@@ -7,7 +7,7 @@ class Client {
         this.connection = connection;
         this.gameID = ''; // ID of game its in
         this.ready = false;
-        this.username = ''; // TODO: RADN USERNAME
+        this.username = 'User' + Math.round(10000 * Math.random());
     }
 
     /**

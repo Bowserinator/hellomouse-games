@@ -24,5 +24,8 @@
       "parser": "babel-eslint"
     },
     "rules": {}
+  },
+  "dependencies": {
+    "websocket": "^1.0.34"
   }
 }

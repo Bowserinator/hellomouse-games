@@ -15,7 +15,17 @@ message types:
     - ignore if user already in a room
 - make move
 - chat
+    - show number, the nusername, ie 1 Bowserinator: 
 - change username
+
+
+Next TODO;
+- username changes
+- readying (future games)
+- README
+- document protocol 
+- tests
+- 
 
 
 
@@ -28,3 +38,4 @@ game has ready state
 
 player on join:
 - reject if already in game
+

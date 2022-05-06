@@ -1,13 +1,20 @@
-
-
 class Game {
     constructor() {
         this.uuid = '';
         this.players = [];
+        this.playerCount = 0;
     }
 
     /** Called when game is created */
     onRoomCreate() {
+        throw new Error('Not implemented');
+    }
+
+    /**
+     * Global state sync, called whenever anything changes
+     * @return {object} To send to all players
+     */
+    globalStateSync() {
         throw new Error('Not implemented');
     }
 
@@ -17,8 +24,25 @@ class Game {
      * @return {boolean} Accept client?
      */
     onJoin(client) {
-        // You should update stuff like this.players here
-        throw new Error('Not implemented');
+        // Fill null spots first (in case disconnect)
+        client.gameID = this.uuid;
+        let found = false;
+
+        for (let i = 0; i < this.players.length; i++) {
+            if (this.players[i] === null) {
+                this.players[i] = client;
+                this.playerCount++;
+                found = true;
+                break;
+            }
+            if (this.players[i] === client) // Duplicate player
+                return false;
+        }
+        if (!found) {
+            this.players.push(client);
+            this.playerCount++;
+        }
+        return true;
     }
 
     /**
@@ -35,7 +59,13 @@ class Game {
      * @param {Client} client
      */
     onDisconnect(client) {
-        throw new Error('Not implemented');
+        for (let i = 0; i < this.players.length; i++) {
+            if (this.players[i] === client) {
+                this.players[i] = null;
+                this.playerCount--;
+                return;
+            }
+        }
     }
 
     /**
@@ -45,4 +75,16 @@ class Game {
     everyoneReady() {
         return this.players.every(x => x.ready);
     }
+
+    /**
+     * Broadcast a message to all players
+     * @param {object} message
+     */
+    broadcast(message) {
+        message = JSON.stringify(message);
+        for (let client of this.players.filter(x => x))
+            client.connection.sendUTF(message);
+    }
 }
+
+module.exports = Game;
