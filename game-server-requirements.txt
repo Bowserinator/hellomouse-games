@@ -1,0 +1,30 @@
+- handle multiple games
+    - specify game type
+    - auto load from list of js files
+
+    - join by uuid
+    - 
+- users can't impersonate other users
+- chat room
+    - emojiis
+    - filter html entities
+
+
+message types:
+- create room
+    - ignore if user already in a room
+- make move
+- chat
+- change username
+
+
+
+game has ready state
+- set ready()
+- on move
+- on join
+- on leave
+- on restart
+
+player on join:
+- reject if already in game
