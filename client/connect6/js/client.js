@@ -1,6 +1,6 @@
 window.WebSocket = window.WebSocket || window.MozWebSocket;
 
-const connection = new WebSocket('ws://127.0.0.1:1337');
+const connection = new WebSocket(`ws://${window.location.host || 'localhost'}:9124`);
 const uuid = window.location.search.substr(1);
 
 
