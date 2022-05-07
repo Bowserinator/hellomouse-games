@@ -40,15 +40,20 @@
                         </div>
                     </div>
                  
-                    <br><br>
-
-                    <button id="submit" onclick="submitMoves()" disabled>Submit Move [Enter]</button>
-                    <br><br><br>
+                    <br>
 
                     <h2>Invite a Friend</h2>
                     <p id="link" class="game-link">Loading...</p>
                     <a href="javascript:copyToClipboard(document.getElementById('link').innerText)"><small>Copy invite link</small></a>
-                    <br><br>
+                    <br><br><br>
+
+                    <button id="submit" onclick="submitMoves()" disabled>
+                        Submit Move [Enter]
+                    </button>
+                    <div id="disabled-reason">Game has not started</div>
+                    <br><br><br>
+
+
  
                     <h2>Rules<sup>[1]</sup></h2>
                     <ol>

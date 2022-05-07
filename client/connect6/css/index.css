@@ -2,25 +2,32 @@ body {
     margin: 0;
     color: #333;
     Font-Family: 'Open Sans', Sans-Serif;
-    overflow: hidden;
+    
 }
 
 .container {
     display: flex;
+    flex-direction: column;
 }
 
-.container > .side {
-    box-shadow: -0.8px -1px 1.4px -12px rgba(0, 0, 0, 0.056),
-        -2px -2.3px 3.4px -12px rgba(0, 0, 0, 0.081),
-        -3.8px -4.4px 6.4px -12px rgba(0, 0, 0, 0.1),
-        -6.7px -7.8px 11.4px -12px rgba(0, 0, 0, 0.119),
-        -12.5px -14.6px 21.3px -12px rgba(0, 0, 0, 0.144),
-        -30px -35px 51px -12px rgba(0, 0, 0, 0.1);
-    z-index: 999;
-    background-color: white;
+@media only screen and (min-width: 992px) {
+    .container {
+        flex-direction: row;
+    }
 
-    max-height: 100vh;
-    overflow-y: auto;
+    .container > .side {
+        box-shadow: -0.8px -1px 1.4px -12px rgba(0, 0, 0, 0.056),
+            -2px -2.3px 3.4px -12px rgba(0, 0, 0, 0.081),
+            -3.8px -4.4px 6.4px -12px rgba(0, 0, 0, 0.1),
+            -6.7px -7.8px 11.4px -12px rgba(0, 0, 0, 0.119),
+            -12.5px -14.6px 21.3px -12px rgba(0, 0, 0, 0.144),
+            -30px -35px 51px -12px rgba(0, 0, 0, 0.1);
+        z-index: 999;
+        background-color: white;
+
+        max-height: 100vh;
+        overflow-y: auto;
+    }
 }
 
 .container > .side h1 {
@@ -213,3 +220,10 @@ button:disabled {
 }
 
 .modal > h1 { margin: 0 0 10px 0; }
+
+#disabled-reason {
+    font-size: 10pt;
+    margin-top: 4px;
+    text-align: center;
+    height: 10pt;
+}

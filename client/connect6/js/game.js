@@ -82,9 +82,9 @@ window.onresize = () => {
     let size = Math.min(window.innerWidth, window.innerHeight);
 
     canvas.width = size;
-    canvas.style.width = size;
+    canvas.style.width = size + 'px';
     canvas.height = size;
-    canvas.style.height = size;
+    canvas.style.height = size + 'px';
     cellSize = canvas.width / (BOARD_SIZE + 2 * MARGIN);
     drawBoard();
 }

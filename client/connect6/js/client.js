@@ -1,13 +1,12 @@
 window.WebSocket = window.WebSocket || window.MozWebSocket;
 
-const connection = new WebSocket('ws://127.0.0.1:1337');
-const uuid = window.location.search.substr(1);
+const connection = new WebSocket(`ws://${window.location.host || 'localhost:8124'}`);
+const uuid = window.location.search.substr(1).split('=')[0]; // TODO: replace with global arg parsing
 
 
 function setPlayer(id, index) {
-    if (index >= 2) return;
     let div = document.getElementById(id);
-    div.innerText = index === 0 ? 'BLACK' : 'WHITE';
+    div.innerText = IDToName(index).toUpperCase();
     div.classList.remove('black');
     div.classList.remove('white');
     div.classList.add(index === 0 ? 'black' : 'white');
@@ -51,7 +50,17 @@ function copyToClipboard(text) {
 function updateButtonDisabled() {
     document.getElementById('submit').disabled =
         (!gameState.started || (gameState.turn !== gameState.currentTurn) ||
-         gameState.maxMoves !== gameState.moves.length);
+        gameState.maxMoves !== gameState.moves.length);
+    
+    let reason = document.getElementById('disabled-reason');
+    if (!gameState.started)
+        reason.innerText = "[ Game has not started ]";
+    else if (gameState.turn !== gameState.currentTurn)
+        reason.innerText = "[ It's not your turn ]";
+    else if (gameState.maxMoves !== gameState.moves.length)
+        reason.innerText = "[ You still need to make some moves! ]";
+    else
+        reason.innerText = '';
 }
 
 function updateHTML() {
@@ -111,6 +120,8 @@ connection.onmessage = message => {
         gameState.moves = [];
         gameState.winner = message.winner;
         gameState.winningLine = message.winningLine;
+
+        document.title = "Connect6 | " + IDToName(gameState.currentTurn) + "'s turn";
 
         if (gameState.winner) {
             document.getElementById('modals').style.display = 'block';

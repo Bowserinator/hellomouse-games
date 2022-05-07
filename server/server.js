@@ -4,6 +4,8 @@ const games = require('./games.js');
 
 const webSocketServer = require('websocket').server;
 const http = require('http');
+const https = require('https');
+const fs = require('fs');
 
 
 // Functions
@@ -60,7 +62,12 @@ function error(client, error) {
 let clients = new Set();
 
 // HTTP Server for websocket
-const server = http.createServer((request, response) => {});
+const server = config.https ?
+    https.createServer({
+        cert: fs.readFileSync('./certs/fullchain.pem'),
+        key: fs.readFileSync('./certs/privkey.pem')
+    }) :
+    http.createServer((request, response) => {});
 const wsServer = new webSocketServer({ httpServer: server });
 
 server.listen(config.port, () => {
