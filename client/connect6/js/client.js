@@ -66,6 +66,9 @@ function submitMoves() {
     connection.send(JSON.stringify({ type: 'MOVE', moves: gameState.moves }));
 }
 
+function restart() {
+    connection.send(JSON.stringify({ type: 'MOVE', restart: true }));
+}
 
 // Connection handling
 connection.onopen = () => {
@@ -103,9 +106,18 @@ connection.onmessage = message => {
         if (!message.players[1]) document.getElementById('player1').classList.add('missing');
         else document.getElementById('player1').classList.remove('missing');
 
-        gameState.placing = message.turn === message.youAre && message.players[1];
+        gameState.placing = !message.winner && message.turn === message.youAre && message.players[1];
         gameState.maxMoves = message.round === 0 ? 1 : 2;
         gameState.moves = [];
+        gameState.winner = message.winner;
+        gameState.winningLine = message.winningLine;
+
+        if (gameState.winner) {
+            document.getElementById('modals').style.display = 'block';
+            document.getElementById('winner').innerText = `${['Black', 'White'][gameState.winner - 1]} wins!`;
+        } else {
+            document.getElementById('modals').style.display = 'none';
+        }
 
         drawBoard();
         updateHTML();

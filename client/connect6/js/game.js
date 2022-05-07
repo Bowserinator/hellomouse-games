@@ -169,4 +169,14 @@ function drawBoard() {
             (move[1] + 2 * MARGIN) * cellSize,
             gameState.turn === 0 ? BLACK_COLOR : WHITE_COLOR,
             PIECE_PLACE_BORDER, PIECE_TENTATIVE_THICKNESS);
+
+    // Winning line
+    if (gameState.winningLine) {
+        let [x1, y1, x2, y2] = gameState.winningLine.flat();
+        x1 = M + x1 * cellSize;
+        y1 = M + y1 * cellSize;
+        x2 = M + x2 * cellSize;
+        y2 = M + y2 * cellSize;
+        drawLine(x1, y1, x2, y2, 8, 'red');
+    }
 }

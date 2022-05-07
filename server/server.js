@@ -162,7 +162,8 @@ wsServer.on('request', request => {
 
         // Move
         else if (message.type === 'MOVE') {
-            game.onMove(client, message);
+            try{ game.onMove(client, message); }
+            catch(e) { console.log(e) }
             gameStateSync(game.uuid);
         }
     });
