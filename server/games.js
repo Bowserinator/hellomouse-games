@@ -38,9 +38,10 @@ function createGame(type, host) {
  * @param {string} uuid of game to remove
  */
 function removeGame(uuid) {
-    for (let player of games[game.uuid].players.filter(x => x))
+    if (!games[uuid]) return;
+    for (let player of games[uuid].players.filter(x => x))
         player.gameID = null;
-    games[game.uuid] = undefined;
+    games[uuid] = undefined;
 }
 
 console.log(GAME_TYPES)

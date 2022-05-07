@@ -20,15 +20,19 @@ class Connect6Game extends Game {
         }
     }
 
-    globalStateSync() {
+    globalStateSync(player) {
         return {
-            players: this.players.filter(x => x).map(x => {
+            players: this.players.map(x => {
+                if (!x) return null;
                 return {
                     username: x.username,
                     ready: x.ready
                 };
             }),
-            board: this.board
+            board: this.board,
+            turn: this.turn,
+            round: this.round,
+            youAre: this.players.indexOf(player)
         };
     }
 

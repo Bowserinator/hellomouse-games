@@ -12,9 +12,11 @@ class Game {
 
     /**
      * Global state sync, called whenever anything changes
+     * Customizable per player
+     * @param {Client} player
      * @return {object} To send to all players
      */
-    globalStateSync() {
+    globalStateSync(player) {
         throw new Error('Not implemented');
     }
 

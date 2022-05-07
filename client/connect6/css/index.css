@@ -1,0 +1,192 @@
+body {
+    margin: 0;
+    color: #333;
+    Font-Family: 'Open Sans', Sans-Serif;
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+}
+
+.container > .side {
+    box-shadow: -0.8px -1px 1.4px -12px rgba(0, 0, 0, 0.056),
+        -2px -2.3px 3.4px -12px rgba(0, 0, 0, 0.081),
+        -3.8px -4.4px 6.4px -12px rgba(0, 0, 0, 0.1),
+        -6.7px -7.8px 11.4px -12px rgba(0, 0, 0, 0.119),
+        -12.5px -14.6px 21.3px -12px rgba(0, 0, 0, 0.144),
+        -30px -35px 51px -12px rgba(0, 0, 0, 0.1);
+    z-index: 999;
+    background-color: white;
+
+    max-height: 100vh;
+    overflow-y: auto;
+}
+
+.container > .side h1 {
+    font-size: 32pt;
+    font-family: 'Raleway', Sans-Serif;
+    
+    margin: 10px 0 0 0;
+    padding: 12px 24px;
+    display: inline-block;
+
+    background-color: black;
+    color: white;
+}
+
+h2 {
+    margin-top: 20px;
+    color: black;
+    font-family: 'Raleway', Sans-Serif;
+    font-weight: normal;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.body {
+    padding: 28px 40px;
+}
+
+.game-link {
+    max-width: 100%;
+    font-family: monospace;
+    font-size: 11pt;
+    user-select: all;
+    margin-bottom: 0;
+
+    color: blue;
+    background-color: rgba(0, 0, 0, 0.02);
+    padding: 12px;
+    overflow-x: auto;
+    border-radius: 4px;
+}
+
+@keyframes flash {
+    from {
+        background-color: #8bf268;
+    }
+    to {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+}
+
+.game-link.flash {
+    animation: flash 0.3s ease-in-out 0s;
+}
+
+button {
+    outline: none;
+    border: none;
+    width: 100%;
+    
+    padding: 20px 40px;
+    background-color: black;
+    color: white;
+    cursor: pointer;
+
+    font-family: 'Raleway', Sans-Serif;
+    font-weight: normal;
+    font-size: 14pt;
+    user-select: none;
+
+    box-shadow: 0px 0.7px 1.3px rgba(0, 0, 0, 0.057),
+        0px 2.5px 4.2px rgba(0, 0, 0, 0.083),
+        0px 11px 19px rgba(0, 0, 0, 0.14);
+    transition: 0.2s box-shadow, 0.2s background-color;
+}
+
+button:hover {
+    box-shadow: 0px 2px 1.3px rgba(0, 0, 0, 0.057),
+        0px 6.7px 4.2px rgba(0, 0, 0, 0.083),
+        0px 15px 19px rgba(0, 0, 0, 0.14);
+    background-color: #333;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+
+.players {
+    line-height: 30pt;
+    vertical-align: middle;
+    position: relative;
+    padding-left: 30pt;
+    font-size: 16pt;
+}
+.players.missing {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.piece {
+    width: 20pt;
+    height: 20pt;
+    border-radius: 50%;
+    border: 1px solid black;
+    display: inline-block;
+    transform: translateY(-50%);
+    top: 50%;
+    left: 0;
+    position: absolute;
+}
+
+.piece.black { background-color: black; }
+.piece.white { background-color: white; }
+
+.player {
+    padding: 5px 15px;
+    border: 1px solid black;
+    font-family: 'Raleway', Sans-Serif;
+}
+.player.black {
+    background-color: black;
+    color: white;
+}
+.player.white {
+    color: black;
+}
+
+
+::-webkit-scrollbar {
+    width: 4px;
+    height: 2px;
+}
+
+::-webkit-scrollbar-button {
+    width: 0px;
+    height: 0px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #e1e1e1;
+    border: 0px none #ffffff;
+    border-radius: 50px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #ffffff;
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: #000000;
+}
+
+::-webkit-scrollbar-track {
+    background: #666666;
+    border: 0px none #ffffff;
+    border-radius: 50px;
+}
+
+::-webkit-scrollbar-track:hover {
+    background: #666666;
+}
+
+::-webkit-scrollbar-track:active {
+    background: #333333;
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}

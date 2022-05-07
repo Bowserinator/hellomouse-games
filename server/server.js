@@ -24,9 +24,12 @@ function broadcast(message) {
  * Sync game state for everyone
  */
 function gameStateSync(id) {
-    let msg = games.games[id].globalStateSync();
-    msg.type = 'SYNC';
-    games.games[id].broadcast(msg);
+    for (let player of games.games[id].players) {
+        if (!player) continue;
+        let msg = games.games[id].globalStateSync(player);
+        msg.type = 'SYNC';
+        send(player, msg);
+    }
 }
 
 /**
