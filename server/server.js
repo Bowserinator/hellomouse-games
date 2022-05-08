@@ -68,7 +68,7 @@ const server = config.https ?
         key: fs.readFileSync('./certs/privkey.pem')
     }) :
     http.createServer((request, response) => {});
-const wsServer = new webSocketServer({ httpServer: server });
+const wsServer = new webSocketServer({ httpServer: server, path: '/ws' });
 
 server.listen(config.port, () => {
     console.log((new Date()) + ' Server is listening on port ' + config.port);
