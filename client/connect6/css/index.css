@@ -1,37 +1,59 @@
 body {
     margin: 0;
     color: #333;
+    background-color: #fcfcfc;
     Font-Family: 'Open Sans', Sans-Serif;
-    
 }
 
-.container {
+canvas {
+    border: 1px solid black;
+    margin: 20px 40px;
+}
+
+
+.right-container {
+    margin: 0 48px 0 0;
+}
+.right-container > div:not(:first-child) {
+    height: 80vh;
+}
+
+.js-tabs {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    margin-top: 20px;
+    font-variant: small-caps;
+    font-size: 13pt;
 }
 
-@media only screen and (min-width: 992px) {
-    .container {
-        flex-direction: row;
-    }
 
-    .container > .side {
-        box-shadow: -0.8px -1px 1.4px -12px rgba(0, 0, 0, 0.056),
-            -2px -2.3px 3.4px -12px rgba(0, 0, 0, 0.081),
-            -3.8px -4.4px 6.4px -12px rgba(0, 0, 0, 0.1),
-            -6.7px -7.8px 11.4px -12px rgba(0, 0, 0, 0.119),
-            -12.5px -14.6px 21.3px -12px rgba(0, 0, 0, 0.144),
-            -30px -35px 51px -12px rgba(0, 0, 0, 0.1);
-        z-index: 999;
-        background-color: white;
+.js-tab-container > div:not(:first-child) {
+    padding: 30px;
+    border: 1px solid #ccc;
+    overflow-y: auto;
 
-        max-height: 100vh;
-        overflow-y: auto;
-    }
+    right: 0px;
 }
 
-.container > .side h1 {
-    font-size: 32pt;
+.js-tabs > div {
+    padding: 6px 20px;
+    background-color: #f1f1f1;
+    border: 1px solid #ccc;
+    border-top: 4px solid transparent;
+    color: #777;
+}
+.js-tabs>div.active {
+    border-top: 4px solid black;
+    border-bottom: none;
+    background-color: transparent;
+    box-shadow: 0px 1px 0px 0px #f1f1f1;
+    color: black;
+    z-index: 100;
+}
+
+
+.connect6-title {
+    font-size: 16pt;
     font-family: 'Raleway', Sans-Serif;
     
     margin: 10px 0 0 0;
@@ -50,22 +72,28 @@ h2 {
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.body {
+.side {
     padding: 28px 40px;
 }
 
+.game-link > small {
+    color: #777;
+}
+
 .game-link {
-    max-width: 100%;
-    font-family: monospace;
-    font-size: 11pt;
-    user-select: all;
+    font-size: 12pt;
     margin-bottom: 0;
 
-    color: blue;
+    border-bottom: 1px solid #777;
+    white-space:nowrap;
+    color: #333;
+    overflow-x: auto;
     background-color: rgba(0, 0, 0, 0.02);
     padding: 12px;
     overflow-x: auto;
-    border-radius: 4px;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    user-select: none;
 }
 
 @keyframes flash {
@@ -95,6 +123,7 @@ button {
     font-weight: normal;
     font-size: 14pt;
     user-select: none;
+    font-variant: small-caps;
 
     box-shadow: 0px 0.7px 1.3px rgba(0, 0, 0, 0.057),
         0px 2.5px 4.2px rgba(0, 0, 0, 0.083),
@@ -121,6 +150,8 @@ button:disabled {
     position: relative;
     padding-left: 30pt;
     font-size: 16pt;
+    margin-right: 20px;
+    margin-top: 10px;
 }
 .players.missing {
     opacity: 0.3;
@@ -153,6 +184,7 @@ button:disabled {
 }
 .player.white {
     color: black;
+    background-color: white;
 }
 
 
@@ -222,8 +254,6 @@ button:disabled {
 .modal > h1 { margin: 0 0 10px 0; }
 
 #disabled-reason {
-    font-size: 10pt;
-    margin-top: 4px;
-    text-align: center;
-    height: 10pt;
+    font-size: 12pt;
+    margin-bottom: 4px;
 }

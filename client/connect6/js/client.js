@@ -19,9 +19,9 @@ function IDToName(i) {
 }
 
 function copyToClipboard(text) {
-    document.getElementById('link').classList.add('flash');
+    document.getElementsByClassName('game-link')[0].classList.add('flash');
     setTimeout(() => {
-        document.getElementById('link').classList.remove('flash');
+        document.getElementsByClassName('game-link')[0].classList.remove('flash');
     }, 500);    
 
     if (window.clipboardData && window.clipboardData.setData) {
@@ -53,20 +53,27 @@ function updateButtonDisabled() {
         gameState.maxMoves !== gameState.moves.length);
     
     let reason = document.getElementById('disabled-reason');
+    reason.style.visibility = 'visible';
     if (!gameState.started)
-        reason.innerText = "[ Game has not started ]";
+        reason.innerText = '⚠️' + "[ Game has not started ]";
     else if (gameState.turn !== gameState.currentTurn)
-        reason.innerText = "[ It's not your turn ]";
+        reason.innerText = '⚠️' + "[ It's not your turn ]";
     else if (gameState.maxMoves !== gameState.moves.length)
-        reason.innerText = "[ You still need to make some moves! ]";
+        reason.innerText = '⚠️' + "[ You still need to make some moves! ]";
     else
-        reason.innerText = '';
+        reason.style.visibility = 'hidden';
 }
 
 function updateHTML() {
     setPlayer('youare', gameState.turn);
-    setPlayer('turn', gameState.currentTurn);
     updateButtonDisabled();
+
+    // Update turn
+    setPlayer('turn', gameState.currentTurn);
+    if (gameState.currentTurn === gameState.turn)
+        document.getElementById('turn').innerText = 'IT IS YOUR TURN — (Move 1/2)';
+    else
+        document.getElementById('turn').innerText = `IT IS ${IDToName(gameState.currentTurn).toUpperCase()}'S TURN`;
 }
 
 /** Finalize moves to server */

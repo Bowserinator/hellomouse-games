@@ -1,0 +1,1 @@
+.side-by-side{display:flex;flex-direction:column}@media only screen and (min-width: 992px){.side-by-side{flex-direction:row}}.js-tab-container>div:not(:first-child):not(:nth-child(2)){display:none}.js-tabs{display:flex;flex-direction:row}.js-tabs>div{cursor:pointer}/*# sourceMappingURL=index.css.map */

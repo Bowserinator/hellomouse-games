@@ -1,0 +1,35 @@
+
+/* A container that splits the screen
+ * side by side. Stacks when the screen is
+ * small */
+.side-by-side {
+    display: flex;
+    flex-direction: column;
+}
+
+@media only screen and (min-width: 992px) {
+    .side-by-side {
+        flex-direction: row;
+    }
+}
+
+
+/* Tabs */
+// Hide everything except the first child (tabs)
+// and the first tab (2nd child)
+.js-tab-container > div:not(:first-child):not(:nth-child(2)) {
+    display: none;
+}
+
+.js-tabs {
+    display: flex;
+    flex-direction: row;
+
+    & > div {
+        cursor: pointer;
+    }
+}
+
+
+// TODO: modals
+// TODO: col by col -> like col-50-50

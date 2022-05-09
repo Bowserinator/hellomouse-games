@@ -80,6 +80,7 @@ window.onmousedown = e => {
 
 window.onresize = () => {
     let size = Math.min(window.innerWidth, window.innerHeight);
+    size -= 80; // TODO
 
     canvas.width = size;
     canvas.style.width = size + 'px';
