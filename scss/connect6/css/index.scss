@@ -1,0 +1,302 @@
+body {
+    margin: 0;
+    color: #333;
+    background-color: #fcfcfc;
+    font-family: 'Open Sans', Sans-Serif;
+}
+
+h2 {
+    margin-top: 20px;
+    color: black;
+    font-family: 'Raleway', Sans-Serif;
+    font-weight: normal;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+canvas {
+    border: 1px solid black;
+    margin: 10px 0;
+}
+
+@media only screen and (min-width: 992px) {
+    // Only apply when screen is large
+    canvas {  margin: 10px 40px;  }
+
+    .right-container { margin: 0 48px 0 0; }
+
+    .right-container > div:not(:first-child) {
+        height: 80vh;
+    }
+}
+
+// Other links at the top
+.misc-links {
+    color: #ccc;
+    padding: 6px;
+}
+
+// Tabs styling
+.js-tabs {
+    display: flex;
+    flex-direction: row;
+    margin-top: 20px;
+    font-variant: small-caps;
+    font-size: 13pt;
+}
+
+// Tab content
+.js-tab-container {
+    &>div:not(:first-child) {
+        padding: 30px;
+        border: 1px solid #ccc;
+        overflow-y: auto;
+    }
+}
+
+// Tabs themselves
+.js-tabs {
+    &>div {
+        padding: 6px 20px;
+        background-color: #f1f1f1;
+        border: 1px solid #ccc;
+        border-top: 4px solid transparent;
+        color: #777;
+        transition: color 0.05s,
+            border-color 0.05s,
+            background-color 0.05s;
+        user-select: none;
+    }
+
+    &>div.active {
+        border-top: 4px solid black;
+        border-bottom: none;
+        background-color: transparent;
+        box-shadow: 0px 1px 0px 0px #f1f1f1; // Cover the border
+        color: black;
+        z-index: 100;
+    }
+}
+
+// Title of the page
+.connect6-title {
+    font-size: 16pt;
+    font-family: 'Raleway', Sans-Serif;
+
+    margin: 10px 0 0 0;
+    padding: 12px 24px;
+    display: inline-block;
+
+    background-color: black;
+    color: white;
+}
+
+// Invite link
+// Small label
+.game-link>small {
+    color: #777;
+}
+
+// Main container
+.game-link {
+    font-size: 12pt;
+    margin-bottom: 0;
+
+    border-bottom: 1px solid #777;
+    white-space: nowrap;
+    color: #333;
+    background-color: rgba(0, 0, 0, 0.02);
+    padding: 12px;
+    overflow-x: auto;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+@keyframes flash {
+    from {
+        background-color: #e8e8e8;
+    }
+    to {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+}
+
+.game-link.flash {
+    animation: flash 0.3s ease-in-out 0s;
+}
+
+
+// Buttons
+button {
+    outline: none;
+    border: none;
+    width: 100%;
+    border-radius: 6px;
+
+    padding: 20px 40px;
+    background-color: black;
+    color: white;
+    cursor: pointer;
+
+    font-family: 'Raleway', Sans-Serif;
+    font-weight: normal;
+    font-size: 14pt;
+    user-select: none;
+
+    box-shadow: 0px 0.7px 1.3px rgba(0, 0, 0, 0.057),
+        0px 2.5px 4.2px rgba(0, 0, 0, 0.083),
+        0px 11px 19px rgba(0, 0, 0, 0.14);
+    transition: 0.2s box-shadow, 0.2s background-color;
+}
+
+button:hover {
+    box-shadow: 0px 2px 1.3px rgba(0, 0, 0, 0.057),
+        0px 6.7px 4.2px rgba(0, 0, 0, 0.083),
+        0px 15px 19px rgba(0, 0, 0, 0.14);
+    background-color: #333;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+
+// Player text container
+.players {
+    line-height: 30pt;
+    vertical-align: middle;
+    position: relative;
+    font-size: 14pt;
+    margin-right: 20px;
+    margin-top: 10px;
+
+    &.missing {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+}
+
+// Circle
+.piece {
+    display: none;
+
+    &.black {
+        background-color: black;
+    }
+
+    &.white {
+        background-color: white;
+    }
+}
+
+// Player text
+.player {
+    padding: 6px 15px;
+    border: 1px solid black;
+    font-family: 'Raleway', Sans-Serif;
+    transition: background-color 0.1s, color 0.1s;
+
+    &.black {
+        background-color: black;
+        color: white;
+    }
+
+    &.white {
+        color: black;
+        background-color: white;
+    }
+}
+
+
+// Split the white and black players horizontally on large screens
+.players-split {
+    display: flex;
+    flex-direction: column;
+}
+
+@media only screen and (min-width: 992px) {
+    .piece {
+        width: 20pt;
+        height: 20pt;
+        border-radius: 50%;
+        border: 1px solid black;
+        display: inline-block;
+        transform: translateY(-50%);
+        top: 50%;
+        left: 0;
+        position: absolute;
+    }
+
+    .players {
+        padding-left: 30pt;
+    }
+
+    .players-split {
+        flex-direction: row;
+    }
+}
+
+// Win modal
+.modal {
+    bottom: 20px;
+    right: 20px;
+    background-color: white;
+    max-width: 100%;
+    min-width: 600px;
+    padding: 30px;
+
+    &>h1 {
+        margin: 0 0 10px 0;
+    }
+}
+
+// The warning text why you can't submit
+#disabled-reason {
+    font-size: 13pt;
+    margin-bottom: 6px;
+    color: #F44336;
+}
+
+// Scrollbar
+::-webkit-scrollbar {
+    width: 4px;
+    height: 2px;
+}
+
+::-webkit-scrollbar-button {
+    width: 0px;
+    height: 0px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #e1e1e1;
+    border: 0px none #ffffff;
+    border-radius: 50px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #ffffff;
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: #000000;
+}
+
+::-webkit-scrollbar-track {
+    background: #666666;
+    border: 0px none #ffffff;
+    border-radius: 50px;
+}
+
+::-webkit-scrollbar-track:hover {
+    background: #666666;
+}
+
+::-webkit-scrollbar-track:active {
+    background: #333333;
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}

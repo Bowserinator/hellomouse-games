@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "serve": "node server/server.js",
-    "scss": "sass --style=compressed --watch client/shared/scss:client/shared/css"
+    "scss": "sass --style=compressed --watch scss/:client/"
   },
   "devDependencies": {
     "@babel/core": "^7.17.10",

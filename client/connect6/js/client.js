@@ -176,3 +176,10 @@ function copyLinkToClipboard(text) {
     setTimeout(() => link.classList.remove('flash'), 500);
     copyToClipboard(text);
 }
+
+/** Spawn new game */
+// eslint-disable-next-line no-unused-vars
+function newGame() {
+    if (confirm('Start a new game?'))
+        window.location.href = window.location.href.split('?')[0];
+}

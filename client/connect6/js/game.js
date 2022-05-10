@@ -213,8 +213,8 @@ window.onmousedown = e => {
 
 window.onresize = () => {
     let size = Math.min(window.innerWidth, window.innerHeight);
-
-    size -= 80; // TODO
+    if (window.innerWidth > 992)
+        size -= 120; // Shrink on large screens
 
     canvas.width = size;
     canvas.style.width = size + 'px';
