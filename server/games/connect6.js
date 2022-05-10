@@ -49,6 +49,7 @@ class Connect6Game extends Game {
         this.round = 0;
         this.winner = 0;
         this.winningLine = [];
+        this.lastMoves = [];
 
         this.board = [];
         for (let row = 0; row < BOARD_SIZE; row++) {
@@ -72,7 +73,8 @@ class Connect6Game extends Game {
             round: this.round,
             youAre: this.players.indexOf(player),
             winner: this.winner,
-            winningLine: this.winningLine
+            winningLine: this.winningLine,
+            lastMoves: this.lastMoves
         };
     }
 
@@ -107,6 +109,8 @@ class Connect6Game extends Game {
             let move = message.moves[i];
             this.board[move[1]][move[0]] = this.turn + 1;
         }
+
+        this.lastMoves = message.moves;
 
         // Check for wins
         // Only need to check areas around the two moves

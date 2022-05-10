@@ -128,6 +128,7 @@ connection.onmessage = message => {
         gameState.placing = !message.winner && message.turn === message.youAre && message.players[1];
         gameState.maxMoves = message.round === 0 ? 1 : 2;
         gameState.moves = [];
+        gameState.lastMoves = message.lastMoves;
         gameState.winner = message.winner;
         gameState.winningLine = message.winningLine;
 

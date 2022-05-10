@@ -5,9 +5,11 @@ const ctx = canvas.getContext('2d');
 // Drawing variables
 const BOARD_SIZE = 19; // Make sure is consistent with server
 const MARGIN = 0.4; // In percentage of cell size
-const CIRCLE_SIZE = 0.4; // In percentage of cell size
+const CIRCLE_SIZE = 0.4; // Piece size, in percentage of cell size
 const MARKER_SIZE = 0.08;
+const RECT_MARKER_SIZE = 0.3; // In percentage of cell size, width
 
+const RECT_MARKER_COLOR = '#F44336';
 const BOARD_COLOR = '#ffead1';
 const LINE_COLOR = '#111';
 const BLACK_COLOR = 'black';
@@ -28,6 +30,7 @@ const gameState = {
     placing: true, // Is currently placing pieces?
     maxMoves: 2,   // Depends on turn
     moves: [],     // Array of [x,y]
+    lastMoves: [], // Array of [x,y]
 
     currentTurn: 0, // Whose turn is it
     currentRound: 0 // Round number, increments by 1 each turn
@@ -60,6 +63,17 @@ function mouseToBoardCoordinate(e) {
 function moveAt(x, y) {
     return gameState.moves.some(m => m[0] === x && m[1] === y);
 }
+
+/**
+ * In gameState.lastMoves, is there a move at this location?
+ * @param {number} x
+ * @param {number} y
+ * @return {boolean}
+ */
+function lastMoveAt(x, y) {
+    return gameState.lastMoves.some(m => m[0] === x && m[1] === y);
+}
+
 
 /**
  * Draw a line from (x1, y1) to (x2, y2)
@@ -100,6 +114,18 @@ function drawCircle(x, y, radius, fill, stroke, strokeWidth) {
         ctx.strokeStyle = stroke;
         ctx.stroke();
     }
+}
+
+/**
+ * Fill square centered on (x, y)
+ * @param {number} x
+ * @param {number} y
+ * @param {number} width
+ * @param {string} color
+ */
+function drawCenteredSquare(x, y, width, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x - width / 2, y - width / 2, width, width);
 }
 
 /**
@@ -157,6 +183,10 @@ function drawBoard() {
             let [cx, cy] = [M + x * cellSize, M + y * cellSize];
 
             drawPiece(cx, cy, color, PIECE_BORDER);
+
+            // It was a last move, mark
+            if (lastMoveAt(x, y))
+                drawCenteredSquare(cx, cy, RECT_MARKER_SIZE * cellSize, RECT_MARKER_COLOR);
         }
 
     // Current turn moves
