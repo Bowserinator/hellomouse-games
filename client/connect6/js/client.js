@@ -1,79 +1,84 @@
-window.WebSocket = window.WebSocket || window.MozWebSocket;
+/* global gameState:false, drawBoard:false, createConnection:false, beep:false, copyToClipboard:false */
 
-const connection = new WebSocket(`ws://${window.location.host || 'localhost:8124'}`);
-const uuid = window.location.search.substr(1).split('=')[0]; // TODO: replace with global arg parsing
+/**
+ * All UI / server communication stuff
+ * goes here. Game state is shared between
+ * this and games.js
+ */
+
+const connection = createConnection();
+
+// url?<GAME UUID>=
+const uuid = window.location.search.substr(1).split('=')[0];
 
 
+/**
+ * Update a player div, setting color class
+ * @param {string} id ID of div
+ * @param {number} index 0 = black, 1 = white
+ */
 function setPlayer(id, index) {
     let div = document.getElementById(id);
-    div.innerText = IDToName(index).toUpperCase();
+
+    div.innerText = idToName(index).toUpperCase();
     div.classList.remove('black');
     div.classList.remove('white');
     div.classList.add(index === 0 ? 'black' : 'white');
 }
 
-function IDToName(i) {
+
+/**
+ * Convert turn number to name
+ * @param {number} i 0 = black, 1 = white, else spectator
+ * @return {string}
+ */
+function idToName(i) {
     if (i === 0) return 'Black';
     else if (i === 1) return 'White';
-    return 'Spectator'
+    return 'Spectator';
 }
 
-function copyToClipboard(text) {
-    document.getElementsByClassName('game-link')[0].classList.add('flash');
-    setTimeout(() => {
-        document.getElementsByClassName('game-link')[0].classList.remove('flash');
-    }, 500);    
-
-    if (window.clipboardData && window.clipboardData.setData) {
-        // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
-        return window.clipboardData.setData("Text", text);
-    }
-    else if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
-        var textarea = document.createElement("textarea");
-        textarea.textContent = text;
-        textarea.style.position = "fixed";  // Prevent scrolling to bottom of page in Microsoft Edge.
-        document.body.appendChild(textarea);
-        textarea.select();
-        try {
-            return document.execCommand("copy");  // Security exception may be thrown by some browsers.
-        }
-        catch (ex) {
-            console.warn("Copy to clipboard failed.", ex);
-            return prompt("Copy to clipboard: Ctrl+C, Enter", text);
-        }
-        finally {
-            document.body.removeChild(textarea);
-        }
-    }
-}
-
-function updateButtonDisabled() {
+/** Update the disabled state of the submit button */
+function updateSubmitButtonDisabled() {
+    // Not allowed to submit if either:
+    // 1. Game hasn't started
+    // 2. It's not your turn
+    // 3. You haven't made enough moves
     document.getElementById('submit').disabled =
         (!gameState.started || (gameState.turn !== gameState.currentTurn) ||
         gameState.maxMoves !== gameState.moves.length);
-    
+
     let reason = document.getElementById('disabled-reason');
     reason.style.visibility = 'visible';
-    if (!gameState.started)
-        reason.innerText = '⚠️' + "[ Game has not started ]";
+
+    if (gameState.winner)
+        reason.innerText = 'Game is over';
+    else if (!gameState.started)
+        reason.innerText = '⚠️Waiting for players';
     else if (gameState.turn !== gameState.currentTurn)
-        reason.innerText = '⚠️' + "[ It's not your turn ]";
-    else if (gameState.maxMoves !== gameState.moves.length)
-        reason.innerText = '⚠️' + "[ You still need to make some moves! ]";
-    else
+        reason.innerText = '⚠️It\'s not your turn';
+    else if (gameState.maxMoves !== gameState.moves.length) {
+        let movesRemaining = gameState.maxMoves - gameState.moves.length;
+        let movesPlural = movesRemaining === 1 ? 'move' : 'moves';
+        reason.innerText = `⚠️You still need to make ${movesRemaining} ${movesPlural}!`;
+    } else
         reason.style.visibility = 'hidden';
 }
 
+/** Update html on state change */
 function updateHTML() {
     setPlayer('youare', gameState.turn);
-    updateButtonDisabled();
+    updateSubmitButtonDisabled();
 
-    // Update turn
+    // Update turn label
     setPlayer('turn', gameState.currentTurn);
-    if (gameState.currentTurn === gameState.turn)
-        document.getElementById('turn').innerText = 'IT IS YOUR TURN — (Move 1/2)';
-    else
-        document.getElementById('turn').innerText = `IT IS ${IDToName(gameState.currentTurn).toUpperCase()}'S TURN`;
+    let turn = document.getElementById('turn');
+
+    if (gameState.currentTurn === gameState.turn) {
+        let moves = `${gameState.moves.length} / ${gameState.maxMoves}`;
+        turn.innerText = `IT IS YOUR TURN — (Move ${moves})`;
+    } else
+        turn.innerText = `IT'S ${idToName(gameState.currentTurn).toUpperCase()}'S TURN`;
 }
 
 /** Finalize moves to server */
@@ -82,6 +87,8 @@ function submitMoves() {
     connection.send(JSON.stringify({ type: 'MOVE', moves: gameState.moves }));
 }
 
+/** Send restart signal, used in restart modal */
+// eslint-disable-next-line no-unused-vars
 function restart() {
     connection.send(JSON.stringify({ type: 'MOVE', restart: true }));
 }
@@ -101,26 +108,22 @@ connection.onmessage = message => {
     console.log(message);
 
     if (message.type === 'ERROR') {
+        // TODO: error code
         if (message.error.includes('GameID of') && message.error.includes('exist'))
             window.location.href = window.location.href.split('?')[0];
         alert(message.error);
-    }
-    else if (message.type === 'UUID') {
+    } else if (message.type === 'UUID') {
+        // Game UUID recieved
         let url = window.location.href.split('?')[0] + '?' + message.uuid;
         history.pushState({}, '', url);
         document.getElementById('link').innerText = url;
-    }
-    else if (message.type === 'SYNC') {
+    } else if (message.type === 'SYNC') {
+        // Game state sync
         gameState.started = message.players[0] && message.players[1];
         gameState.board = message.board;
         gameState.turn = message.youAre;
         gameState.currentTurn = message.turn;
         gameState.currentRound = message.round;
-
-        if (!message.players[0]) document.getElementById('player0').classList.add('missing');
-        else document.getElementById('player0').classList.remove('missing');
-        if (!message.players[1]) document.getElementById('player1').classList.add('missing');
-        else document.getElementById('player1').classList.remove('missing');
 
         gameState.placing = !message.winner && message.turn === message.youAre && message.players[1];
         gameState.maxMoves = message.round === 0 ? 1 : 2;
@@ -128,15 +131,26 @@ connection.onmessage = message => {
         gameState.winner = message.winner;
         gameState.winningLine = message.winningLine;
 
-        document.title = "Connect6 | " + IDToName(gameState.currentTurn) + "'s turn";
+        // Highlight active players
+        let player0 = document.getElementById('player0');
+        let player1 = document.getElementById('player1');
 
+        if (!message.players[0]) player0.classList.add('missing');
+        else player0.classList.remove('missing');
+        if (!message.players[1]) player1.classList.add('missing');
+        else player1.classList.remove('missing');
+
+        document.title = 'Connect6 | ' + idToName(gameState.currentTurn) + '\'s turn';
+
+        // Update winner modal
+        let modal = document.getElementById('modals');
         if (gameState.winner) {
-            document.getElementById('modals').style.display = 'block';
+            modal.style.display = 'block';
             document.getElementById('winner').innerText = `${['Black', 'White'][gameState.winner - 1]} wins!`;
-        } else {
-            document.getElementById('modals').style.display = 'none';
-        }
+        } else
+            modal.style.display = 'none';
 
+        beep();
         drawBoard();
         updateHTML();
     }
@@ -144,7 +158,21 @@ connection.onmessage = message => {
 
 updateHTML();
 
+// Submit moves on ENTER
 document.addEventListener('keyup', event => {
     if (event.key === 'Enter')
         submitMoves();
 });
+
+
+/**
+ * Used in the copy link to clipboard
+ * @param {string} text Text to copy
+ */
+// eslint-disable-next-line no-unused-vars
+function copyLinkToClipboard(text) {
+    let link = document.getElementsByClassName('game-link')[0];
+    link.classList.add('flash');
+    setTimeout(() => link.classList.remove('flash'), 500);
+    copyToClipboard(text);
+}

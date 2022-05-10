@@ -18,7 +18,7 @@ class Connect6Game extends Game {
 
         let end1 = move;
         let end2 = move;
-    
+
         // Positive dy
         for (let step = 1; step <= BOARD_SIZE; step++) {
             if (!board[my + step * y]) break;

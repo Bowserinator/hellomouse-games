@@ -13,6 +13,13 @@
     }
 }
 
+/* Better hr */
+hr {
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.14);
+    height: 0;
+    margin: 14px 0;
+}
 
 /* Tabs */
 // Hide everything except the first child (tabs)
@@ -32,4 +39,3 @@
 
 
 // TODO: modals
-// TODO: col by col -> like col-50-50

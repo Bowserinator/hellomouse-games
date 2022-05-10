@@ -11,9 +11,11 @@ module.exports = {
             experimentalObjectRestSpread: true
         }
     },
-    parser: 'babel-eslint',
     extends: ['eslint:recommended', '@hellomouse'],
     rules: {
+        'indent': ['error', 4],
+        'curly': ['error', 'multi'],
+        'no-multi-spaces': ['error', { ignoreEOLComments: true }],
         'padded-blocks': [
             'error',
             {
@@ -30,8 +32,8 @@ module.exports = {
         ],
         'padding-line-between-statements': [
             'error',
-            { blankLine: 'always', prev: '*', next: 'return' },
-            { blankLine: 'always', prev: ['const', 'let'], next: '*' },
+            { blankLine: 'never', prev: '*', next: 'return' },
+            { blankLine: 'any', prev: ['const', 'let'], next: '*' },
             { blankLine: 'any', prev: ['const', 'let'], next: ['const', 'let'] }
         ],
         'no-shadow': 'error',

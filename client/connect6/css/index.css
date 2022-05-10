@@ -113,6 +113,7 @@ button {
     outline: none;
     border: none;
     width: 100%;
+    border-radius: 6px;
     
     padding: 20px 40px;
     background-color: black;
@@ -123,7 +124,6 @@ button {
     font-weight: normal;
     font-size: 14pt;
     user-select: none;
-    font-variant: small-caps;
 
     box-shadow: 0px 0.7px 1.3px rgba(0, 0, 0, 0.057),
         0px 2.5px 4.2px rgba(0, 0, 0, 0.083),
@@ -254,6 +254,7 @@ button:disabled {
 .modal > h1 { margin: 0 0 10px 0; }
 
 #disabled-reason {
-    font-size: 12pt;
-    margin-bottom: 4px;
+    font-size: 13pt;
+    margin-bottom: 6px;
+    color: red;
 }

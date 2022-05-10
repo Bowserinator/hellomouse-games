@@ -7,9 +7,11 @@
     "scss": "sass --style=compressed --watch client/shared/scss:client/shared/css"
   },
   "devDependencies": {
+    "@babel/core": "^7.17.10",
+    "@babel/eslint-parser": "^7.17.0",
     "@hellomouse/eslint-config": "^1.1.5",
-    "babel-eslint": "^10.1.0",
-    "eslint": "^7.32.0",
+    "eslint": "^8.15.0",
+    "eslint-config-google": "^0.14.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^3.4.1",
     "sass": "^1.51.0"
@@ -23,7 +25,7 @@
       "eslint:recommended"
     ],
     "parserOptions": {
-      "parser": "babel-eslint"
+      "parser": "@babel/eslint-parser"
     },
     "rules": {}
   },

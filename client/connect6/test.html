@@ -17,7 +17,7 @@
     <title>Connect6</title>
 
     <link href="https://fonts.googleapis.com/css?family=Open+Sans|Raleway:300,400" rel="stylesheet">
-    <link rel="stylesheet" href="../shared/css/index.css">
+    <link rel="stylesheet" href="/shared/css/index.css">
     <link rel="stylesheet" href="css/index.css">
 </head>
 
@@ -38,7 +38,7 @@
                 </div>
                 <div>
 
-                    <div class="players missing" id="player0">
+                    <div class="players">
                         <div class="piece black"></div>
                         <div class="player white" id="turn">
                             IT IS WHITES TURN
@@ -61,42 +61,27 @@
                         <span class="player white" id="youare">WHITE PLAYER</span>
                     </div>
 
-                    <br><br>
-        
-                    
+                    <hr><br>
+                            
                     <div id="disabled-reason">⚠️ Game has not started</div>
                     <button id="submit" onclick="submitMoves()" disabled>
                         Submit Move [Enter]
                     </button>
                     
-                    <br><br>
+                    <br><br><br>
 
-                    <hr>
+
+                    <h2>Invite Link</h2>
+
+                    <p>Use the invite link below to invite a friend or spectator! Players are 
+                        assigned on a first-come first-serve basis.
+                    </p>
     
-                    <p class="game-link" onclick="copyToClipboard(document.getElementById('link').innerText)">
-                        <small>Copy Invite</small><br>
-                            <span id="link">Loading...</span></p>
-                
+                    <p class="game-link" onclick="copyLinkToClipboard(document.getElementById('link').innerText)">
+                        <small>Click to copy</small><br>
+                        <span id="link">Loading...</span>
+                    </p>
                     <br>
-
-                    <div class="js-tab-container">
-                        <div class="js-tabs">
-                            <div>Moves</div>
-                            <div>Chat</div>
-                        </div>
-                        <div>
-                            MOVES
-                        </div>
-                        <div>
-                            CHAT
-                        </div>
-                    </div>
-
-                    <br>
-        
-                    <br>
-        
-        
                 </div>
                 <!-- End game tab -->
                 <div>
@@ -143,7 +128,7 @@
         </div>
     </div>
 
-    <script src="../shared/js/index.js"></script>
+    <script src="/shared/js/index.js"></script>
     <script src="./js/game.js"></script>
     <script src="./js/client.js"></script>
 </body>
