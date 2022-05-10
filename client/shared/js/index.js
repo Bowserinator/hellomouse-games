@@ -4,7 +4,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 const createConnection = () => new WebSocket(
     window.location.host.includes('localhost') ?
         `ws://localhost:8124` :
-        `ws://${window.location.host || 'localhost:8124'}`);
+        `wss://${window.location.host || 'localhost:8124'}/ws`);
 
 
 // Beep
