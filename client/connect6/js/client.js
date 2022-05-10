@@ -73,6 +73,11 @@ function updateHTML() {
     // Update turn label
     setPlayer('turn', gameState.currentTurn);
     let turn = document.getElementById('turn');
+    let turnPiece = document.getElementById('turn-piece');
+
+    turnPiece.classList.remove('black');
+    turnPiece.classList.remove('white');
+    turnPiece.classList.add(gameState.currentTurn === 0 ? 'black' : 'white');
 
     if (gameState.currentTurn === gameState.turn) {
         let moves = `${gameState.moves.length} / ${gameState.maxMoves}`;
