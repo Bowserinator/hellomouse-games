@@ -146,7 +146,12 @@ connection.onmessage = message => {
         let modal = document.getElementById('modals');
         if (gameState.winner) {
             modal.style.display = 'block';
-            document.getElementById('winner').innerText = `${['Black', 'White'][gameState.winner - 1]} wins!`;
+
+            let winnerTitle = document.getElementById('winner');
+            if (gameState.winner < 3)
+                winnerTitle.innerText = `${['Black', 'White'][gameState.winner - 1]} wins!`;
+            else
+                winnerTitle.innerText = `Draw! No one wins :(`;
         } else
             modal.style.display = 'none';
 

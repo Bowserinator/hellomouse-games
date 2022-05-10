@@ -110,11 +110,16 @@ class Connect6Game extends Game {
 
         // Check for wins
         // Only need to check areas around the two moves
-        for (let move of message.moves) {
+        for (let move of message.moves)
             if (this.checkForWin(move)) {
                 this.winner = this.turn + 1;
                 return;
             }
+        // Draw, if entire board is filled and previous win check
+        // hasn't passed
+        if (!this.board.some(x => x.some(y => y))) {
+            this.winner = 3;
+            return;
         }
 
         // Post changes
