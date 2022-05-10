@@ -108,8 +108,7 @@ connection.onmessage = message => {
     console.log(message);
 
     if (message.type === 'ERROR') {
-        // TODO: error code
-        if (message.error.includes('GameID of') && message.error.includes('exist'))
+        if (message.code === 'NO_GAME')
             window.location.href = window.location.href.split('?')[0];
         alert(message.error);
     } else if (message.type === 'UUID') {

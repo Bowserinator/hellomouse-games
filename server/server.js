@@ -24,6 +24,7 @@ function broadcast(message) {
 
 /**
  * Sync game state for everyone
+ * @param id
  */
 function gameStateSync(id) {
     for (let player of games.games[id].players) {
@@ -37,7 +38,7 @@ function gameStateSync(id) {
 /**
  * Return an error status to a client
  * @param {Client} client Client obj
- * @param {Object} object
+ * @param {object} message
  */
 function send(client, message) {
     client.connection.sendUTF(JSON.stringify(message));
@@ -48,11 +49,13 @@ function send(client, message) {
  * Return an error status to a client
  * @param {Client} client Client obj
  * @param {string} error Error message
+ * @param {string} code Error code
  */
-function error(client, error) {
+function error(client, error, code = '') {
     client.connection.sendUTF(JSON.stringify({
         type: 'ERROR',
-        error: error
+        error: error,
+        code: code
     }));
 }
 
@@ -86,24 +89,27 @@ wsServer.on('request', request => {
     console.log((new Date()) + ' Connection accepted.');
 
     connection.on('message', message => {
-        if (message.type !== 'utf8') return  error(client, "Not UTF-8");
+        if (message.type !== 'utf8') return error(client, 'Not UTF-8', 'ENCODE');
         message = message.utf8Data;
 
-        console.log(message)
+        console.log(message);
 
-        try { message = JSON.parse(message); }
-        catch(e) { return error(client, "Invalid JSON"); }
+        try {
+            message = JSON.parse(message);
+        } catch (e) {
+            return error(client, 'Invalid JSON', 'JSON');
+        }
 
         // Join a game
         if (message.type === 'JOIN') {
             if (client.isInGame()) // Failed: already in a game
-                return error(client, "You're already in a game!");
+                return error(client, 'You\'re already in a game!', 'IN_GAME');
             if (!message.gameID) // Failed: missing gameID
-                return error(client, "Missing gameID");
+                return error(client, 'Missing gameID', 'NO_ID');
             if (!games.games[message.gameID]) // Failed: no game exists
-                return error(client, `GameID of ${message.gameID} doesn't exist`);
+                return error(client, `GameID of ${message.gameID} doesn't exist`, 'NO_GAME');
             if (!games.games[message.gameID].onJoin(client))
-                return error(client, 'Not allowed to join this game');
+                return error(client, 'Not allowed to join this game', 'NOT_ALLOWED');
 
             gameStateSync(client.gameID);
             return send(client, {
@@ -115,11 +121,12 @@ wsServer.on('request', request => {
         // Create a game
         else if (message.type === 'CREATE') {
             if (client.isInGame()) // Failed: already in a game
-                return error(client, "You're already in a game!");
+                return error(client, 'You\'re already in a game!', 'ALREADY_IN_GAME');
             if (!message.gameType) // Failed: missing game type
-                return error(client, "Missing game type");
+                return error(client, 'Missing game type', 'NO_TYPE');
             if (!games.createGame(message.gameType, client))
-                return error(client, `Could not create game of type '${message.gameType}'`);
+                return error(client, `Could not create game of type '${message.gameType}'`,
+                    'FAILED_CREATE');
 
             // Send user UUID
             games.games[client.gameID].onJoin(client);
@@ -133,7 +140,7 @@ wsServer.on('request', request => {
 
         // All of the remaining parses require the user to be in a game:
         if (!client.isInGame()) // User is not in a game
-            return error(client, "You're not in a game!");
+            return error(client, 'You\'re not in a game!', 'NOT_IN_GAME');
 
         let game = games.games[client.gameID];
 
@@ -141,7 +148,7 @@ wsServer.on('request', request => {
         if (message.type === 'CHAT') {
             // Invalid chat message
             if (!message.message)
-                return error(client, "Invalid chat message");
+                return error(client, 'Invalid chat message', 'BAD_CHAT');
             // Strip html content, broadcast
             game.broadcast({
                 type: 'CHAT',
@@ -151,12 +158,12 @@ wsServer.on('request', request => {
                     .slice(0, 1000) // TODO: add ...
             });
         }
-        
+
         // Username change
         else if (message.type === 'USERNAME') {
             // Missing or invalid username
             if (!message.username || !config.validateUsername(message.username))
-                return error(client, "Invalid username");
+                return error(client, 'Invalid username', 'BAD_USERNAME');
             client.username = message.username;
 
             // TODO: broadcast
@@ -169,8 +176,11 @@ wsServer.on('request', request => {
 
         // Move
         else if (message.type === 'MOVE') {
-            try{ game.onMove(client, message); }
-            catch(e) { console.log(e) }
+            try {
+                game.onMove(client, message);
+            } catch (e) {
+                console.log(e);
+            }
             gameStateSync(game.uuid);
         }
     });

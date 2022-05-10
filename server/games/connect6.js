@@ -61,7 +61,7 @@ class Connect6Game extends Game {
 
     globalStateSync(player) {
         return {
-            players: this.players.map(x => {
+            players: this.players.slice(0, 2).map(x => {
                 if (!x) return null;
                 return {
                     username: x.username,
