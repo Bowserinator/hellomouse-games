@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+/** @type {import("eslint").Linter.Config} */
 module.exports = {
     env: {
         es6: true,
@@ -5,17 +7,18 @@ module.exports = {
         browser: true
     },
     parserOptions: {
-        ecmaVersion: 8,
+        ecmaVersion: 'latest',
         sourceType: 'module',
         ecmaFeatures: {
             experimentalObjectRestSpread: true
-        }
+        },
+        project: './tsconfig.json'
     },
-    extends: ['eslint:recommended', '@hellomouse'],
+    extends: ['@hellomouse/typescript'],
+    ignorePatterns: ['build/**'],
     rules: {
-        'indent': ['error', 4],
+        '@typescript-eslint/indent': ['error', 4, { SwitchCase: 2 }],
         'curly': ['error', 'multi'],
-        'no-multi-spaces': ['error', { ignoreEOLComments: true }],
         'padded-blocks': [
             'error',
             {
@@ -30,16 +33,36 @@ module.exports = {
                 nonwords: false
             }
         ],
-        'padding-line-between-statements': [
+        'padding-line-between-statements': 'off',
+        '@typescript-eslint/padding-line-between-statements': [
             'error',
-            { blankLine: 'never', prev: '*', next: 'return' },
+            { blankLine: 'any', prev: '*', next: 'return' },
             { blankLine: 'any', prev: ['const', 'let'], next: '*' },
-            { blankLine: 'any', prev: ['const', 'let'], next: ['const', 'let'] }
+            { blankLine: 'any', prev: ['const', 'let'], next: ['const', 'let'] },
+            { blankLine: 'any', prev: '*', next: ['interface', 'type'] }
         ],
-        'no-shadow': 'error',
+        'no-shadow': 'off',
+        '@typescript-eslint/no-shadow': 'error',
         'no-useless-return': 'error',
         'block-scoped-var': 'error',
         'no-else-return': 'error',
-        'no-undef-init': 'error'
+        'no-undef-init': 'error',
+        'no-multi-spaces': ['error', { ignoreEOLComments: true }],
+        "@typescript-eslint/no-var-requires": "off",
+        '@typescript-eslint/naming-convention': [
+            'error',
+            { selector: 'default', format: ['camelCase'], leadingUnderscore: 'allow' },
+            { selector: 'variable', format: ['camelCase', 'UPPER_CASE', 'PascalCase'], leadingUnderscore: 'allow' },
+            { selector: 'parameter', format: ['camelCase'], leadingUnderscore: 'allow' },
+            { selector: 'memberLike', format: ['camelCase'], leadingUnderscore: 'allow' },
+            { selector: 'typeLike', format: ['PascalCase'] },
+            { selector: 'enum', format: ['PascalCase', 'UPPER_CASE'] },
+            { selector: 'enumMember', format: ['PascalCase', 'UPPER_CASE'] },
+            { selector: 'variable', modifiers: ['const'], format: ['camelCase', 'UPPER_CASE'] },
+            { selector: 'typeProperty', format: ['PascalCase', 'camelCase'], leadingUnderscore: 'allow' },
+            { selector: 'typeAlias', format: ['PascalCase', 'UPPER_CASE'] },
+            { selector: 'objectLiteralProperty', format: ['camelCase', 'UPPER_CASE'] }
+        ],
+        '@typescript-eslint/array-type': ['error', { default: 'generic' }]
     }
 };

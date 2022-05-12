@@ -1,13 +1,35 @@
-const Game = require('../game.js');
+import Game from '../game.js';
+import Client from '../client.js';
 
 const BOARD_SIZE = 19;
 
+interface Connect6Message {
+    restart?: boolean;
+    moves?: Array<Array<number>>;
+}
+
 class Connect6Game extends Game {
+    turn: number;
+    win: number;
+    round: number;
+    winner: number;
+    winningLine: Array<Array<number>>;
+    board: Array<Array<number>>;
+    lastMoves: Array<Array<number>>;
+
     constructor() {
+        // TODO: enums??
         super();
+        this.turn = 0;         // 0 = player 1, 1 = player 2
+        this.win = 0;          // 1 = player 1, 2 = player 2
+        this.round = 0;        // Current turn, increments
+        this.winner = 0;       // 0 = no winner, 1 = black, 2 = white, 3 = draw
+        this.winningLine = []; // [[x, y], [x, y]]
+        this.lastMoves = [];   // [[x, y], ...]
+        this.board = [];       // 2D array of 0, 1 or 2 (empty, black or white)
     }
 
-    checkForWinDir(move, x, y) {
+    checkForWinDir(move: Array<number>, x: number, y: number) {
         if (y < 0) {
             y *= -1;
             x *= -1;
@@ -38,14 +60,14 @@ class Connect6Game extends Game {
         return c >= 6;
     }
 
-    checkForWin(move) {
+    checkForWin(move: Array<number>) {
         return this.checkForWinDir(move, 1, 1) || this.checkForWinDir(move, 1, -1) ||
             this.checkForWinDir(move, 0, 1) || this.checkForWinDir(move, 1, 0);
     }
 
     onRoomCreate() {
-        this.turn = 0; // 0 = player 1, 1 = player 2
-        this.win = 0; // 1 = player 1, 2 = player 2
+        this.turn = 0;
+        this.win = 0;
         this.round = 0;
         this.winner = 0;
         this.winningLine = [];
@@ -59,7 +81,7 @@ class Connect6Game extends Game {
         }
     }
 
-    globalStateSync(player) {
+    globalStateSync(player: Client) {
         return {
             players: this.players.slice(0, 2).map(x => {
                 if (!x) return null;
@@ -78,7 +100,7 @@ class Connect6Game extends Game {
         };
     }
 
-    onMove(client, message) {
+    onMove(client: Client, message: Connect6Message) {
         // Message format:
         // { type: 'MOVE', moves: [[x, y], [x, y]] }
 

@@ -1,4 +1,10 @@
-class Game {
+import Client from './client.js';
+
+export default class Game {
+    uuid: string;
+    players: Array<Client | null>;
+    playerCount: number;
+
     constructor() {
         this.uuid = '';
         this.players = [];
@@ -16,7 +22,7 @@ class Game {
      * @param {Client} player
      * @return {object} To send to all players
      */
-    globalStateSync(player) {
+    globalStateSync(player: Client): object {
         throw new Error('Not implemented');
     }
 
@@ -25,7 +31,7 @@ class Game {
      * @param {Client} client
      * @return {boolean} Accept client?
      */
-    onJoin(client) {
+    onJoin(client: Client): boolean {
         // Fill null spots first (in case disconnect)
         client.gameID = this.uuid;
         let found = false;
@@ -52,41 +58,40 @@ class Game {
      * @param {Client} client
      * @param {Object} message
      */
-    onMove(client, message) {
-       throw new Error('Not implemented'); 
+    onMove(client: Client, message: object) {
+        throw new Error('Not implemented');
     }
 
     /**
      * Called when a client disconnects
      * @param {Client} client
      */
-    onDisconnect(client) {
-        for (let i = 0; i < this.players.length; i++) {
+    onDisconnect(client: Client) {
+        for (let i = 0; i < this.players.length; i++)
             if (this.players[i] === client) {
                 this.players[i] = null;
                 this.playerCount--;
                 return;
             }
-        }
     }
 
     /**
      * Are all players ready?
      * @return {boolean}
      */
-    everyoneReady() {
-        return this.players.every(x => x.ready);
+    everyoneReady(): boolean {
+        return this.players.every(x => x !== null && x.ready);
     }
 
     /**
      * Broadcast a message to all players
+     * (that are in the game)
      * @param {object} message
      */
-    broadcast(message) {
-        message = JSON.stringify(message);
-        for (let client of this.players.filter(x => x))
-            client.connection.sendUTF(message);
+    broadcast(message: object) {
+        let msg = JSON.stringify(message);
+        for (let client of this.players)
+            if (client !== null)
+                client.connection.sendUTF(msg);
     }
 }
-
-module.exports = Game;

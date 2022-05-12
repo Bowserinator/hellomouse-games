@@ -3,19 +3,23 @@ const glob = require('glob');
 const path = require('path');
 const crypto = require('crypto');
 
-const GAMES = {};
-const GAME_TYPES = [];
+import Client from './client.js';
+import Game from './game.js';
 
-glob.sync('./server/games/**/*.js').forEach(file => {
+const GAMES: any = {};
+const GAME_TYPES: Array<string> = [];
+
+glob.sync('./server/games/**/*.js').forEach((file:string) => {
     console.log(file);
-    let type = file.split('/');
+    let typeSplit = file.split('/');
+    let type = typeSplit[typeSplit.length - 1].split('.')[0];
 
-    type = type[type.length - 1].split('.')[0];
     GAMES[type] = require(path.resolve(file));
     GAME_TYPES.push(type);
 });
 
-let games = {}; // UUID: game
+let games: { [id: string]: Game };
+games = {}; // UUID: game
 
 /**
  * Create a game
@@ -23,11 +27,11 @@ let games = {}; // UUID: game
  * @param {Client} host
  * @return {boolean} Allowed to create
  */
-function createGame(type, host) {
-    if (!GAME_TYPES.includes(type)) {
+function createGame(type: string, host: Client): boolean {
+    if (!GAME_TYPES.includes(type))
         return false;
-    }
-    let game = new GAMES[type]();
+
+    let game: Game = new GAMES[type]();
 
     game.uuid = crypto.randomBytes(16).toString('hex');
     game.onRoomCreate();
@@ -41,12 +45,13 @@ function createGame(type, host) {
  * Remove a game from active games list
  * @param {string} uuid of game to remove
  */
-function removeGame(uuid) {
+function removeGame(uuid: string) {
     if (!games[uuid]) return;
-    for (let player of games[uuid].players.filter(x => x)) {
-        player.gameID = null;
-    }
-    games[uuid] = undefined;
+    for (let player of games[uuid].players)
+        if (player !== null)
+            player.gameID = '';
+
+    delete games[uuid];
 }
 
 console.log(GAME_TYPES);

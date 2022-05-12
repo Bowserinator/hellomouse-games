@@ -1,5 +1,5 @@
 const config = require('./config.js');
-const Client = require('./client.js');
+import Client from './client.js';
 const games = require('./games.js');
 
 const webSocketServer = require('websocket').server;
@@ -12,21 +12,10 @@ const fs = require('fs');
 // --------------------------
 
 /**
- * Broadcast a message to everyone (literally everyone)
- * Not just in-game players!! For GLOBAL BROADCASTS ONLY
- * @param {object} message
- */
-function broadcast(message) {
-    message = JSON.stringify(message);
-    for (let client of clients)
-        client.connection.sendUTF(message);
-}
-
-/**
  * Sync game state for everyone
  * @param id
  */
-function gameStateSync(id) {
+function gameStateSync(id: string) {
     for (let player of games.games[id].players) {
         if (!player) continue;
         let msg = games.games[id].globalStateSync(player);
@@ -40,7 +29,7 @@ function gameStateSync(id) {
  * @param {Client} client Client obj
  * @param {object} message
  */
-function send(client, message) {
+function send(client: Client, message: object) {
     client.connection.sendUTF(JSON.stringify(message));
 }
 
@@ -51,10 +40,10 @@ function send(client, message) {
  * @param {string} error Error message
  * @param {string} code Error code
  */
-function error(client, error, code = '') {
+function error(client: Client, err: string, code = '') {
     client.connection.sendUTF(JSON.stringify({
         type: 'ERROR',
-        error: error,
+        error: err,
         code: code
     }));
 }
@@ -65,19 +54,21 @@ function error(client, error, code = '') {
 let clients = new Set();
 
 // HTTP Server for websocket
-const server = config.https ?
-    https.createServer({
+const server = config.https
+    ? https.createServer({
         cert: fs.readFileSync('./certs/fullchain.pem'),
         key: fs.readFileSync('./certs/privkey.pem')
-    }) :
-    http.createServer((request, response) => {});
+    })
+    : http.createServer((request: any, response: any) => {});
+
+// eslint-disable-next-line new-cap
 const wsServer = new webSocketServer({ httpServer: server, path: '/ws' });
 
 server.listen(config.port, () => {
     console.log((new Date()) + ' Server is listening on port ' + config.port);
 });
 
-wsServer.on('request', request => {
+wsServer.on('request', (request: any) => {
     // TODO remove this / better logging
     console.log((new Date()) + ' Connection from origin ' + request.origin + '.');
 
@@ -88,14 +79,27 @@ wsServer.on('request', request => {
 
     console.log((new Date()) + ' Connection accepted.');
 
-    connection.on('message', message => {
-        if (message.type !== 'utf8') return error(client, 'Not UTF-8', 'ENCODE');
-        message = message.utf8Data;
+    interface Message {
+        utf8Data: string;
+        type: string;
+    }
+    interface MessageData {
+        type: string;
+        gameID?: string;
+        gameType?: string;
+        message?: string;
+        username?: string;
+    }
 
-        console.log(message);
+    connection.on('message', (msg: Message) => {
+        if (msg.type !== 'utf8') return error(client, 'Not UTF-8', 'ENCODE');
+        let messageData: string = msg.utf8Data;
+
+        console.log(messageData);
+        let message: MessageData;
 
         try {
-            message = JSON.parse(message);
+            message = JSON.parse(messageData);
         } catch (e) {
             return error(client, 'Invalid JSON', 'JSON');
         }
@@ -116,10 +120,7 @@ wsServer.on('request', request => {
                 type: 'UUID',
                 uuid: client.gameID
             });
-        }
-
-        // Create a game
-        else if (message.type === 'CREATE') {
+        } else if (message.type === 'CREATE') { // Create a game
             if (client.isInGame()) // Failed: already in a game
                 return error(client, 'You\'re already in a game!', 'ALREADY_IN_GAME');
             if (!message.gameType) // Failed: missing game type
@@ -157,25 +158,17 @@ wsServer.on('request', request => {
                     .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
                     .slice(0, 1000) // TODO: add ...
             });
-        }
-
-        // Username change
-        else if (message.type === 'USERNAME') {
+        } else if (message.type === 'USERNAME') { // Username change
             // Missing or invalid username
             if (!message.username || !config.validateUsername(message.username))
                 return error(client, 'Invalid username', 'BAD_USERNAME');
             client.username = message.username;
 
             // TODO: broadcast
-        }
-
-        // Ready up
-        else if (message.type === 'READY')
+        } else if (message.type === 'READY') // Ready up
             client.ready = !client.ready;
             // TODO: broadcast ready state
-
-        // Move
-        else if (message.type === 'MOVE') {
+        else if (message.type === 'MOVE') { // Move
             try {
                 game.onMove(client, message);
             } catch (e) {
@@ -186,13 +179,13 @@ wsServer.on('request', request => {
     });
 
     // On disconnect
-    connection.on('close', connection => {
+    connection.on('close', (conn: any) => {
         let game = games.games[client.gameID];
         if (game) game.onDisconnect(client);
         clients.delete(client);
 
         // No one in game, remove it
-        if (game && !game.players.filter(x => x).length)
+        if (game && !game.players.filter((x: Array<Client>) => x).length)
             games.removeGame(game.uuid);
         else if (game)
             gameStateSync(game.uuid);
