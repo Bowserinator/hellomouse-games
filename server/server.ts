@@ -1,7 +1,7 @@
-const config = require('./config.js');
+import config from './config.js';
 import Client from './client.js';
-const games = require('./games.js');
 
+const games = require('./games.js');
 const webSocketServer = require('websocket').server;
 const http = require('http');
 const https = require('https');
