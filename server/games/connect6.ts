@@ -3,6 +3,13 @@ import Client from '../client.js';
 
 const BOARD_SIZE = 19;
 
+enum Turn {
+    BLACK, WHITE
+}
+enum Winner {
+    NONE, BLACK, WHITE, DRAW
+}
+
 interface Connect6Message {
     restart?: boolean;
     moves?: Array<Array<number>>;
@@ -10,25 +17,31 @@ interface Connect6Message {
 
 class Connect6Game extends Game {
     turn: number;
-    win: number;
+    winner: Winner;
     round: number;
-    winner: number;
     winningLine: Array<Array<number>>;
     board: Array<Array<number>>;
     lastMoves: Array<Array<number>>;
 
     constructor() {
-        // TODO: enums??
         super();
-        this.turn = 0;         // 0 = player 1, 1 = player 2
-        this.win = 0;          // 1 = player 1, 2 = player 2
-        this.round = 0;        // Current turn, increments
-        this.winner = 0;       // 0 = no winner, 1 = black, 2 = white, 3 = draw
-        this.winningLine = []; // [[x, y], [x, y]]
-        this.lastMoves = [];   // [[x, y], ...]
-        this.board = [];       // 2D array of 0, 1 or 2 (empty, black or white)
+        this.turn = Turn.BLACK;    // 0 = player 1, 1 = player 2
+        this.winner = Winner.NONE; // 0 = no winner, 1 = black, 2 = white, 3 = draw
+        this.round = 0;            // Current turn, increments
+        this.winningLine = [];     // [[x, y], [x, y]]
+        this.lastMoves = [];       // [[x, y], ...]
+        this.board = [];           // 2D array of 0, 1 or 2 (empty, black or white)
     }
 
+    /**
+     * Check for wins along a given direction, checks along
+     * vector <x,y> starting at move. The vector extends in both
+     * directions (so -<x, y> also checked)
+     * @param {Array<number>} move Where a move was made
+     * @param {number} x x component of vector to check
+     * @param {number} y y component of vector to check
+     * @return {boolean} Is there a win/
+     */
     checkForWinDir(move: Array<number>, x: number, y: number) {
         if (y < 0) {
             y *= -1;
@@ -66,10 +79,9 @@ class Connect6Game extends Game {
     }
 
     onRoomCreate() {
-        this.turn = 0;
-        this.win = 0;
+        this.turn = Turn.BLACK;
+        this.winner = Winner.NONE;
         this.round = 0;
-        this.winner = 0;
         this.winningLine = [];
         this.lastMoves = [];
 
@@ -144,7 +156,7 @@ class Connect6Game extends Game {
         // Draw, if entire board is filled and previous win check
         // hasn't passed
         if (!this.board.some(x => x.some(y => y))) {
-            this.winner = 3;
+            this.winner = Winner.DRAW;
             return;
         }
 
