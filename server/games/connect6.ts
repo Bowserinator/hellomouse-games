@@ -95,6 +95,7 @@ class Connect6Game extends Game {
 
     globalStateSync(player: Client) {
         return {
+            type: 'SYNC',
             players: this.players.slice(0, 2).map(x => {
                 if (!x) return null;
                 return {
@@ -166,4 +167,4 @@ class Connect6Game extends Game {
     }
 }
 
-module.exports = Connect6Game;
+export default Connect6Game;

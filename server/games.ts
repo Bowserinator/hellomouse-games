@@ -1,7 +1,8 @@
 // Load all games
-const glob = require('glob');
-const path = require('path');
-const crypto = require('crypto');
+import glob from 'glob';
+import path from 'path';
+import crypto from 'crypto';
+import signale from 'signale';
 
 import Client from './client.js';
 import Game from './game.js';
@@ -9,17 +10,22 @@ import Game from './game.js';
 const GAMES: any = {};
 const GAME_TYPES: Array<string> = [];
 
-glob.sync('./server/games/**/*.js').forEach((file:string) => {
-    console.log(file);
+glob.sync('./server/games/**/*.js').forEach(async (file:string) => {
     let typeSplit = file.split('/');
     let type = typeSplit[typeSplit.length - 1].split('.')[0];
 
-    GAMES[type] = require(path.resolve(file));
+    if (type.startsWith('_')) // Ignore files starting with _
+        return;
+
+    signale.info(`Loading game '${file}'`);
+
+    GAMES[type] = (await import(path.resolve(file))).default;
     GAME_TYPES.push(type);
 });
 
 let games: { [id: string]: Game };
 games = {}; // UUID: game
+
 
 /**
  * Create a game
@@ -54,10 +60,7 @@ function removeGame(uuid: string) {
     delete games[uuid];
 }
 
-console.log(GAME_TYPES);
+signale.info('All loaded game types:');
+GAME_TYPES.forEach(signale.info);
 
-module.exports = {
-    createGame,
-    removeGame,
-    games
-};
+export { createGame, removeGame, games };

@@ -1,11 +1,12 @@
 import config from './config.js';
 import Client from './client.js';
+import { createGame, removeGame, games } from './games.js';
 
-const games = require('./games.js');
-const webSocketServer = require('websocket').server;
-const http = require('http');
-const https = require('https');
-const fs = require('fs');
+import { server as webSocketServer } from 'websocket';
+import http from 'http';
+import https from 'https';
+import fs from 'fs';
+import signale from 'signale';
 
 
 // Functions
@@ -16,9 +17,9 @@ const fs = require('fs');
  * @param id
  */
 function gameStateSync(id: string) {
-    for (let player of games.games[id].players) {
+    for (let player of games[id].players) {
         if (!player) continue;
-        let msg = games.games[id].globalStateSync(player);
+        let msg = games[id].globalStateSync(player);
         msg.type = 'SYNC';
         send(player, msg);
     }
@@ -62,40 +63,25 @@ const server = config.https
     : http.createServer((request: any, response: any) => {});
 
 // eslint-disable-next-line new-cap
-const wsServer = new webSocketServer({ httpServer: server, path: '/ws' });
+const wsServer = new webSocketServer({ httpServer: server });
 
 server.listen(config.port, () => {
-    console.log((new Date()) + ' Server is listening on port ' + config.port);
+    signale.start(`${new Date()} Server is listening on ${config.port}`);
 });
 
 wsServer.on('request', (request: any) => {
-    // TODO remove this / better logging
-    console.log((new Date()) + ' Connection from origin ' + request.origin + '.');
+    signale.debug(`${new Date()} Connection from ${request.origin}`);
 
     const connection = request.accept(null, request.origin);
     const client = new Client(connection);
     clients.add(client);
 
-
-    console.log((new Date()) + ' Connection accepted.');
-
-    interface Message {
-        utf8Data: string;
-        type: string;
-    }
-    interface MessageData {
-        type: string;
-        gameID?: string;
-        gameType?: string;
-        message?: string;
-        username?: string;
-    }
-
     connection.on('message', (msg: Message) => {
         if (msg.type !== 'utf8') return error(client, 'Not UTF-8', 'ENCODE');
         let messageData: string = msg.utf8Data;
 
-        console.log(messageData);
+        signale.debug(`> ${messageData}`);
+
         let message: MessageData;
 
         try {
@@ -110,9 +96,9 @@ wsServer.on('request', (request: any) => {
                 return error(client, 'You\'re already in a game!', 'IN_GAME');
             if (!message.gameID) // Failed: missing gameID
                 return error(client, 'Missing gameID', 'NO_ID');
-            if (!games.games[message.gameID]) // Failed: no game exists
+            if (!games[message.gameID]) // Failed: no game exists
                 return error(client, `GameID of ${message.gameID} doesn't exist`, 'NO_GAME');
-            if (!games.games[message.gameID].onJoin(client))
+            if (!games[message.gameID].onJoin(client))
                 return error(client, 'Not allowed to join this game', 'NOT_ALLOWED');
 
             gameStateSync(client.gameID);
@@ -125,12 +111,12 @@ wsServer.on('request', (request: any) => {
                 return error(client, 'You\'re already in a game!', 'ALREADY_IN_GAME');
             if (!message.gameType) // Failed: missing game type
                 return error(client, 'Missing game type', 'NO_TYPE');
-            if (!games.createGame(message.gameType, client))
+            if (!createGame(message.gameType, client))
                 return error(client, `Could not create game of type '${message.gameType}'`,
                     'FAILED_CREATE');
 
             // Send user UUID
-            games.games[client.gameID].onJoin(client);
+            games[client.gameID].onJoin(client);
             send(client, {
                 type: 'UUID',
                 uuid: client.gameID
@@ -143,7 +129,7 @@ wsServer.on('request', (request: any) => {
         if (!client.isInGame()) // User is not in a game
             return error(client, 'You\'re not in a game!', 'NOT_IN_GAME');
 
-        let game = games.games[client.gameID];
+        let game = games[client.gameID];
 
         // Chat message
         if (message.type === 'CHAT') {
@@ -172,7 +158,7 @@ wsServer.on('request', (request: any) => {
             try {
                 game.onMove(client, message);
             } catch (e) {
-                console.log(e);
+                signale.error(e);
             }
             gameStateSync(game.uuid);
         }
@@ -180,14 +166,16 @@ wsServer.on('request', (request: any) => {
 
     // On disconnect
     connection.on('close', (conn: any) => {
-        let game = games.games[client.gameID];
+        let game = games[client.gameID];
         if (game) game.onDisconnect(client);
         clients.delete(client);
 
         // No one in game, remove it
-        if (game && !game.players.filter((x: Array<Client>) => x).length)
-            games.removeGame(game.uuid);
+        if (game && !game.players.some((x: Client | null) => x))
+            removeGame(game.uuid);
         else if (game)
             gameStateSync(game.uuid);
     });
 });
+
+export {};
