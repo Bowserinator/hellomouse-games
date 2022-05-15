@@ -17,10 +17,10 @@ export class Bullet {
         this.velocity = this.collider.bounce(this.velocity, 1)[0];
 
         // TODO: get nearest tank
-        let allTanks = [gameState.playerTank, ...gameState.enemyTanks];
-        let closest = allTanks[0];
+        let closest = gameState.tanks[0];
+        if (!closest) return;
         let distance = 9999999;
-        for (let tank of allTanks) {
+        for (let tank of gameState.tanks) {
             let dis = tank.collider.position.manhattanDist(this.collider.position);
             if (dis < distance) {
                 distance = dis;

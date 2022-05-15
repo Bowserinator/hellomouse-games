@@ -160,7 +160,8 @@ wsServer.on('request', (request: any) => {
             } catch (e) {
                 signale.error(e);
             }
-            gameStateSync(game.uuid);
+            if (game.syncAfterMove)
+                gameStateSync(game.uuid);
         }
     });
 

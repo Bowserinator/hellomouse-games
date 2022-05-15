@@ -5,16 +5,45 @@ import Tank from './tank.js';
 
 
 export default class GameState {
-    enemyTanks: Array<Tank>;
-    playerTank: Tank;
+    tanks: Array<Tank>;
+    tankIndex: number;
     walls: Array<Wall>;
     bullets: Array<Bullet>;
+    lastUpdate: number;
 
     constructor() {
-        this.enemyTanks = [];
-        this.playerTank = new Tank(new Vector(20, 20), 1);
+        this.tanks = [];
+        this.tankIndex = 0;
         this.walls = [];
         this.bullets = [];
+
+        this.lastUpdate = Date.now(); // Time of last update as UNIX timestamp
+        this.addedBullets = new Set();
+        this.addedTanks = []; // Requires order
+        this.changedTanks = new Set();
+    }
+
+    addTank(tank: Tank) {
+        let id = this.tanks.push(tank);
+        this.addedTanks.push(id - 1);
+        return id;
+    }
+
+    addBullet(bullet: Bullet) {
+        this.bullets.push(bullet);
+        this.addedBullets.add(bullet);
+    }
+
+    clearDeltas() {
+        this.addedBullets.clear();
+        this.changedTanks.clear();
+        this.addedTanks = [];
+    }
+
+    update() {
+        let timestep = (Date.now() - this.lastUpdate) / 1000;
+        this.tanks.forEach(tank => tank.update(this, timestep));
+        this.lastUpdate = Date.now();
     }
 
     syncFromMessage(message) {

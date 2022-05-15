@@ -4,11 +4,14 @@ export default class Game {
     uuid: string;
     players: Array<Client | null>;
     playerCount: number;
+    syncAfterMove: boolean;
 
     constructor() {
         this.uuid = '';
         this.players = [];
         this.playerCount = 0;
+
+        this.syncAfterMove = true;
     }
 
     /** Called when game is created */

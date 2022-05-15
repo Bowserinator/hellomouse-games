@@ -74,4 +74,17 @@ export default class Vector2D {
     manhattanDist(otherVec: Vector2D) {
         return Math.abs(this.x - otherVec.x) + Math.abs(this.y - otherVec.y);
     }
+
+    /**
+     * Create a vector from an angle and magnitude
+     * @param {number} angle
+     * @param {number} magnitude
+     * @return {Vector2D}
+     */
+    static vecFromRotation(angle: number, magnitude = 1) {
+        return new Vector2D(
+            Math.cos(angle) * magnitude,
+            Math.sin(angle) * magnitude
+        );
+    }
 }

@@ -17,7 +17,7 @@ glob.sync('./server/games/**/*.js').forEach(async (file:string) => {
     if (type.startsWith('_')) // Ignore files starting with _
         return;
 
-    signale.info(`Loading game '${file}'`);
+    signale.info(`Loading game '${file}' (${type})`);
 
     GAMES[type] = (await import(path.resolve(file))).default;
     GAME_TYPES.push(type);
@@ -59,8 +59,5 @@ function removeGame(uuid: string) {
 
     delete games[uuid];
 }
-
-signale.info('All loaded game types:');
-GAME_TYPES.forEach(signale.info);
 
 export { createGame, removeGame, games };

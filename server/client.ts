@@ -1,8 +1,11 @@
+import crypto from 'crypto';
+
 export default class Client {
     connection: any; // WebSocketConnection; // No idea where this is exported
     gameID: string;
     ready: boolean;
     username: string;
+    id: string;
 
     /**
      * A client connection
@@ -13,6 +16,7 @@ export default class Client {
         this.gameID = ''; // ID of game its in
         this.ready = false;
         this.username = 'User' + Math.round(10000 * Math.random());
+        this.id = crypto.randomBytes(8).toString('hex');
     }
 
     /**
