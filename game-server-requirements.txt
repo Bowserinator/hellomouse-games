@@ -13,7 +13,6 @@ message types:
 
 
 Next TODO;
-- logger
 - username changes
 - readying (future games)
 - README

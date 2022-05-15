@@ -15,7 +15,8 @@
         "isolatedModules": false,
         "sourceMap": true,
         "lib": [
-            "esnext"
+            "esnext",
+            "dom"
         ],
         "outDir": "build",
         "composite": true
@@ -26,6 +27,7 @@
     ],
     "include": [
         "**/*.ts",
+        "**/*.cjs",
         ".eslintrc.cjs",
         "config.cjs",
         "src/strings.json",
