@@ -1,4 +1,5 @@
 import Vector from './vector2d.js';
+import GameState from './gamestate.js';
 
 /**
  * Rectangular collision helper
@@ -66,11 +67,12 @@ export default class Collider {
      * Perform a bounce of the collider given an initial velocity
      * and timestep. Updates the collider's position in place
      *
+     * @param {GameState} gameState
      * @param {Vector} velocity Initial v
      * @param {number} time timestep
      * @return {[Vector, number]} [post-velocity, bounce count]
      */
-    bounce(velocity: Vector, time: number) {
+    bounce(gameState: GameState, velocity: Vector, time: number) {
         const STEP_SIZE = 2;
         let steps = time * velocity.magnitude();
         let v = velocity.normalize();

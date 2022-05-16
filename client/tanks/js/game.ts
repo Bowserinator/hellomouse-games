@@ -1,7 +1,7 @@
 import { Bullet, NormalBullet } from './tanks/bullets.js';
 import Vector from './tanks/vector2d.js';
 import Wall from './tanks/wall.js';
-import Tank from './tanks/Tank.js';
+import Tank from './tanks/tank.js';
 import Collider from './tanks/collision.js';
 import generateMap from './tanks/map-gen.js';
 import GameState from './tanks/gamestate.js';
@@ -51,8 +51,6 @@ function drawBoard() {
 
     gameState.update();
 
-    gameState.bullets.forEach(bullet => bullet.update());
-
     gameState.tanks.forEach(tank => tank.draw(ctx));
     gameState.walls.forEach(wall => wall.draw(ctx));
     gameState.bullets.forEach(bullet => bullet.draw(ctx));
@@ -96,24 +94,7 @@ connection.onmessage = message => {
         history.pushState({}, '', url);
     }
 
-    if (message.type === TankSync.TANK_POS) {
-        if (!gameState.tanks[message.id]) return; // TODO hack
-        gameState.tanks[message.id].movement = message.movement;
-        gameState.tanks[message.id].position = new Vector(...message.position);
-        gameState.tanks[message.id].rotation = message.rotation;
-    }
-    else if (message.type === TankSync.UPDATE_ALL_TANKS) { // TODO batch
-        gameState.tanks = [];
-        for (let i = 0; i < message.positions.length; i++) {
-            gameState.addTank(new Tank(new Vector(...message.positions[i]), message.rotations[i]));
-        }
-    }
-    else if (message.type === TankSync.ADD_BULLET) {
-        // TODO check type
-        let bullet = new NormalBullet(new Vector(...message.position), new Vector(...message.velocity));
-        gameState.addBullet(bullet);
-    }
-
+    gameState.syncFromMessage(message);
 };
 
 

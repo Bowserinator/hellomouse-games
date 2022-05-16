@@ -1,23 +1,40 @@
 import { Powerup, Direction } from '../types.js';
 import Collider from './collision.js';
 import Vector from './vector2d.js';
+import GameState from './gamestate.js';
 import { NormalBullet } from './bullets.js';
 
 
 export default class Tank {
-    constructor(pos, rotation) {
-        this.position = pos;
+    position: Vector;
+    velocity: Vector;
+    rotation: number;
+    ammo: number;
+    lastFired: number;
+    powerup: Powerup;
+    collider: Collider;
+
+    movement: Array<Direction>;
+    isFiring: boolean;
+
+    speed: number;
+
+    constructor(pos: Vector, rotation: number) {
+        this.position = pos.copy(); // Center coordinate, not top-left corner. Collider has offset position
+        this.velocity = new Vector(0, 0);
         this.rotation = rotation;
         this.ammo = 2;
         this.lastFired = 0; // UNIX timestamp last fired a bullet
         this.powerup = Powerup.NONE;
 
         // Loaded from client intents
-        this.movement = [Direction.NONE, Direction.NONE]; // horz, vert
+        this.movement = [Direction.NONE, Direction.NONE]; // horz, vert, none = not moving in that dir
         this.isFiring = false;
 
         // Other
         this.speed = 300;
+
+        this.createCollider();
     }
 
     createCollider() {
@@ -27,19 +44,19 @@ export default class Tank {
         this.collider = new Collider(new Vector(x, y), new Vector(50, 50)); // TODO
     }
 
-    draw(ctx) {
-        // drawCenteredSquare(this.position.x, this.position.y, 50, 'red');
-
+    draw(ctx: CanvasRenderingContext2D) {
         this.collider.draw(ctx);
     }
 
-    update(gameState, timestep) {
-        // TODO neatify this part
-        let xDir = this.movement[0] === Direction.LEFT ? -this.speed : this.speed;
-        if (this.movement[0] === Direction.NONE) xDir = 0;
-        let yDir = this.movement[1] === Direction.UP ? -this.speed : this.speed;
-        if (this.movement[1] === Direction.NONE) yDir = 0;
+    update(gameState: GameState, timestep: number) {
+        let dirMap: Record<Direction, number> = {};
+        dirMap[Direction.LEFT] = -this.speed;
+        dirMap[Direction.UP] = -this.speed;
+        dirMap[Direction.RIGHT] = this.speed;
+        dirMap[Direction.DOWN] = this.speed;
+        dirMap[Direction.NONE] = 0;
 
+        let [xDir, yDir] = [dirMap[this.movement[0]], dirMap[this.movement[1]]];
         this.velocity = new Vector(xDir, yDir);
 
         this.position.x += this.velocity.x * timestep;

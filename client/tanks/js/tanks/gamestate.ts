@@ -1,15 +1,31 @@
-import { Bullet } from './bullets.js';
+import { Direction, TankSync } from '../types.js';
+import { Bullet, NormalBullet } from './bullets.js';
 import Vector from './vector2d.js';
 import Wall from './wall.js';
 import Tank from './tank.js';
 
+interface SyncMessage {
+    movement: [Direction, Direction];
+    position: [number, number];
+    velocity: [number, number];
+    rotation: number;
+    id: number;
+    type: TankSync;
+
+    positions: Array<[number, number]>;
+    rotations: Array<number>;
+}
 
 export default class GameState {
     tanks: Array<Tank>;
     tankIndex: number;
     walls: Array<Wall>;
     bullets: Array<Bullet>;
+
     lastUpdate: number;
+    addedBullets: Set<Bullet>;
+    addedTanks: Array<number>;
+    changedTankIDs: Set<number>;
 
     constructor() {
         this.tanks = [];
@@ -20,15 +36,25 @@ export default class GameState {
         this.lastUpdate = Date.now(); // Time of last update as UNIX timestamp
         this.addedBullets = new Set();
         this.addedTanks = []; // Requires order
-        this.changedTanks = new Set();
+        this.changedTankIDs = new Set();
     }
 
+    /**
+     * Push a new tank to tank array and update tank delta
+     * @param {Tank} tank To add
+     * @return {number} Result of .push
+     */
     addTank(tank: Tank) {
         let id = this.tanks.push(tank);
         this.addedTanks.push(id - 1);
         return id;
     }
 
+    /**
+     * Add new bullet to bullet array
+     * and update bullet delta
+     * @param {Bullet} bullet
+     */
     addBullet(bullet: Bullet) {
         this.bullets.push(bullet);
         this.addedBullets.add(bullet);
@@ -36,30 +62,40 @@ export default class GameState {
 
     clearDeltas() {
         this.addedBullets.clear();
-        this.changedTanks.clear();
+        this.changedTankIDs.clear();
         this.addedTanks = [];
     }
 
     update() {
         let timestep = (Date.now() - this.lastUpdate) / 1000;
         this.tanks.forEach(tank => tank.update(this, timestep));
+        this.bullets.forEach(bullet => bullet.update(this, timestep));
         this.lastUpdate = Date.now();
     }
 
-    syncFromMessage(message) {
-        // TODO use enums
-        if (message.action === 'MAP') {
-            // Update map from scratch
-            this.walls = [];
+    /**
+     * Update state on client from a server message
+     * Call from client side only
+     * @param {SyncMessgae} message
+     * @return {boolean} Success / changed?
+     */
+    syncFromMessage(message: SyncMessage) {
+        if (message.type === TankSync.TANK_POS) {
+            if (message.id === undefined || !this.tanks[message.id])
+                return false;
+
+            this.tanks[message.id].movement = message.movement;
+            this.tanks[message.id].position = new Vector(...message.position);
+            this.tanks[message.id].rotation = message.rotation;
+        } else if (message.type === TankSync.UPDATE_ALL_TANKS) {
+            this.tanks = [];
+            for (let i = 0; i < message.positions.length; i++)
+                this.addTank(new Tank(new Vector(...message.positions[i]), message.rotations[i]));
+        } else if (message.type === TankSync.ADD_BULLET) {
+            let bullet = Bullet.bulletFromType(message.type,
+                new Vector(...message.position), new Vector(...message.velocity));
+            this.addBullet(bullet);
         }
-        else if (message.action === 'POS') {
-            // Positions of tanks
-        }
-        else if (message.action === 'CB') {
-            // Create new bullet
-        }
-        else if (message.action === 'DB') {
-            // Destroy existing bullet
-        }
+        return true;
     }
 }

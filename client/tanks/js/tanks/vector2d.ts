@@ -76,6 +76,14 @@ export default class Vector2D {
     }
 
     /**
+     * Return a copy of this vector
+     * @return {Vector2D}
+     */
+    copy() {
+        return new Vector2D(this.x, this.y);
+    }
+
+    /**
      * Create a vector from an angle and magnitude
      * @param {number} angle
      * @param {number} magnitude
