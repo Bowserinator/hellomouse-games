@@ -34,11 +34,23 @@ function drawCenteredSquare(x, y, width, color) {
 const gameState = new GameState();
 window.gameState = gameState;
 
-for (let i = 0; i < 50; i++)
-    gameState.bullets.push(new NormalBullet(new Vector(10, 10), new Vector(Math.random() * 10, Math.random() * 10)));
-
 
 function drawBoard() {
+    // if (gameState.tanks[0]) {
+    //     if (keys['a'])
+    //         gameState.tanks[0].movement[0] = Direction.LEFT;
+    //     else if (keys['d'])
+    //         gameState.tanks[0].movement[0] = Direction.RIGHT;
+    //     else
+    //         gameState.tanks[0].movement[0] = Direction.NONE;
+    //     if (keys['w'])
+    //         gameState.tanks[0].movement[1] = Direction.UP;
+    //     else if (keys['s'])
+    //         gameState.tanks[0].movement[1] = Direction.DOWN;
+    //     else
+    //         gameState.tanks[0].movement[1] = Direction.NONE;
+    // }
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     gameState.update();
@@ -49,18 +61,6 @@ function drawBoard() {
 
     if (keys[' ']) // Fire
         console.log('Fire');
-    // if (keys['a'])
-    //     gameState.playerTank.velocity.x = -5;
-    // else if (keys['d'])
-    //     gameState.playerTank.velocity.x = 5;
-    // else
-    //     gameState.playerTank.velocity.x *= 0.9;
-    // if (keys['w'])
-    //     gameState.playerTank.velocity.y = -5;
-    // else if (keys['s'])
-    //     gameState.playerTank.velocity.y = 5;
-    // else
-    //     gameState.playerTank.velocity.y *= 0.9;
 }
 
 

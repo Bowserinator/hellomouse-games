@@ -1,5 +1,6 @@
 import Wall from './wall.js';
 import Vector from './vector2d.js';
+import GameState from './gamestate.js';
 
 import { Maze } from '../maze_generator/mod.js';
 
@@ -10,11 +11,11 @@ const WALL_THICKNESS = 10;
 /**
  * Construct a wall with given position (top left corner)
  * and size vector
- * @param {Vector} pos
- * @param {Vector} size
+ * @param {[number, number]} pos
+ * @param {[number, number]} size
  * @return {Wall}
  */
-function makeWall(pos, size) {
+function makeWall(pos: [number, number], size: [number, number]) {
     return new Wall(new Vector(...pos), new Vector(...size));
 }
 

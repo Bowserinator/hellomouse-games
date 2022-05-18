@@ -1,3 +1,4 @@
+// @ts-nocheck
 export const dx = {
     E: 1,
     W: -1,

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /*
 This file is an adapted version of seedrandom v3.0.5 (MIT license).
 I am importing the file locally so I don't have to deal with cross-compatability stuff (as Node does not support importing URLs).

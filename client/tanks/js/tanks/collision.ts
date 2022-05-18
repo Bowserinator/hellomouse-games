@@ -72,7 +72,7 @@ export default class Collider {
      * @param {number} time timestep
      * @return {[Vector, number]} [post-velocity, bounce count]
      */
-    bounce(gameState: GameState, velocity: Vector, time: number) {
+    bounce(gameState: GameState, velocity: Vector, time: number): [Vector, number] {
         const STEP_SIZE = 2;
         let steps = time * velocity.magnitude();
         let v = velocity.normalize();

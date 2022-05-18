@@ -1,4 +1,4 @@
-import { Direction, TankSync } from '../types.js';
+import { Direction, TankSync, BulletType } from '../types.js';
 import { Bullet, NormalBullet } from './bullets.js';
 
 import Vector from './vector2d.js';
@@ -13,6 +13,7 @@ interface SyncMessage {
     rotation: number;
     id: number;
     type: TankSync;
+    bulletType: BulletType;
 
     positions: Array<[number, number]>;
     rotations: Array<number>;
@@ -95,7 +96,7 @@ export default class GameState {
             for (let i = 0; i < message.positions.length; i++)
                 this.addTank(new Tank(new Vector(...message.positions[i]), message.rotations[i]));
         } else if (message.type === TankSync.ADD_BULLET) {
-            let bullet = Bullet.bulletFromType(message.type,
+            let bullet = Bullet.bulletFromType(message.bulletType,
                 new Vector(...message.position), new Vector(...message.velocity));
             this.addBullet(bullet);
         } else if (message.type === TankSync.MAP_UPDATE)

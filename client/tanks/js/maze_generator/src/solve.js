@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { dx, dy } from "./directions.js";
 
 export default function solve(

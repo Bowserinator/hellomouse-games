@@ -14,7 +14,10 @@ interface IntentMessage {
 }
 
 const MAX_PLAYERS = 4;
-const UPDATE_EVERY_N_MS = 20; // Game tick length
+
+// If tick length is too high tank collision becomes buggy
+// Recommended: 30 ms or below
+const UPDATE_EVERY_N_MS = 30; // Game tick length
 
 
 class TankGame extends Game {
@@ -39,7 +42,9 @@ class TankGame extends Game {
         generateMaze(this.state, this.mapSeed);
     }
 
+    // @ts-ignore:next-line
     globalStateSync(player: Client) {
+        // Literally never called, type doesn't matter
         return {};
     }
 

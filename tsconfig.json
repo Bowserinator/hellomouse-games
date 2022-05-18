@@ -19,8 +19,7 @@
             "esnext",
             "dom"
         ],
-        "outDir": "build",
-        "composite": true
+        "outDir": "build"
     },
     "exclude": [
         "node_modules",

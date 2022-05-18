@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { directions, dx, dy, fullNames, opposite } from "./directions.js";
 
 export default function braid({

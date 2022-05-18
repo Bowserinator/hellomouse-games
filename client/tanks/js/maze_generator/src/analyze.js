@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { directions, fullNames, opposite } from "./directions.js";
 
 export default function analyze(maze) {

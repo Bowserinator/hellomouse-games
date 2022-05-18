@@ -1,3 +1,4 @@
+// @ts-nocheck
 import RecursiveBacktracker from "./algorithms/RecursiveBacktracker.js";
 import Sidewinder from "./algorithms/Sidewinder.js";
 import HuntAndKill from "./algorithms/HuntAndKill.js";

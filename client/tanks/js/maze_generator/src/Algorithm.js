@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { directions, dx, dy, opposite } from "./directions.js";
 import seedrandom from "./seedrandom.js";
 

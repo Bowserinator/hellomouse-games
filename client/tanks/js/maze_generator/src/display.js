@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { directions } from "./directions.js";
 
 export default function display({

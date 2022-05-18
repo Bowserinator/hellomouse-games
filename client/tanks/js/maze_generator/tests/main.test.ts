@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* TODO: 
 * Test that braid method removes all walls
 * Test that kruskals, true prims etc. produce minimum spanning trees

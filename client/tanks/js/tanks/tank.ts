@@ -49,6 +49,7 @@ export default class Tank {
     }
 
     update(gameState: GameState, timestep: number) {
+        // @ts-ignore:next-line
         let dirMap: Record<Direction, number> = {};
         dirMap[Direction.LEFT] = -this.speed;
         dirMap[Direction.UP] = -this.speed;

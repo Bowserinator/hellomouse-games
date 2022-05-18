@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Algorithm } from "../Algorithm.js";
 import { directions, dx, dy } from "../directions.js";
 

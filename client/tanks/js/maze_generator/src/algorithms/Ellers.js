@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Algorithm } from "../Algorithm.js";
 
 class Ellers extends Algorithm {
