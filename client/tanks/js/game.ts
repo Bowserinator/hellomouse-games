@@ -137,7 +137,15 @@ window.onmousemove = e => {
 window.onmousedown = e => {
     // Fire gun TODO
     // TODO: get curent tank position & shit
-    connection.send(JSON.stringify({ type: 'MOVE', action: Action.FIRE, direction: [1, 1] }));
+    const rect = canvas.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+    let dir = [
+        x - gameState.tanks[0].position.x,
+        y - gameState.tanks[0].position.y
+    ]; // TODO
+
+    connection.send(JSON.stringify({ type: 'MOVE', action: Action.FIRE, direction: dir }));
 };
 
 window.onmouseup = e => {

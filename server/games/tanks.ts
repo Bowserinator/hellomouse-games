@@ -13,7 +13,7 @@ interface IntentMessage {
 }
 
 const MAX_PLAYERS = 4;
-const UPDATE_EVERY_N_MS = 10; // Game tick length
+const UPDATE_EVERY_N_MS = 20; // Game tick length
 
 
 class TankGame extends Game {

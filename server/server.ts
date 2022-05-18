@@ -80,7 +80,7 @@ wsServer.on('request', (request: any) => {
         if (msg.type !== 'utf8') return error(client, 'Not UTF-8', 'ENCODE');
         let messageData: string = msg.utf8Data;
 
-        signale.debug(`> ${messageData}`);
+        // signale.debug(`> ${messageData}`);
 
         let message: MessageData;
 

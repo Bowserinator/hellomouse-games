@@ -1,0 +1,21 @@
+{
+  "name": "maze_generator",
+  "description": "A module for generating mazes",
+  "version": "0.4.0",
+  "entry": "./mod.js",
+  "checkFormat": false,
+  "files": [
+    "./src/**/*",
+    "./examples/**/*",
+    "./images/**/*",
+    "./tests/**/*",
+    "./egg.json",
+    "./LICENSE",
+    "./mod.js",
+    "./README.md"
+  ],
+  "check": true,
+  "homepage": "https://github.com/thewizardbear/maze_generator",
+  "ignore": [],
+  "unlisted": false
+}
