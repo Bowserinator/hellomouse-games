@@ -25,7 +25,7 @@ function makeWall(pos, size) {
  * @param {GameState} gameState Will modify .walls
  * @param {number} seed
  */
-function generateMaze(gameState: GameState, seed: number) {
+export default function generateMaze(gameState: GameState, seed: number) {
     let size = seed % 5 + 10;
     let m = new Maze({
         width: size,
@@ -62,7 +62,7 @@ function generateMaze(gameState: GameState, seed: number) {
                 let firstLine2 = Math.round(firstLine / 2);
                 let x2 = Math.round(x / 2);
                 gameState.walls.push(makeWall(
-                    [firstLine2 * CELL_SIZE, (y + 1) * CELL_SIZE],
+                    [firstLine2 * CELL_SIZE, (y + 1) * CELL_SIZE - CELL_SIZE],
                     [(x2 - firstLine2) * CELL_SIZE + WALL_THICKNESS, WALL_THICKNESS]
                 ));
                 firstLine = -1;
@@ -81,7 +81,7 @@ function generateMaze(gameState: GameState, seed: number) {
                     firstLine = y;
                 if (y === col.length - 1 || col[y + 1] !== '|') {
                     gameState.walls.push(makeWall(
-                        [Math.round(x / 2) * CELL_SIZE, firstLine * CELL_SIZE],
+                        [Math.round(x / 2) * CELL_SIZE, firstLine * CELL_SIZE - CELL_SIZE],
                         [WALL_THICKNESS, (y - firstLine + 1) * CELL_SIZE + WALL_THICKNESS]
                     ));
                     firstLine = -1;
@@ -89,9 +89,3 @@ function generateMaze(gameState: GameState, seed: number) {
             }
     }
 }
-
-
-export default function generateMap(symmetry = 0) {
-    generateMaze(window.gameState, Math.round(Math.random() * 100000));
-}
-

@@ -1,8 +1,10 @@
 import { Direction, TankSync } from '../types.js';
 import { Bullet, NormalBullet } from './bullets.js';
+
 import Vector from './vector2d.js';
 import Wall from './wall.js';
 import Tank from './tank.js';
+import generateMaze from './map-gen.js';
 
 interface SyncMessage {
     movement: [Direction, Direction];
@@ -14,6 +16,7 @@ interface SyncMessage {
 
     positions: Array<[number, number]>;
     rotations: Array<number>;
+    seed: number;
 }
 
 export default class GameState {
@@ -95,7 +98,8 @@ export default class GameState {
             let bullet = Bullet.bulletFromType(message.type,
                 new Vector(...message.position), new Vector(...message.velocity));
             this.addBullet(bullet);
-        }
+        } else if (message.type === TankSync.MAP_UPDATE)
+            generateMaze(this, message.seed);
         return true;
     }
 }

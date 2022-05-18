@@ -30,8 +30,6 @@ const algorithms = {
   GrowingTree,
 };
 
-import createWidget from "./createWidget.js";
-
 import mazeString from "./print.js";
 import display from "./display.js";
 import calculateDistances from "./distances.js";
@@ -185,8 +183,6 @@ class Maze {
     return calculateDistances({ maze: this, distanceFrom });
   }
 }
-
-Maze.createWidget = createWidget;
 
 // export default Maze;
 export { algorithms, Maze };

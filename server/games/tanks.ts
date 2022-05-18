@@ -5,6 +5,7 @@ import GameState from '../../client/tanks/js/tanks/gamestate.js';
 import { Direction, Action, TankSync } from '../../client/tanks/js/types.js';
 import Tank from '../../client/tanks/js/tanks/tank.js';
 import Vector from '../../client/tanks/js/tanks/vector2d.js';
+import generateMaze from '../../client/tanks/js/tanks/map-gen.js';
 
 interface IntentMessage {
     action: Action;
@@ -20,6 +21,7 @@ class TankGame extends Game {
     state: GameState;
     interval: ReturnType<typeof setInterval> | null;
     playerTankIDMap: Record<string, number>;
+    mapSeed: number;
 
     constructor() {
         super();
@@ -33,7 +35,8 @@ class TankGame extends Game {
     }
 
     onRoomCreate() {
-
+        this.mapSeed = Math.floor(Math.random() * 100000000);
+        generateMaze(this.state, this.mapSeed);
     }
 
     globalStateSync(player: Client) {
@@ -47,8 +50,13 @@ class TankGame extends Game {
         let canJoin = super.onJoin(client);
         if (canJoin && !this.playerTankIDMap[client.id])
             this.playerTankIDMap[client.id] = this.state.addTank(new Tank(
-                new Vector(0, 0), 0
+                new Vector(20, 20), 0
             )) - 1;
+
+        client.connection.send(JSON.stringify({
+            type: TankSync.MAP_UPDATE,
+            seed: this.mapSeed
+        }));
 
         return canJoin;
     }

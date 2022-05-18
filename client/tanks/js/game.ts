@@ -3,7 +3,6 @@ import Vector from './tanks/vector2d.js';
 import Wall from './tanks/wall.js';
 import Tank from './tanks/tank.js';
 import Collider from './tanks/collision.js';
-import generateMap from './tanks/map-gen.js';
 import GameState from './tanks/gamestate.js';
 import { Direction, Action, TankSync } from './types.js';
 
@@ -38,13 +37,6 @@ window.gameState = gameState;
 for (let i = 0; i < 50; i++)
     gameState.bullets.push(new NormalBullet(new Vector(10, 10), new Vector(Math.random() * 10, Math.random() * 10)));
 
-// Add bounding colliders
-// gameState.walls.push(new Wall([-100, 0], [100, 1000]));
-// gameState.walls.push(new Wall([1000, 0], [1000, 1000]));
-// gameState.walls.push(new Wall([0, -100], [1000, 100]));
-// gameState.walls.push(new Wall([0, 500], [1000, 100]));
-
-generateMap();
 
 function drawBoard() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
