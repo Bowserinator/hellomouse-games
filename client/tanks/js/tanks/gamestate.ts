@@ -14,7 +14,9 @@ interface SyncMessage {
     id: number;
     type: TankSync;
     bulletType: BulletType;
+    bulletTypes: Array<BulletType>;
 
+    velocities: Array<[number, number]>;
     positions: Array<[number, number]>;
     rotations: Array<number>;
     seed: number;
@@ -69,6 +71,10 @@ export default class GameState {
         this.addedBullets.add(bullet);
     }
 
+    removeBullet(bullet: Bullet) {
+        this.bullets = this.bullets.filter((b: Bullet) => b !== bullet);
+    }
+
     killTank(tank: Tank) {
         if (!tank.isDead)
             this.killedTanks.add(tank.id);
@@ -115,6 +121,15 @@ export default class GameState {
             generateMaze(this, message.seed);
         else if (message.type === TankSync.TANK_DIED)
             this.tanks[message.id].isDead = true;
+        else if (message.type === TankSync.SYNC_ALL_BULLETS) {
+            this.bullets = [];
+            for (let i = 0; i < message.positions.length; i++)
+                this.bullets.push(Bullet.bulletFromType(
+                    message.bulletTypes[i],
+                    new Vector(...message.positions[i]),
+                    new Vector(...message.velocities[i])
+                ));
+        }
         return true;
     }
 }

@@ -16,7 +16,7 @@ export enum Powerup {
 
 export enum TankSync {
     ADD_BULLET, DELETE_BULLET, TANK_POS, MAP_UPDATE,
-    UPDATE_ALL_TANKS, TANK_DIED
+    UPDATE_ALL_TANKS, TANK_DIED, SYNC_ALL_BULLETS
 }
 
 export enum BulletType {

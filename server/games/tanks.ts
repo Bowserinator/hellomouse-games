@@ -18,6 +18,7 @@ const MAX_PLAYERS = 4;
 // If tick length is too high tank collision becomes buggy
 // Recommended: 30 ms or below
 const UPDATE_EVERY_N_MS = 30; // Game tick length
+const SYNC_BULLETS_EVERY_N_TIMES = 10; // How many iterations to sync bullets
 
 
 class TankGame extends Game {
@@ -26,6 +27,9 @@ class TankGame extends Game {
     playerTankIDMap: Record<string, number>;
     mapSeed: number;
 
+    dontSyncBullets: boolean; // Temp flag
+    syncCount: number;
+
     constructor() {
         super();
         this.state = new GameState();
@@ -33,6 +37,8 @@ class TankGame extends Game {
         this.syncAfterMove = false; // Syncing handled in game loop
 
         this.playerTankIDMap = {}; // Map client.id -> index in tank array
+        this.syncCount = 0;
+        this.dontSyncBullets = false;
 
         this.startGameLoop();
     }
@@ -100,6 +106,22 @@ class TankGame extends Game {
             });
     }
 
+    syncBullets() {
+        if (this.syncCount % SYNC_BULLETS_EVERY_N_TIMES !== 0)
+            return;
+        if (this.state.bullets.length === 0 && this.dontSyncBullets)
+            return;
+
+        this.broadcast({
+            type: TankSync.SYNC_ALL_BULLETS,
+            positions: this.state.bullets.map(b => b.collider.position.l()),
+            velocities: this.state.bullets.map(b => b.velocity.l()),
+            bulletTypes: this.state.bullets.map(b => b.type)
+        });
+
+        this.dontSyncBullets = this.state.bullets.length === 0;
+    }
+
     sendTankDeadUpdates() {
         for (let tankID of this.state.killedTanks)
             this.broadcast({
@@ -116,6 +138,7 @@ class TankGame extends Game {
         this.sendTankUpdates();
         this.state.update();
         this.sendBulletUpdates();
+        this.syncBullets();
         this.sendTankDeadUpdates();
 
         this.state.clearDeltas();

@@ -4,11 +4,14 @@ import GameState from './gamestate.js';
 import { BulletType } from '../types.js';
 
 
+const DESPAWN_TIME = 10000; // Time bullets last in ms
+
 export class Bullet {
     position: Vector;
     velocity: Vector;
     collider: Collider;
     type: BulletType;
+    createdTime: number;
 
     constructor(position: Vector, size: Vector, velocity: Vector) {
         if (this.constructor === Bullet)
@@ -16,10 +19,16 @@ export class Bullet {
 
         this.velocity = velocity.copy();
         this.collider = new Collider(position.copy(), size.copy());
+        this.createdTime = Date.now();
     }
 
     update(gameState: GameState, timestep: number) {
-        this.velocity = this.collider.bounce(gameState, this.velocity, 1)[0];
+        if (!gameState.isClientSide && Date.now() - this.createdTime > DESPAWN_TIME) {
+            gameState.removeBullet(this);
+            return;
+        }
+
+        this.velocity = this.collider.bounce(gameState, this.velocity, timestep)[0];
 
         // Hit tanks
         // TODO: add to changedTankIDs

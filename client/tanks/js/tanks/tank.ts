@@ -83,7 +83,7 @@ export default class Tank {
         if (this.isFiring && (Date.now() - this.lastFired) > 100) { // TODO
             gameState.addBullet(new NormalBullet(
                 this.position.add(Vector.vecFromRotation(this.rotation, 50)),
-                Vector.vecFromRotation(this.rotation, 4) ));
+                Vector.vecFromRotation(this.rotation, 200)));
             this.lastFired = Date.now();
         }
     }
