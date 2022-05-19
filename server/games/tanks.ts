@@ -100,6 +100,14 @@ class TankGame extends Game {
             });
     }
 
+    sendTankDeadUpdates() {
+        for (let tankID of this.state.killedTanks)
+            this.broadcast({
+                type: TankSync.TANK_DIED,
+                id: tankID
+            });
+    }
+
     gameLoop() {
         // TODO:
         // Send all added bullets
@@ -108,6 +116,7 @@ class TankGame extends Game {
         this.sendTankUpdates();
         this.state.update();
         this.sendBulletUpdates();
+        this.sendTankDeadUpdates();
 
         this.state.clearDeltas();
     }
@@ -138,6 +147,9 @@ class TankGame extends Game {
 
         let clientID = this.playerTankIDMap[client.id];
         let isVertical = [Direction.UP, Direction.DOWN].includes(message.dir) ? 1 : 0;
+
+        if (this.state.tanks[clientID].isDead)
+            return;
 
         if (message.action === Action.MOVE_BEGIN)
             // Request to move in a certain direction

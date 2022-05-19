@@ -21,6 +21,7 @@ interface SyncMessage {
 }
 
 export default class GameState {
+    isClientSide: boolean;
     tanks: Array<Tank>;
     tankIndex: number;
     walls: Array<Wall>;
@@ -29,9 +30,11 @@ export default class GameState {
     lastUpdate: number;
     addedBullets: Set<Bullet>;
     addedTanks: Array<number>;
+    killedTanks: Set<number>;
     changedTankIDs: Set<number>;
 
-    constructor() {
+    constructor(isClientSide = false) {
+        this.isClientSide = isClientSide;
         this.tanks = [];
         this.tankIndex = 0;
         this.walls = [];
@@ -41,6 +44,7 @@ export default class GameState {
         this.addedBullets = new Set();
         this.addedTanks = []; // Requires order
         this.changedTankIDs = new Set();
+        this.killedTanks = new Set();
     }
 
     /**
@@ -51,6 +55,7 @@ export default class GameState {
     addTank(tank: Tank) {
         let id = this.tanks.push(tank);
         this.addedTanks.push(id - 1);
+        this.tanks[this.tanks.length - 1].id = id - 1;
         return id;
     }
 
@@ -64,10 +69,17 @@ export default class GameState {
         this.addedBullets.add(bullet);
     }
 
+    killTank(tank: Tank) {
+        if (!tank.isDead)
+            this.killedTanks.add(tank.id);
+        tank.isDead = true;
+    }
+
     clearDeltas() {
         this.addedBullets.clear();
         this.changedTankIDs.clear();
         this.addedTanks = [];
+        this.killedTanks.clear();
     }
 
     update() {
@@ -94,13 +106,15 @@ export default class GameState {
         } else if (message.type === TankSync.UPDATE_ALL_TANKS) {
             this.tanks = [];
             for (let i = 0; i < message.positions.length; i++)
-                this.addTank(new Tank(new Vector(...message.positions[i]), message.rotations[i]));
+                this.addTank(new Tank(new Vector(...message.positions[i]), message.rotations[i], i));
         } else if (message.type === TankSync.ADD_BULLET) {
             let bullet = Bullet.bulletFromType(message.bulletType,
                 new Vector(...message.position), new Vector(...message.velocity));
             this.addBullet(bullet);
         } else if (message.type === TankSync.MAP_UPDATE)
             generateMaze(this, message.seed);
+        else if (message.type === TankSync.TANK_DIED)
+            this.tanks[message.id].isDead = true;
         return true;
     }
 }

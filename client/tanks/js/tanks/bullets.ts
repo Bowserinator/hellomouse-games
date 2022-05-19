@@ -21,6 +21,14 @@ export class Bullet {
     update(gameState: GameState, timestep: number) {
         this.velocity = this.collider.bounce(gameState, this.velocity, 1)[0];
 
+        // Hit tanks
+        // TODO: add to changedTankIDs
+        // or make new check in state for this (deadTanks)
+        for (let tank of gameState.tanks)
+            if (this.collider.collidesWith(tank.collider) && !gameState.isClientSide)
+                gameState.killTank(tank);
+
+
         // TODO: get nearest tank
         let closest = gameState.tanks[0];
         if (!closest) return;

@@ -52,6 +52,15 @@ export default class Vector2D {
     }
 
     /**
+     * Sum two vectors
+     * @param {Vector2D} other
+     * @return {Vector2D} Sum
+     */
+    add(other: Vector2D) {
+        return new Vector2D(this.x + other.x, this.y + other.y);
+    }
+
+    /**
      * Get list representation of the components of the vector
      * @return {Array<number>}
      */

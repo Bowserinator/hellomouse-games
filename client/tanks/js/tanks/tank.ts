@@ -16,20 +16,24 @@ export default class Tank {
 
     movement: Array<Direction>;
     isFiring: boolean;
+    isDead: boolean;
+    id: number;
 
     speed: number;
 
-    constructor(pos: Vector, rotation: number) {
+    constructor(pos: Vector, rotation: number, id = -1) {
         this.position = pos.copy(); // Center coordinate, not top-left corner. Collider has offset position
         this.velocity = new Vector(0, 0);
         this.rotation = rotation;
         this.ammo = 2;
         this.lastFired = 0; // UNIX timestamp last fired a bullet
         this.powerup = Powerup.NONE;
+        this.id = id;
 
         // Loaded from client intents
         this.movement = [Direction.NONE, Direction.NONE]; // horz, vert, none = not moving in that dir
         this.isFiring = false;
+        this.isDead = false;
 
         // Other
         this.speed = 300;
@@ -45,10 +49,13 @@ export default class Tank {
     }
 
     draw(ctx: CanvasRenderingContext2D) {
+        if (this.isDead) return;
         this.collider.draw(ctx);
     }
 
     update(gameState: GameState, timestep: number) {
+        if (this.isDead) return;
+
         // @ts-ignore:next-line
         let dirMap: Record<Direction, number> = {};
         dirMap[Direction.LEFT] = -this.speed;
@@ -74,7 +81,8 @@ export default class Tank {
             }
 
         if (this.isFiring && (Date.now() - this.lastFired) > 100) { // TODO
-            gameState.addBullet(new NormalBullet(this.position,
+            gameState.addBullet(new NormalBullet(
+                this.position.add(Vector.vecFromRotation(this.rotation, 50)),
                 Vector.vecFromRotation(this.rotation, 4) ));
             this.lastFired = Date.now();
         }

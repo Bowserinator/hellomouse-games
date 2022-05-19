@@ -31,7 +31,7 @@ function drawCenteredSquare(x, y, width, color) {
 
 
 // Game state, shared with client.js
-const gameState = new GameState();
+const gameState = new GameState(true);
 window.gameState = gameState;
 
 
