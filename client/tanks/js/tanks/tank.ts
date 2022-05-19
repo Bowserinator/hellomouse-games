@@ -3,7 +3,7 @@ import Collider from './collision.js';
 import Vector from './vector2d.js';
 import GameState from './gamestate.js';
 import { NormalBullet } from './bullets.js';
-
+import { TANK_SPEED, TANK_SIZE, TANK_AMMO } from '../vars.js';
 
 export default class Tank {
     position: Vector;
@@ -25,7 +25,7 @@ export default class Tank {
         this.position = pos.copy(); // Center coordinate, not top-left corner. Collider has offset position
         this.velocity = new Vector(0, 0);
         this.rotation = rotation;
-        this.ammo = 2;
+        this.ammo = TANK_AMMO;
         this.lastFired = 0; // UNIX timestamp last fired a bullet
         this.powerup = Powerup.NONE;
         this.id = id;
@@ -36,16 +36,16 @@ export default class Tank {
         this.isDead = false;
 
         // Other
-        this.speed = 300;
+        this.speed = TANK_SPEED;
 
         this.createCollider();
     }
 
     createCollider() {
         let [x, y] = this.position.l();
-        x -= 25;
-        y -= 25;
-        this.collider = new Collider(new Vector(x, y), new Vector(50, 50)); // TODO
+        x -= TANK_SIZE / 2;
+        y -= TANK_SIZE / 2;
+        this.collider = new Collider(new Vector(x, y), new Vector(TANK_SIZE, TANK_SIZE)); // TODO
     }
 
     draw(ctx: CanvasRenderingContext2D) {
@@ -74,16 +74,16 @@ export default class Tank {
         for (let wall of gameState.walls)
             if (wall.collider.collidesWith(this.collider)) {
                 this.position = this.collider.getSnapPosition(wall.collider)[0];
-                this.position.x += 25;
-                this.position.y += 25;
+                this.position.x += TANK_SIZE / 2;
+                this.position.y += TANK_SIZE / 2;
                 this.velocity = new Vector(0, 0);
                 this.createCollider();
             }
 
         if (this.isFiring && (Date.now() - this.lastFired) > 100) { // TODO
             gameState.addBullet(new NormalBullet(
-                this.position.add(Vector.vecFromRotation(this.rotation, 50)),
-                Vector.vecFromRotation(this.rotation, 200)));
+                this.position.add(Vector.vecFromRotation(this.rotation, TANK_SIZE)),
+                Vector.vecFromRotation(this.rotation, 4 * TANK_SIZE)));
             this.lastFired = Date.now();
         }
     }

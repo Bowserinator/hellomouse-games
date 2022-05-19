@@ -3,9 +3,7 @@ import Vector from './vector2d.js';
 import GameState from './gamestate.js';
 
 import { Maze } from '../maze_generator/mod.js';
-
-const CELL_SIZE = 120;
-const WALL_THICKNESS = 10;
+import { CELL_SIZE, WALL_THICKNESS, MIN_MAZE_SIZE, MAX_MAZE_SIZE } from '../vars.js';
 
 
 /**
@@ -27,7 +25,7 @@ function makeWall(pos: [number, number], size: [number, number]) {
  * @param {number} seed
  */
 export default function generateMaze(gameState: GameState, seed: number) {
-    let size = seed % 5 + 10;
+    let size = seed % (MAX_MAZE_SIZE - MIN_MAZE_SIZE) + MIN_MAZE_SIZE;
     let m = new Maze({
         width: size,
         height: size,

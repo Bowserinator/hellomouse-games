@@ -2,9 +2,7 @@ import Vector from './vector2d.js';
 import Collider from './collision.js';
 import GameState from './gamestate.js';
 import { BulletType } from '../types.js';
-
-
-const DESPAWN_TIME = 10000; // Time bullets last in ms
+import { BULLET_DESPAWN_TIME } from '../vars.js';
 
 export class Bullet {
     position: Vector;
@@ -23,7 +21,7 @@ export class Bullet {
     }
 
     update(gameState: GameState, timestep: number) {
-        if (!gameState.isClientSide && Date.now() - this.createdTime > DESPAWN_TIME) {
+        if (!gameState.isClientSide && Date.now() - this.createdTime > BULLET_DESPAWN_TIME) {
             gameState.removeBullet(this);
             return;
         }
