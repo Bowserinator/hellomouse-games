@@ -1,5 +1,6 @@
 import Vector from './vector2d.js';
 import GameState from './gamestate.js';
+import Camera from '../renderer/camera.js';
 
 /**
  * Rectangular collision helper
@@ -105,13 +106,11 @@ export default class Collider {
     }
 
     /** Debug draw method */
-    draw(ctx: CanvasRenderingContext2D, color = 'green') {
+    draw(camera: Camera, color = [0, 255, 0]) {
         let [x, y] = this.position.l();
         let [w, h] = this.size.l();
 
-        ctx.strokeStyle = color;
-        ctx.beginPath();
-        ctx.rect(x, y, w, h);
-        ctx.stroke();
+        camera.drawRectangularPrism(
+            [x, y, 0], [w, h, 20], 5, color, 0);
     }
 }

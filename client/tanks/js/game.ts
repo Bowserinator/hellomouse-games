@@ -5,6 +5,7 @@ import Tank from './tanks/tank.js';
 import Collider from './tanks/collision.js';
 import GameState from './tanks/gamestate.js';
 import { Direction, Action, TankSync } from './types.js';
+import Camera from './renderer/camera.js';
 
 import connection from './client.js';
 
@@ -53,11 +54,16 @@ function drawBoard() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    if (!gameState.camera) // TODO move
+        gameState.camera = new Camera(new Vector(0, 0), ctx);
+
+    if (gameState.tanks[0])
+        gameState.camera.position = gameState.tanks[0].position.add(
+            new Vector(-canvas.width / 2, -canvas.height / 2));
+
     gameState.update();
 
-    gameState.tanks.forEach(tank => tank.draw(ctx));
-    gameState.walls.forEach(wall => wall.draw(ctx));
-    gameState.bullets.forEach(bullet => bullet.draw(ctx));
+    gameState.draw();
 
     if (keys[' ']) // Fire
         console.log('Fire');

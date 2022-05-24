@@ -2,7 +2,8 @@ import Vector from './vector2d.js';
 import Collider from './collision.js';
 import GameState from './gamestate.js';
 import { BulletType } from '../types.js';
-import { BULLET_DESPAWN_TIME } from '../vars.js';
+import { BULLET_DESPAWN_TIME, NORMAL_BULLET_SIZE, NORMAL_BULLET_SPEED } from '../vars.js';
+import Camera from '../renderer/camera.js';
 
 export class Bullet {
     position: Vector;
@@ -28,9 +29,12 @@ export class Bullet {
 
         this.velocity = this.collider.bounce(gameState, this.velocity, timestep)[0];
 
+        // Hit other bullets
+        for (let bullet of gameState.bullets)
+            if (bullet !== this && this.collider.collidesWith(bullet.collider) && !gameState.isClientSide)
+                gameState.removeBullet(bullet);
+
         // Hit tanks
-        // TODO: add to changedTankIDs
-        // or make new check in state for this (deadTanks)
         for (let tank of gameState.tanks)
             if (this.collider.collidesWith(tank.collider) && !gameState.isClientSide)
                 gameState.killTank(tank);
@@ -57,8 +61,8 @@ export class Bullet {
         // this.velocity[1] += v1[1];
     }
 
-    draw(ctx: CanvasRenderingContext2D) {
-        this.collider.draw(ctx);
+    draw(camera: Camera) {
+        this.collider.draw(camera);
     }
 
     onFire() {
@@ -87,7 +91,10 @@ export class Bullet {
 
 export class NormalBullet extends Bullet {
     constructor(position: Vector, velocity: Vector) {
-        super(position, new Vector(5, 5), velocity);
+        super(
+            position,
+            new Vector(NORMAL_BULLET_SIZE, NORMAL_BULLET_SIZE),
+            velocity.normalize().mul(NORMAL_BULLET_SPEED));
         this.type = BulletType.NORMAL;
     }
 }

@@ -4,6 +4,7 @@ import Vector from './vector2d.js';
 import GameState from './gamestate.js';
 import { NormalBullet } from './bullets.js';
 import { TANK_SPEED, TANK_SIZE, TANK_AMMO } from '../vars.js';
+import Camera from '../renderer/camera.js';
 
 export default class Tank {
     position: Vector;
@@ -48,9 +49,9 @@ export default class Tank {
         this.collider = new Collider(new Vector(x, y), new Vector(TANK_SIZE, TANK_SIZE)); // TODO
     }
 
-    draw(ctx: CanvasRenderingContext2D) {
+    draw(camera: Camera) {
         if (this.isDead) return;
-        this.collider.draw(ctx);
+        this.collider.draw(camera);
     }
 
     update(gameState: GameState, timestep: number) {

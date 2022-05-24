@@ -1,5 +1,6 @@
 import { Direction, TankSync, BulletType } from '../types.js';
 import { Bullet, NormalBullet } from './bullets.js';
+import Camera from '../renderer/camera.js';
 
 import Vector from './vector2d.js';
 import Wall from './wall.js';
@@ -35,6 +36,8 @@ export default class GameState {
     killedTanks: Set<number>;
     changedTankIDs: Set<number>;
 
+    camera: Camera;
+
     constructor(isClientSide = false) {
         this.isClientSide = isClientSide;
         this.tanks = [];
@@ -44,6 +47,7 @@ export default class GameState {
 
         this.lastUpdate = Date.now(); // Time of last update as UNIX timestamp
         this.addedBullets = new Set();
+        this.removedBulletIds = new Set();
         this.addedTanks = []; // Requires order
         this.changedTankIDs = new Set();
         this.killedTanks = new Set();
@@ -72,6 +76,8 @@ export default class GameState {
     }
 
     removeBullet(bullet: Bullet) {
+        let i = this.bullets.indexOf(bullet);
+        if (i > -1) this.removedBulletIds.add(i);
         this.bullets = this.bullets.filter((b: Bullet) => b !== bullet);
     }
 
@@ -83,6 +89,7 @@ export default class GameState {
 
     clearDeltas() {
         this.addedBullets.clear();
+        this.removedBulletIds.clear();
         this.changedTankIDs.clear();
         this.addedTanks = [];
         this.killedTanks.clear();
@@ -93,6 +100,13 @@ export default class GameState {
         this.tanks.forEach(tank => tank.update(this, timestep));
         this.bullets.forEach(bullet => bullet.update(this, timestep));
         this.lastUpdate = Date.now();
+    }
+
+    draw() {
+        // TODO: sort by z value
+        this.tanks.forEach(tank => tank.draw(this.camera));
+        this.walls.forEach(wall => wall.draw(this.camera));
+        this.bullets.forEach(bullet => bullet.draw(this.camera));
     }
 
     /**
@@ -117,7 +131,9 @@ export default class GameState {
             let bullet = Bullet.bulletFromType(message.bulletType,
                 new Vector(...message.position), new Vector(...message.velocity));
             this.addBullet(bullet);
-        } else if (message.type === TankSync.MAP_UPDATE)
+        } else if (message.type === TankSync.REMOVE_BULLETS)
+            this.bullets = this.bullets.filter((b, i) => !message.indices.includes(i));
+        else if (message.type === TankSync.MAP_UPDATE)
             generateMaze(this, message.seed);
         else if (message.type === TankSync.TANK_DIED)
             this.tanks[message.id].isDead = true;

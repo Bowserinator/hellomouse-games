@@ -104,6 +104,13 @@ class TankGame extends Game {
                 velocity: bullet.velocity.l(),
                 bulletType: bullet.type
             });
+
+        // Send remove bullet state update
+        if (this.state.removedBulletIds.size)
+            this.broadcast({
+                type: TankSync.REMOVE_BULLETS,
+                indices: [...this.state.removedBulletIds]
+            });
     }
 
     syncBullets() {

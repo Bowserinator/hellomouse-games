@@ -93,6 +93,15 @@ export default class Vector2D {
     }
 
     /**
+     * Multiply this by a scalar
+     * @param {number} v
+     * @return {Vector2D} v * this
+     */
+    mul(v) {
+        return new Vector2D(this.x * v, this.y * v);
+    }
+
+    /**
      * Create a vector from an angle and magnitude
      * @param {number} angle
      * @param {number} magnitude

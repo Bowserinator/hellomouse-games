@@ -1,5 +1,6 @@
 import Collider from './collision.js';
 import Vector from './vector2d.js';
+import Camera from '../renderer/camera.js';
 
 export default class Wall {
     collider: Collider;
@@ -26,8 +27,8 @@ export default class Wall {
         return this.collider.size;
     }
 
-    draw(ctx: CanvasRenderingContext2D) {
-        this.collider.draw(ctx, 'red');
+    draw(camera: Camera) {
+        this.collider.draw(camera, [255, 0, 0]);
 
         // TODO
     }
