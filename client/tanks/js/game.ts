@@ -139,8 +139,8 @@ window.onmousedown = e => {
     let x = e.clientX - rect.left;
     let y = e.clientY - rect.top;
     let dir = [
-        x - gameState.tanks[0].position.x,
-        y - gameState.tanks[0].position.y
+        x - canvas.width / 2,
+        y - canvas.height / 2
     ]; // TODO
 
     connection.send(JSON.stringify({ type: 'MOVE', action: Action.FIRE, direction: dir }));
