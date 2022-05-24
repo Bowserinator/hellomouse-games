@@ -3,7 +3,7 @@ import Collider from './collision.js';
 import Vector from './vector2d.js';
 import GameState from './gamestate.js';
 import { NormalBullet } from './bullets.js';
-import { TANK_SPEED, TANK_SIZE, TANK_AMMO } from '../vars.js';
+import { TANK_SPEED, TANK_SIZE, TANK_AMMO, TANK_FIRE_DELAY } from '../vars.js';
 import Camera from '../renderer/camera.js';
 
 export default class Tank {
@@ -19,6 +19,7 @@ export default class Tank {
     isFiring: boolean;
     isDead: boolean;
     id: number;
+    score: number;
 
     speed: number;
 
@@ -38,6 +39,7 @@ export default class Tank {
 
         // Other
         this.speed = TANK_SPEED;
+        this.score = 0;
 
         this.createCollider();
     }
@@ -81,10 +83,14 @@ export default class Tank {
                 this.createCollider();
             }
 
-        if (this.isFiring && (Date.now() - this.lastFired) > 100) { // TODO
-            gameState.addBullet(new NormalBullet(
+        if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
+            // TODO: bullet types + ammo
+            let bullet = new NormalBullet(
                 this.position.add(Vector.vecFromRotation(this.rotation, TANK_SIZE)),
-                Vector.vecFromRotation(this.rotation, 4 * TANK_SIZE)));
+                Vector.vecFromRotation(this.rotation, 4 * TANK_SIZE));
+            bullet.firedBy = this.id;
+
+            gameState.addBullet(bullet);
             this.lastFired = Date.now();
         }
     }

@@ -11,6 +11,7 @@ export class Bullet {
     collider: Collider;
     type: BulletType;
     createdTime: number;
+    firedBy: number; // Tank id that fired the bullet, else -1
 
     constructor(position: Vector, size: Vector, velocity: Vector) {
         if (this.constructor === Bullet)
@@ -19,6 +20,7 @@ export class Bullet {
         this.velocity = velocity.copy();
         this.collider = new Collider(position.copy(), size.copy());
         this.createdTime = Date.now();
+        this.firedBy = -1;
     }
 
     update(gameState: GameState, timestep: number) {
@@ -35,9 +37,14 @@ export class Bullet {
                 gameState.removeBullet(bullet);
 
         // Hit tanks
-        for (let tank of gameState.tanks)
-            if (this.collider.collidesWith(tank.collider) && !gameState.isClientSide)
+        for (let tank of gameState.tanks.filter((t: Tank) => !t.isDead))
+            if (this.collider.collidesWith(tank.collider) && !gameState.isClientSide) {
+                if (tank.id !== this.firedBy && this.firedBy > -1) // No points for suicide shots
+                    gameState.tanks[this.firedBy].score++;
                 gameState.killTank(tank);
+                gameState.removeBullet(this);
+                return;
+            }
 
 
         // TODO: get nearest tank

@@ -10,6 +10,7 @@ export const NORMAL_BULLET_SPEED = 300;
 export const TANK_AMMO = 2; // Starting ammo count
 export const TANK_SIZE = 50;
 export const TANK_SPEED = 200;
+export const TANK_FIRE_DELAY = 100;
 
 // Maze generation
 export const CELL_SIZE = 120;
