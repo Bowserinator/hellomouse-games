@@ -6,7 +6,8 @@ export enum Action {
     MOVE_BEGIN,
     MOVE_END,
     FIRE,
-    STOP_FIRE
+    STOP_FIRE,
+    UPDATE_ROTATION
 }
 
 export enum Powerup {
@@ -15,8 +16,13 @@ export enum Powerup {
 }
 
 export enum TankSync {
-    ADD_BULLET, REMOVE_BULLETS, TANK_POS, MAP_UPDATE,
-    UPDATE_ALL_TANKS, TANK_DIED, SYNC_ALL_BULLETS
+    ADD_BULLET,
+    REMOVE_BULLETS,
+    TANK_POS,
+    MAP_UPDATE,
+    UPDATE_ALL_TANKS,
+    TANK_DIED,
+    SYNC_ALL_BULLETS
 }
 
 export enum BulletType {

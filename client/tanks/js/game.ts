@@ -57,8 +57,8 @@ function drawBoard() {
     if (!gameState.camera) // TODO move
         gameState.camera = new Camera(new Vector(0, 0), ctx);
 
-    if (gameState.tanks[0])
-        gameState.camera.position = gameState.tanks[0].position.add(
+    if (gameState.tanks[gameState.tankIndex])
+        gameState.camera.position = gameState.tanks[gameState.tankIndex].position.add(
             new Vector(-canvas.width / 2, -canvas.height / 2));
 
     gameState.update();
@@ -128,6 +128,17 @@ window.onkeyup = e => {
 };
 
 
+const UPDATE_ROTATION = new RateLimited(
+    100, () => {
+        let rotation = window.gameState.tanks[gameState.tankIndex].rotation;
+        connection.send(JSON.stringify({
+            type: 'MOVE',
+            action: Action.UPDATE_ROTATION,
+            rotation
+        }));
+    }
+);
+
 window.onmousemove = e => {
     const rect = canvas.getBoundingClientRect();
     let x = e.clientX - rect.left;
@@ -140,7 +151,8 @@ window.onmousemove = e => {
         return;
 
     // TODO not always 0 somehow get own ID
-    window.gameState.tanks[0].rotation = Math.atan2(dir[1], dir[0]); // TODO is it always 0?
+    window.gameState.tanks[gameState.tankIndex].rotation = Math.atan2(dir[1], dir[0]); // TODO is it always 0?
+    UPDATE_ROTATION.call();
 };
 
 window.onmousedown = e => {

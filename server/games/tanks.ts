@@ -11,6 +11,7 @@ interface IntentMessage {
     action: Action;
     dir: Direction;
     direction: [number, number];
+    rotation: number;
 }
 
 const MAX_PLAYERS = 4;
@@ -66,7 +67,8 @@ class TankGame extends Game {
 
         client.connection.send(JSON.stringify({
             type: TankSync.MAP_UPDATE,
-            seed: this.mapSeed
+            seed: this.mapSeed,
+            id: this.playerTankIDMap[client.id]
         }));
 
         return canJoin;
@@ -202,6 +204,10 @@ class TankGame extends Game {
             this.state.tanks[clientID].isFiring = false;
             // TODO: test if this would mean quick taps dont register
             // test with higher update
+        else if (message.action === Action.UPDATE_ROTATION && typeof message.rotation === 'number')
+            // TODO: bound check + 
+            //  && typeof message.rotation === 'number'
+            this.state.tanks[clientID].rotation = message.rotation;
         this.state.changedTankIDs.add(clientID);
     }
 }

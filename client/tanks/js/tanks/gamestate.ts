@@ -26,7 +26,7 @@ interface SyncMessage {
 export default class GameState {
     isClientSide: boolean;
     tanks: Array<Tank>;
-    tankIndex: number; // TODO unused?
+    tankIndex: number;
     walls: Array<Wall>;
     bullets: Array<Bullet>;
 
@@ -41,7 +41,7 @@ export default class GameState {
     constructor(isClientSide = false) {
         this.isClientSide = isClientSide;
         this.tanks = [];
-        this.tankIndex = 0;
+        this.tankIndex = 0; // Client tank index
         this.walls = [];
         this.bullets = [];
 
@@ -122,9 +122,15 @@ export default class GameState {
 
             this.tanks[message.id].movement = message.movement;
             this.tanks[message.id].position = new Vector(...message.position);
-            this.tanks[message.id].rotation = message.rotation;
+
+            // Client is free to lie about own rotation since you can rotate
+            // instantly anyways, so this prevents rotation stuttering
+            if (message.id !== this.tankIndex)
+                this.tanks[message.id].rotation = message.rotation;
         } else if (message.type === TankSync.UPDATE_ALL_TANKS) {
             this.tanks = [];
+
+            // TODO: keep old tanks if not necessary to create new one
             for (let i = 0; i < message.positions.length; i++)
                 this.addTank(new Tank(new Vector(...message.positions[i]), message.rotations[i], i));
         } else if (message.type === TankSync.ADD_BULLET) {
@@ -133,9 +139,10 @@ export default class GameState {
             this.addBullet(bullet);
         } else if (message.type === TankSync.REMOVE_BULLETS)
             this.bullets = this.bullets.filter((b, i) => !message.indices.includes(i));
-        else if (message.type === TankSync.MAP_UPDATE)
+        else if (message.type === TankSync.MAP_UPDATE) {
             generateMaze(this, message.seed);
-        else if (message.type === TankSync.TANK_DIED)
+            this.tankIndex = message.id;
+        } else if (message.type === TankSync.TANK_DIED)
             this.tanks[message.id].isDead = true;
         else if (message.type === TankSync.SYNC_ALL_BULLETS) {
             this.bullets = [];

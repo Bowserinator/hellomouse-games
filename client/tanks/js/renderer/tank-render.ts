@@ -7,6 +7,8 @@ let TANK_BODY = null;
 let TANK_TURRET = null;
 
 (async () => {
+    if (typeof Image === 'undefined') return; // Server side, Image doesn't exist
+
     TANK_BODY = await getImage('/tanks/img/tank-body.png', TANK_SIZE, TANK_SIZE);
     TANK_TURRET = await getImage('/tanks/img/tank-turret.png', TANK_TURRET_SIZE, TANK_TURRET_SIZE);
 })();
@@ -16,5 +18,5 @@ export default function drawTank(tank: Tank, camera: Camera) {
 
     // Tank position x, y is center of the tank
     camera.drawImageRotated(TANK_BODY, tank.position.x, tank.position.y, tank.realBaseRotation);
-    camera.drawImageRotated(TANK_TURRET, tank.position.x, tank.position.y, tank.rotation);
+    camera.drawImageRotated(TANK_TURRET, tank.position.x, tank.position.y, tank.visualTurretRotation);
 }

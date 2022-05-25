@@ -136,3 +136,27 @@ const tabContainers = [...document.getElementsByClassName('js-tab-container')];
 
 tabContainers.forEach(createTab);
 tabContainers.forEach(c => showTab(c, 0)); // Default all tabs to first one
+
+
+/**
+ * A rate limited function call
+ * @author Bowserinator
+ */
+class RateLimited {
+    /**
+     * @param {number} delayBetween delay between calls
+     * @param {Function} f Function to call
+     */
+    constructor(delayBetween, f) {
+        this.delayBetween = delayBetween;
+        this.f = f;
+        this.lastCalled = Date.now();
+    }
+
+    call() {
+        if (Date.now() - this.lastCalled < this.delayBetween)
+            return;
+        this.f();
+        this.lastCalled = Date.now();
+    }
+}
