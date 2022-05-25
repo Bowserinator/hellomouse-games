@@ -17,9 +17,9 @@ export const TANK_SPEED = 200;
 export const TANK_FIRE_DELAY = 100;
 
 // Maze generation
-export const CELL_SIZE = 120;
+export const CELL_SIZE = 130;
 export const WALL_THICKNESS = 10;
-export const MIN_MAZE_SIZE = 10;
-export const MAX_MAZE_SIZE = 15;
+export const MIN_MAZE_SIZE = 5;
+export const MAX_MAZE_SIZE = 12;
 
 // TODO: maze size parameters

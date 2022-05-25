@@ -68,4 +68,18 @@ export default class Camera {
         ctx.rect(position[0], position[1], size[0], size[1]);
         ctx.stroke();
     }
+
+    /**
+     * Fill a rectangle at a given world location
+     * @param {[number, number]} position [x, y] top-left
+     * @param {[number, number]} size [w, h]
+     * @param {string} color Color to fill
+     */
+    fillRect(position: [number, number], size: [number, number], color: string) {
+        let ctx = this.ctx;
+        position = this.worldToScreen(...position);
+
+        ctx.fillStyle = color;
+        ctx.fillRect(position[0], position[1], size[0], size[1]);
+    }
 }

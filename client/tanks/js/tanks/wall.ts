@@ -28,8 +28,6 @@ export default class Wall {
     }
 
     draw(camera: Camera) {
-        this.collider.draw(camera, 'red');
-
-        // TODO
+        camera.fillRect(this.collider.position.l(), this.collider.size.l(), '#333');
     }
 }

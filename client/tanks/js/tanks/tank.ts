@@ -133,9 +133,10 @@ export default class Tank {
 
         if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
             // TODO: bullet types + ammo
+            // TODO: explain 0.73 = 1/sqrt(2) or something
             let bullet = new NormalBullet(
-                this.position.add(Vector.vecFromRotation(this.rotation, TANK_SIZE)),
-                Vector.vecFromRotation(this.rotation, 4 * TANK_SIZE));
+                this.position.add(Vector.vecFromRotation(this.rotation, 0.73 * TANK_SIZE)),
+                Vector.vecFromRotation(this.rotation, 1.01 * TANK_SIZE)); // TODO velocity
             bullet.firedBy = this.id;
 
             gameState.addBullet(bullet);
