@@ -1,6 +1,7 @@
 import Collider from './collision.js';
 import Vector from './vector2d.js';
 import Camera from '../renderer/camera.js';
+import { WALL_COLOR, SHADOW_SIZE_X, SHADOW_SIZE_Y, SHADOW_COLOR } from '../vars.js';
 
 export default class Wall {
     collider: Collider;
@@ -28,6 +29,13 @@ export default class Wall {
     }
 
     draw(camera: Camera) {
-        camera.fillRect(this.collider.position.l(), this.collider.size.l(), '#333');
+        camera.fillRect(this.collider.position.l(), this.collider.size.l(), WALL_COLOR);
+    }
+
+    drawShadow(camera: Camera) {
+        camera.fillRect(
+            this.collider.position.l(),
+            [this.collider.size.x + SHADOW_SIZE_X, this.collider.size.y + SHADOW_SIZE_Y],
+            SHADOW_COLOR);
     }
 }

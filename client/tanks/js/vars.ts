@@ -22,4 +22,9 @@ export const WALL_THICKNESS = 10;
 export const MIN_MAZE_SIZE = 5;
 export const MAX_MAZE_SIZE = 12;
 
-// TODO: maze size parameters
+// Graphics
+export const WALL_COLOR = '#333';
+
+export const SHADOW_COLOR = '#bbb';
+export const SHADOW_SIZE_X = 10;
+export const SHADOW_SIZE_Y = 10;

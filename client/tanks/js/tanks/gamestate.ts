@@ -1,6 +1,7 @@
 import { Direction, TankSync, BulletType } from '../types.js';
 import { Bullet, NormalBullet } from './bullets.js';
 import Camera from '../renderer/camera.js';
+import { generateMazeImage, generateMazeShadowImage } from '../renderer/maze-image-gen.js';
 
 import Vector from './vector2d.js';
 import Wall from './wall.js';
@@ -37,6 +38,10 @@ export default class GameState {
     changedTankIDs: Set<number>;
 
     camera: Camera;
+
+    // Clientside only:
+    mazeLayer?: HTMLCanvasElement;
+    mazeShadowLayer?: HTMLCanvasElement;
 
     constructor(isClientSide = false) {
         this.isClientSide = isClientSide;
@@ -103,9 +108,13 @@ export default class GameState {
     }
 
     draw() {
-        // TODO: sort by z value
+        if (this.mazeShadowLayer)
+            this.camera.drawImage(this.mazeShadowLayer, 0, 0);
+
         this.tanks.forEach(tank => tank.draw(this.camera));
-        this.walls.forEach(wall => wall.draw(this.camera));
+
+        if (this.mazeLayer)
+            this.camera.drawImage(this.mazeLayer, 0, 0);
         this.bullets.forEach(bullet => bullet.draw(this.camera));
     }
 
@@ -140,8 +149,12 @@ export default class GameState {
         } else if (message.type === TankSync.REMOVE_BULLETS)
             this.bullets = this.bullets.filter((b, i) => !message.indices.includes(i));
         else if (message.type === TankSync.MAP_UPDATE) {
-            generateMaze(this, message.seed);
             this.tankIndex = message.id;
+            let [w, h] = generateMaze(this, message.seed);
+            if (this.isClientSide) {
+                this.mazeLayer = generateMazeImage(this.walls, w, h);
+                this.mazeShadowLayer = generateMazeShadowImage(this.walls, w, h);
+            }
         } else if (message.type === TankSync.TANK_DIED)
             this.tanks[message.id].isDead = true;
         else if (message.type === TankSync.SYNC_ALL_BULLETS) {

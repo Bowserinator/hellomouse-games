@@ -3,7 +3,7 @@
  * @param {string} path Path to img
  * @param {number} width Width in px
  * @param {number} height Height in px
- * @return HTMLCanvasElement
+ * @return {HTMLCanvasElement}
  */
 export async function getImage(path: string, width: number, height: number) {
     let img = new Image();
