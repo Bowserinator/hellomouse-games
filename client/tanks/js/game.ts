@@ -151,7 +151,9 @@ window.onmousemove = e => {
         return;
 
     // TODO not always 0 somehow get own ID
-    window.gameState.tanks[gameState.tankIndex].rotation = Math.atan2(dir[1], dir[0]); // TODO is it always 0?
+    window.gameState.tanks[gameState.tankIndex].rotation =
+        window.gameState.tanks[gameState.tankIndex].visualTurretRotation =
+        Math.atan2(dir[1], dir[0]); // TODO is it always 0?
     UPDATE_ROTATION.call();
 };
 
