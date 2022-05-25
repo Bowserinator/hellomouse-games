@@ -26,7 +26,7 @@ interface SyncMessage {
 export default class GameState {
     isClientSide: boolean;
     tanks: Array<Tank>;
-    tankIndex: number;
+    tankIndex: number; // TODO unused?
     walls: Array<Wall>;
     bullets: Array<Bullet>;
 

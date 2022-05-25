@@ -68,6 +68,14 @@ export default class Vector2D {
         return [this.x, this.y];
     }
 
+    /**
+     * Are both components zero?
+     * @return {boolean}
+     */
+    isZero() {
+        return this.x === 0 && this.y === 0;
+    }
+
     /** Round the components (in place) */
     round() {
         this.x = Math.round(this.x);

@@ -28,7 +28,7 @@ export default class Wall {
     }
 
     draw(camera: Camera) {
-        this.collider.draw(camera, [255, 0, 0]);
+        this.collider.draw(camera, 'red');
 
         // TODO
     }

@@ -129,7 +129,18 @@ window.onkeyup = e => {
 
 
 window.onmousemove = e => {
-    // TODO aim gun
+    const rect = canvas.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+    let dir = [
+        x - canvas.width / 2,
+        y - canvas.height / 2
+    ];
+    if (dir[0] === 0 && dir[1] === 0)
+        return;
+
+    // TODO not always 0 somehow get own ID
+    window.gameState.tanks[0].rotation = Math.atan2(dir[1], dir[0]); // TODO is it always 0?
 };
 
 window.onmousedown = e => {

@@ -12,39 +12,60 @@ export default class Camera {
     }
 
     /**
-     * Render a perspective aligned rectangle
-     * @param {[number, number, number]} position World location to draw this rectangle (top-left corner)
-     * @param {[number, number, number]} size Size of rectangle
-     * @param {number} layers Number of layers to draw, set to -1 to equal height (maxes out at height of prism)
-     * @param {[number, number, number]} color RGB color
-     * @param {number} darken Float 0-1, 0 = bottom becomes black, 1 = uniform color
+     * Transform world coordinates to screen coordinates
+     * @param {number} x World x
+     * @param {number} y World y
+     * @return {[number, number]} [screen x, screen y]
      */
-    drawRectangularPrism(
-        position: [number, number, number],
-        size: [number, number, number],
-        layers: number, color: [number, number, number], darken: number) {
-        // Determine if rectangle is offscreen
+    worldToScreen(x: number, y: number) {
+        return [
+            x - this.position.x,
+            y - this.position.y
+        ];
+    }
 
-        // Draw based on camera position
+    /**
+     * Render an image with given world coordinates
+     * @param {HTMLCanvasElement | Image | null} img If null ignored
+     * @param {number} x Top left corner x
+     * @param {number} y Top left corner y
+     */
+    drawImage(img: HTMLCanvasElement | Image | null, x: number, y: number) {
+        if (img === null) return;
+        [x, y] = this.worldToScreen(x, y);
+        this.ctx.drawImage(img, x, y);
+    }
+
+    /**
+     * Render an image with given world coordinates with rotation
+     * @param {HTMLCanvasElement | Image | null} img If null ignored
+     * @param {number} x Center x
+     * @param {number} y Center y
+     * @param {rotation} rotation Rotation CCW in radians
+     */
+    drawImageRotated(img: HTMLCanvasElement | Image | null, x: number, y: number, rotation: number) {
+        if (img === null) return;
+
+        [x, y] = this.worldToScreen(x, y);
+        this.ctx.setTransform(1, 0, 0, 1, x, y); // Sets scale=1 and origin
+        this.ctx.rotate(rotation);
+        this.ctx.drawImage(img, -img.width / 2, -img.height / 2);
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+    }
+
+    /**
+     * Stroke a rectangle at a given world location
+     * @param {[number, number]} position [x, y] top-left
+     * @param {[number, number]} size [w, h]
+     * @param {string} color Color to stroke
+     */
+    drawRect(position: [number, number], size: [number, number], color: string) {
         let ctx = this.ctx;
+        position = this.worldToScreen(...position);
 
-        const FOV = 0.0005; // TODO
-
-        for (let layer = position[2];
-            layer < position[2] + size[2];
-            layer += Math.max(1, Math.round(size[2] / layers))) {
-            let correctedPos = [position[0] + size[0] / 2, position[1] + size[1] / 2];
-            let offsetX = -layer * this.position.x - correctedPos[0];
-            let offsetY = -layer * this.position.y - correctedPos[1];
-
-            let d = (layer - position[2]) / size[2];
-            d = (1 - darken) * d + darken;
-
-            ctx.fillStyle = `rgb(${color[0] * d}, ${color[1] * d}, ${color[2] * d})`;
-            ctx.fillRect(
-                position[0] - this.position.x - offsetX * FOV,
-                position[1] - this.position.y - offsetY * FOV - layer,
-                size[0], size[1]);
-        }
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.rect(position[0], position[1], size[0], size[1]);
+        ctx.stroke();
     }
 }

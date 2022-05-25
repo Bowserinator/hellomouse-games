@@ -106,11 +106,10 @@ export default class Collider {
     }
 
     /** Debug draw method */
-    draw(camera: Camera, color = [0, 255, 0]) {
-        let [x, y] = this.position.l();
-        let [w, h] = this.size.l();
-
-        camera.drawRectangularPrism(
-            [x, y, 0], [w, h, 20], 5, color, 0);
+    draw(camera: Camera, color = 'green') {
+        camera.drawRect(
+            this.position.l() as [number, number],
+            this.size.l() as [number, number],
+            color);
     }
 }
