@@ -72,26 +72,26 @@ export default class Tank {
     }
 
     updateRotation(target: string, visual: string, rate: number, timestep: number) {
-        let targetRotation = this[target];
+        let targetRotation = (this as any)[target];
         while (targetRotation < 0)
             targetRotation += 2 * Math.PI;
 
         // Rotate visual rotation to match
         rate *= timestep;
-        let toRotate = (this[visual] < targetRotation) ? rate : -rate;
+        let toRotate = ((this as any)[visual] < targetRotation) ? rate : -rate;
 
         // Snap to target if error is < 1 rotation timestep
-        if (Math.abs(targetRotation - this[visual]) < rate)
-            this[visual] = targetRotation;
-        else if (Math.abs(targetRotation - this[visual]) < Math.PI)
-            this[visual] += toRotate;
+        if (Math.abs(targetRotation - (this as any)[visual]) < rate)
+            (this as any)[visual] = targetRotation;
+        else if (Math.abs(targetRotation - (this as any)[visual]) < Math.PI)
+            (this as any)[visual] += toRotate;
         else // Prevent making large turns when an opposite dir turn is faster
-            this[visual] -= toRotate;
+            (this as any)[visual] -= toRotate;
 
         // Normalize to 0 to 2PI
-        this[visual] %= (Math.PI * 2);
-        while (this[visual] < 0)
-            this[visual] += Math.PI * 2;
+        (this as any)[visual] %= (Math.PI * 2);
+        while ((this as any)[visual] < 0)
+            (this as any)[visual] += Math.PI * 2;
     }
 
     updateBaseRotation(timestep: number) {

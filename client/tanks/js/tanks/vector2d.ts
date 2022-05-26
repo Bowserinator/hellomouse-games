@@ -105,7 +105,7 @@ export default class Vector2D {
      * @param {number} v
      * @return {Vector2D} v * this
      */
-    mul(v) {
+    mul(v: number) {
         return new Vector2D(this.x * v, this.y * v);
     }
 

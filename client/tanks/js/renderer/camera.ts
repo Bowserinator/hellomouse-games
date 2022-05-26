@@ -1,14 +1,18 @@
 import Vector from '../tanks/vector2d.js';
 
 export default class Camera {
+    position: Vector;
+    ctx: CanvasRenderingContext2D;
+
+    /**
+     * Construct a new camera, which can draw stuff with a global offset
+     * @param {Vector} position Where the camera is centered
+     * @param {CanvasRenderingContext2D} ctx ctx to draw to
+     */
     constructor(position: Vector, ctx: CanvasRenderingContext2D) {
         // Where the camera is centered
         this.position = position;
         this.ctx = ctx;
-    }
-
-    render() {
-
     }
 
     /**
@@ -17,7 +21,7 @@ export default class Camera {
      * @param {number} y World y
      * @return {[number, number]} [screen x, screen y]
      */
-    worldToScreen(x: number, y: number) {
+    worldToScreen(x: number, y: number): [number, number] {
         return [
             x - this.position.x,
             y - this.position.y
@@ -26,11 +30,11 @@ export default class Camera {
 
     /**
      * Render an image with given world coordinates
-     * @param {HTMLCanvasElement | Image | null} img If null ignored
+     * @param {HTMLCanvasElement | typeof Image | CanvasImageSource | null} img If null ignored
      * @param {number} x Top left corner x
      * @param {number} y Top left corner y
      */
-    drawImage(img: HTMLCanvasElement | Image | null, x: number, y: number) {
+    drawImage(img: CanvasImageSource | null, x: number, y: number) {
         if (img === null) return;
         [x, y] = this.worldToScreen(x, y);
         this.ctx.drawImage(img, x, y);
@@ -38,12 +42,13 @@ export default class Camera {
 
     /**
      * Render an image with given world coordinates with rotation
-     * @param {HTMLCanvasElement | Image | null} img If null ignored
+     * @param {HTMLCanvasElement | Image | CanvasImageSource | null} img If null ignored
      * @param {number} x Center x
      * @param {number} y Center y
      * @param {rotation} rotation Rotation CCW in radians
      */
-    drawImageRotated(img: HTMLCanvasElement | Image | null, x: number, y: number, rotation: number) {
+    drawImageRotated(img: CanvasImageSource | null,
+        x: number, y: number, rotation: number) {
         if (img === null) return;
 
         [x, y] = this.worldToScreen(x, y);

@@ -21,6 +21,7 @@ interface SyncMessage {
     velocities: Array<[number, number]>;
     positions: Array<[number, number]>;
     rotations: Array<number>;
+    indices: Array<number>;
     seed: number;
 }
 
@@ -33,6 +34,7 @@ export default class GameState {
 
     lastUpdate: number;
     addedBullets: Set<Bullet>;
+    removedBulletIds: Set<number>;
     addedTanks: Array<number>;
     killedTanks: Set<number>;
     changedTankIDs: Set<number>;

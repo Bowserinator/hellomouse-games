@@ -12,7 +12,9 @@ import Wall from '../tanks/wall.js';
  */
 export function generateMazeImage(walls: Array<Wall>, width: number, height: number) {
     const canvas = document.createElement('canvas');
-    const camera = new Camera(new Vector(0, 0), canvas.getContext('2d'));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const camera = new Camera(new Vector(0, 0), ctx);
 
     canvas.width = CELL_SIZE * width + WALL_THICKNESS;
     canvas.height = CELL_SIZE * height + WALL_THICKNESS;
@@ -30,7 +32,9 @@ export function generateMazeImage(walls: Array<Wall>, width: number, height: num
  */
 export function generateMazeShadowImage(walls: Array<Wall>, width: number, height: number) {
     const canvas = document.createElement('canvas');
-    const camera = new Camera(new Vector(0, 0), canvas.getContext('2d'));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const camera = new Camera(new Vector(0, 0), ctx);
 
     canvas.width = CELL_SIZE * width + WALL_THICKNESS + SHADOW_SIZE_X;
     canvas.height = CELL_SIZE * height + WALL_THICKNESS + SHADOW_SIZE_Y;

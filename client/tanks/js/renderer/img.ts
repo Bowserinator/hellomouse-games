@@ -13,6 +13,10 @@ export async function getImage(path: string, width: number, height: number) {
     let canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
-    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+
+    let ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.drawImage(img, 0, 0, width, height);
     return canvas;
 }

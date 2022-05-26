@@ -1,5 +1,6 @@
 import Vector from './vector2d.js';
 import Collider from './collision.js';
+import Tank from './tank.js';
 import GameState from './gamestate.js';
 import { BulletType } from '../types.js';
 import { BULLET_DESPAWN_TIME, NORMAL_BULLET_SIZE, NORMAL_BULLET_SPEED } from '../vars.js';

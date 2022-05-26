@@ -1,10 +1,10 @@
 import { TANK_SIZE, TANK_TURRET_SIZE } from '../vars.js';
-import Tank from '../tanks/Tank.js';
+import Tank from '../tanks/tank.js';
 import Camera from './camera.js';
 import { getImage } from './img.js';
 
-let TANK_BODY = null;
-let TANK_TURRET = null;
+let TANK_BODY: HTMLCanvasElement | undefined | null = null;
+let TANK_TURRET: HTMLCanvasElement | undefined | null = null;
 
 (async () => {
     if (typeof Image === 'undefined') return; // Server side, Image doesn't exist
