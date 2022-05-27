@@ -150,10 +150,12 @@ window.onmousemove = e => {
     if (dir[0] === 0 && dir[1] === 0)
         return;
 
-    // TODO not always 0 somehow get own ID
+    let rot = Math.atan2(dir[1], dir[0]);
+    if (rot < 0) rot += Math.PI * 2; // Makes turning less jittery
+
     window.gameState.tanks[gameState.tankIndex].rotation =
         window.gameState.tanks[gameState.tankIndex].visualTurretRotation =
-        Math.atan2(dir[1], dir[0]); // TODO is it always 0?
+        rot;
     UPDATE_ROTATION.call();
 };
 
