@@ -28,12 +28,22 @@ export class Bullet {
     config: BulletConfig;
     rotation: number;
 
+    /**
+     * Construct a bullet
+     * @param {Vector} position Center of the bullet
+     * @param {Vector} direction Dir to fire in, speed is dependent on config
+     * @param {BulletConfig} config Bullet properties
+     */
     constructor(position: Vector, direction: Vector, config: BulletConfig) {
         if (this.constructor === Bullet)
             throw new Error('Bullet is Abstract');
 
+        position = position.copy();
+        position.x -= config.size.x / 2;
+        position.y -= config.size.y / 2; // Center bullet
+
         this.velocity = direction.normalize().mul(config.speed);
-        this.collider = new Collider(position.copy(), config.size);
+        this.collider = new Collider(position, config.size);
         this.createdTime = Date.now();
         this.firedBy = -1;
         this.type = config.type;
@@ -57,7 +67,7 @@ export class Bullet {
         let bounces;
         [this.velocity, bounces] = this.collider.bounce(gameState, this.velocity, timestep);
 
-        if (!this.config.allowBounce && bounces > 0) {
+        if (!gameState.isClientSide && !this.config.allowBounce && bounces > 0) {
             gameState.removeBullet(this);
             return;
         }
@@ -92,16 +102,39 @@ export class Bullet {
         drawBullet(this, camera, this.config.rotate);
     }
 
-    drawFirePreview(camera: Camera) {
-
-    }
-
     onFire() {
 
     }
 
     onDeath() {
 
+    }
+
+    drawFirePreview(camera: Camera, gameState: GameState) {
+        Bullet.drawFirePreview(camera, 2, 0.05, 9, '#777', this, gameState);
+    }
+
+    /**
+     * Helper to draw the fire preview
+     * @param {Camera} camera
+     * @param {number} circleSize Size of each circle
+     * @param {number} circleTime Time between each circle
+     * @param {number} circleCount Number of circles to draw
+     * @param {string} color Color of the circles
+     * @param {Bullet} bullet
+     * @param {GameState} gameState
+     */
+    static drawFirePreview(camera: Camera, circleSize: number, circleTime: number,
+        circleCount: number, color: string, bullet: Bullet, gameState: GameState) {
+        let collider = new Collider(bullet.collider.position.copy(), bullet.collider.size.copy());
+
+        for (let i = 0; i < circleCount; i++) {
+            let bounces = collider.bounce(gameState, bullet.velocity, circleTime)[1];
+            if (!bullet.config.allowBounce && bounces > 0) return;
+
+            camera.fillCircle([collider.position.x + collider.size.x / 2, collider.position.y + collider.size.y / 2],
+                circleSize, color);
+        }
     }
 
     /**

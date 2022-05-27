@@ -113,7 +113,7 @@ export default class GameState {
         if (this.mazeShadowLayer)
             this.camera.drawImage(this.mazeShadowLayer, 0, 0);
 
-        this.tanks.forEach(tank => tank.draw(this.camera));
+        this.tanks.forEach(tank => tank.draw(this.camera, this));
 
         if (this.mazeLayer)
             this.camera.drawImage(this.mazeLayer, 0, 0);

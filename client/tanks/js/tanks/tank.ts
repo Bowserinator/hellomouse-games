@@ -2,7 +2,7 @@ import { Powerup, Direction } from '../types.js';
 import Collider from './collision.js';
 import Vector from './vector2d.js';
 import GameState from './gamestate.js';
-import { Bullet } from './bullets.js';
+import { Bullet, NormalBullet } from './bullets.js';
 import { BulletType } from '../types.js';
 import {
     TANK_SPEED, TANK_SIZE, TANK_AMMO, TANK_FIRE_DELAY,
@@ -23,6 +23,7 @@ export default class Tank {
     realBaseRotation: number;
     rotation: number; // Turret rotation, synced
     visualTurretRotation: number; // Visual only
+    fakeBullet: Bullet; // Used for visual path preview
 
     movement: Array<Direction>;
     isFiring: boolean;
@@ -48,6 +49,10 @@ export default class Tank {
         this.visualTurretRotation = rotation;
         this.targetBaseRotation = 0;
 
+        // TODO move to method
+        this.fakeBullet = Bullet.bulletFromType(BulletType.NORMAL,
+            ...this.getFiringPositionAndDirection());
+
         // Loaded from client intents
         this.movement = [Direction.NONE, Direction.NONE]; // horz, vert, none = not moving in that dir
         this.isFiring = false;
@@ -64,12 +69,28 @@ export default class Tank {
         let [x, y] = this.position.l();
         x -= TANK_SIZE / 2;
         y -= TANK_SIZE / 2;
-        this.collider = new Collider(new Vector(x, y), new Vector(TANK_SIZE, TANK_SIZE)); // TODO
+        this.collider = new Collider(new Vector(x, y), new Vector(TANK_SIZE, TANK_SIZE));
     }
 
-    draw(camera: Camera) {
+    draw(camera: Camera, gamestate: Gamestate) {
         if (this.isDead) return;
         drawTank(this, camera);
+
+        this.fakeBullet = Bullet.bulletFromType(BulletType.FAST,
+            ...this.getFiringPositionAndDirection()); // TODO: dont recreate but have set velocity + position shit
+        this.fakeBullet.drawFirePreview(camera, gamestate);
+    }
+
+    /**
+     * Get spawn pos + dir of a bullet that would be fired from this given this.rotation
+     * @return {[Vector, Vector]} Firing position, direction
+     */
+    getFiringPositionAndDirection(): [Vector, Vector] {
+        // 0.73 > 1/sqrt(2), the length of the diagonal from the center to a corner of the hitbox
+        // so the spawned bullet won't collide with the tank
+        let pos = this.position.add(Vector.vecFromRotation(this.rotation, 0.73 * TANK_SIZE));
+        let dir = Vector.vecFromRotation(this.rotation, 1);
+        return [pos, dir];
     }
 
     updateRotation(target: string, visual: string, rate: number, timestep: number) {
@@ -134,11 +155,9 @@ export default class Tank {
 
         if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
             // TODO: bullet types + ammo
-            // TODO: explain 0.73 = 1/sqrt(2) or something
             let bullet = Bullet.bulletFromType(
                 BulletType.FAST,
-                this.position.add(Vector.vecFromRotation(this.rotation, 0.73 * TANK_SIZE)),
-                Vector.vecFromRotation(this.rotation, 1));
+                ...this.getFiringPositionAndDirection());
 
             bullet.firedBy = this.id;
 

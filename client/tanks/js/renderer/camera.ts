@@ -87,4 +87,20 @@ export default class Camera {
         ctx.fillStyle = color;
         ctx.fillRect(position[0], position[1], size[0], size[1]);
     }
+
+    /**
+     * Fill a circle at given world location
+     * @param {[number, number]} position [x, y] center
+     * @param {number} radius Radius of circle (px)
+     * @param {string} color Color to fill
+     */
+    fillCircle(position: [number, number], radius: number, color: string) {
+        let ctx = this.ctx;
+        position = this.worldToScreen(...position);
+
+        ctx.beginPath();
+        ctx.arc(position[0], position[1], radius, 0, 2 * Math.PI, false);
+        ctx.fillStyle = color;
+        ctx.fill();
+    }
 }
