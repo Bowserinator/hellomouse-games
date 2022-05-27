@@ -30,11 +30,11 @@ export default class Camera {
 
     /**
      * Render an image with given world coordinates
-     * @param {HTMLCanvasElement | typeof Image | CanvasImageSource | null} img If null ignored
+     * @param {HTMLCanvasElement | CanvasImageSource | null} img If null ignored
      * @param {number} x Top left corner x
      * @param {number} y Top left corner y
      */
-    drawImage(img: CanvasImageSource | null, x: number, y: number) {
+    drawImage(img: HTMLCanvasElement | CanvasImageSource | null, x: number, y: number) {
         if (img === null) return;
         [x, y] = this.worldToScreen(x, y);
         this.ctx.drawImage(img, x, y);
@@ -42,12 +42,12 @@ export default class Camera {
 
     /**
      * Render an image with given world coordinates with rotation
-     * @param {HTMLCanvasElement | Image | CanvasImageSource | null} img If null ignored
+     * @param {HTMLCanvasElement | CanvasImageSource | null} img If null ignored
      * @param {number} x Center x
      * @param {number} y Center y
      * @param {rotation} rotation Rotation CCW in radians
      */
-    drawImageRotated(img: CanvasImageSource | null,
+    drawImageRotated(img: HTMLCanvasElement | CanvasImageSource | null,
         x: number, y: number, rotation: number) {
         if (img === null) return;
 

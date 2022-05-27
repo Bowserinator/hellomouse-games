@@ -1,9 +1,4 @@
 
-// Bullets
-export const BULLET_DESPAWN_TIME = 10000; // Time bullets last in ms
-export const NORMAL_BULLET_SIZE = 5;
-export const NORMAL_BULLET_SPEED = 300;
-
 // TODO: bullet sizes
 
 // Tanks

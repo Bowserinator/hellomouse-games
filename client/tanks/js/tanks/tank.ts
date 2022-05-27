@@ -2,7 +2,8 @@ import { Powerup, Direction } from '../types.js';
 import Collider from './collision.js';
 import Vector from './vector2d.js';
 import GameState from './gamestate.js';
-import { NormalBullet } from './bullets.js';
+import { Bullet } from './bullets.js';
+import { BulletType } from '../types.js';
 import {
     TANK_SPEED, TANK_SIZE, TANK_AMMO, TANK_FIRE_DELAY,
     TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE } from '../vars.js';
@@ -134,9 +135,11 @@ export default class Tank {
         if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
             // TODO: bullet types + ammo
             // TODO: explain 0.73 = 1/sqrt(2) or something
-            let bullet = new NormalBullet(
+            let bullet = Bullet.bulletFromType(
+                BulletType.FAST,
                 this.position.add(Vector.vecFromRotation(this.rotation, 0.73 * TANK_SIZE)),
-                Vector.vecFromRotation(this.rotation, 1.01 * TANK_SIZE)); // TODO velocity
+                Vector.vecFromRotation(this.rotation, 1));
+
             bullet.firedBy = this.id;
 
             gameState.addBullet(bullet);
