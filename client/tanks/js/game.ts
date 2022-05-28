@@ -6,6 +6,7 @@ import Collider from './tanks/collision.js';
 import GameState from './tanks/gamestate.js';
 import { Direction, Action, TankSync } from './types.js';
 import Camera from './renderer/camera.js';
+import { CAMERA_EDGE_MARGIN } from './vars.js';;
 
 import connection from './client.js';
 
@@ -36,6 +37,15 @@ const gameState = new GameState(true);
 window.gameState = gameState;
 
 
+function getDir(x, y) {
+    let pos = gameState.camera.worldToScreen(...gameState.tanks[gameState.tankIndex].position.l());
+    return [
+        x - pos[0],
+        y - pos[1]
+    ];
+}
+
+
 function drawBoard() {
     // if (gameState.tanks[0]) {
     //     if (keys['a'])
@@ -60,6 +70,16 @@ function drawBoard() {
     if (gameState.tanks[gameState.tankIndex])
         gameState.camera.position = gameState.tanks[gameState.tankIndex].position.add(
             new Vector(-canvas.width / 2, -canvas.height / 2));
+
+    gameState.camera.position.x = Math.max(-CAMERA_EDGE_MARGIN, gameState.camera.position.x);
+    gameState.camera.position.y = Math.max(-CAMERA_EDGE_MARGIN, gameState.camera.position.y);
+
+    if (gameState.mazeLayer) {
+        gameState.camera.position.x =
+            Math.min(gameState.mazeLayer.width - canvas.width + CAMERA_EDGE_MARGIN, gameState.camera.position.x);
+        gameState.camera.position.y =
+            Math.min(gameState.mazeLayer.height - canvas.height + CAMERA_EDGE_MARGIN, gameState.camera.position.y);
+    }
 
     gameState.update();
 
@@ -143,10 +163,7 @@ window.onmousemove = e => {
     const rect = canvas.getBoundingClientRect();
     let x = e.clientX - rect.left;
     let y = e.clientY - rect.top;
-    let dir = [
-        x - canvas.width / 2,
-        y - canvas.height / 2
-    ];
+    let dir = getDir(x, y);
     if (dir[0] === 0 && dir[1] === 0)
         return;
 
@@ -165,10 +182,7 @@ window.onmousedown = e => {
     const rect = canvas.getBoundingClientRect();
     let x = e.clientX - rect.left;
     let y = e.clientY - rect.top;
-    let dir = [
-        x - canvas.width / 2,
-        y - canvas.height / 2
-    ]; // TODO
+    let dir = getDir(x, y);
 
     connection.send(JSON.stringify({ type: 'MOVE', action: Action.FIRE, direction: dir }));
 };
