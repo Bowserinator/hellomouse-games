@@ -8,8 +8,11 @@ import {
     TANK_SPEED, TANK_SIZE, TANK_AMMO, TANK_FIRE_DELAY,
     TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE } from '../vars.js';
 
+import { PowerupSingleton, ShieldPowerup } from './powerups/powerups.js';
+
 import Camera from '../renderer/camera.js';
-import drawTank from '../renderer/tank-render.js';
+import drawTank from '../renderer/render-tank.js';
+
 
 export default class Tank {
     position: Vector;
@@ -17,6 +20,7 @@ export default class Tank {
     ammo: number;
     lastFired: number;
     powerup: Powerup;
+    powerupSingleton: PowerupSingleton | null; // TODO rename or remove powerup
     collider: Collider;
 
     targetBaseRotation: number; // Rotation of base, visual only
@@ -39,6 +43,7 @@ export default class Tank {
         this.ammo = TANK_AMMO;
         this.lastFired = 0; // UNIX timestamp last fired a bullet
         this.powerup = Powerup.NONE;
+        this.powerupSingleton = new ShieldPowerup(this);
         this.id = id;
 
         // For physics
@@ -79,6 +84,9 @@ export default class Tank {
         this.fakeBullet = Bullet.bulletFromType(BulletType.FAST,
             ...this.getFiringPositionAndDirection()); // TODO: dont recreate but have set velocity + position shit
         this.fakeBullet.drawFirePreview(camera, gamestate);
+
+        if (this.powerupSingleton)
+            this.powerupSingleton.draw(camera);
     }
 
     /**
@@ -164,5 +172,8 @@ export default class Tank {
             gameState.addBullet(bullet);
             this.lastFired = Date.now();
         }
+
+        if (this.powerupSingleton)
+            this.powerupSingleton.update(gameState);
     }
 }

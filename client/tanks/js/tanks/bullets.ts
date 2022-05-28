@@ -4,7 +4,7 @@ import Tank from './tank.js';
 import GameState from './gamestate.js';
 import { BulletType } from '../types.js';
 import Camera from '../renderer/camera.js';
-import drawBullet from '../renderer/bullet-render.js';
+import drawBullet from '../renderer/render-bullet.js';
 
 interface BulletConfig {
     imageUrl: string; // // Abs url to image, ie /tanks/img/...
