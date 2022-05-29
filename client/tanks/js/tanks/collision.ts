@@ -84,9 +84,10 @@ export default class Collider {
      * @param {GameState} gameState
      * @param {Vector} velocity Initial v
      * @param {number} time timestep
+     * @param {boolean} allowBounce if false, terminates upon collision
      * @return {[Vector, number]} [post-velocity, bounce count]
      */
-    bounce(gameState: GameState, velocity: Vector, time: number): [Vector, number] {
+    bounce(gameState: GameState, velocity: Vector, time: number, allowBounce = true): [Vector, number] {
         const STEP_SIZE = 2;
         let steps = time * velocity.magnitude();
         let v = velocity.normalize();
@@ -112,6 +113,9 @@ export default class Collider {
                         velocity.x *= -1;
                         v.x *= -1;
                     }
+
+                    if (!allowBounce)
+                        return [velocity, bounceCount]; // Collided, stop
                 }
             steps -= STEP_SIZE;
         }

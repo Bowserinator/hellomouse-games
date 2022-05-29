@@ -2,6 +2,8 @@ import Vector from './vector2d.js';
 import Collider from './collision.js';
 import Tank from './tank.js';
 import GameState from './gamestate.js';
+import Explosion from './explosion.js';
+
 import { BulletType } from '../types.js';
 import Camera from '../renderer/camera.js';
 import drawBullet from '../renderer/render-bullet.js';
@@ -65,7 +67,7 @@ export class Bullet {
         }
 
         let bounces;
-        [this.velocity, bounces] = this.collider.bounce(gameState, this.velocity, timestep);
+        [this.velocity, bounces] = this.collider.bounce(gameState, this.velocity, timestep, this.config.allowBounce);
 
         if (!gameState.isClientSide && !this.config.allowBounce && bounces > 0) {
             gameState.removeBullet(this);
@@ -108,7 +110,7 @@ export class Bullet {
 
     }
 
-    onDeath() {
+    onRemove(gamestate: GameState) {
 
     }
 
@@ -240,5 +242,9 @@ export class HighSpeedBullet extends Bullet {
 
     constructor(position: Vector, direction: Vector) {
         super(position, direction, HighSpeedBullet.config);
+    }
+
+    onRemove(gamestate: GameState) {
+        gamestate.addExplosion(new Explosion(this.getCenter(), 5, 12, 100));
     }
 }

@@ -139,6 +139,18 @@ class TankGame extends Game {
             });
     }
 
+    sendNewExplosionUpdates() {
+        let newExplosions = [...this.state.addedExplosions];
+        this.broadcast({
+            type: TankSync.ADD_EXPLOSIONS,
+            positions: newExplosions.map(e => e.position.l()),
+            damageRadii: newExplosions.map(e => e.damageRadius),
+            graphicsRadii: newExplosions.map(e => e.graphicsRadius),
+            durations: newExplosions.map(e => e.duration),
+            graphics: newExplosions.map(e => e.graphics)
+        });
+    }
+
     gameLoop() {
         // TODO:
         // Send all added bullets
@@ -146,6 +158,7 @@ class TankGame extends Game {
 
         this.sendTankUpdates();
         this.state.update();
+        this.sendNewExplosionUpdates();
         this.sendBulletUpdates();
         this.syncBullets();
         this.sendTankDeadUpdates();

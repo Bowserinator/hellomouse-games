@@ -22,9 +22,14 @@ export enum TankSync {
     MAP_UPDATE,
     UPDATE_ALL_TANKS,
     TANK_DIED,
-    SYNC_ALL_BULLETS
+    SYNC_ALL_BULLETS,
+    ADD_EXPLOSIONS
 }
 
 export enum BulletType {
     NORMAL, MAGNET, BOMB, SMALL, LASER, FAST
+}
+
+export enum ExplosionGraphics {
+    SIMPLE
 }

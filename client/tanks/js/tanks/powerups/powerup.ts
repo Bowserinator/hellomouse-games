@@ -1,9 +1,3 @@
-
-
-// methods:
-// -draw()
-// -create(tank)
-
 import Tank from '../tank.js';
 import { Powerup } from '../../types.js';
 import Camera from '../../renderer/camera.js';
@@ -24,7 +18,7 @@ export class PowerupSingleton {
         // Override
     }
 
-    update(gameState: GameState) {
+    update(gameState: GameState, timestep: number) {
         // Override
     }
 
@@ -32,6 +26,6 @@ export class PowerupSingleton {
         // TODO: reset turret appearance and other values
         // Remove tank powerupSingleton + powerup
         // TODO: send update to client
-        this.tank.powerupSingleton = null;
+        this.tank.powerup = null;
     }
 }

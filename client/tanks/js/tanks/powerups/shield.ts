@@ -79,7 +79,7 @@ export class ShieldPowerup extends PowerupSingleton {
         });
     }
 
-    update(gameState: GameState) {
+    update(gameState: GameState, timestep: number) {
         let now = Date.now();
 
         // Deflect bullets

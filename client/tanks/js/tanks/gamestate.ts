@@ -1,4 +1,4 @@
-import { Direction, TankSync, BulletType } from '../types.js';
+import { Direction, TankSync, BulletType, ExplosionGraphics } from '../types.js';
 import { Bullet, NormalBullet } from './bullets.js';
 import Camera from '../renderer/camera.js';
 import { generateMazeImage, generateMazeShadowImage } from '../renderer/maze-image-gen.js';
@@ -6,6 +6,7 @@ import { generateMazeImage, generateMazeShadowImage } from '../renderer/maze-ima
 import Vector from './vector2d.js';
 import Wall from './wall.js';
 import Tank from './tank.js';
+import Explosion from './explosion.js';
 import generateMaze from './map-gen.js';
 
 interface SyncMessage {
@@ -23,6 +24,11 @@ interface SyncMessage {
     rotations: Array<number>;
     indices: Array<number>;
     seed: number;
+
+    damageRadii: Array<number>;
+    graphicsRadii: Array<number>;
+    durations: Array<number>;
+    graphics: Array<ExplosionGraphics>;
 }
 
 export default class GameState {
@@ -31,6 +37,7 @@ export default class GameState {
     tankIndex: number;
     walls: Array<Wall>;
     bullets: Array<Bullet>;
+    explosions: Array<Explosion>;
 
     lastUpdate: number;
     addedBullets: Set<Bullet>;
@@ -38,6 +45,7 @@ export default class GameState {
     addedTanks: Array<number>;
     killedTanks: Set<number>;
     changedTankIDs: Set<number>;
+    addedExplosions: Set<Explosion>;
 
     camera: Camera;
 
@@ -51,12 +59,14 @@ export default class GameState {
         this.tankIndex = 0; // Client tank index
         this.walls = [];
         this.bullets = [];
+        this.explosions = [];
 
         this.lastUpdate = Date.now(); // Time of last update as UNIX timestamp
         this.addedBullets = new Set();
         this.removedBulletIds = new Set();
         this.addedTanks = []; // Requires order
         this.changedTankIDs = new Set();
+        this.addedExplosions = new Set();
         this.killedTanks = new Set();
     }
 
@@ -82,10 +92,24 @@ export default class GameState {
         this.addedBullets.add(bullet);
     }
 
+    addExplosion(explosion: Explosion) {
+        this.explosions.push(explosion);
+        this.addedExplosions.add(explosion);
+    }
+
     removeBullet(bullet: Bullet) {
+        bullet.onRemove(this);
+
         let i = this.bullets.indexOf(bullet);
         if (i > -1) this.removedBulletIds.add(i);
+        // TODO: more efficent splice
         this.bullets = this.bullets.filter((b: Bullet) => b !== bullet);
+    }
+
+    removeExplosion(explosion: Explosion) {
+        // Explosions don't need removal sync since they decay naturally over time
+        this.explosions = this.explosions.filter((e: Explosion) => e !== explosion);
+        this.addedExplosions.delete(explosion);
     }
 
     killTank(tank: Tank) {
@@ -100,12 +124,14 @@ export default class GameState {
         this.changedTankIDs.clear();
         this.addedTanks = [];
         this.killedTanks.clear();
+        this.addedExplosions.clear();
     }
 
     update() {
         let timestep = (Date.now() - this.lastUpdate) / 1000;
         this.tanks.forEach(tank => tank.update(this, timestep));
         this.bullets.forEach(bullet => bullet.update(this, timestep));
+        this.explosions.forEach(explosion => explosion.update(this, timestep));
         this.lastUpdate = Date.now();
     }
 
@@ -118,6 +144,8 @@ export default class GameState {
         if (this.mazeLayer)
             this.camera.drawImage(this.mazeLayer, 0, 0);
         this.bullets.forEach(bullet => bullet.draw(this.camera));
+
+        this.explosions.forEach(explosion => explosion.draw(this.camera, this));
     }
 
     /**
@@ -167,7 +195,15 @@ export default class GameState {
                     new Vector(...message.positions[i]),
                     new Vector(...message.velocities[i])
                 ));
-        }
+        } else if (message.type === TankSync.ADD_EXPLOSIONS)
+            for (let i = 0; i < message.positions.length; i++)
+                this.addExplosion(new Explosion(
+                    new Vector(...message.positions[i]),
+                    message.damageRadii[i],
+                    message.graphicsRadii[i],
+                    message.durations[i],
+                    message.graphics[i]
+                ));
         return true;
     }
 }

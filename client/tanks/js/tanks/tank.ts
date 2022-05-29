@@ -19,8 +19,7 @@ export default class Tank {
     velocity: Vector;
     ammo: number;
     lastFired: number;
-    powerup: Powerup;
-    powerupSingleton: PowerupSingleton | null; // TODO rename or remove powerup
+    powerup: PowerupSingleton | null;
     collider: Collider;
 
     targetBaseRotation: number; // Rotation of base, visual only
@@ -44,8 +43,7 @@ export default class Tank {
         this.ammo = TANK_AMMO;
         this.lastFired = 0; // UNIX timestamp last fired a bullet
         this.invincible = false;
-        this.powerup = Powerup.NONE;
-        this.powerupSingleton = new ShieldPowerup(this);
+        this.powerup = new ShieldPowerup(this);
         this.id = id;
 
         // For physics
@@ -55,8 +53,6 @@ export default class Tank {
         // Visual only
         this.visualTurretRotation = rotation;
         this.targetBaseRotation = 0;
-
-        // TODO move to method
         this.fakeBullet = Bullet.bulletFromType(BulletType.NORMAL,
             ...this.getFiringPositionAndDirection());
 
@@ -87,8 +83,8 @@ export default class Tank {
             ...this.getFiringPositionAndDirection()); // TODO: dont recreate but have set velocity + position shit
         this.fakeBullet.drawFirePreview(camera, gamestate);
 
-        if (this.powerupSingleton)
-            this.powerupSingleton.draw(camera);
+        if (this.powerup)
+            this.powerup.draw(camera);
     }
 
     /**
@@ -166,7 +162,7 @@ export default class Tank {
         if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
             // TODO: bullet types + ammo
             let bullet = Bullet.bulletFromType(
-                BulletType.NORMAL,
+                BulletType.FAST,
                 ...this.getFiringPositionAndDirection());
 
             bullet.firedBy = this.id;
@@ -175,7 +171,7 @@ export default class Tank {
             this.lastFired = Date.now();
         }
 
-        if (this.powerupSingleton)
-            this.powerupSingleton.update(gameState);
+        if (this.powerup)
+            this.powerup.update(gameState, timestep);
     }
 }
