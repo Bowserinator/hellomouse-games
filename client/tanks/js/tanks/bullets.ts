@@ -83,6 +83,8 @@ export class Bullet {
         // Hit tanks
         for (let tank of gameState.tanks.filter((t: Tank) => !t.isDead))
             if (this.collider.collidesWith(tank.collider) && !gameState.isClientSide) {
+                if (tank.invincible)
+                    continue;
                 if (tank.id !== this.firedBy && this.firedBy > -1) // No points for suicide shots
                     gameState.tanks[this.firedBy].score++;
                 gameState.killTank(tank);

@@ -1,11 +1,15 @@
-import Camera from './camera.js';
+import Camera from '../../renderer/camera.js';
+import Tank from '../tank.js';
+import GameState from '../gamestate.js';
 import { TANK_SIZE } from '../../vars.js';
 import { PowerupSingleton } from './powerup.js';
 import { Powerup } from '../../types.js';
+import Vector from '../vector2d.js';
 
 const SHIELD_DURATION = 6000; // How long the shield lasts
 const SHIELD_WARNING = 1000; // Time (ms) before shield goes down to flicker
-
+const SHIELD_RADIUS = TANK_SIZE * 0.72;
+const HIT_FLICKER_TIME = 60;
 
 interface ShieldConfig {
     radius: number;
@@ -15,7 +19,7 @@ interface ShieldConfig {
     shadowColor?: string;    // Blur (glow) color (default: blue)
     shadowBlur?: number;     // Shadow blur radius (outer edge) (default: 10)
     maxAlpha?: number;       // Max alpha for the pulses (default: 0.6)
-    flicker?: number;
+    flicker?: boolean;
     flickerRate?: number;    // in ms (half a period) (default: 60ms)
 }
 
@@ -54,27 +58,50 @@ export function drawShield(camera: Camera, center: [number, number], config: Shi
 
 /** Force field around the tank */
 export class ShieldPowerup extends PowerupSingleton {
-    start: number;
-    flicker: boolean;
+    start: number; // Time created
+    flicker: boolean; // Is shield flickering?
+    lastHitTime: number; // Time last projectile hit
 
     constructor(tank: Tank) {
         super(tank, Powerup.SHIELD);
         this.start = Date.now();
         this.flicker = false;
+        this.lastHitTime = 0;
+
+        this.tank.invincible = true;
     }
 
     draw(camera: Camera) {
         drawShield(camera, this.tank.position.l(), {
-            radius: TANK_SIZE * 0.72,
-            flicker: this.flicker
+            radius: SHIELD_RADIUS,
+            flicker: this.flicker,
+            color: Date.now() - this.lastHitTime < HIT_FLICKER_TIME ? '#b3d3ff' : '#529cff'
         });
     }
 
     update(gameState: GameState) {
         let now = Date.now();
+
+        // Deflect bullets
+        for (let bullet of gameState.bullets)
+            if (bullet.collider.within(this.tank.position, SHIELD_RADIUS)) {
+                let center = bullet.getCenter();
+                bullet.velocity = (new Vector(
+                    center.x - this.tank.position.x,
+                    center.y - this.tank.position.y
+                )).normalize().mul(bullet.velocity.magnitude());
+                this.lastHitTime = Date.now();
+            }
+
+        // Duration check
         if (now - this.start > SHIELD_DURATION)
-            this.stop();
+            this.stop(gameState);
         else if (now - this.start > SHIELD_DURATION - SHIELD_WARNING)
             this.flicker = true;
+    }
+
+    stop(gameState: GameState) {
+        this.tank.invincible = false;
+        super.stop(gameState);
     }
 }

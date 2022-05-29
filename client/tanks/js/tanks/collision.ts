@@ -65,6 +65,19 @@ export default class Collider {
     }
 
     /**
+     * Is the center of this collider within a certain distance
+     * from a given center?
+     * @param {Vector} center Distance to center
+     * @param {number} distance Radius from center
+     * @return {boolean}
+     */
+    within(position: Vector, distance: number) {
+        let centerX = this.position.x + this.size.x / 2;
+        let centerY = this.position.y + this.size.y / 2;
+        return Math.pow(centerX - position.x, 2) + Math.pow(centerY - position.y, 2) <= distance * distance;
+    }
+
+    /**
      * Perform a bounce of the collider given an initial velocity
      * and timestep. Updates the collider's position in place
      *

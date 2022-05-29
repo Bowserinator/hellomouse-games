@@ -6,10 +6,15 @@
 
 import Tank from '../tank.js';
 import { Powerup } from '../../types.js';
+import Camera from '../../renderer/camera.js';
+import GameState from '../gamestate.js';
 
 //     NONE, MISSILE, LASER, SHOTGUN, BOMB, CLOAK, SHIELD
 
 export class PowerupSingleton {
+    tank: Tank;
+    type: Powerup;
+
     constructor(tank: Tank, type: Powerup) {
         this.type = type;
         this.tank = tank;

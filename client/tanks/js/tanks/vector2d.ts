@@ -62,9 +62,9 @@ export default class Vector2D {
 
     /**
      * Get list representation of the components of the vector
-     * @return {Array<number>}
+     * @return {[number, number]}
      */
-    l() {
+    l(): [number, number] {
         return [this.x, this.y];
     }
 

@@ -34,6 +34,7 @@ export default class Tank {
     isDead: boolean;
     id: number;
     score: number;
+    invincible: boolean;
 
     speed: number;
 
@@ -42,6 +43,7 @@ export default class Tank {
         this.velocity = new Vector(0, 0);
         this.ammo = TANK_AMMO;
         this.lastFired = 0; // UNIX timestamp last fired a bullet
+        this.invincible = false;
         this.powerup = Powerup.NONE;
         this.powerupSingleton = new ShieldPowerup(this);
         this.id = id;
@@ -77,7 +79,7 @@ export default class Tank {
         this.collider = new Collider(new Vector(x, y), new Vector(TANK_SIZE, TANK_SIZE));
     }
 
-    draw(camera: Camera, gamestate: Gamestate) {
+    draw(camera: Camera, gamestate: GameState) {
         if (this.isDead) return;
         drawTank(this, camera);
 
@@ -164,7 +166,7 @@ export default class Tank {
         if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
             // TODO: bullet types + ammo
             let bullet = Bullet.bulletFromType(
-                BulletType.FAST,
+                BulletType.NORMAL,
                 ...this.getFiringPositionAndDirection());
 
             bullet.firedBy = this.id;
