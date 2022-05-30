@@ -4,6 +4,7 @@ import Client from '../client.js';
 import GameState from '../../client/tanks/js/tanks/gamestate.js';
 import { Direction, Action, TankSync } from '../../client/tanks/js/types.js';
 import Tank from '../../client/tanks/js/tanks/tank.js';
+import { LaserBullet } from '../../client/tanks/js/tanks/bullets/bullets.js';
 import Vector from '../../client/tanks/js/tanks/vector2d.js';
 import generateMaze from '../../client/tanks/js/tanks/map-gen.js';
 
@@ -104,8 +105,10 @@ class TankGame extends Game {
                 type: TankSync.ADD_BULLET,
                 position: bullet.collider.position.l(),
                 velocity: bullet.velocity.l(),
+                extra: bullet.getExtra(),
                 bulletType: bullet.type
             });
+
 
         // Send remove bullet state update
         if (this.state.removedBulletIds.size)
@@ -121,11 +124,19 @@ class TankGame extends Game {
         if (this.state.bullets.length === 0 && this.dontSyncBullets)
             return;
 
+        let extras = {};
+        for (let i = 0; i < this.state.bullets.length; i++) {
+            let extra = this.state.bullets[i].getExtra();
+            if (extra !== undefined)
+                extras[i] = extra;
+        }
+
         this.broadcast({
             type: TankSync.SYNC_ALL_BULLETS,
             positions: this.state.bullets.map(b => b.collider.position.l()),
             velocities: this.state.bullets.map(b => b.velocity.l()),
-            bulletTypes: this.state.bullets.map(b => b.type)
+            bulletTypes: this.state.bullets.map(b => b.type),
+            extras
         });
 
         this.dontSyncBullets = this.state.bullets.length === 0;
@@ -141,14 +152,15 @@ class TankGame extends Game {
 
     sendNewExplosionUpdates() {
         let newExplosions = [...this.state.addedExplosions];
-        this.broadcast({
-            type: TankSync.ADD_EXPLOSIONS,
-            positions: newExplosions.map(e => e.position.l()),
-            damageRadii: newExplosions.map(e => e.damageRadius),
-            graphicsRadii: newExplosions.map(e => e.graphicsRadius),
-            durations: newExplosions.map(e => e.duration),
-            graphics: newExplosions.map(e => e.graphics)
-        });
+        if (newExplosions.length)
+            this.broadcast({
+                type: TankSync.ADD_EXPLOSIONS,
+                positions: newExplosions.map(e => e.position.l()),
+                damageRadii: newExplosions.map(e => e.damageRadius),
+                graphicsRadii: newExplosions.map(e => e.graphicsRadius),
+                durations: newExplosions.map(e => e.duration),
+                graphics: newExplosions.map(e => e.graphics)
+            });
     }
 
     gameLoop() {
@@ -218,7 +230,7 @@ class TankGame extends Game {
             // TODO: test if this would mean quick taps dont register
             // test with higher update
         else if (message.action === Action.UPDATE_ROTATION && typeof message.rotation === 'number')
-            // TODO: bound check + 
+            // TODO: bound check +
             //  && typeof message.rotation === 'number'
             this.state.tanks[clientID].rotation = message.rotation;
         this.state.changedTankIDs.add(clientID);

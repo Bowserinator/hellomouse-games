@@ -1,5 +1,5 @@
 import { Direction, TankSync, BulletType, ExplosionGraphics } from '../types.js';
-import { Bullet, NormalBullet } from './bullets.js';
+import { Bullet, LaserBullet } from './bullets/bullets.js';
 import Camera from '../renderer/camera.js';
 import { generateMazeImage, generateMazeShadowImage } from '../renderer/maze-image-gen.js';
 
@@ -18,6 +18,8 @@ interface SyncMessage {
     type: TankSync;
     bulletType: BulletType;
     bulletTypes: Array<BulletType>;
+    extra?: any;
+    extras: object;
 
     velocities: Array<[number, number]>;
     positions: Array<[number, number]>;
@@ -143,7 +145,7 @@ export default class GameState {
 
         if (this.mazeLayer)
             this.camera.drawImage(this.mazeLayer, 0, 0);
-        this.bullets.forEach(bullet => bullet.draw(this.camera));
+        this.bullets.forEach(bullet => bullet.draw(this.camera, this));
 
         this.explosions.forEach(explosion => explosion.draw(this.camera, this));
     }
@@ -175,6 +177,9 @@ export default class GameState {
         } else if (message.type === TankSync.ADD_BULLET) {
             let bullet = Bullet.bulletFromType(message.bulletType,
                 new Vector(...message.position), new Vector(...message.velocity));
+            if (message.extra)
+                bullet.syncExtra(message.extra, message.bulletType);
+
             this.addBullet(bullet);
         } else if (message.type === TankSync.REMOVE_BULLETS)
             this.bullets = this.bullets.filter((b, i) => !message.indices.includes(i));
@@ -189,12 +194,15 @@ export default class GameState {
             this.tanks[message.id].isDead = true;
         else if (message.type === TankSync.SYNC_ALL_BULLETS) {
             this.bullets = [];
-            for (let i = 0; i < message.positions.length; i++)
+            for (let i = 0; i < message.positions.length; i++) {
                 this.bullets.push(Bullet.bulletFromType(
                     message.bulletTypes[i],
                     new Vector(...message.positions[i]),
                     new Vector(...message.velocities[i])
                 ));
+                if (message.extras[i])
+                    this.bullets[this.bullets.length - 1].syncExtra(message.extras[i], message.bulletTypes[i]);
+            }
         } else if (message.type === TankSync.ADD_EXPLOSIONS)
             for (let i = 0; i < message.positions.length; i++)
                 this.addExplosion(new Explosion(

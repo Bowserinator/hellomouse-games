@@ -110,6 +110,14 @@ export default class Vector2D {
     }
 
     /**
+     * Compute the angle the vector makes, mathematician polar
+     * @return {number} angle (rad)
+     */
+    angle() {
+        return Math.atan2(this.y, this.x);
+    }
+
+    /**
      * Create a vector from an angle and magnitude
      * @param {number} angle
      * @param {number} magnitude

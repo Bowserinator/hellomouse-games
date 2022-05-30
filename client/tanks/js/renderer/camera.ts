@@ -119,4 +119,17 @@ export default class Camera {
         ctx.fillStyle = color;
         ctx.fill();
     }
+
+    drawLine(p1: [number, number], p2: [number, number], thickness: number, color: string) {
+        let ctx = this.ctx;
+        p1 = this.worldToScreen(...p1);
+        p2 = this.worldToScreen(...p2);
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = thickness;
+        ctx.beginPath();
+        ctx.moveTo(...p1);
+        ctx.lineTo(...p2);
+        ctx.stroke();
+    }
 }

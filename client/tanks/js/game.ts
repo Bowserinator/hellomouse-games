@@ -1,4 +1,4 @@
-import { Bullet, NormalBullet } from './tanks/bullets.js';
+import { Bullet } from './tanks/bullets/bullets.js';
 import Vector from './tanks/vector2d.js';
 import Wall from './tanks/wall.js';
 import Tank from './tanks/tank.js';
@@ -184,6 +184,7 @@ window.onmousedown = e => {
     let y = e.clientY - rect.top;
     let dir = getDir(x, y);
 
+    UPDATE_ROTATION.f();
     connection.send(JSON.stringify({ type: 'MOVE', action: Action.FIRE, direction: dir }));
 };
 

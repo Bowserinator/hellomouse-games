@@ -1,12 +1,12 @@
-import Vector from './vector2d.js';
-import Collider from './collision.js';
-import Tank from './tank.js';
-import GameState from './gamestate.js';
-import Explosion from './explosion.js';
+import Vector from '../vector2d.js';
+import Collider from '../collision.js';
+import Tank from '../tank.js';
+import GameState from '../gamestate.js';
+import Explosion from '../explosion.js';
 
-import { BulletType } from '../types.js';
-import Camera from '../renderer/camera.js';
-import drawBullet from '../renderer/render-bullet.js';
+import { BulletType } from '../../types.js';
+import Camera from '../../renderer/camera.js';
+import drawBullet from '../../renderer/render-bullet.js';
 
 interface BulletConfig {
     imageUrl: string; // // Abs url to image, ie /tanks/img/...
@@ -60,6 +60,14 @@ export class Bullet {
             this.config.allowBounce = true;
     }
 
+    getExtra(): any {
+    }
+
+    sync(extra: any, type: BulletType) {
+        // Extra info for special bullet sync
+        // Override
+    }
+
     update(gameState: GameState, timestep: number) {
         if (!gameState.isClientSide && Date.now() - this.createdTime > this.config.despawnTime) {
             gameState.removeBullet(this);
@@ -67,7 +75,7 @@ export class Bullet {
         }
 
         let bounces;
-        [this.velocity, bounces] = this.collider.bounce(gameState, this.velocity, timestep, this.config.allowBounce);
+        [this.velocity, bounces, _] = this.collider.bounce(gameState, this.velocity, timestep, this.config.allowBounce);
 
         if (!gameState.isClientSide && !this.config.allowBounce && bounces > 0) {
             gameState.removeBullet(this);
@@ -102,8 +110,9 @@ export class Bullet {
         );
     }
 
-    draw(camera: Camera) {
+    draw(camera: Camera, gameState: GameState) {
         drawBullet(this, camera, this.config.rotate);
+        this.collider.draw(camera);
     }
 
     onFire() {
@@ -111,7 +120,7 @@ export class Bullet {
     }
 
     onRemove(gamestate: GameState) {
-
+        // Override
     }
 
     drawFirePreview(camera: Camera, gameState: GameState) {
@@ -156,6 +165,10 @@ export class Bullet {
                     return new HighSpeedBullet(position, direction);
                 case BulletType.MAGNET:
                     return new MagneticMineBullet(position, direction);
+                case BulletType.LASER:
+                    return new LaserBullet(position, direction);
+                case BulletType.BOMB:
+                    return new BombBullet(position, direction);
         }
         throw new Error(`Unknown bullet type ${type}`);
     }
@@ -220,12 +233,27 @@ export class MagneticMineBullet extends Bullet {
     }
 }
 
-class LaserBullet {
 
-}
+export class BombBullet extends Bullet {
+    static config = {
+        type: BulletType.BOMB,
+        imageUrl: '/tanks/img/fast_bullet.png',
+        size: new Vector(7, 7),
+        speed: 150,
+        despawnTime: 10000,
+        imageSize: new Vector(16, 12),
+        rotate: true
+    };
 
-class BombBullet {
+    constructor(position: Vector, direction: Vector) {
+        super(position, direction, BombBullet.config);
+    }
 
+    onRemove(gamestate: GameState) {
+        gamestate.addExplosion(new Explosion(this.getCenter(), 40, 40, 300));
+
+        // TODO spawn new bullets
+    }
 }
 
 export class HighSpeedBullet extends Bullet {
@@ -246,5 +274,106 @@ export class HighSpeedBullet extends Bullet {
 
     onRemove(gamestate: GameState) {
         gamestate.addExplosion(new Explosion(this.getCenter(), 5, 12, 100));
+    }
+}
+
+
+export class LaserBullet extends Bullet {
+    static config = {
+        type: BulletType.LASER,
+        size: new Vector(0, 0),
+        speed: 500,
+        despawnTime: 200,
+        imageUrl: ''
+    };
+    static repeatPerUpdate = 100;
+
+    previousPositions: Array<Vector>;
+    fired: boolean;
+
+    constructor(position: Vector, direction: Vector) {
+        super(position, direction, LaserBullet.config);
+        this.previousPositions = [];
+        this.fired = false;
+    }
+
+    getExtra(): any {
+        return this.previousPositions.map(v => v.l());
+    }
+
+    syncExtra(extra: any, type: BulletType) {
+        if (type !== BulletType.LASER)
+            return;
+        this.previousPositions = extra.map(v => new Vector(...v));
+    }
+
+    onRemove(gamestate: GameState) {
+        gamestate.addExplosion(new Explosion(this.getCenter(), 5, 12, 100));
+    }
+
+    update(gameState: GameState, timestep: number) {
+        if (!gameState.isClientSide && Date.now() - this.createdTime > this.config.despawnTime) {
+            gameState.removeBullet(this);
+            return;
+        }
+
+        // TODO: 1. proeprty to make bullets invincible
+        // 2. seperate out the kill tank method + move method
+
+        if (!this.fired) {
+            const repeatPerUpdate = LaserBullet.repeatPerUpdate;
+
+            if (!gameState.isClientSide) {
+                this.previousPositions.push(this.collider.position.copy());
+                let bounce = 0;
+                let bouncePos: Array<Vector> = [];
+
+                for (let i = 0; i < repeatPerUpdate; i++) {
+                    [this.velocity, bounce, bouncePos] =
+                        this.collider.bounce(gameState, this.velocity, 0.035, this.config.allowBounce);
+                    if (bounce)
+                        this.previousPositions = this.previousPositions.concat(bouncePos);
+                }
+            }
+            this.velocity = new Vector(0, 0);
+            this.fired = true;
+        }
+
+        if (this.firedBy > -1)
+            this.previousPositions[0] = gameState.tanks[this.firedBy].getFiringPositionAndDirection()[0];
+
+        // Hit other bullets
+        for (let bullet of gameState.bullets)
+            if (bullet !== this && this.collider.collidesWith(bullet.collider) && !gameState.isClientSide)
+                gameState.removeBullet(bullet);
+
+        // Hit tanks
+        // for (let tank of gameState.tanks.filter((t: Tank) => !t.isDead))
+        //     if (this.collider.collidesWith(tank.collider) && !gameState.isClientSide) {
+        //         if (tank.invincible)
+        //             continue;
+        //         if (tank.id !== this.firedBy && this.firedBy > -1) // No points for suicide shots
+        //             gameState.tanks[this.firedBy].score++;
+        //         gameState.killTank(tank);
+        //         gameState.removeBullet(this);
+        //         return;
+        //     }
+    }
+
+    draw(camera: Camera, gameState: GameState) {
+        let p = [...this.previousPositions, this.getCenter()];
+        const rand = (p: [number, number]) => [
+            Math.round(p[0] + (Math.random() - 0.5) * 8),
+            Math.round(p[1] + (Math.random() - 0.5) * 8)];
+
+        for (let i = 0; i < p.length - 1; i++) {
+            camera.drawLine(p[i].l(), p[i + 1].l(), 1, 'red');
+            camera.drawLine(rand(p[i].l()), rand(p[i + 1].l()), 1, '#ff3333');
+            camera.drawLine(rand(p[i].l()), rand(p[i + 1].l()), 1, '#ff3333');
+        }
+    }
+
+    drawFirePreview(camera: Camera, gameState: GameState) {
+        Bullet.drawFirePreview(camera, 1, 0.02, 100, 'red', this, gameState);
     }
 }

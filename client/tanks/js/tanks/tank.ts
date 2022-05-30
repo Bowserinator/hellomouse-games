@@ -2,7 +2,7 @@ import { Powerup, Direction } from '../types.js';
 import Collider from './collision.js';
 import Vector from './vector2d.js';
 import GameState from './gamestate.js';
-import { Bullet, NormalBullet } from './bullets.js';
+import { Bullet } from './bullets/bullets.js';
 import { BulletType } from '../types.js';
 import {
     TANK_SPEED, TANK_SIZE, TANK_AMMO, TANK_FIRE_DELAY,
@@ -79,7 +79,7 @@ export default class Tank {
         if (this.isDead) return;
         drawTank(this, camera);
 
-        this.fakeBullet = Bullet.bulletFromType(BulletType.FAST,
+        this.fakeBullet = Bullet.bulletFromType(BulletType.LASER,
             ...this.getFiringPositionAndDirection()); // TODO: dont recreate but have set velocity + position shit
         this.fakeBullet.drawFirePreview(camera, gamestate);
 
@@ -94,8 +94,9 @@ export default class Tank {
     getFiringPositionAndDirection(): [Vector, Vector] {
         // 0.73 > 1/sqrt(2), the length of the diagonal from the center to a corner of the hitbox
         // so the spawned bullet won't collide with the tank
-        let pos = this.position.add(Vector.vecFromRotation(this.rotation, 0.73 * TANK_SIZE));
-        let dir = Vector.vecFromRotation(this.rotation, 1);
+        let rot = Vector.vecFromRotation(this.rotation, 0.73 * TANK_SIZE);
+        let pos = this.position.add(rot);
+        let dir = rot;
         return [pos, dir];
     }
 
@@ -162,7 +163,7 @@ export default class Tank {
         if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
             // TODO: bullet types + ammo
             let bullet = Bullet.bulletFromType(
-                BulletType.FAST,
+                BulletType.LASER,
                 ...this.getFiringPositionAndDirection());
 
             bullet.firedBy = this.id;

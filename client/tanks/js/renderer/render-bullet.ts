@@ -1,4 +1,4 @@
-import { Bullet } from '../tanks/bullets.js';
+import { Bullet } from '../tanks/bullets/bullets.js';
 import Camera from './camera.js';
 import { getImage } from './img.js';
 
@@ -26,7 +26,7 @@ export default function drawBullet(bullet: Bullet, camera: Camera, rotate = fals
     }
 
     const bulletCenter = bullet.getCenter();
-    
+
     if (rotate)
         camera.drawImageRotated(BULLET_IMAGES[imageUrl], bulletCenter.x, bulletCenter.y, bullet.rotation);
     else
