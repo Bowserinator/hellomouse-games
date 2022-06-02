@@ -16,6 +16,14 @@ export default class Explosion {
     graphics: ExplosionGraphics;
     createdTimestep: number;
 
+    /**
+     * Create a new explosion
+     * @param {Vector} postion Center of explosion
+     * @param {number} damageRadius Damage radius (counted from center of collider)
+     * @param {number} graphicsRadius Radius to render the explosion
+     * @param {number} duration Duration of explosin
+     * @param {ExplosionGraphics} graphics What graphics type to display as
+     */
     constructor(position: Vector, damageRadius: number, graphicsRadius: number,
         duration: number, graphics = ExplosionGraphics.SIMPLE) {
         this.position = position;
@@ -31,22 +39,63 @@ export default class Explosion {
             gamestate.removeExplosion(this);
     }
 
-    draw(camera: Camera, gamestate: GameState) {
-        let multi = (Date.now() - this.createdTimestep) / this.duration;
-        multi = 1 - Math.min(1, multi);
-
+    _drawCircularExplosion(camera: Camera, gameState: GameState, multi: number,
+        radius: number, position: [number, number]) {
         let color1 = gradient([[[255, 235, 189], 0], [[255, 128, 102], 1]], 1 - multi);
         let color2 = gradient([[[255, 255, 255], 0], [[255, 118, 84], 1]], 1 - multi);
         let color3 = gradient([[[255, 167, 84], 0], [[255, 118, 84], 1]], 1 - multi);
 
+        camera.ctx.globalAlpha = 0.8;
         camera.ctx.shadowColor = color1;
         camera.ctx.shadowBlur = 20;
         camera.ctx.globalCompositeOperation = 'screen';
-        camera.fillCircle(this.position.l(), 2 * multi * this.graphicsRadius, color3);
-        camera.fillCircle(this.position.l(), multi * this.graphicsRadius, color2);
+        camera.fillCircle(position, 2 * multi * radius, color3);
+        camera.fillCircle(position, multi * radius, color2);
         camera.ctx.globalCompositeOperation = 'source-over';
         camera.ctx.shadowBlur = 0;
+        camera.ctx.globalAlpha = 1;
+    }
 
-        // TODO: smoke n shit
+    _drawCircularSmokeCloud(camera: Camera, gameState: GameState, multi: number,
+        radius: number, position: [number, number]) {
+        let color = gradient([[[180, 180, 180], 0], [[40, 40, 40], 1]], 1 - multi);
+
+        camera.ctx.shadowColor = color;
+        camera.ctx.globalAlpha = 0.8;
+        camera.ctx.shadowBlur = 20;
+        camera.ctx.globalCompositeOperation = 'multiply';
+        camera.fillCircle(position, 2 * multi * radius, color);
+        camera.ctx.globalCompositeOperation = 'source-over';
+        camera.ctx.shadowBlur = 0;
+        camera.ctx.globalAlpha = 1;
+    }
+
+    draw(camera: Camera, gamestate: GameState) {
+        let multi = (Date.now() - this.createdTimestep) / this.duration;
+        multi = 1 - Math.min(1, multi);
+
+        switch (this.graphics) {
+                case ExplosionGraphics.SIMPLE: {
+                    this._drawCircularExplosion(camera, gameState, multi, this.graphicsRadius, this.position.l());
+                    break;
+                }
+                case ExplosionGraphics.CLUSTER: {
+                    // Add explosions in a spiral shape
+                    const CLUSTER_SIZE = 10;
+                    let angle = 0;
+                    let radius = this.graphicsRadius / 2;
+                    let offsetRadius = 0;
+
+                    for (let i = 0; i < CLUSTER_SIZE; i++) {
+                        this._drawCircularExplosion(
+                            camera, gameState, multi, radius,
+                            this.position.add(Vector.vecFromRotation(angle, offsetRadius)).l());
+                        angle += Math.PI / 1.2;
+                        offsetRadius += this.graphicsRadius / CLUSTER_SIZE;
+                        radius *= 0.95;
+                    }
+                    break;
+                }
+        }
     }
 }

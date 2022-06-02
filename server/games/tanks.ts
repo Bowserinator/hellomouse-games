@@ -124,7 +124,7 @@ class TankGame extends Game {
         if (this.state.bullets.length === 0 && this.dontSyncBullets)
             return;
 
-        let extras = {};
+        let extras: Record<number, any> = {};
         for (let i = 0; i < this.state.bullets.length; i++) {
             let extra = this.state.bullets[i].getExtra();
             if (extra !== undefined)

@@ -8,20 +8,22 @@ const BULLET_IMAGE_PROCESSING: Record<string, boolean> = {};
 export default function drawBullet(bullet: Bullet, camera: Camera, rotate = false) {
     if (typeof Image === 'undefined') return; // Server side, Image doesn't exist
 
-    const imageUrl = bullet.config.imageUrl;
+    const imageUrl = bullet.imageUrl;
     const size = bullet.config.imageSize || bullet.collider.size;
 
     if (!BULLET_IMAGES[imageUrl]) {
         // Try to load and return for now
         // If already processing don't load again
-        if (BULLET_IMAGE_PROCESSING[imageUrl])
-            return;
-        (async () => {
-            let image = await getImage(imageUrl, size.x, size.y);
-            if (image === undefined) return;
-            BULLET_IMAGES[imageUrl] = image;
-        })();
-        BULLET_IMAGE_PROCESSING[imageUrl] = true;
+        for (let imgUrl of bullet.config.imageUrls) {
+            if (BULLET_IMAGE_PROCESSING[imgUrl])
+                continue;
+            (async () => {
+                let image = await getImage(imgUrl, size.x, size.y);
+                if (image === undefined) return;
+                BULLET_IMAGES[imgUrl] = image;
+            })();
+            BULLET_IMAGE_PROCESSING[imgUrl] = true;
+        }
         return;
     }
 

@@ -85,9 +85,11 @@ export default class Collider {
      * @param {Vector} velocity Initial v
      * @param {number} time timestep
      * @param {boolean} allowBounce if false, terminates upon collision
+     * @param {number} bounceEnergy Velocity to retain per bounce, 1 = all, 2 = double, 0.5 = halve, etc...
      * @return {[Vector, number, Array<Vector>]} [post-velocity, bounce count, bounce positions]
      */
-    bounce(gameState: GameState, velocity: Vector, time: number, allowBounce = true): [Vector, number, Array<Vector>] {
+    bounce(gameState: GameState, velocity: Vector, time: number,
+        allowBounce = true, bounceEnergy = 1): [Vector, number, Array<Vector>] {
         const STEP_SIZE = 2;
         let steps = time * velocity.magnitude();
         let v = velocity.normalize();
@@ -109,11 +111,11 @@ export default class Collider {
                     bouncePositions.push(this.position.copy());
 
                     if (isHorz) {
-                        velocity.y *= -1;
-                        v.y *= -1;
+                        velocity.y *= -bounceEnergy;
+                        v.y *= -bounceEnergy;
                     } else {
-                        velocity.x *= -1;
-                        v.x *= -1;
+                        velocity.x *= -bounceEnergy;
+                        v.x *= -bounceEnergy;
                     }
 
                     if (!allowBounce)

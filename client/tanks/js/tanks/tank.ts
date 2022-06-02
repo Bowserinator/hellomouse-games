@@ -163,10 +163,11 @@ export default class Tank {
         if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
             // TODO: bullet types + ammo
             let bullet = Bullet.bulletFromType(
-                BulletType.LASER,
+                BulletType.MAGNET,
                 ...this.getFiringPositionAndDirection());
 
             bullet.firedBy = this.id;
+            this.invincible = true; // TODO remove
 
             gameState.addBullet(bullet);
             this.lastFired = Date.now();

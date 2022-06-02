@@ -19,7 +19,7 @@ interface SyncMessage {
     bulletType: BulletType;
     bulletTypes: Array<BulletType>;
     extra?: any;
-    extras: object;
+    extras: Record<number, any>;
 
     velocities: Array<[number, number]>;
     positions: Array<[number, number]>;
@@ -178,7 +178,7 @@ export default class GameState {
             let bullet = Bullet.bulletFromType(message.bulletType,
                 new Vector(...message.position), new Vector(...message.velocity));
             if (message.extra)
-                bullet.syncExtra(message.extra, message.bulletType);
+                bullet.syncExtra(message.extra);
 
             this.addBullet(bullet);
         } else if (message.type === TankSync.REMOVE_BULLETS)
@@ -201,7 +201,7 @@ export default class GameState {
                     new Vector(...message.velocities[i])
                 ));
                 if (message.extras[i])
-                    this.bullets[this.bullets.length - 1].syncExtra(message.extras[i], message.bulletTypes[i]);
+                    this.bullets[this.bullets.length - 1].syncExtra(message.extras[i]);
             }
         } else if (message.type === TankSync.ADD_EXPLOSIONS)
             for (let i = 0; i < message.positions.length; i++)

@@ -4,12 +4,13 @@ import Tank from '../tank.js';
 import GameState from '../gamestate.js';
 import Explosion from '../explosion.js';
 
-import { BulletType } from '../../types.js';
+import { BulletType, ExplosionGraphics } from '../../types.js';
 import Camera from '../../renderer/camera.js';
 import drawBullet from '../../renderer/render-bullet.js';
+import { drawShield } from '../powerups/shield.js';
 
 interface BulletConfig {
-    imageUrl: string; // // Abs url to image, ie /tanks/img/...
+    imageUrls: Array<string>; // Abs urls to image, ie /tanks/img/...
     size: Vector; // Size [w, h]
     speed: number; // () -> pixels/s
     despawnTime: number; // Time in ms to despawn
@@ -18,6 +19,7 @@ interface BulletConfig {
     imageSize?: Vector; // If different from size
     rotate?: boolean; // Rotate texture? (No for symmetric textures)
     allowBounce?: boolean; // Can bounce (otherwise dies on wall)
+    bounceEnergy?: number; // 1 (default) = bounce with same, 2 = bounce = double velocity, 0.5 = halve, etc...
 }
 
 
@@ -29,6 +31,8 @@ export class Bullet {
     firedBy: number; // Tank id that fired the bullet, else -1
     config: BulletConfig;
     rotation: number;
+    imageUrl: string; // Current image to display
+    invincible: boolean; // Can be killed by other bullets?
 
     /**
      * Construct a bullet
@@ -52,42 +56,59 @@ export class Bullet {
         this.rotation = Math.atan2(this.velocity.y, this.velocity.x);
 
         this.config = config;
+        this.imageUrl = config.imageUrls[0];
+        this.invincible = false;
 
         // Config defaults
         if (this.config.rotate === undefined)
             this.config.rotate = false;
         if (this.config.allowBounce === undefined)
             this.config.allowBounce = true;
+        if (this.config.bounceEnergy === undefined)
+            this.config.bounceEnergy = 1;
     }
 
     getExtra(): any {
     }
 
-    sync(extra: any, type: BulletType) {
+    syncExtra(extra: any) {
         // Extra info for special bullet sync
         // Override
     }
 
-    update(gameState: GameState, timestep: number) {
+    /**
+     * Perform movement updates, such as despawning, bouncing, rotating, etc...
+     * Can be overwritten
+     * @return {boolean} Resume? (If false update() terminates early)
+     */
+    updateMovement(gameState: GameState, timestep: number): boolean {
         if (!gameState.isClientSide && Date.now() - this.createdTime > this.config.despawnTime) {
             gameState.removeBullet(this);
-            return;
+            return false;
         }
 
-        let bounces;
-        [this.velocity, bounces, _] = this.collider.bounce(gameState, this.velocity, timestep, this.config.allowBounce);
-
+        let bounces, _;
+        [this.velocity, bounces, _] = this.collider.bounce(gameState, this.velocity, timestep,
+            this.config.allowBounce this.config.bounceEnergy);
         if (!gameState.isClientSide && !this.config.allowBounce && bounces > 0) {
             gameState.removeBullet(this);
-            return;
+            return false;
         }
 
         if (this.config.rotate)
             this.rotation = Math.atan2(this.velocity.y, this.velocity.x);
+        return true;
+    }
 
+    /**
+     * Kill other bullets and tanks
+     * @return {boolean} Resume? (If false update() terminates early)
+     */
+    killStuff(gameState: GameState, timestep: number): boolean {
         // Hit other bullets
         for (let bullet of gameState.bullets)
-            if (bullet !== this && this.collider.collidesWith(bullet.collider) && !gameState.isClientSide)
+            if (!bullet.invincible && bullet !== this &&
+                this.collider.collidesWith(bullet.collider) && !gameState.isClientSide)
                 gameState.removeBullet(bullet);
 
         // Hit tanks
@@ -99,8 +120,15 @@ export class Bullet {
                     gameState.tanks[this.firedBy].score++;
                 gameState.killTank(tank);
                 gameState.removeBullet(this);
-                return;
+                return false;
             }
+        return true;
+    }
+
+    update(gameState: GameState, timestep: number): boolean {
+        if (!this.updateMovement(gameState, timestep)) return false;
+        if (!this.killStuff(gameState, timestep)) return false;
+        return true;
     }
 
     getCenter() {
@@ -112,7 +140,6 @@ export class Bullet {
 
     draw(camera: Camera, gameState: GameState) {
         drawBullet(this, camera, this.config.rotate);
-        this.collider.draw(camera);
     }
 
     onFire() {
@@ -178,7 +205,7 @@ export class Bullet {
 export class NormalBullet extends Bullet {
     static config = {
         type: BulletType.NORMAL,
-        imageUrl: '/tanks/img/normal_bullet.png',
+        imageUrls: ['/tanks/img/normal_bullet.png'],
         size: new Vector(7, 7),
         speed: 300,
         despawnTime: 10000
@@ -189,47 +216,109 @@ export class NormalBullet extends Bullet {
     }
 }
 
+
+/**
+ * A magnetic mine "smart bomb" that primes after 1 second
+ * Once primed cannot be killed by other bullets, and gravitates
+ * towards the nearest tank
+ * @author Bowserinator
+ */
 export class MagneticMineBullet extends Bullet {
     static config = {
         type: BulletType.MAGNET,
-        imageUrl: '/tanks/img/fast_bullet.png',
+        imageUrls: ['/tanks/img/magnet_bullet_1.png', '/tanks/img/magnet_bullet_2.png'],
         size: new Vector(14, 14),
+        imageSize: new Vector(20, 20),
         speed: 160,
-        despawnTime: 10000
+        despawnTime: 10000,
+        bounceEnergy: 0.5
     };
+    /* eslint-disable @typescript-eslint/naming-convention */
+    static PRIME_TIME = 2000; // Time to prime before seeking
+    static SEEK_TIME = 7000; // Time to follow before self destructing
+    static FLICKER_RATE = 400; // Time in ms for each frame of the primed animation
+    static MAX_VELOCITY_COMPONENT = 300; // Max component for velocity after seeking
+    static ACCELERATION = 500; // Acceleration when seeking
+    /* eslint-enable @typescript-eslint/naming-convention */
+
+    createdTime: number;
 
     constructor(position: Vector, direction: Vector) {
         super(position, direction, MagneticMineBullet.config);
+        this.createdTime = Date.now();
+    }
+
+    getExtra(): any {
+        return this.createdTime;
+    }
+
+    syncExtra(extra: any) {
+        this.createdTime = extra;
+    }
+
+    draw(camera: Camera, gameState: GameState) {
+        super.draw(camera, gameState);
+
+        const deltaT = Date.now() - this.createdTime;
+        if (deltaT > MagneticMineBullet.PRIME_TIME) { // Primed
+            // 8x the flciker rate 500ms before it explodes
+            const FLICKER_RATE = (MagneticMineBullet.PRIME_TIME + MagneticMineBullet.SEEK_TIME - deltaT) < 1000
+                ? MagneticMineBullet.FLICKER_RATE / 8 : MagneticMineBullet.FLICKER_RATE;
+            this.imageUrl = this.config.imageUrls[Math.floor(deltaT / FLICKER_RATE) % 2];
+
+            drawShield(camera, this.getCenter().l(), {
+                radius: this.config.imageSize.x / 2 + 1,
+                color: 'red', // TODO: color of the tank being targetted
+                shadowColor: 'red'
+            });
+        }
+    }
+
+    onRemove(gamestate: GameState) {
+        gamestate.addExplosion(new Explosion(this.getCenter(), 70, 70, 300, ExplosionGraphics.CLUSTER));
     }
 
     update(gameState: GameState, timestep: number) {
-        super.update(gameState, timestep);
+        if (!super.update(gameState, timestep)) return false;
 
-        // TODO: get nearest tank
-        let closest = gameState.tanks[0];
-        if (!closest) return;
-        let distance = 9999999;
-        for (let tank of gameState.tanks) {
-            let dis = tank.collider.position.manhattanDist(this.collider.position);
-            if (dis < distance) {
-                distance = dis;
-                closest = tank;
+        const deltaT = Date.now() - this.createdTime;
+        if (deltaT > MagneticMineBullet.PRIME_TIME + MagneticMineBullet.SEEK_TIME)
+            gameState.removeBullet(this);
+        else if (deltaT > MagneticMineBullet.PRIME_TIME) {
+            // Primed, accelerate towards nearest tank
+            // Also becomes invincible to other bullets
+            this.invincible = true;
+
+            // Get nearest tank
+            let closest = gameState.tanks[0];
+            if (closest === undefined) return false;
+            let distance = -1;
+
+            for (let tank of gameState.tanks) {
+                let dis = tank.collider.position.manhattanDist(this.collider.position);
+                if (distance < 0 || dis < distance) {
+                    distance = dis;
+                    closest = tank;
+                }
             }
+
+            // Accelerate towards tank
+            let tank = closest;
+            let v1 = new Vector(
+                tank.position.x - this.collider.position.x,
+                tank.position.y - this.collider.position.y);
+            v1 = v1.normalize().mul(MagneticMineBullet.ACCELERATION);
+
+            this.velocity.x += v1.x * timestep;
+            this.velocity.y += v1.y * timestep;
+
+            // Limit max velocity
+            const limitAbs = (abs: number, vel: number) => Math.abs(vel) > abs
+                ? (vel < 0 ? -abs : abs) : vel;
+            this.velocity.x = limitAbs(MagneticMineBullet.MAX_VELOCITY_COMPONENT, this.velocity.x);
+            this.velocity.y = limitAbs(MagneticMineBullet.MAX_VELOCITY_COMPONENT, this.velocity.y);
         }
-
-        // Accelerate towards tank
-        let tank = closest;
-        let v1 = new Vector(
-            tank.position.x - this.collider.position.x,
-            tank.position.y - this.collider.position.y);
-        v1 = v1.normalize().mul(200);
-
-        // TODO: limit speed
-        // TODO priming period
-        // TODO draw target color
-
-        this.velocity.x += v1.x * timestep;
-        this.velocity.y += v1.y * timestep;
+        return true;
     }
 }
 
@@ -237,7 +326,7 @@ export class MagneticMineBullet extends Bullet {
 export class BombBullet extends Bullet {
     static config = {
         type: BulletType.BOMB,
-        imageUrl: '/tanks/img/fast_bullet.png',
+        imageUrls: ['/tanks/img/fast_bullet.png'],
         size: new Vector(7, 7),
         speed: 150,
         despawnTime: 10000,
@@ -256,10 +345,15 @@ export class BombBullet extends Bullet {
     }
 }
 
+
+/**
+ * A hypervelocity railgun slug. Explodes on impact
+ * @author Bowserinator
+ */
 export class HighSpeedBullet extends Bullet {
     static config = {
         type: BulletType.FAST,
-        imageUrl: '/tanks/img/fast_bullet.png',
+        imageUrls: ['/tanks/img/fast_bullet.png'],
         size: new Vector(7, 7),
         speed: 1000,
         despawnTime: 1000,
@@ -278,15 +372,19 @@ export class HighSpeedBullet extends Bullet {
 }
 
 
+/**
+ * A laser beam that bounces around
+ * @author Bowserinator
+ */
 export class LaserBullet extends Bullet {
     static config = {
         type: BulletType.LASER,
         size: new Vector(0, 0),
         speed: 500,
         despawnTime: 200,
-        imageUrl: ''
+        imageUrls: []
     };
-    static repeatPerUpdate = 100;
+    static repeatPerUpdate = 100; // Adjust length of laser
 
     previousPositions: Array<Vector>;
     fired: boolean;
@@ -295,30 +393,22 @@ export class LaserBullet extends Bullet {
         super(position, direction, LaserBullet.config);
         this.previousPositions = [];
         this.fired = false;
+        this.invincible = true;
     }
 
     getExtra(): any {
         return this.previousPositions.map(v => v.l());
     }
 
-    syncExtra(extra: any, type: BulletType) {
-        if (type !== BulletType.LASER)
-            return;
+    syncExtra(extra: any) {
         this.previousPositions = extra.map(v => new Vector(...v));
     }
 
-    onRemove(gamestate: GameState) {
-        gamestate.addExplosion(new Explosion(this.getCenter(), 5, 12, 100));
-    }
-
-    update(gameState: GameState, timestep: number) {
+    updateMovement(gameState: GameState, timestep: number) {
         if (!gameState.isClientSide && Date.now() - this.createdTime > this.config.despawnTime) {
             gameState.removeBullet(this);
-            return;
+            return false;
         }
-
-        // TODO: 1. proeprty to make bullets invincible
-        // 2. seperate out the kill tank method + move method
 
         if (!this.fired) {
             const repeatPerUpdate = LaserBullet.repeatPerUpdate;
@@ -330,7 +420,8 @@ export class LaserBullet extends Bullet {
 
                 for (let i = 0; i < repeatPerUpdate; i++) {
                     [this.velocity, bounce, bouncePos] =
-                        this.collider.bounce(gameState, this.velocity, 0.035, this.config.allowBounce);
+                        this.collider.bounce(gameState, this.velocity, 0.035,
+                            this.config.allowBounce, this.config.bounceEnergy);
                     if (bounce)
                         this.previousPositions = this.previousPositions.concat(bouncePos);
                 }
@@ -341,30 +432,18 @@ export class LaserBullet extends Bullet {
 
         if (this.firedBy > -1)
             this.previousPositions[0] = gameState.tanks[this.firedBy].getFiringPositionAndDirection()[0];
+        return true;
+    }
 
-        // Hit other bullets
-        for (let bullet of gameState.bullets)
-            if (bullet !== this && this.collider.collidesWith(bullet.collider) && !gameState.isClientSide)
-                gameState.removeBullet(bullet);
-
-        // Hit tanks
-        // for (let tank of gameState.tanks.filter((t: Tank) => !t.isDead))
-        //     if (this.collider.collidesWith(tank.collider) && !gameState.isClientSide) {
-        //         if (tank.invincible)
-        //             continue;
-        //         if (tank.id !== this.firedBy && this.firedBy > -1) // No points for suicide shots
-        //             gameState.tanks[this.firedBy].score++;
-        //         gameState.killTank(tank);
-        //         gameState.removeBullet(this);
-        //         return;
-        //     }
+    killStuff(gameState: GameState, timestep: number) {
+        return true;
     }
 
     draw(camera: Camera, gameState: GameState) {
         let p = [...this.previousPositions, this.getCenter()];
-        const rand = (p: [number, number]) => [
-            Math.round(p[0] + (Math.random() - 0.5) * 8),
-            Math.round(p[1] + (Math.random() - 0.5) * 8)];
+        const rand = (pt: [number, number]): [number, number] => [
+            Math.round(pt[0] + (Math.random() - 0.5) * 8),
+            Math.round(pt[1] + (Math.random() - 0.5) * 8)];
 
         for (let i = 0; i < p.length - 1; i++) {
             camera.drawLine(p[i].l(), p[i + 1].l(), 1, 'red');
@@ -373,6 +452,42 @@ export class LaserBullet extends Bullet {
         }
     }
 
+    drawFirePreview(camera: Camera, gameState: GameState) {
+        Bullet.drawFirePreview(camera, 1, 0.02, 100, 'red', this, gameState);
+    }
+}
+
+
+/**
+ * A small shotgun pellet. Slows down over time and has
+ * randomized decay time
+ * @author Bowserinator
+ */
+export class SmallBullet extends Bullet {
+    static config = {
+        type: BulletType.SMALL,
+        size: new Vector(4, 4),
+        speed: 500,
+        despawnTime: 200,
+        imageUrls: ['/tanks/img/normal_bullet.png']
+    };
+
+    despawnTime: number;
+
+    constructor(position: Vector, direction: Vector) {
+        super(position, direction, LaserBullet.config);
+        this.despawnTime = 0; // TODO: randomize
+    }
+
+    getExtra(): any {
+        return [this.despawnTime];
+    }
+
+    syncExtra(extra: any) {
+        this.despawnTime = extra[0];
+    }
+
+    // TODO: this is shotgun fire preview
     drawFirePreview(camera: Camera, gameState: GameState) {
         Bullet.drawFirePreview(camera, 1, 0.02, 100, 'red', this, gameState);
     }
