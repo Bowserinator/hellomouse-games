@@ -34,9 +34,9 @@ export default class Explosion {
         this.createdTimestep = Date.now();
     }
 
-    update(gamestate: GameState, timestep: number) {
+    update(gameState: GameState, timestep: number) {
         if (Date.now() - this.createdTimestep > this.duration)
-            gamestate.removeExplosion(this);
+            gameState.removeExplosion(this);
     }
 
     _drawCircularExplosion(camera: Camera, gameState: GameState, multi: number,
@@ -70,7 +70,7 @@ export default class Explosion {
         camera.ctx.globalAlpha = 1;
     }
 
-    draw(camera: Camera, gamestate: GameState) {
+    draw(camera: Camera, gameState: GameState) {
         let multi = (Date.now() - this.createdTimestep) / this.duration;
         multi = 1 - Math.min(1, multi);
 
@@ -93,6 +93,31 @@ export default class Explosion {
                         angle += Math.PI / 1.2;
                         offsetRadius += this.graphicsRadius / CLUSTER_SIZE;
                         radius *= 0.95;
+                    }
+                    break;
+                }
+                case ExplosionGraphics.CIRCLE: {
+                    // Add explosions in an expanding ring shape
+                    const RINGS = 4;
+                    const RING_OFFSET = 0.2;
+
+                    let numPerCluster = 1;
+                    let radius = this.graphicsRadius / 2;
+                    let offsetRadius = 0;
+
+                    for (let i = 0; i < RINGS; i++) {
+                        if (multi - i * RING_OFFSET < 0)
+                            break;
+
+                        const OFFSET = Math.random() * Math.PI;
+
+                        for (let angle = 0; angle < Math.PI * 2; angle += Math.PI * 2 / numPerCluster)
+                            this._drawCircularExplosion(
+                                camera, gameState, (multi - i * RING_OFFSET) / (1 - i * RING_OFFSET), radius,
+                                this.position.add(Vector.vecFromRotation(OFFSET + angle, offsetRadius)).l());
+                        offsetRadius += this.graphicsRadius / RINGS;
+                        radius *= 0.95;
+                        numPerCluster *= 2;
                     }
                     break;
                 }

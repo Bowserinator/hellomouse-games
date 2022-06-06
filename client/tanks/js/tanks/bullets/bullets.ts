@@ -89,7 +89,7 @@ export class Bullet {
 
         let bounces, _;
         [this.velocity, bounces, _] = this.collider.bounce(gameState, this.velocity, timestep,
-            this.config.allowBounce this.config.bounceEnergy);
+            this.config.allowBounce, this.config.bounceEnergy);
         if (!gameState.isClientSide && !this.config.allowBounce && bounces > 0) {
             gameState.removeBullet(this);
             return false;
@@ -142,8 +142,12 @@ export class Bullet {
         drawBullet(this, camera, this.config.rotate);
     }
 
-    onFire() {
-
+    /**
+     * Called when fired by a tank, not when spawned by any other means
+     * @param {GameState} gameState
+     */
+    onFire(gamestate: GameState) {
+        // Override if needed
     }
 
     onRemove(gamestate: GameState) {
@@ -196,6 +200,8 @@ export class Bullet {
                     return new LaserBullet(position, direction);
                 case BulletType.BOMB:
                     return new BombBullet(position, direction);
+                case BulletType.SMALL:
+                    return new SmallBullet(position, direction);
         }
         throw new Error(`Unknown bullet type ${type}`);
     }
@@ -265,9 +271,10 @@ export class MagneticMineBullet extends Bullet {
             const FLICKER_RATE = (MagneticMineBullet.PRIME_TIME + MagneticMineBullet.SEEK_TIME - deltaT) < 1000
                 ? MagneticMineBullet.FLICKER_RATE / 8 : MagneticMineBullet.FLICKER_RATE;
             this.imageUrl = this.config.imageUrls[Math.floor(deltaT / FLICKER_RATE) % 2];
+            let imgSize = this.config.imageSize ? this.config.imageSize.x : this.config.size.x;
 
             drawShield(camera, this.getCenter().l(), {
-                radius: this.config.imageSize.x / 2 + 1,
+                radius: imgSize / 2 + 1,
                 color: 'red', // TODO: color of the tank being targetted
                 shadowColor: 'red'
             });
@@ -323,25 +330,34 @@ export class MagneticMineBullet extends Bullet {
 }
 
 
+/**
+ * A bomb that explodes when destroyed
+ * Fires many small bullets in explosion
+ * @author Bowserinator
+ */
 export class BombBullet extends Bullet {
     static config = {
         type: BulletType.BOMB,
-        imageUrls: ['/tanks/img/fast_bullet.png'],
-        size: new Vector(7, 7),
+        imageUrls: ['/tanks/img/bomb_bullet.png'],
+        size: new Vector(16, 16),
         speed: 150,
         despawnTime: 10000,
-        imageSize: new Vector(16, 12),
-        rotate: true
+        imageSize: new Vector(24, 24)
     };
+
+    static bulletsToFire = 100; // Bullets to spawn in explosion
 
     constructor(position: Vector, direction: Vector) {
         super(position, direction, BombBullet.config);
     }
 
-    onRemove(gamestate: GameState) {
-        gamestate.addExplosion(new Explosion(this.getCenter(), 40, 40, 300));
+    onRemove(gameState: GameState) {
+        gameState.addExplosion(new Explosion(this.getCenter(), 40, 60, 500, ExplosionGraphics.CIRCLE));
 
-        // TODO spawn new bullets
+        for (let angle = 0; angle < Math.PI * 2; angle += Math.PI * 2 / BombBullet.bulletsToFire) {
+            let bullet = new SmallBullet(this.getCenter(), Vector.vecFromRotation(angle, 1));
+            gameState.addBullet(bullet);
+        }
     }
 }
 
@@ -401,7 +417,7 @@ export class LaserBullet extends Bullet {
     }
 
     syncExtra(extra: any) {
-        this.previousPositions = extra.map(v => new Vector(...v));
+        this.previousPositions = extra.map((v: [number, number]) => new Vector(...v));
     }
 
     updateMovement(gameState: GameState, timestep: number) {
@@ -467,28 +483,67 @@ export class SmallBullet extends Bullet {
     static config = {
         type: BulletType.SMALL,
         size: new Vector(4, 4),
-        speed: 500,
+        speed: 1000,
         despawnTime: 200,
         imageUrls: ['/tanks/img/normal_bullet.png']
     };
 
-    despawnTime: number;
+    static despawnTimeRange: [number, number] = [400, 800];
+    static velocityMulRange: [number, number] = [0.5, 1.5];
+    static velocityMultiplier = 0.9; // Velocity decay per tick
+    static firePreviewBullets = Array(6).fill(0).map(_ =>
+        new SmallBullet(new Vector(0, 0), new Vector(1, 1))); // For preview
+    static angleRange = Math.PI / 3; // Fire range
+    static bulletsToFire = 16;
 
     constructor(position: Vector, direction: Vector) {
-        super(position, direction, LaserBullet.config);
-        this.despawnTime = 0; // TODO: randomize
+        super(position, direction, { ...SmallBullet.config });
+
+        const randBetween = (a: number, b: number) => (Math.random() * (b - a)) + a;
+        this.config.despawnTime = randBetween(...SmallBullet.despawnTimeRange);
+        this.velocity = this.velocity.mul(randBetween(...SmallBullet.velocityMulRange));
     }
 
     getExtra(): any {
-        return [this.despawnTime];
+        return [this.config.despawnTime];
     }
 
     syncExtra(extra: any) {
-        this.despawnTime = extra[0];
+        this.config.despawnTime = extra[0];
     }
 
-    // TODO: this is shotgun fire preview
+    update(gameState: GameState, timestep: number) {
+        if (!super.update(gameState, timestep)) return false;
+        if (!gameState.isClientSide)
+            this.velocity = this.velocity.mul(SmallBullet.velocityMultiplier);
+        return true;
+    }
+
+    onFire(gameState: GameState) {
+        const thisAngle = this.velocity.angle();
+        const halfAngle = SmallBullet.angleRange / 2;
+
+        for (let angleOffset = -halfAngle; angleOffset < halfAngle; angleOffset +=
+            SmallBullet.angleRange / SmallBullet.bulletsToFire) {
+            let bullet = new SmallBullet(
+                this.getCenter(),
+                Vector.vecFromRotation(thisAngle + angleOffset, 1));
+            gameState.addBullet(bullet);
+        }
+    }
+
     drawFirePreview(camera: Camera, gameState: GameState) {
-        Bullet.drawFirePreview(camera, 1, 0.02, 100, 'red', this, gameState);
+        let angleOffset = -SmallBullet.angleRange / 2;
+
+        // Shotgun fire preview, show multiple paths
+        for (let bullet of SmallBullet.firePreviewBullets) {
+            bullet.collider.position = this.collider.position.copy();
+            bullet.velocity = Vector.vecFromRotation(
+                this.velocity.angle() + angleOffset,
+                bullet.velocity.magnitude()
+            );
+            angleOffset += SmallBullet.angleRange / SmallBullet.firePreviewBullets.length;
+            Bullet.drawFirePreview(camera, 1.5, 0.02, 14, '#aaa', bullet, gameState);
+        }
     }
 }

@@ -79,7 +79,7 @@ export default class Tank {
         if (this.isDead) return;
         drawTank(this, camera);
 
-        this.fakeBullet = Bullet.bulletFromType(BulletType.LASER,
+        this.fakeBullet = Bullet.bulletFromType(BulletType.SMALL,
             ...this.getFiringPositionAndDirection()); // TODO: dont recreate but have set velocity + position shit
         this.fakeBullet.drawFirePreview(camera, gamestate);
 
@@ -163,11 +163,11 @@ export default class Tank {
         if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
             // TODO: bullet types + ammo
             let bullet = Bullet.bulletFromType(
-                BulletType.MAGNET,
+                BulletType.BOMB,
                 ...this.getFiringPositionAndDirection());
-
             bullet.firedBy = this.id;
             this.invincible = true; // TODO remove
+            bullet.onFire(gameState);
 
             gameState.addBullet(bullet);
             this.lastFired = Date.now();

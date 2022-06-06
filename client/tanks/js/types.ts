@@ -32,5 +32,6 @@ export enum BulletType {
 
 export enum ExplosionGraphics {
     SIMPLE,  // An expanding circle, good for small explosions
-    CLUSTER  // Cluster of many explosions, good for large explosions
+    CLUSTER, // Cluster of many explosions, good for large explosions
+    CIRCLE   // Like cluster, but circular
 }
