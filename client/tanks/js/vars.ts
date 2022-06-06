@@ -21,6 +21,6 @@ export const MAX_MAZE_SIZE = 12;
 export const WALL_COLOR = '#333';
 export const CAMERA_EDGE_MARGIN = 100;
 
-export const SHADOW_COLOR = '#bbb';
+export const SHADOW_COLOR = '#ddd';
 export const SHADOW_SIZE_X = 10;
 export const SHADOW_SIZE_Y = 10;

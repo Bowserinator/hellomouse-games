@@ -5,16 +5,15 @@ import GameState from './gamestate.js';
 import { Bullet } from './bullets/bullets.js';
 import { BulletType } from '../types.js';
 import {
-    TANK_SPEED, TANK_SIZE, TANK_AMMO, TANK_FIRE_DELAY,
+    TANK_SPEED, TANK_SIZE, TANK_TURRET_SIZE, TANK_AMMO, TANK_FIRE_DELAY,
     TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE } from '../vars.js';
 
 import { PowerupSingleton, ShieldPowerup } from './powerups/powerups.js';
 
 import Camera from '../renderer/camera.js';
-import drawTank from '../renderer/render-tank.js';
+import Renderable from '../renderer/renderable.js';
 
-
-export default class Tank {
+export default class Tank extends Renderable {
     position: Vector;
     velocity: Vector;
     ammo: number;
@@ -38,6 +37,11 @@ export default class Tank {
     speed: number;
 
     constructor(pos: Vector, rotation: number, id = -1) {
+        super([
+            ['/tanks/img/tank-body.png', new Vector(TANK_SIZE, TANK_SIZE)],
+            ['/tanks/img/tank-turret.png', new Vector(TANK_TURRET_SIZE, TANK_TURRET_SIZE)]
+        ]);
+
         this.position = pos.copy(); // Center coordinate, not top-left corner. Collider has offset position
         this.velocity = new Vector(0, 0);
         this.ammo = TANK_AMMO;
@@ -77,7 +81,12 @@ export default class Tank {
 
     draw(camera: Camera, gamestate: GameState) {
         if (this.isDead) return;
-        drawTank(this, camera);
+        if (!this.isLoaded()) return;
+
+        camera.drawImageRotated(this.images[this.imageUrls[0][0]],
+            this.position.x, this.position.y, this.realBaseRotation);
+        camera.drawImageRotated(this.images[this.imageUrls[1][0]],
+            this.position.x, this.position.y, this.visualTurretRotation);
 
         this.fakeBullet = Bullet.bulletFromType(BulletType.SMALL,
             ...this.getFiringPositionAndDirection()); // TODO: dont recreate but have set velocity + position shit
@@ -163,7 +172,7 @@ export default class Tank {
         if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
             // TODO: bullet types + ammo
             let bullet = Bullet.bulletFromType(
-                BulletType.BOMB,
+                BulletType.MAGNET,
                 ...this.getFiringPositionAndDirection());
             bullet.firedBy = this.id;
             this.invincible = true; // TODO remove

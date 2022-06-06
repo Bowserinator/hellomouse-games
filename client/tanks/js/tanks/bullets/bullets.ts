@@ -6,7 +6,7 @@ import Explosion from '../explosion.js';
 
 import { BulletType, ExplosionGraphics } from '../../types.js';
 import Camera from '../../renderer/camera.js';
-import drawBullet from '../../renderer/render-bullet.js';
+import Renderable from '../../renderer/renderable.js';
 import { drawShield } from '../powerups/shield.js';
 
 interface BulletConfig {
@@ -23,7 +23,7 @@ interface BulletConfig {
 }
 
 
-export class Bullet {
+export class Bullet extends Renderable {
     velocity: Vector;
     collider: Collider;
     type: BulletType;
@@ -41,6 +41,8 @@ export class Bullet {
      * @param {BulletConfig} config Bullet properties
      */
     constructor(position: Vector, direction: Vector, config: BulletConfig) {
+        super(config.imageUrls.map(url => [url, config.imageSize || config.size]));
+
         if (this.constructor === Bullet)
             throw new Error('Bullet is Abstract');
 
@@ -139,7 +141,18 @@ export class Bullet {
     }
 
     draw(camera: Camera, gameState: GameState) {
-        drawBullet(this, camera, this.config.rotate);
+        if (!this.isLoaded()) return;
+
+        const bulletCenter = this.getCenter();
+        const imageUrl = this.imageUrl;
+        const size = this.config.imageSize || this.collider.size;
+
+        if (this.config.rotate)
+            camera.drawImageRotated(this.images[imageUrl], bulletCenter.x, bulletCenter.y, this.rotation);
+        else
+            camera.drawImage(this.images[imageUrl],
+                bulletCenter.x - size.x / 2,
+                bulletCenter.y - size.y / 2);
     }
 
     /**

@@ -36,9 +36,9 @@ export default class Wall {
     }
 
     drawShadow(camera: Camera) {
-        camera.fillRect(
-            this.collider.position.l() as [number, number],
-            [this.collider.size.x + SHADOW_SIZE_X, this.collider.size.y + SHADOW_SIZE_Y],
-            SHADOW_COLOR);
+        // camera.fillRect(
+        //     this.collider.position.l() as [number, number],
+        //     [this.collider.size.x + SHADOW_SIZE_X, this.collider.size.y + SHADOW_SIZE_Y],
+        //     SHADOW_COLOR);
     }
 }
