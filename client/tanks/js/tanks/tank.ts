@@ -8,17 +8,19 @@ import {
     TANK_SPEED, TANK_SIZE, TANK_TURRET_SIZE, TANK_AMMO, TANK_FIRE_DELAY,
     TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE } from '../vars.js';
 
-import { PowerupSingleton, ShieldPowerup } from './powerups/powerups.js';
+import { BombPowerup, PowerupSingleton, ShieldPowerup, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
 
 import Camera from '../renderer/camera.js';
 import Renderable from '../renderer/renderable.js';
 
+const TURRET_SIZE = new Vector(TANK_TURRET_SIZE, TANK_TURRET_SIZE);
+
 export default class Tank extends Renderable {
     position: Vector;
     velocity: Vector;
-    ammo: number;
+    bulletType: BulletType;
     lastFired: number;
-    powerup: PowerupSingleton | null;
+    powerups: Array<PowerupSingleton>;
     collider: Collider;
 
     targetBaseRotation: number; // Rotation of base, visual only
@@ -35,22 +37,25 @@ export default class Tank extends Renderable {
     invincible: boolean;
     stealthed: boolean;
     firedBullets: Array<Bullet>;
+    turretImageUrl: string;
 
     speed: number;
 
     constructor(pos: Vector, rotation: number, id = -1) {
         super([
             ['/tanks/img/tank-body.png', new Vector(TANK_SIZE, TANK_SIZE)],
-            ['/tanks/img/tank-turret.png', new Vector(TANK_TURRET_SIZE, TANK_TURRET_SIZE)]
+            ...(Object.values(TANK_TURRET_IMAGE_URLS).map((url: string): [string, Vector] => [url, TURRET_SIZE]))
         ]);
 
+        this.turretImageUrl = TANK_TURRET_IMAGE_URLS[Powerup.NONE];
         this.position = pos.copy(); // Center coordinate, not top-left corner. Collider has offset position
         this.velocity = new Vector(0, 0);
-        this.ammo = TANK_AMMO;
+        this.bulletType = BulletType.NORMAL;
         this.lastFired = 0; // UNIX timestamp last fired a bullet
         this.invincible = false;
         this.stealthed = false;
-        this.powerup = new ShieldPowerup(this);
+        this.powerups = [];
+        this.powerups = [new ShieldPowerup(this), new BombPowerup(this)];
         this.id = id;
         this.firedBullets = [];
 
@@ -61,7 +66,7 @@ export default class Tank extends Renderable {
         // Visual only
         this.visualTurretRotation = rotation;
         this.targetBaseRotation = 0;
-        this.fakeBullet = Bullet.bulletFromType(BulletType.NORMAL,
+        this.fakeBullet = Bullet.bulletFromType(this.bulletType,
             ...this.getFiringPositionAndDirection());
 
         // Loaded from client intents
@@ -89,15 +94,13 @@ export default class Tank extends Renderable {
 
         camera.drawImageRotated(this.images[this.imageUrls[0][0]],
             this.position.x, this.position.y, this.realBaseRotation);
-        camera.drawImageRotated(this.images[this.imageUrls[1][0]],
+        camera.drawImageRotated(this.images[this.turretImageUrl],
             this.position.x, this.position.y, this.visualTurretRotation);
 
-        this.fakeBullet = Bullet.bulletFromType(BulletType.SMALL,
+        this.fakeBullet = Bullet.bulletFromType(this.bulletType,
             ...this.getFiringPositionAndDirection()); // TODO: dont recreate but have set velocity + position shit
         this.fakeBullet.drawFirePreview(camera, gamestate);
-
-        if (this.powerup)
-            this.powerup.draw(camera);
+        this.powerups.forEach(powerup => powerup.draw(camera));
     }
 
     /**
@@ -176,13 +179,13 @@ export default class Tank extends Renderable {
         if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
             this.firedBullets = this.firedBullets.filter(b => !b.isDead);
             if (this.firedBullets.length < (this.fakeBullet.config.maxAmmo || 1)) {
-                // TODO: bullet types + ammo
                 let bullet = Bullet.bulletFromType(
-                    BulletType.NORMAL,
+                    this.bulletType,
                     ...this.getFiringPositionAndDirection());
                 bullet.firedBy = this.id;
                 this.invincible = true; // TODO remove
                 bullet.onFire(gameState);
+                this.powerups.forEach(powerup => powerup.onFire(gameState));
 
                 gameState.addBullet(bullet);
                 this.firedBullets.push(bullet);
@@ -190,7 +193,6 @@ export default class Tank extends Renderable {
             }
         }
 
-        if (this.powerup)
-            this.powerup.update(gameState, timestep);
+        this.powerups.forEach(powerup => powerup.update(gameState, timestep));
     }
 }

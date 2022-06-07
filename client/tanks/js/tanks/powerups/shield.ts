@@ -67,7 +67,6 @@ export class ShieldPowerup extends PowerupSingleton {
         this.start = Date.now();
         this.flicker = false;
         this.lastHitTime = 0;
-
         this.tank.invincible = true;
     }
 

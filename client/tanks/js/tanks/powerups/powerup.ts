@@ -22,10 +22,12 @@ export class PowerupSingleton {
         // Override
     }
 
+    onFire(gameState: GameState) {
+        // Triggered when fired
+    }
+
     stop(gameState: GameState) {
-        // TODO: reset turret appearance and other values
-        // Remove tank powerupSingleton + powerup
         // TODO: send update to client
-        this.tank.powerup = null;
+        this.tank.powerups = this.tank.powerups.filter(powerup => powerup !== this);
     }
 }

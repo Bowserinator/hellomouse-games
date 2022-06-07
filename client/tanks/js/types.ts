@@ -11,7 +11,7 @@ export enum Action {
 }
 
 export enum Powerup {
-    NONE, MISSILE, LASER, SHOTGUN, BOMB,
+    NONE, FAST, LASER, SHOTGUN, BOMB, MAGNET,
     CLOAK, SHIELD
 }
 
