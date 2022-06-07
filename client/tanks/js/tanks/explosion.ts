@@ -121,6 +121,14 @@ export default class Explosion {
                     }
                     break;
                 }
+                case ExplosionGraphics.SHOCKWAVE: {
+                    camera.ctx.globalAlpha = multi * 0.15;
+                    camera.ctx.lineWidth = 30;
+                    camera.drawCircle(this.position.l(), (1 - multi) * this.graphicsRadius, 'white');
+                    camera.ctx.globalAlpha = 1;
+                    camera.ctx.lineWidth = 1;
+                    break;
+                }
         }
     }
 }

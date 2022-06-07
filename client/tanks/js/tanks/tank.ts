@@ -172,7 +172,7 @@ export default class Tank extends Renderable {
         if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
             // TODO: bullet types + ammo
             let bullet = Bullet.bulletFromType(
-                BulletType.MAGNET,
+                BulletType.FAST,
                 ...this.getFiringPositionAndDirection());
             bullet.firedBy = this.id;
             this.invincible = true; // TODO remove

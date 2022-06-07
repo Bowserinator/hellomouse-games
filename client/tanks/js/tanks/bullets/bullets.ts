@@ -395,8 +395,14 @@ export class HighSpeedBullet extends Bullet {
         super(position, direction, HighSpeedBullet.config);
     }
 
+    update(gameState: GameState, timestep: number) {
+        if (!super.update(gameState, timestep)) return false;
+        gameState.addExplosion(new Explosion(this.getCenter(), 0, 80, 400, ExplosionGraphics.SHOCKWAVE));
+        return true;
+    }
+
     onRemove(gamestate: GameState) {
-        gamestate.addExplosion(new Explosion(this.getCenter(), 5, 12, 100));
+        gamestate.addExplosion(new Explosion(this.getCenter(), 5, 6, 100));
     }
 }
 
