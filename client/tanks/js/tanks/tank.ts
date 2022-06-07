@@ -33,6 +33,8 @@ export default class Tank extends Renderable {
     id: number;
     score: number;
     invincible: boolean;
+    stealthed: boolean;
+    firedBullets: Array<Bullet>;
 
     speed: number;
 
@@ -47,8 +49,10 @@ export default class Tank extends Renderable {
         this.ammo = TANK_AMMO;
         this.lastFired = 0; // UNIX timestamp last fired a bullet
         this.invincible = false;
+        this.stealthed = false;
         this.powerup = new ShieldPowerup(this);
         this.id = id;
+        this.firedBullets = [];
 
         // For physics
         this.rotation = rotation;
@@ -170,16 +174,20 @@ export default class Tank extends Renderable {
             }
 
         if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
-            // TODO: bullet types + ammo
-            let bullet = Bullet.bulletFromType(
-                BulletType.FAST,
-                ...this.getFiringPositionAndDirection());
-            bullet.firedBy = this.id;
-            this.invincible = true; // TODO remove
-            bullet.onFire(gameState);
+            this.firedBullets = this.firedBullets.filter(b => !b.isDead);
+            if (this.firedBullets.length < (this.fakeBullet.config.maxAmmo || 1)) {
+                // TODO: bullet types + ammo
+                let bullet = Bullet.bulletFromType(
+                    BulletType.NORMAL,
+                    ...this.getFiringPositionAndDirection());
+                bullet.firedBy = this.id;
+                this.invincible = true; // TODO remove
+                bullet.onFire(gameState);
 
-            gameState.addBullet(bullet);
-            this.lastFired = Date.now();
+                gameState.addBullet(bullet);
+                this.firedBullets.push(bullet);
+                this.lastFired = Date.now();
+            }
         }
 
         if (this.powerup)

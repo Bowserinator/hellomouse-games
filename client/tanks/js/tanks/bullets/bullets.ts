@@ -16,6 +16,7 @@ interface BulletConfig {
     despawnTime: number; // Time in ms to despawn
     type: BulletType;
 
+    maxAmmo?: number; // (1 default) Max bullets that can be fired until one despawns
     imageSize?: Vector; // If different from size
     rotate?: boolean; // Rotate texture? (No for symmetric textures)
     allowBounce?: boolean; // Can bounce (otherwise dies on wall)
@@ -33,6 +34,7 @@ export class Bullet extends Renderable {
     rotation: number;
     imageUrl: string; // Current image to display
     invincible: boolean; // Can be killed by other bullets?
+    isDead: boolean;
 
     /**
      * Construct a bullet
@@ -56,6 +58,7 @@ export class Bullet extends Renderable {
         this.firedBy = -1;
         this.type = config.type;
         this.rotation = Math.atan2(this.velocity.y, this.velocity.x);
+        this.isDead = false;
 
         this.config = config;
         this.imageUrl = config.imageUrls[0];
@@ -68,6 +71,8 @@ export class Bullet extends Renderable {
             this.config.allowBounce = true;
         if (this.config.bounceEnergy === undefined)
             this.config.bounceEnergy = 1;
+        if (this.config.maxAmmo === undefined)
+            this.config.maxAmmo = 1;
     }
 
     getExtra(): any {
@@ -164,7 +169,7 @@ export class Bullet extends Renderable {
     }
 
     onRemove(gamestate: GameState) {
-        // Override
+        this.isDead = true;
     }
 
     drawFirePreview(camera: Camera, gameState: GameState) {
@@ -221,13 +226,18 @@ export class Bullet extends Renderable {
 }
 
 
+/**
+ * Standard bullet
+ * @author Bowserinator
+ */
 export class NormalBullet extends Bullet {
     static config = {
         type: BulletType.NORMAL,
         imageUrls: ['/tanks/img/normal_bullet.png'],
         size: new Vector(7, 7),
         speed: 300,
-        despawnTime: 10000
+        despawnTime: 10000,
+        maxAmmo: 5
     };
 
     constructor(position: Vector, direction: Vector) {
@@ -294,8 +304,9 @@ export class MagneticMineBullet extends Bullet {
         }
     }
 
-    onRemove(gamestate: GameState) {
-        gamestate.addExplosion(new Explosion(this.getCenter(), 70, 70, 300, ExplosionGraphics.CLUSTER));
+    onRemove(gameState: GameState) {
+        super.onRemove(gameState);
+        gameState.addExplosion(new Explosion(this.getCenter(), 70, 70, 300, ExplosionGraphics.CLUSTER));
     }
 
     update(gameState: GameState, timestep: number) {
@@ -365,6 +376,7 @@ export class BombBullet extends Bullet {
     }
 
     onRemove(gameState: GameState) {
+        super.onRemove(gameState);
         gameState.addExplosion(new Explosion(this.getCenter(), 40, 60, 500, ExplosionGraphics.CIRCLE));
 
         for (let angle = 0; angle < Math.PI * 2; angle += Math.PI * 2 / BombBullet.bulletsToFire) {
@@ -401,8 +413,9 @@ export class HighSpeedBullet extends Bullet {
         return true;
     }
 
-    onRemove(gamestate: GameState) {
-        gamestate.addExplosion(new Explosion(this.getCenter(), 5, 6, 100));
+    onRemove(gameState: GameState) {
+        super.onRemove(gameState);
+        gameState.addExplosion(new Explosion(this.getCenter(), 5, 6, 100));
     }
 }
 
