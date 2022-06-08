@@ -12,7 +12,7 @@ export enum Action {
 
 export enum Powerup {
     NONE, FAST, LASER, SHOTGUN, BOMB, MAGNET,
-    CLOAK, SHIELD
+    STEALTH, SHIELD
 }
 
 export enum TankSync {

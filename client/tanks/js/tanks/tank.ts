@@ -8,7 +8,7 @@ import {
     TANK_SPEED, TANK_SIZE, TANK_TURRET_SIZE, TANK_AMMO, TANK_FIRE_DELAY,
     TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE } from '../vars.js';
 
-import { BombPowerup, PowerupSingleton, ShieldPowerup, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
+import { StealthPowerup, PowerupSingleton, FastBulletPowerup, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
 
 import Camera from '../renderer/camera.js';
 import Renderable from '../renderer/renderable.js';
@@ -55,7 +55,7 @@ export default class Tank extends Renderable {
         this.invincible = false;
         this.stealthed = false;
         this.powerups = [];
-        this.powerups = [new ShieldPowerup(this), new BombPowerup(this)];
+        this.powerups = [new StealthPowerup(this), new FastBulletPowerup(this)];
         this.id = id;
         this.firedBullets = [];
 
@@ -92,14 +92,21 @@ export default class Tank extends Renderable {
         if (this.isDead) return;
         if (!this.isLoaded()) return;
 
+        const isOwnTank = gamestate.tanks[gamestate.tankIndex] === this;
+        if (this.stealthed)
+            camera.ctx.globalAlpha = isOwnTank ? 0.2 : 0;
+
         camera.drawImageRotated(this.images[this.imageUrls[0][0]],
             this.position.x, this.position.y, this.realBaseRotation);
         camera.drawImageRotated(this.images[this.turretImageUrl],
             this.position.x, this.position.y, this.visualTurretRotation);
+        if (this.stealthed) camera.ctx.globalAlpha = 1;
 
-        this.fakeBullet = Bullet.bulletFromType(this.bulletType,
-            ...this.getFiringPositionAndDirection()); // TODO: dont recreate but have set velocity + position shit
-        this.fakeBullet.drawFirePreview(camera, gamestate);
+        if (isOwnTank) {
+            this.fakeBullet = Bullet.bulletFromType(this.bulletType,
+                ...this.getFiringPositionAndDirection()); // TODO: dont recreate but have set velocity + position shit
+            this.fakeBullet.drawFirePreview(camera, gamestate);
+        }
         this.powerups.forEach(powerup => powerup.draw(camera));
     }
 
