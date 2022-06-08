@@ -95,6 +95,7 @@ export class Bullet extends Renderable {
         }
 
         let bounces, _;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         [this.velocity, bounces, _] = this.collider.bounce(gameState, this.velocity, timestep,
             this.config.allowBounce, this.config.bounceEnergy);
         if (!gameState.isClientSide && !this.config.allowBounce && bounces > 0) {
@@ -415,7 +416,7 @@ export class HighSpeedBullet extends Bullet {
 
     onRemove(gameState: GameState) {
         super.onRemove(gameState);
-        gameState.addExplosion(new Explosion(this.getCenter(), 5, 6, 100));
+        gameState.addExplosion(new Explosion(this.getCenter(), 5, 6, 100, ExplosionGraphics.PARTICLES));
     }
 }
 

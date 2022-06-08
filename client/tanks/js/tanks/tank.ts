@@ -1,11 +1,11 @@
-import { Powerup, Direction } from '../types.js';
+import { Powerup, Direction, BulletType, ExplosionGraphics } from '../types.js';
 import Collider from './collision.js';
 import Vector from './vector2d.js';
 import GameState from './gamestate.js';
+import Explosion from './explosion.js';
 import { Bullet } from './bullets/bullets.js';
-import { BulletType } from '../types.js';
 import {
-    TANK_SPEED, TANK_SIZE, TANK_TURRET_SIZE, TANK_AMMO, TANK_FIRE_DELAY,
+    TANK_SPEED, TANK_SIZE, TANK_TURRET_SIZE, TANK_FIRE_DELAY,
     TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE } from '../vars.js';
 
 import { StealthPowerup, PowerupSingleton, FastBulletPowerup, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
@@ -110,6 +110,10 @@ export default class Tank extends Renderable {
         this.powerups.forEach(powerup => powerup.draw(camera));
     }
 
+    onDeath(gameState: GameState) {
+        gameState.addExplosion(new Explosion(this.position, 0, 26, 300, ExplosionGraphics.SIMPLE));
+    }
+
     /**
      * Get spawn pos + dir of a bullet that would be fired from this given this.rotation
      * @return {[Vector, Vector]} Firing position, direction
@@ -190,7 +194,6 @@ export default class Tank extends Renderable {
                     this.bulletType,
                     ...this.getFiringPositionAndDirection());
                 bullet.firedBy = this.id;
-                this.invincible = true; // TODO remove
                 bullet.onFire(gameState);
                 this.powerups.forEach(powerup => powerup.onFire(gameState));
 

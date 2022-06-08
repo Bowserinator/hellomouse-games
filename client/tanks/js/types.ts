@@ -34,5 +34,11 @@ export enum ExplosionGraphics {
     SIMPLE,  // An expanding circle, good for small explosions
     CLUSTER, // Cluster of many explosions, good for large explosions
     CIRCLE,  // Like cluster, but circular
-    SHOCKWAVE // Railgun shockwave
+    SHOCKWAVE, // Railgun shockwave
+    PARTICLES  // Tank death explosion
+}
+
+export enum ParticleGraphics {
+    SIMPLE, // Black circles, used for stuff like tanks
+    SPARKS  // Used for hotter stuff breaking apart
 }

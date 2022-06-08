@@ -1,5 +1,5 @@
 import { Direction, TankSync, BulletType, ExplosionGraphics } from '../types.js';
-import { Bullet, LaserBullet } from './bullets/bullets.js';
+import { Bullet } from './bullets/bullets.js';
 import Camera from '../renderer/camera.js';
 import { generateMazeImage, generateMazeShadowImage } from '../renderer/maze-image-gen.js';
 
@@ -7,6 +7,7 @@ import Vector from './vector2d.js';
 import Wall from './wall.js';
 import Tank from './tank.js';
 import Explosion from './explosion.js';
+import Particle from './particle.js';
 import generateMaze from './map-gen.js';
 
 interface SyncMessage {
@@ -54,6 +55,7 @@ export default class GameState {
     // Clientside only:
     mazeLayer?: HTMLCanvasElement;
     mazeShadowLayer?: HTMLCanvasElement;
+    particles: Array<Particle>;
 
     constructor(isClientSide = false) {
         this.isClientSide = isClientSide;
@@ -62,6 +64,7 @@ export default class GameState {
         this.walls = [];
         this.bullets = [];
         this.explosions = [];
+        this.particles = []; // Client side only
 
         this.lastUpdate = Date.now(); // Time of last update as UNIX timestamp
         this.addedBullets = new Set();
@@ -99,6 +102,11 @@ export default class GameState {
         this.addedExplosions.add(explosion);
     }
 
+    addParticle(particle: Particle) {
+        if (!this.isClientSide) return;
+        this.particles.push(particle);
+    }
+
     removeBullet(bullet: Bullet) {
         bullet.onRemove(this);
 
@@ -114,9 +122,16 @@ export default class GameState {
         this.addedExplosions.delete(explosion);
     }
 
+    removeParticle(particle: Particle) {
+        // TODO: more efficent splice
+        this.particles = this.particles.filter(p => p !== particle);
+    }
+
     killTank(tank: Tank) {
-        if (!tank.isDead)
+        if (!tank.isDead) {
             this.killedTanks.add(tank.id);
+            tank.onDeath(this);
+        }
         tank.isDead = true;
     }
 
@@ -131,6 +146,7 @@ export default class GameState {
 
     update() {
         let timestep = (Date.now() - this.lastUpdate) / 1000;
+        this.particles.forEach(particle => particle.update(this, timestep));
         this.tanks.forEach(tank => tank.update(this, timestep));
         this.bullets.forEach(bullet => bullet.update(this, timestep));
         this.explosions.forEach(explosion => explosion.update(this, timestep));
@@ -145,6 +161,7 @@ export default class GameState {
 
         if (this.mazeLayer)
             this.camera.drawImage(this.mazeLayer, 0, 0);
+        this.particles.forEach(particle => particle.draw(this.camera, this));
         this.bullets.forEach(bullet => bullet.draw(this.camera, this));
 
         this.explosions.forEach(explosion => explosion.draw(this.camera, this));

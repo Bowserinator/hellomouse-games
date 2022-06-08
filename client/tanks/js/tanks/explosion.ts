@@ -1,7 +1,8 @@
 import Vector from './vector2d.js';
 import GameState from './gamestate.js';
+import Particle from './particle.js';
 import Camera from '../renderer/camera.js';
-import { ExplosionGraphics } from '../types.js';
+import { ExplosionGraphics, ParticleGraphics } from '../types.js';
 import gradient from '../renderer/gradient.js';
 
 /**
@@ -15,13 +16,14 @@ export default class Explosion {
     duration: number;
     graphics: ExplosionGraphics;
     createdTimestep: number;
+    firstRun: boolean;
 
     /**
      * Create a new explosion
      * @param {Vector} postion Center of explosion
      * @param {number} damageRadius Damage radius (counted from center of collider)
      * @param {number} graphicsRadius Radius to render the explosion
-     * @param {number} duration Duration of explosin
+     * @param {number} duration Duration of explosion
      * @param {ExplosionGraphics} graphics What graphics type to display as
      */
     constructor(position: Vector, damageRadius: number, graphicsRadius: number,
@@ -32,11 +34,53 @@ export default class Explosion {
         this.duration = duration;
         this.graphics = graphics;
         this.createdTimestep = Date.now();
+        this.firstRun = true;
     }
 
     update(gameState: GameState, timestep: number) {
         if (Date.now() - this.createdTimestep > this.duration)
             gameState.removeExplosion(this);
+        if (this.firstRun) {
+            switch (this.graphics) {
+                    case ExplosionGraphics.PARTICLES: {
+                        this._spawnParticles(gameState, 10, this.position, 400,
+                            ParticleGraphics.SIMPLE, 6, 300);
+                        this._spawnParticles(gameState, 20, this.position, 200,
+                            ParticleGraphics.SPARKS, 6, 500);
+                        break;
+                    }
+                    case ExplosionGraphics.SIMPLE: {
+                        this._spawnParticles(gameState, 40, this.position, 400,
+                            ParticleGraphics.SIMPLE, 8, 600);
+                        this._spawnParticles(gameState, 60, this.position, 200,
+                            ParticleGraphics.SPARKS, 8, 800);
+                        break;
+                    }
+            }
+            this.firstRun = false;
+        }
+    }
+
+    /**
+     * Spawn a number of particles from a center location
+     * @param gameState GameState
+     * @param count Number of particles to spawn
+     * @param center Center to radiate particles
+     * @param maxVelMag Max velocity magnitude of particles, randomized 0 to this
+     * @param graphics Particle graphics
+     * @param maxSize Max particle size, randomized 0 to this
+     * @param maxDuration Max particle duration, randomized 0 to this
+     */
+    _spawnParticles(gameState: GameState, count: number, center: Vector, maxVelMag: number,
+        graphics: ParticleGraphics, maxSize: number, maxDuration: number) {
+        const RAND_OFFSET = Math.random() * Math.PI;
+        for (let angle = 0; angle < Math.PI * 2; angle += Math.PI * 2 / count)
+            gameState.addParticle(new Particle(
+                center.copy(), Vector.vecFromRotation(angle + RAND_OFFSET,
+                    Math.round(Math.random() * maxVelMag)),
+                Math.round(Math.random() * maxSize),
+                Math.round(Math.random() * maxDuration), graphics
+            ));
     }
 
     _drawCircularExplosion(camera: Camera, gameState: GameState, multi: number,
@@ -127,6 +171,9 @@ export default class Explosion {
                     camera.drawCircle(this.position.l(), (1 - multi) * this.graphicsRadius, 'white');
                     camera.ctx.globalAlpha = 1;
                     camera.ctx.lineWidth = 1;
+                    break;
+                }
+                case ExplosionGraphics.PARTICLES: {
                     break;
                 }
         }
