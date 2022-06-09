@@ -100,7 +100,7 @@ connection.onopen = () => {
 
 connection.onmessage = message => {
     message = JSON.parse(message.data);
-    console.log(message);
+    // console.log(message);
 
     if (message.type === 'ERROR') {
         if (message.code === 'NO_GAME')

@@ -4,10 +4,11 @@ import Tank from '../tank.js';
 import GameState from '../gamestate.js';
 import Explosion from '../explosion.js';
 
-import { BulletType, ExplosionGraphics } from '../../types.js';
+import { BulletType, ExplosionGraphics, ParticleGraphics } from '../../types.js';
 import Camera from '../../renderer/camera.js';
 import Renderable from '../../renderer/renderable.js';
 import { drawShield } from '../powerups/shield.js';
+import Particle from '../particle.js';
 
 interface BulletConfig {
     imageUrls: Array<string>; // Abs urls to image, ie /tanks/img/...
@@ -146,6 +147,17 @@ export class Bullet extends Renderable {
         );
     }
 
+    setCenter(position: Vector) {
+        position = position.copy();
+        position.x -= this.config.size.x / 2;
+        position.y -= this.config.size.y / 2; // Center bullet
+        this.collider.position = position;
+    }
+
+    setVelocityFromDir(direction: Vector) {
+        this.velocity = direction.normalize().mul(this.config.speed);
+    }
+
     draw(camera: Camera, gameState: GameState) {
         if (!this.isLoaded()) return;
 
@@ -221,6 +233,8 @@ export class Bullet extends Renderable {
                     return new BombBullet(position, direction);
                 case BulletType.SMALL:
                     return new SmallBullet(position, direction);
+                case BulletType.ROCKET:
+                    return new RocketBullet(position, direction);
         }
         throw new Error(`Unknown bullet type ${type}`);
     }
@@ -320,19 +334,8 @@ export class MagneticMineBullet extends Bullet {
             // Primed, accelerate towards nearest tank
             // Also becomes invincible to other bullets
             this.invincible = true;
-
-            // Get nearest tank
-            let closest = gameState.tanks[0];
-            if (closest === undefined) return false;
-            let distance = -1;
-
-            for (let tank of gameState.tanks) {
-                let dis = tank.collider.position.manhattanDist(this.collider.position);
-                if (distance < 0 || dis < distance) {
-                    distance = dis;
-                    closest = tank;
-                }
-            }
+            let closest = gameState.getNearestTank(this.getCenter());
+            if (!closest) return false;
 
             // Accelerate towards tank
             let tank = closest;
@@ -578,5 +581,153 @@ export class SmallBullet extends Bullet {
             angleOffset += SmallBullet.angleRange / SmallBullet.firePreviewBullets.length;
             Bullet.drawFirePreview(camera, 1.5, 0.02, 14, '#aaa', bullet, gameState);
         }
+    }
+}
+
+
+/**
+ * A spawner for rocket artillery, not exactly a "bullet", but
+ * just an invisible entity
+ * @author Bowserinator
+ */
+export class RocketBullet extends Bullet {
+    static config = {
+        type: BulletType.ROCKET,
+        size: new Vector(0, 0),
+        speed: 0,
+        despawnTime: 999999, // Manual despawn
+        imageUrls: [],
+        maxAmmo: 9999
+    };
+
+    static warningTime = 1500; // Warning labels in ms
+    static attackRadius = 100; // Radius rockets can fall on
+    static rocketCount = 3;    // Number of rockets to fall in radius
+    static rocketRadius = 24;  // Radius of rocket explosion
+    static warningRadius = 24; // Radius of warning marker
+
+    // Hacky thing for client-side sync
+    static spawnedWarnings = new Set<number>();
+
+    fireTime: number;
+    targetCenter: Vector;
+    randomID: number; // Used for map
+    lastDrawUpdate: number; // Client side only, rate limits getNearestTank
+
+    // Where to launch rockets to (relative to this.targetCenter)
+    offsetLocations: Array<Vector>;
+
+    constructor(position: Vector, direction: Vector) {
+        super(position, direction, { ...RocketBullet.config });
+        this.fireTime = 0;
+        this.targetCenter = position; // Temp, will change in update
+        this.randomID = Math.round(Math.random() * 100000);
+        this.lastDrawUpdate = 0;
+    }
+
+    /**
+     * Generate where the rockets fall in the circle
+     * Evenly spaces angle and radii, but randomizes radii order
+     */
+    generateOffsetLocations() {
+        this.offsetLocations = [];
+
+        const ANGLE_OFFSET = Math.random() * Math.PI;
+        const ANGLE_SIZE = Math.PI * 2 / RocketBullet.rocketCount;
+        const RADII = Array(RocketBullet.rocketCount).fill(0)
+            .map((x, i) => (i + 1) * RocketBullet.attackRadius / RocketBullet.rocketCount)
+            .sort(() => Math.random() - 0.5);
+
+        for (let i = 0; i < RocketBullet.rocketCount; i++)
+            this.offsetLocations.push(Vector.vecFromRotation(ANGLE_SIZE * i + ANGLE_OFFSET, RADII[i]));
+    }
+
+    /**
+     * Update where to target (nearest tank that's not self, or if none, then self)
+     * @param {GameState} gameState
+     */
+    updateTargetCenter(gameState: GameState) {
+        let nearest = gameState.getNearestTank(this.getCenter(), [gameState.tanks[this.firedBy]]);
+        if (!nearest && this.firedBy > -1) nearest = gameState.tanks[this.firedBy]; // No other tanks, target self
+        if (!nearest) return;
+        this.targetCenter = nearest.position.copy();
+    }
+
+    getExtra(): any {
+        return [this.offsetLocations.map(d => d.l()), this.randomID, this.targetCenter.l()];
+    }
+
+    syncExtra(extra: any) {
+        this.offsetLocations = extra[0].map((d: [number, number]) => new Vector(...d));
+        this.randomID = extra[1];
+        this.targetCenter = new Vector(...(extra[2] as [number, number]));
+    }
+
+    killStuff(gameState: GameState, timestep: number) {
+        return true; // The spawner has no effect
+    }
+
+    draw(camera: Camera, gameState: GameState) {
+        // Don't draw, invisible
+    }
+
+    update(gameState: GameState, timestep: number) {
+        if (!super.update(gameState, timestep)) return false;
+
+        // Clean up map
+        if (this.isDead) {
+            RocketBullet.spawnedWarnings.delete(this.randomID);
+            return false;
+        }
+
+        // (Client-side) Spawn warnings if not already
+        if (gameState.isClientSide && !RocketBullet.spawnedWarnings.has(this.randomID)) {
+            for (let delta of this.offsetLocations)
+                gameState.addParticle(new Particle(
+                    this.targetCenter.add(delta),
+                    new Vector(0, 0), RocketBullet.warningRadius,
+                    RocketBullet.warningTime, ParticleGraphics.WARNING));
+
+            let center = this.getCenter();
+            gameState.addExplosion(new Explosion(center, 0, 60, 300, ExplosionGraphics.SHOCKWAVE));
+            gameState.addExplosion(new Explosion(center, 0, 120, 300, ExplosionGraphics.PARTICLES));
+            RocketBullet.spawnedWarnings.add(this.randomID);
+        }
+
+        let elapsed = Date.now() - this.fireTime;
+        if (!gameState.isClientSide && elapsed > RocketBullet.warningTime) {
+            for (let delta of this.offsetLocations)
+                gameState.addExplosion(new Explosion(
+                    this.targetCenter.add(delta),
+                    RocketBullet.rocketRadius, RocketBullet.rocketRadius,
+                    800, ExplosionGraphics.SIMPLE));
+            gameState.removeBullet(this);
+            return false;
+        }
+        return true;
+    }
+
+    onFire(gameState: GameState) {
+        this.fireTime = Date.now();
+
+        // (Server-side) generate offsets
+        if (!gameState.isClientSide && !RocketBullet.spawnedWarnings.has(this.randomID)) {
+            this.updateTargetCenter(gameState);
+            this.generateOffsetLocations();
+            RocketBullet.spawnedWarnings.add(this.randomID);
+        }
+    }
+
+    drawFirePreview(camera: Camera, gameState: GameState) {
+        // Rate limit update target to every 50 ms
+        if (Date.now() - this.lastDrawUpdate > 50) {
+            this.updateTargetCenter(gameState);
+            this.lastDrawUpdate = Date.now();
+        }
+        camera.ctx.globalCompositeOperation = 'screen';
+        camera.ctx.globalAlpha = 0.2;
+        camera.fillCircle(this.targetCenter.l(), RocketBullet.attackRadius, 'red');
+        camera.ctx.globalAlpha = 1;
+        camera.ctx.globalCompositeOperation = 'source-over';
     }
 }

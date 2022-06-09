@@ -8,7 +8,7 @@ import {
     TANK_SPEED, TANK_SIZE, TANK_TURRET_SIZE, TANK_FIRE_DELAY,
     TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE } from '../vars.js';
 
-import { StealthPowerup, PowerupSingleton, FastBulletPowerup, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
+import { StealthPowerup, PowerupSingleton, RocketPowerup, FastBulletPowerup, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
 
 import Camera from '../renderer/camera.js';
 import Renderable from '../renderer/renderable.js';
@@ -55,7 +55,7 @@ export default class Tank extends Renderable {
         this.invincible = false;
         this.stealthed = false;
         this.powerups = [];
-        this.powerups = [new StealthPowerup(this), new FastBulletPowerup(this)];
+        this.powerups = [new StealthPowerup(this), new RocketPowerup(this)];
         this.id = id;
         this.firedBullets = [];
 
@@ -88,6 +88,12 @@ export default class Tank extends Renderable {
         this.collider = new Collider(new Vector(x, y), new Vector(TANK_SIZE, TANK_SIZE));
     }
 
+    changeBulletType(bulletType: BulletType) {
+        this.bulletType = bulletType;
+        this.fakeBullet = Bullet.bulletFromType(this.bulletType,
+            ...this.getFiringPositionAndDirection());
+    }
+
     draw(camera: Camera, gamestate: GameState) {
         if (this.isDead) return;
         if (!this.isLoaded()) return;
@@ -103,8 +109,10 @@ export default class Tank extends Renderable {
         if (this.stealthed) camera.ctx.globalAlpha = 1;
 
         if (isOwnTank) {
-            this.fakeBullet = Bullet.bulletFromType(this.bulletType,
-                ...this.getFiringPositionAndDirection()); // TODO: dont recreate but have set velocity + position shit
+            let [pos, vel] = this.getFiringPositionAndDirection();
+            this.fakeBullet.firedBy = this.id;
+            this.fakeBullet.setCenter(pos);
+            this.fakeBullet.setVelocityFromDir(vel);
             this.fakeBullet.drawFirePreview(camera, gamestate);
         }
         this.powerups.forEach(powerup => powerup.draw(camera));

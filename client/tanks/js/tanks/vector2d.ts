@@ -93,6 +93,24 @@ export default class Vector2D {
     }
 
     /**
+     * Squared absolute distance to another vec
+     * @param {Vector2D} otherVec Other position
+     * @return {number} distance
+     */
+    distance2(otherVec: Vector2D) {
+        return Math.pow(this.x - otherVec.x, 2) + Math.pow(this.y - otherVec.y, 2);
+    }
+
+    /**
+     * Absolute distance to another vec
+     * @param {Vector2D} otherVec Other position
+     * @return {number} distance
+     */
+    distance(otherVec: Vector2D) {
+        return Math.sqrt(this.distance2(otherVec));
+    }
+
+    /**
      * Return a copy of this vector
      * @return {Vector2D}
      */

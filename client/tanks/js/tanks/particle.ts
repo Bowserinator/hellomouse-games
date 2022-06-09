@@ -57,6 +57,30 @@ export default class Particle {
                     camera.fillCircle(this.position.l(), multi * this.radius, color);
                     camera.ctx.globalCompositeOperation = 'source-over';
                     camera.ctx.globalAlpha = 1;
+                    break;
+                }
+                case ParticleGraphics.WARNING: {
+                    const [cx, cy] = this.position.l();
+                    const THICKNESS = 5;
+                    const COLOR = '#c62828';
+
+                    let m = Math.min(1, 10 * (1 - multi));
+                    let r = m * this.radius;
+
+                    camera.ctx.globalAlpha = m;
+                    camera.ctx.lineWidth = THICKNESS;
+
+                    camera.drawCircle([cx, cy], r, COLOR);
+                    // Uncomment for X shape instead
+                    // const delta = this.radius / Math.sqrt(2);
+                    // camera.drawLine([cx - delta, cy - delta], [cx + delta, cy + delta], THICKNESS, COLOR);
+                    // camera.drawLine([cx - delta, cy + delta], [cx + delta, cy - delta], THICKNESS, COLOR);
+                    camera.drawLine([cx, cy - r], [cx, cy + r], THICKNESS, COLOR);
+                    camera.drawLine([cx - r, cy], [cx + r, cy], THICKNESS, COLOR);
+
+                    camera.ctx.lineWidth = 1;
+                    camera.ctx.globalAlpha = 1;
+                    break;
                 }
         }
     }

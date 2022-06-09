@@ -11,7 +11,7 @@ export enum Action {
 }
 
 export enum Powerup {
-    NONE, FAST, LASER, SHOTGUN, BOMB, MAGNET,
+    NONE, FAST, LASER, SHOTGUN, BOMB, MAGNET, ROCKET,
     STEALTH, SHIELD
 }
 
@@ -27,7 +27,7 @@ export enum TankSync {
 }
 
 export enum BulletType {
-    NORMAL, MAGNET, BOMB, SMALL, LASER, FAST
+    NORMAL, MAGNET, BOMB, SMALL, LASER, FAST, ROCKET
 }
 
 export enum ExplosionGraphics {
@@ -40,5 +40,6 @@ export enum ExplosionGraphics {
 
 export enum ParticleGraphics {
     SIMPLE, // Black circles, used for stuff like tanks
-    SPARKS  // Used for hotter stuff breaking apart
+    SPARKS, // Used for hotter stuff breaking apart
+    WARNING // Used for rocket artillery impact zone
 }

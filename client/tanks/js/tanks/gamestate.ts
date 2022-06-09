@@ -135,6 +135,18 @@ export default class GameState {
         tank.isDead = true;
     }
 
+    /**
+     * Find nearest tank to a position
+     * @param position Position to find nearest tank to
+     * @param exclude Array of tanks to exclude in search
+     * @returns Nearest tank, or null if none found
+     */
+    getNearestTank(position: Vector, exclude: Array<Tank> = []) {
+        let tanks = this.tanks.filter(tank => !exclude.includes(tank));
+        if (!tanks.length) return null;
+        return tanks.reduce((a, b) => a.position.distance2(position) < b.position.distance2(position) ? a : b);
+    }
+
     clearDeltas() {
         this.addedBullets.clear();
         this.removedBulletIds.clear();
