@@ -55,7 +55,6 @@ export default class Tank extends Renderable {
         this.invincible = false;
         this.stealthed = false;
         this.powerups = [];
-        this.powerups = [new ShieldPowerup(this), new LaserPowerup(this)];
         this.id = id;
         this.firedBullets = [];
 

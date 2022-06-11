@@ -15,6 +15,11 @@ export enum Powerup {
     STEALTH, SHIELD
 }
 
+// Powerups within the same category silent override each other
+export enum PowerupCategory {
+    BULLET, TANK
+}
+
 export enum TankSync {
     ADD_BULLET,
     REMOVE_BULLETS,
@@ -23,7 +28,9 @@ export enum TankSync {
     UPDATE_ALL_TANKS,
     TANK_DIED,
     SYNC_ALL_BULLETS,
-    ADD_EXPLOSIONS
+    ADD_EXPLOSIONS,
+    ADD_POWERUP_ITEM,
+    DELETE_POWERUP_ITEM
 }
 
 export enum BulletType {

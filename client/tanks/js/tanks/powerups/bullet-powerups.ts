@@ -1,7 +1,7 @@
 import Tank from '../tank.js';
 import GameState from '../gamestate.js';
 import { PowerupState } from './powerup.js';
-import { Powerup, BulletType } from '../../types.js';
+import { Powerup, BulletType, PowerupCategory } from '../../types.js';
 
 // @ts-expect-error TS is stupid
 export const TANK_TURRET_IMAGE_URLS: Record<Powerup, string> = {};
@@ -24,23 +24,13 @@ class AbstractBulletPowerup extends PowerupState {
      * @param powerup Powerup enum type
      */
     constructor(tank: Tank, bulletType: BulletType, powerup: Powerup) {
-        super(tank, powerup);
+        super(tank, powerup, PowerupCategory.BULLET);
         if (this.constructor === AbstractBulletPowerup)
             throw new Error('AbstractBulletPowerup is abstract');
 
         this.bulletType = bulletType;
         this.tank.changeBulletType(this.bulletType);
-        this.clearTankBulletPowerups(this);
         this.tank.turretImageUrl = TANK_TURRET_IMAGE_URLS[powerup] || TANK_TURRET_IMAGE_URLS[Powerup.NONE];
-    }
-
-    /**
-     * Clear all other bullet powerups without calling stop()
-     * @param {AbstractBulletPowerup | null} exception Don't remove this poweruo
-     */
-    clearTankBulletPowerups(exception: AbstractBulletPowerup | null = null) {
-        this.tank.powerups = this.tank.powerups.filter(powerup =>
-            !(powerup instanceof AbstractBulletPowerup) || powerup === exception);
     }
 
     /**
@@ -58,7 +48,7 @@ class AbstractBulletPowerup extends PowerupState {
     stop(gameState: GameState) {
         this.tank.turretImageUrl = TANK_TURRET_IMAGE_URLS[Powerup.NONE];
         this.tank.changeBulletType(BulletType.NORMAL);
-        this.clearTankBulletPowerups();
+        super.stop(gameState);
     }
 }
 

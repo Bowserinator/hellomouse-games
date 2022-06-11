@@ -75,6 +75,21 @@ class TankGame extends Game {
         return canJoin;
     }
 
+    sendPowerupUpdates() {
+        for (let add of this.state.addedPowerupItems)
+            this.broadcast({
+                type: TankSync.ADD_POWERUP_ITEM,
+                position: add.position.l(),
+                powerup: add.powerup,
+                id: add.randomID
+            });
+        for (let remove of this.state.removedPowerupItems)
+            this.broadcast({
+                type: TankSync.DELETE_POWERUP_ITEM,
+                id: remove.randomID
+            });
+    }
+
     sendTankUpdates() {
         // TODO use a flag tank numbers modified or something
         // TODO: also send other data like powerups
@@ -174,6 +189,7 @@ class TankGame extends Game {
         this.sendBulletUpdates();
         this.syncBullets();
         this.sendTankDeadUpdates();
+        this.sendPowerupUpdates();
 
         this.state.clearDeltas();
     }

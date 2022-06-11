@@ -1,5 +1,5 @@
 import Tank from '../tank.js';
-import { Powerup } from '../../types.js';
+import { Powerup, PowerupCategory } from '../../types.js';
 import Camera from '../../renderer/camera.js';
 import GameState from '../gamestate.js';
 
@@ -11,10 +11,22 @@ import GameState from '../gamestate.js';
 export class PowerupState {
     tank: Tank;
     type: Powerup;
+    category: PowerupCategory;
 
-    constructor(tank: Tank, type: Powerup) {
+    constructor(tank: Tank, type: Powerup, category: PowerupCategory) {
         this.type = type;
         this.tank = tank;
+        this.category = category;
+        this.clearSameTypePowerups([this]);
+    }
+
+    /**
+     * Clear bullet powerups of the same type
+     * @param {Array<PowerupState>} exceptions Don't remove these powerups
+     */
+    clearSameTypePowerups(exceptions: Array<PowerupState> = []) {
+        this.tank.powerups = this.tank.powerups.filter(powerup =>
+            powerup.category !== this.category || exceptions.includes(powerup));
     }
 
     /**
@@ -49,6 +61,6 @@ export class PowerupState {
      */
     stop(gameState: GameState) {
         // TODO: send update to client
-        this.tank.powerups = this.tank.powerups.filter(powerup => powerup !== this);
+        this.clearSameTypePowerups();
     }
 }

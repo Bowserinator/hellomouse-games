@@ -1,4 +1,4 @@
-import { Direction, TankSync, BulletType, ExplosionGraphics } from '../types.js';
+import { Direction, TankSync, BulletType, ExplosionGraphics, Powerup } from '../types.js';
 import { Bullet } from './bullets/bullets.js';
 import Camera from '../renderer/camera.js';
 import { generateMazeImage, generateMazeShadowImage } from '../renderer/maze-image-gen.js';
@@ -9,6 +9,7 @@ import Tank from './tank.js';
 import Explosion from './explosion.js';
 import Particle from './particle.js';
 import generateMaze from './map-gen.js';
+import { PowerupItem } from './powerups/powerup-item.js';
 
 interface SyncMessage {
     movement: [Direction, Direction];
@@ -32,6 +33,7 @@ interface SyncMessage {
     graphicsRadii: Array<number>;
     durations: Array<number>;
     graphics: Array<ExplosionGraphics>;
+    powerup: Powerup;
 }
 
 export default class GameState {
@@ -41,6 +43,7 @@ export default class GameState {
     walls: Array<Wall>;
     bullets: Array<Bullet>;
     explosions: Array<Explosion>;
+    powerupItems: Array<PowerupItem>;
 
     lastUpdate: number;
     addedBullets: Set<Bullet>;
@@ -49,6 +52,8 @@ export default class GameState {
     killedTanks: Set<number>;
     changedTankIDs: Set<number>;
     addedExplosions: Set<Explosion>;
+    addedPowerupItems: Set<PowerupItem>;
+    removedPowerupItems: Set<PowerupItem>;
 
     camera: Camera;
 
@@ -65,6 +70,7 @@ export default class GameState {
         this.bullets = [];
         this.explosions = [];
         this.particles = []; // Client side only
+        this.powerupItems = [];
 
         this.lastUpdate = Date.now(); // Time of last update as UNIX timestamp
         this.addedBullets = new Set();
@@ -73,6 +79,15 @@ export default class GameState {
         this.changedTankIDs = new Set();
         this.addedExplosions = new Set();
         this.killedTanks = new Set();
+        this.addedPowerupItems = new Set();
+        this.removedPowerupItems = new Set();
+
+        // TODO: delete
+        if (!isClientSide) {
+            this.spawnRandomPowerup();
+            this.spawnRandomPowerup();
+            this.spawnRandomPowerup();
+        }
     }
 
     /**
@@ -107,6 +122,11 @@ export default class GameState {
         this.particles.push(particle);
     }
 
+    addPowerupItem(powerup: PowerupItem) {
+        this.powerupItems.push(powerup);
+        this.addedPowerupItems.add(powerup);
+    }
+
     removeBullet(bullet: Bullet) {
         bullet.onRemove(this);
 
@@ -125,6 +145,12 @@ export default class GameState {
     removeParticle(particle: Particle) {
         // TODO: more efficent splice
         this.particles = this.particles.filter(p => p !== particle);
+    }
+
+    removePowerupItem(powerup: PowerupItem) {
+        // TODO: more efficent splice
+        this.removedPowerupItems.add(powerup);
+        this.powerupItems = this.powerupItems.filter(p => p !== powerup);
     }
 
     killTank(tank: Tank) {
@@ -154,6 +180,20 @@ export default class GameState {
         this.addedTanks = [];
         this.killedTanks.clear();
         this.addedExplosions.clear();
+        this.addedPowerupItems.clear();
+        this.removedPowerupItems.clear();
+    }
+
+    spawnRandomPowerup() {
+        const powerups = Object.values(Powerup).filter(x => typeof x !== 'string');
+        const powerup = powerups[Math.floor(Math.random() * powerups.length)];
+        // Note: this can create a powerup type of NONEs
+        // TODO
+        if (powerup === Powerup.NONE) return; // hack
+
+        let x = Math.random() * 1000;
+        let y = Math.random() * 1000; // TODO: compute from grid
+        this.addPowerupItem(new PowerupItem(new Vector(x, y), powerup as Powerup));
     }
 
     update() {
@@ -162,6 +202,7 @@ export default class GameState {
         this.tanks.forEach(tank => tank.update(this, timestep));
         this.bullets.forEach(bullet => bullet.update(this, timestep));
         this.explosions.forEach(explosion => explosion.update(this, timestep));
+        this.powerupItems.forEach(item => item.update(this, timestep));
         this.lastUpdate = Date.now();
     }
 
@@ -169,6 +210,7 @@ export default class GameState {
         if (this.mazeShadowLayer)
             this.camera.drawImage(this.mazeShadowLayer, 0, 0);
 
+        this.powerupItems.forEach(p => p.draw(this.camera, this));
         this.tanks.forEach(tank => tank.draw(this.camera, this));
 
         if (this.mazeLayer)
@@ -241,6 +283,15 @@ export default class GameState {
                     message.durations[i],
                     message.graphics[i]
                 ));
+        else if (message.type === TankSync.ADD_POWERUP_ITEM) {
+            let item = new PowerupItem(
+                new Vector(...message.position),
+                message.powerup
+            );
+            item.randomID = message.id;
+            this.addPowerupItem(item);
+        } else if (message.type === TankSync.DELETE_POWERUP_ITEM)
+            this.powerupItems = this.powerupItems.filter(p => p.randomID !== message.id);
         return true;
     }
 }

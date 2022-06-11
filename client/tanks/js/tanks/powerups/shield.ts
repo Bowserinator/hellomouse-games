@@ -3,7 +3,7 @@ import Tank from '../tank.js';
 import GameState from '../gamestate.js';
 import { TANK_SIZE } from '../../vars.js';
 import { PowerupState } from './powerup.js';
-import { Powerup } from '../../types.js';
+import { Powerup, PowerupCategory } from '../../types.js';
 import Vector from '../vector2d.js';
 
 const SHIELD_DURATION = 6000; // How long the shield lasts
@@ -64,7 +64,7 @@ export class ShieldPowerup extends PowerupState {
     lastHitTime: number; // Time last projectile hit
 
     constructor(tank: Tank) {
-        super(tank, Powerup.SHIELD);
+        super(tank, Powerup.SHIELD, PowerupCategory.TANK);
         this.start = Date.now();
         this.flicker = false;
         this.lastHitTime = 0;
