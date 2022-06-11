@@ -1,6 +1,6 @@
 import Tank from '../tank.js';
 import GameState from '../gamestate.js';
-import { PowerupSingleton } from './powerup.js';
+import { PowerupState } from './powerup.js';
 import { Powerup, BulletType } from '../../types.js';
 
 // @ts-expect-error TS is stupid
@@ -15,7 +15,7 @@ TANK_TURRET_IMAGE_URLS[Powerup.ROCKET] = '/tanks/img/turrets/rocket.png';
 
 
 /** An abstract bullet type powerup  */
-class AbstractBulletPowerup extends PowerupSingleton {
+class AbstractBulletPowerup extends PowerupState {
     bulletType: BulletType;
 
     /**

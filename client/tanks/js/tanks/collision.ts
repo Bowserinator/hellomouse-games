@@ -157,10 +157,14 @@ export default class Collider {
             for (let tank of gameState.tanks)
                 if (tank.invincible && this.collidesWithCircle(tank.position, SHIELD_RADIUS)) {
                     let center = new Vector(this.position.x + this.size.x / 2, this.position.y + this.size.y / 2);
-                    velocity = (new Vector(
+                    let newVelocity = (new Vector(
                         center.x - tank.position.x,
                         center.y - tank.position.y
                     )).normalize().mul(velocity.magnitude());
+
+                    velocity.x = newVelocity.x;
+                    velocity.y = newVelocity.y;
+
                     bounceCount++;
                     bouncePositions.push(this.position.copy());
 

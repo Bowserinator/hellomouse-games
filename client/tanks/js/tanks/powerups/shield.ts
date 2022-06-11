@@ -2,7 +2,7 @@ import Camera from '../../renderer/camera.js';
 import Tank from '../tank.js';
 import GameState from '../gamestate.js';
 import { TANK_SIZE } from '../../vars.js';
-import { PowerupSingleton } from './powerup.js';
+import { PowerupState } from './powerup.js';
 import { Powerup } from '../../types.js';
 import Vector from '../vector2d.js';
 
@@ -58,7 +58,7 @@ export function drawShield(camera: Camera, center: [number, number], config: Shi
 }
 
 /** Force field around the tank */
-export class ShieldPowerup extends PowerupSingleton {
+export class ShieldPowerup extends PowerupState {
     start: number; // Time created
     flicker: boolean; // Is shield flickering?
     lastHitTime: number; // Time last projectile hit

@@ -2,7 +2,7 @@ import Camera from '../../renderer/camera.js';
 import Tank from '../tank.js';
 import GameState from '../gamestate.js';
 import { TANK_SIZE } from '../../vars.js';
-import { PowerupSingleton } from './powerup.js';
+import { PowerupState } from './powerup.js';
 import { Powerup } from '../../types.js';
 
 const STEALTH_DURATION = 10000; // How long the stealth lasts
@@ -48,7 +48,7 @@ export function drawStealth(camera: Camera, center: [number, number], config: St
 
 
 /** Stealth field around the tank */
-export class StealthPowerup extends PowerupSingleton {
+export class StealthPowerup extends PowerupState {
     start: number; // Time created
 
     constructor(tank: Tank) {
