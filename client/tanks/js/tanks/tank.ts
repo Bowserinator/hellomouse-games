@@ -8,7 +8,7 @@ import {
     TANK_SPEED, TANK_SIZE, TANK_TURRET_SIZE, TANK_FIRE_DELAY,
     TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE } from '../vars.js';
 
-import { StealthPowerup, PowerupSingleton, RocketPowerup, FastBulletPowerup, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
+import { StealthPowerup, PowerupSingleton, ShieldPowerup, LaserPowerup, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
 
 import Camera from '../renderer/camera.js';
 import Renderable from '../renderer/renderable.js';
@@ -55,7 +55,7 @@ export default class Tank extends Renderable {
         this.invincible = false;
         this.stealthed = false;
         this.powerups = [];
-        this.powerups = [new StealthPowerup(this), new RocketPowerup(this)];
+        this.powerups = [new ShieldPowerup(this), new LaserPowerup(this)];
         this.id = id;
         this.firedBullets = [];
 

@@ -1,6 +1,7 @@
 import Vector from './vector2d.js';
 import GameState from './gamestate.js';
 import Camera from '../renderer/camera.js';
+import { SHIELD_RADIUS } from './powerups/shield.js';
 
 /**
  * Rectangular collision helper
@@ -78,6 +79,56 @@ export default class Collider {
     }
 
     /**
+     * Does the line intersect the bounding box at any point?
+     * (From start to end)
+     * @param {Vector} start Start of the line
+     * @param {Vector} end End of the line
+     * @returns Does it collide?
+     */
+    collidesWithLine(start: Vector, end: Vector) {
+        /** Do lines intersect, stolen from https://stackoverflow.com/a/28866825 */
+        function linesIntersect(p1: Vector, p2: Vector, p3: Vector, p4: Vector) {
+            // eslint-disable-next-line @typescript-eslint/no-shadow, @typescript-eslint/naming-convention
+            function CCW(p1: Vector, p2: Vector, p3: Vector) {
+                return (p3.y - p1.y) * (p2.x - p1.x) > (p2.y - p1.y) * (p3.x - p1.x);
+            }
+            // eslint-disable-next-line new-cap
+            return (CCW(p1, p3, p4) !== CCW(p2, p3, p4)) && (CCW(p1, p2, p3) !== CCW(p1, p2, p4));
+        }
+
+        return linesIntersect(start, end, this.position, this.position.add(new Vector(this.size.x, 0))) ||
+            linesIntersect(start, end, this.position, this.position.add(new Vector(0, this.size.y))) ||
+            linesIntersect(start, end, this.position.add(new Vector(0, this.size.y)), this.position.add(this.size)) ||
+            linesIntersect(start, end, this.position.add(new Vector(this.size.x, 0)), this.position.add(this.size));
+    }
+
+    /**
+     * Does a circle overlap with this collider?
+     * @param {Vector} center Center of circle
+     * @param {number} r Radius of circle
+     * @returns {boolean} Does the circle overlap?
+     */
+    collidesWithCircle(center: Vector, r: number) {
+        // eslint-disable-next-line @typescript-eslint/no-shadow
+        function lineIntersect(center: Vector, radius: number, line1: Vector, line2: Vector) {
+            center = center.add(line1.mul(-1));
+            line2 = line2.add(line1.mul(-1));
+
+            let t = (line2.x * center.x + line2.y + center.y) / (line2.x * line2.x + line2.y * line2.y);
+            t = Math.max(0, Math.min(t, 1));
+
+            let deltaX = line2.x * t - center.x;
+            let deltaY = line2.y * t - center.y;
+            return deltaX * deltaX + deltaY * deltaY <= radius * radius;
+        }
+
+        return lineIntersect(center, r, this.position, this.position.add(new Vector(this.size.x, 0))) ||
+            lineIntersect(center, r, this.position, this.position.add(new Vector(0, this.size.y))) ||
+            lineIntersect(center, r, this.position.add(new Vector(0, this.size.y)), this.position.add(this.size)) ||
+            lineIntersect(center, r, this.position.add(new Vector(this.size.x, 0)), this.position.add(this.size));
+    }
+
+    /**
      * Perform a bounce of the collider given an initial velocity
      * and timestep. Updates the collider's position in place
      *
@@ -101,6 +152,21 @@ export default class Collider {
 
             this.position.x += mul * v.x;
             this.position.y += mul * v.y;
+
+            // Bounce off of shields
+            for (let tank of gameState.tanks)
+                if (tank.invincible && this.collidesWithCircle(tank.position, SHIELD_RADIUS)) {
+                    let center = new Vector(this.position.x + this.size.x / 2, this.position.y + this.size.y / 2);
+                    velocity = (new Vector(
+                        center.x - tank.position.x,
+                        center.y - tank.position.y
+                    )).normalize().mul(velocity.magnitude());
+                    bounceCount++;
+                    bouncePositions.push(this.position.copy());
+
+                    if (!allowBounce)
+                        return [velocity, bounceCount, bouncePositions]; // Collided, stop
+                }
 
             for (let wall of gameState.walls)
                 if (wall.collider.collidesWith(this)) {

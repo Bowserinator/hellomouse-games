@@ -8,8 +8,9 @@ import Vector from '../vector2d.js';
 
 const SHIELD_DURATION = 6000; // How long the shield lasts
 const SHIELD_WARNING = 1000; // Time (ms) before shield goes down to flicker
-const SHIELD_RADIUS = TANK_SIZE * 0.72;
 const HIT_FLICKER_TIME = 60;
+
+export const SHIELD_RADIUS = TANK_SIZE * 0.72;
 
 interface ShieldConfig {
     radius: number;
@@ -81,17 +82,7 @@ export class ShieldPowerup extends PowerupSingleton {
     update(gameState: GameState, timestep: number) {
         let now = Date.now();
 
-        // Deflect bullets
-        for (let bullet of gameState.bullets)
-            if (bullet.collider.within(this.tank.position, SHIELD_RADIUS)) {
-                let center = bullet.getCenter();
-                bullet.velocity = (new Vector(
-                    center.x - this.tank.position.x,
-                    center.y - this.tank.position.y
-                )).normalize().mul(bullet.velocity.magnitude());
-                this.lastHitTime = Date.now();
-            }
-
+        // Deflect bullets is done in collision
         // Duration check
         if (now - this.start > SHIELD_DURATION)
             this.stop(gameState);

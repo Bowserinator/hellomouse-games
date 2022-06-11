@@ -488,6 +488,27 @@ export class LaserBullet extends Bullet {
     }
 
     killStuff(gameState: GameState, timestep: number) {
+        let p = [...this.previousPositions, this.getCenter()];
+        for (let i = 0; i < p.length - 1; i++) {
+            let [start, end] = [p[i], p[i + 1]];
+
+            // Hit other bullets
+            for (let bullet of gameState.bullets)
+                if (!bullet.invincible && bullet !== this &&
+                    bullet.collider.collidesWithLine(start, end) && !gameState.isClientSide)
+                    gameState.removeBullet(bullet);
+
+            // Hit tanks
+            for (let tank of gameState.tanks.filter((t: Tank) => !t.isDead))
+                if (tank.collider.collidesWithLine(start, end) && !gameState.isClientSide) {
+                    if (tank.invincible)
+                        continue;
+                    if (tank.id !== this.firedBy && this.firedBy > -1) // No points for suicide shots
+                        gameState.tanks[this.firedBy].score++;
+                    gameState.killTank(tank);
+                    return false;
+                }
+        }
         return true;
     }
 
