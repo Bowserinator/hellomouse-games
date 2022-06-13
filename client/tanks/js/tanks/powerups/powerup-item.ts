@@ -4,9 +4,9 @@ import GameState from '../gamestate.js';
 import { Powerup } from '../../types.js';
 import Vector from '../vector2d.js';
 import Collider from '../collision.js';
-import { createPowerupFromType } from './powerups.js';
+import { POWERUP_ITEM_SIZE } from '../../vars.js';
 
-const POWERUP_ITEM_SIZE = new Vector(36, 36); // Move to global config?
+const POWERUP_ITEM_SIZE_VECTOR = new Vector(POWERUP_ITEM_SIZE, POWERUP_ITEM_SIZE);
 
 // @ts-expect-error TS is stupid
 const POWERUP_TEXTURE_MAP: Record<Powerup, string> = {};
@@ -27,10 +27,10 @@ export class PowerupItem extends Renderable {
 
     constructor(position: Vector, powerup: Powerup) {
         // eslint-disable-next-line @typescript-eslint/no-shadow
-        super(Object.values(POWERUP_TEXTURE_MAP).map(powerup => [powerup, POWERUP_ITEM_SIZE]));
+        super(Object.values(POWERUP_TEXTURE_MAP).map(powerup => [powerup, POWERUP_ITEM_SIZE_VECTOR]));
         this.position = position;
         this.powerup = powerup;
-        this.collider = new Collider(position, POWERUP_ITEM_SIZE);
+        this.collider = new Collider(position, POWERUP_ITEM_SIZE_VECTOR);
         this.randomID = Math.round(Math.random() * 100000);
     }
 
@@ -39,7 +39,7 @@ export class PowerupItem extends Renderable {
         if (this.images[POWERUP_TEXTURE_MAP[this.powerup]])
             camera.drawImage(this.images[POWERUP_TEXTURE_MAP[this.powerup]], ...this.position.l());
         else
-            camera.fillRect(this.position.l(), POWERUP_ITEM_SIZE.l(), 'red');
+            camera.fillRect(this.position.l(), POWERUP_ITEM_SIZE_VECTOR.l(), 'red');
     }
 
     update(gameState: GameState, timestep: number) {

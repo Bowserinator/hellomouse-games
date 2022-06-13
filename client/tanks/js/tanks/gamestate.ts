@@ -8,11 +8,13 @@ import Wall from './wall.js';
 import Tank from './tank.js';
 import Explosion from './explosion.js';
 import Particle from './particle.js';
-import generateMaze from './map-gen.js';
+import { generateMaze, getMazeSize } from './map-gen.js';
 import { PowerupItem } from './powerups/powerup-item.js';
 import { createPowerupFromType } from './powerups/powerups.js';
+import { CELL_SIZE, MAX_POWERUP_ITEMS, POWERUP_ITEM_SIZE } from '../vars.js';
 
 interface SyncMessage {
+    seed: number;
     movement: [Direction, Direction];
     position: [number, number];
     velocity: [number, number];
@@ -28,7 +30,6 @@ interface SyncMessage {
     positions: Array<[number, number]>;
     rotations: Array<number>;
     indices: Array<number>;
-    seed: number;
 
     damageRadii: Array<number>;
     graphicsRadii: Array<number>;
@@ -58,6 +59,7 @@ export default class GameState {
     addedPowerups: Set<[Powerup, number]>; // Powerup, tankid
 
     camera: Camera;
+    mazeSeed: number;
 
     // Clientside only:
     mazeLayer?: HTMLCanvasElement;
@@ -73,6 +75,7 @@ export default class GameState {
         this.explosions = [];
         this.particles = []; // Client side only
         this.powerupItems = [];
+        this.mazeSeed = 0;
 
         this.lastUpdate = Date.now(); // Time of last update as UNIX timestamp
         this.addedBullets = new Set();
@@ -86,10 +89,9 @@ export default class GameState {
         this.addedPowerups = new Set();
 
         // TODO: delete
-        if (!isClientSide) {
+        if (!isClientSide)
             for (let i = 0; i < 30; i++)
-            this.spawnRandomPowerup();
-        }
+                this.spawnRandomPowerup();
     }
 
     /**
@@ -130,6 +132,7 @@ export default class GameState {
     }
 
     removeBullet(bullet: Bullet) {
+        bullet.isDead = true;
         bullet.onRemove(this);
 
         let i = this.bullets.indexOf(bullet);
@@ -170,13 +173,13 @@ export default class GameState {
     }
 
     /**
-     * Find nearest tank to a position
+     * Find nearest tank to a position, ignores dead & stealthed tanks
      * @param position Position to find nearest tank to
      * @param exclude Array of tanks to exclude in search
      * @returns Nearest tank, or null if none found
      */
     getNearestTank(position: Vector, exclude: Array<Tank> = []) {
-        let tanks = this.tanks.filter(tank => !tank.isDead && !exclude.includes(tank));
+        let tanks = this.tanks.filter(tank => !tank.isDead && !tank.stealthed && !exclude.includes(tank));
         if (!tanks.length) return null;
         return tanks.reduce((a, b) => a.position.distance2(position) < b.position.distance2(position) ? a : b);
     }
@@ -193,15 +196,27 @@ export default class GameState {
         this.addedPowerups.clear();
     }
 
+    /**
+     * Spawn a random powerup somewhere in the maze. Can fail to spawn
+     * a powerup if there are no empty spots or too many existing powerups
+     */
     spawnRandomPowerup() {
-        const powerups = Object.values(Powerup).filter(x => typeof x !== 'string');
-        const powerup = powerups[Math.floor(Math.random() * powerups.length)];
-        // Note: this can create a powerup type of NONEs
-        // TODO
-        if (powerup === Powerup.NONE) return; // hack
+        let powerups = Object.values(Powerup).filter(x => typeof x !== 'string');
+        powerups = powerups.filter((p, i) => powerups[i] !== Powerup.NONE);
 
-        let x = Math.random() * 1000;
-        let y = Math.random() * 1000; // TODO: compute from grid
+        const powerup = powerups[Math.floor(Math.random() * powerups.length)];
+        const size = getMazeSize(this.mazeSeed);
+        let [x, y] = [0, 0];
+
+        // No more room for maze items
+        if (this.powerupItems.length > Math.min(MAX_POWERUP_ITEMS, size * size))
+            return;
+
+        // Pick unoccupied spot
+        while (!x || !y || this.powerupItems.some(i => i.collider.position.x === x && i.collider.position.y === y)) {
+            x = CELL_SIZE / 2 + CELL_SIZE * Math.round(Math.random() * size) - POWERUP_ITEM_SIZE / 2;
+            y = CELL_SIZE / 2 + CELL_SIZE * Math.round(Math.random() * size) - POWERUP_ITEM_SIZE / 2;
+        }
         this.addPowerupItem(new PowerupItem(new Vector(x, y), powerup as Powerup));
     }
 
@@ -265,6 +280,7 @@ export default class GameState {
             this.bullets = this.bullets.filter((b, i) => !message.indices.includes(i));
         else if (message.type === TankSync.MAP_UPDATE) {
             this.tankIndex = message.id;
+            this.mazeSeed = message.seed;
             let [w, h] = generateMaze(this, message.seed);
             if (this.isClientSide) {
                 this.mazeLayer = generateMazeImage(this.walls, w, h);

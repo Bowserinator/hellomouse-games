@@ -1,5 +1,6 @@
 
-// TODO: bullet sizes
+// Game
+export const MAX_POWERUP_ITEMS = 10;
 
 // Tanks
 export const TANK_SIZE = 50; // Visual + collision
@@ -23,3 +24,4 @@ export const CAMERA_EDGE_MARGIN = 100;
 export const SHADOW_COLOR = '#ddd';
 export const SHADOW_SIZE_X = 10;
 export const SHADOW_SIZE_Y = 10;
+export const POWERUP_ITEM_SIZE = 36;

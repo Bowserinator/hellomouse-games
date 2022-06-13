@@ -128,7 +128,9 @@ export default class Tank extends Renderable {
     getFiringPositionAndDirection(): [Vector, Vector] {
         // 0.73 > 1/sqrt(2), the length of the diagonal from the center to a corner of the hitbox
         // so the spawned bullet won't collide with the tank
-        let rot = Vector.vecFromRotation(this.rotation, 0.73 * TANK_SIZE);
+        // Also add bullet size to avoid shield collisions
+        let rot = Vector.vecFromRotation(this.rotation, 0.73 * TANK_SIZE +
+            Math.max(...Bullet.bulletClassFromType(this.bulletType).config.size.l()));
         let pos = this.position.add(rot);
         let dir = rot;
         return [pos, dir];

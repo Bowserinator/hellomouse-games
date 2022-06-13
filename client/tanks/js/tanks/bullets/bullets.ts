@@ -116,7 +116,7 @@ export class Bullet extends Renderable {
     killStuff(gameState: GameState, timestep: number): boolean {
         // Hit other bullets
         for (let bullet of gameState.bullets)
-            if (!bullet.invincible && bullet !== this &&
+            if (!bullet.isDead && !bullet.invincible && bullet !== this &&
                 this.collider.collidesWith(bullet.collider) && !gameState.isClientSide)
                 gameState.removeBullet(bullet);
 
@@ -213,6 +213,31 @@ export class Bullet extends Renderable {
     }
 
     /**
+     * Get bullet class of a given type
+     * @param {BulletType} type Type of the bullet
+     * @return {Bullet} bullet
+     */
+    static bulletClassFromType(type: BulletType) {
+        switch (type) {
+                case BulletType.NORMAL:
+                    return NormalBullet;
+                case BulletType.FAST:
+                    return HighSpeedBullet;
+                case BulletType.MAGNET:
+                    return MagneticMineBullet;
+                case BulletType.LASER:
+                    return LaserBullet;
+                case BulletType.BOMB:
+                    return BombBullet;
+                case BulletType.SMALL:
+                    return SmallBullet;
+                case BulletType.ROCKET:
+                    return RocketBullet;
+        }
+        throw new Error(`Unknown bullet type ${type}`);
+    }
+
+    /**
      * Create a bullet of a given type
      * @param {BulletType} type Type of the bullet
      * @param {Vector} position Position of bullet
@@ -220,23 +245,9 @@ export class Bullet extends Renderable {
      * @return {Bullet} bullet
      */
     static bulletFromType(type: BulletType, position: Vector, direction: Vector): Bullet {
-        switch (type) {
-                case BulletType.NORMAL:
-                    return new NormalBullet(position, direction);
-                case BulletType.FAST:
-                    return new HighSpeedBullet(position, direction);
-                case BulletType.MAGNET:
-                    return new MagneticMineBullet(position, direction);
-                case BulletType.LASER:
-                    return new LaserBullet(position, direction);
-                case BulletType.BOMB:
-                    return new BombBullet(position, direction);
-                case BulletType.SMALL:
-                    return new SmallBullet(position, direction);
-                case BulletType.ROCKET:
-                    return new RocketBullet(position, direction);
-        }
-        throw new Error(`Unknown bullet type ${type}`);
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const TypeBullet = Bullet.bulletClassFromType(type);
+        return new TypeBullet(position, direction);
     }
 }
 
@@ -373,7 +384,7 @@ export class BombBullet extends Bullet {
         imageSize: new Vector(24, 24)
     };
 
-    static bulletsToFire = 100; // Bullets to spawn in explosion
+    static bulletsToFire = 50; // Bullets to spawn in explosion
 
     constructor(position: Vector, direction: Vector) {
         super(position, direction, BombBullet.config);
@@ -384,7 +395,9 @@ export class BombBullet extends Bullet {
         gameState.addExplosion(new Explosion(this.getCenter(), 40, 60, 500, ExplosionGraphics.CIRCLE));
 
         for (let angle = 0; angle < Math.PI * 2; angle += Math.PI * 2 / BombBullet.bulletsToFire) {
-            let bullet = new SmallBullet(this.getCenter(), Vector.vecFromRotation(angle, 1));
+            let bullet = new SmallBullet(
+                this.getCenter().add(Vector.vecFromRotation(angle, 10)),
+                Vector.vecFromRotation(angle, 1));
             gameState.addBullet(bullet);
         }
     }
@@ -494,7 +507,7 @@ export class LaserBullet extends Bullet {
 
             // Hit other bullets
             for (let bullet of gameState.bullets)
-                if (!bullet.invincible && bullet !== this &&
+                if (!bullet.isDead && !bullet.invincible && bullet !== this &&
                     bullet.collider.collidesWithLine(start, end) && !gameState.isClientSide)
                     gameState.removeBullet(bullet);
 

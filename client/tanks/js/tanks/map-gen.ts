@@ -19,14 +19,24 @@ function makeWall(pos: [number, number], size: [number, number]) {
 
 
 /**
+ * Get size of maze from seed
+ * @param {number} seed Random seed
+ * @returns Size of maze in cells
+ */
+export function getMazeSize(seed: number) {
+    return seed % (MAX_MAZE_SIZE - MIN_MAZE_SIZE) + MIN_MAZE_SIZE;
+}
+
+
+/**
  * Create walls in the gameState to generate a maze
  * with a given random seed
  * @param {GameState} gameState Will modify .walls
  * @param {number} seed
  * @return {[number, number]} width, height of maze (in cells)
  */
-export default function generateMaze(gameState: GameState, seed: number) {
-    let size = seed % (MAX_MAZE_SIZE - MIN_MAZE_SIZE) + MIN_MAZE_SIZE;
+export function generateMaze(gameState: GameState, seed: number) {
+    let size = getMazeSize(seed);
     let m = new Maze({
         width: size,
         height: size,

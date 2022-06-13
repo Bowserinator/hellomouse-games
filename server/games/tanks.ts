@@ -4,9 +4,8 @@ import Client from '../client.js';
 import GameState from '../../client/tanks/js/tanks/gamestate.js';
 import { Direction, Action, TankSync } from '../../client/tanks/js/types.js';
 import Tank from '../../client/tanks/js/tanks/tank.js';
-import { LaserBullet } from '../../client/tanks/js/tanks/bullets/bullets.js';
 import Vector from '../../client/tanks/js/tanks/vector2d.js';
-import generateMaze from '../../client/tanks/js/tanks/map-gen.js';
+import { generateMaze } from '../../client/tanks/js/tanks/map-gen.js';
 
 interface IntentMessage {
     action: Action;
@@ -48,6 +47,7 @@ class TankGame extends Game {
     onRoomCreate() {
         this.mapSeed = Math.floor(Math.random() * 100000000);
         generateMaze(this.state, this.mapSeed);
+        this.state.mazeSeed = this.mapSeed;
     }
 
     // @ts-ignore:next-line
