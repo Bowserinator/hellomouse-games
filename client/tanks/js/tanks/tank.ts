@@ -195,7 +195,7 @@ export default class Tank extends Renderable {
             }
 
         if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
-            this.firedBullets = this.firedBullets.filter(b => !b.isDead);
+            this.firedBullets = this.firedBullets.filter(b => !b.isDead && b.type === this.bulletType);
             if (this.firedBullets.length < (this.fakeBullet.config.maxAmmo || 1)) {
                 let bullet = Bullet.bulletFromType(
                     this.bulletType,

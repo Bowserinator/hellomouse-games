@@ -17,16 +17,23 @@ export class PowerupState {
         this.type = type;
         this.tank = tank;
         this.category = category;
-        this.clearSameTypePowerups([this]);
+        this.clearSameTypePowerups(false, [this]);
     }
 
     /**
      * Clear bullet powerups of the same type
      * @param {Array<PowerupState>} exceptions Don't remove these powerups
      */
-    clearSameTypePowerups(exceptions: Array<PowerupState> = []) {
-        this.tank.powerups = this.tank.powerups.filter(powerup =>
-            powerup.category !== this.category || exceptions.includes(powerup));
+    clearSameTypePowerups(isRecursive = false, exceptions: Array<PowerupState> = []) {
+        if (isRecursive) return;
+
+        let newPowerups = [];
+        for (let powerup of this.tank.powerups)
+            if (powerup.category === this.category && !exceptions.includes(powerup))
+                powerup.stop(true);
+            else
+                newPowerups.push(powerup);
+        this.tank.powerups = newPowerups;
     }
 
     /**
@@ -54,13 +61,8 @@ export class PowerupState {
         // Override
     }
 
-    /**
-     * Stops the current powerup's effects and undos any changes made
-     * May not always be called if the powerup is directly deleted by another
-     * @param {GameState} gameState GameState
-     */
-    stop(gameState: GameState) {
-        // TODO: send update to client
-        this.clearSameTypePowerups();
+    /** Stops the current powerup's effects and undos any changes made */
+    stop(isRecursive = false) {
+        this.clearSameTypePowerups(isRecursive);
     }
 }

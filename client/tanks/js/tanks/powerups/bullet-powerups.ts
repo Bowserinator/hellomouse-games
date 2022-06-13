@@ -38,17 +38,13 @@ class AbstractBulletPowerup extends PowerupState {
      * @param gameState GameState
      */
     onFire(gameState: GameState) {
-        this.stop(gameState);
+        this.stop();
     }
 
-    /**
-     * Terminate the current powerup + unset variables
-     * @param gameState GameState
-     */
-    stop(gameState: GameState) {
+    stop(isRecursive = false) {
         this.tank.turretImageUrl = TANK_TURRET_IMAGE_URLS[Powerup.NONE];
         this.tank.changeBulletType(BulletType.NORMAL);
-        super.stop(gameState);
+        super.stop(isRecursive);
     }
 }
 

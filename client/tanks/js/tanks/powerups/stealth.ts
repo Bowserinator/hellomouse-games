@@ -68,14 +68,14 @@ export class StealthPowerup extends PowerupState {
 
         // Duration check
         if (now - this.start > STEALTH_DURATION)
-            this.stop(gameState);
+            this.stop();
         else if (now - this.start > STEALTH_DURATION - STEALTH_WARNING)
             // Flicker stealth, flicker rate = 60
             this.tank.stealthed = Math.floor(Date.now() / 60) % 2 === 0;
     }
 
-    stop(gameState: GameState) {
+    stop(isRecursive = false) {
         this.tank.stealthed = false;
-        super.stop(gameState);
+        super.stop(isRecursive);
     }
 }

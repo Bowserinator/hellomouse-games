@@ -1,4 +1,4 @@
-import { Direction, TankSync, BulletType, ExplosionGraphics, Powerup } from '../types.js';
+import { Direction, TankSync, BulletType, ExplosionGraphics, Powerup, PowerupCategory } from '../types.js';
 import { Bullet } from './bullets/bullets.js';
 import Camera from '../renderer/camera.js';
 import { generateMazeImage, generateMazeShadowImage } from '../renderer/maze-image-gen.js';
@@ -10,6 +10,7 @@ import Explosion from './explosion.js';
 import Particle from './particle.js';
 import generateMaze from './map-gen.js';
 import { PowerupItem } from './powerups/powerup-item.js';
+import { createPowerupFromType } from './powerups/powerups.js';
 
 interface SyncMessage {
     movement: [Direction, Direction];
@@ -54,6 +55,7 @@ export default class GameState {
     addedExplosions: Set<Explosion>;
     addedPowerupItems: Set<PowerupItem>;
     removedPowerupItems: Set<PowerupItem>;
+    addedPowerups: Set<[Powerup, number]>; // Powerup, tankid
 
     camera: Camera;
 
@@ -81,11 +83,11 @@ export default class GameState {
         this.killedTanks = new Set();
         this.addedPowerupItems = new Set();
         this.removedPowerupItems = new Set();
+        this.addedPowerups = new Set();
 
         // TODO: delete
         if (!isClientSide) {
-            this.spawnRandomPowerup();
-            this.spawnRandomPowerup();
+            for (let i = 0; i < 30; i++)
             this.spawnRandomPowerup();
         }
     }
@@ -161,6 +163,12 @@ export default class GameState {
         tank.isDead = true;
     }
 
+    giveTankPowerup(tank: Tank, powerup: Powerup) {
+        let powerupState = createPowerupFromType(powerup, tank);
+        tank.powerups.push(powerupState);
+        this.addedPowerups.add([powerup, tank.id]);
+    }
+
     /**
      * Find nearest tank to a position
      * @param position Position to find nearest tank to
@@ -168,7 +176,7 @@ export default class GameState {
      * @returns Nearest tank, or null if none found
      */
     getNearestTank(position: Vector, exclude: Array<Tank> = []) {
-        let tanks = this.tanks.filter(tank => !exclude.includes(tank));
+        let tanks = this.tanks.filter(tank => !tank.isDead && !exclude.includes(tank));
         if (!tanks.length) return null;
         return tanks.reduce((a, b) => a.position.distance2(position) < b.position.distance2(position) ? a : b);
     }
@@ -182,6 +190,7 @@ export default class GameState {
         this.addedExplosions.clear();
         this.addedPowerupItems.clear();
         this.removedPowerupItems.clear();
+        this.addedPowerups.clear();
     }
 
     spawnRandomPowerup() {
@@ -292,6 +301,8 @@ export default class GameState {
             this.addPowerupItem(item);
         } else if (message.type === TankSync.DELETE_POWERUP_ITEM)
             this.powerupItems = this.powerupItems.filter(p => p.randomID !== message.id);
+        else if (message.type === TankSync.GIVE_POWERUP)
+            this.giveTankPowerup(this.tanks[message.id], message.powerup);
         return true;
     }
 }

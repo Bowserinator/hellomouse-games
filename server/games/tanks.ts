@@ -76,6 +76,7 @@ class TankGame extends Game {
     }
 
     sendPowerupUpdates() {
+        // Powerup items
         for (let add of this.state.addedPowerupItems)
             this.broadcast({
                 type: TankSync.ADD_POWERUP_ITEM,
@@ -87,6 +88,14 @@ class TankGame extends Game {
             this.broadcast({
                 type: TankSync.DELETE_POWERUP_ITEM,
                 id: remove.randomID
+            });
+
+        // Powerups
+        for (let add of this.state.addedPowerups)
+            this.broadcast({
+                type: TankSync.GIVE_POWERUP,
+                id: add[1],
+                powerup: add[0]
             });
     }
 

@@ -85,13 +85,13 @@ export class ShieldPowerup extends PowerupState {
         // Deflect bullets is done in collision
         // Duration check
         if (now - this.start > SHIELD_DURATION)
-            this.stop(gameState);
+            this.stop();
         else if (now - this.start > SHIELD_DURATION - SHIELD_WARNING)
             this.flicker = true;
     }
 
-    stop(gameState: GameState) {
+    stop(isRecursive = false) {
         this.tank.invincible = false;
-        super.stop(gameState);
+        super.stop(isRecursive);
     }
 }

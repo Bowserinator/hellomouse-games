@@ -6,7 +6,18 @@ import Vector from '../vector2d.js';
 import Collider from '../collision.js';
 import { createPowerupFromType } from './powerups.js';
 
-const POWERUP_ITEM_SIZE = new Vector(30, 30); // Move to global config?
+const POWERUP_ITEM_SIZE = new Vector(36, 36); // Move to global config?
+
+// @ts-expect-error TS is stupid
+const POWERUP_TEXTURE_MAP: Record<Powerup, string> = {};
+POWERUP_TEXTURE_MAP[Powerup.LASER] = '/tanks/img/items/laser.png';
+POWERUP_TEXTURE_MAP[Powerup.SHOTGUN] = '/tanks/img/items/shotgun.png';
+POWERUP_TEXTURE_MAP[Powerup.BOMB] = '/tanks/img/items/bomb.png';
+POWERUP_TEXTURE_MAP[Powerup.MAGNET] = '/tanks/img/items/magnet.png';
+POWERUP_TEXTURE_MAP[Powerup.FAST] = '/tanks/img/items/fast.png';
+POWERUP_TEXTURE_MAP[Powerup.ROCKET] = '/tanks/img/items/rocket.png';
+POWERUP_TEXTURE_MAP[Powerup.SHIELD] = '/tanks/img/items/shield.png';
+POWERUP_TEXTURE_MAP[Powerup.STEALTH] = '/tanks/img/items/stealth.png';
 
 export class PowerupItem extends Renderable {
     powerup: Powerup;
@@ -15,9 +26,8 @@ export class PowerupItem extends Renderable {
     randomID: number;
 
     constructor(position: Vector, powerup: Powerup) {
-        super([
-            ['', POWERUP_ITEM_SIZE] // TODO: powerup image list
-        ]);
+        // eslint-disable-next-line @typescript-eslint/no-shadow
+        super(Object.values(POWERUP_TEXTURE_MAP).map(powerup => [powerup, POWERUP_ITEM_SIZE]));
         this.position = position;
         this.powerup = powerup;
         this.collider = new Collider(position, POWERUP_ITEM_SIZE);
@@ -26,17 +36,17 @@ export class PowerupItem extends Renderable {
 
     draw(camera: Camera, gameState: GameState) {
         // Draw image
-        camera.fillRect(this.position.l(), POWERUP_ITEM_SIZE.l(), 'red');
+        if (this.images[POWERUP_TEXTURE_MAP[this.powerup]])
+            camera.drawImage(this.images[POWERUP_TEXTURE_MAP[this.powerup]], ...this.position.l());
+        else
+            camera.fillRect(this.position.l(), POWERUP_ITEM_SIZE.l(), 'red');
     }
 
     update(gameState: GameState, timestep: number) {
         // If collide with tank give powerup
         for (let tank of gameState.tanks)
             if (tank.collider.collidesWith(this.collider)) {
-                // Note: you must seperate powerup create and the push
-                // or weird bugs happen
-                let powerup = createPowerupFromType(this.powerup, tank);
-                tank.powerups.push(powerup);
+                gameState.giveTankPowerup(tank, this.powerup);
                 gameState.removePowerupItem(this);
                 return;
             }

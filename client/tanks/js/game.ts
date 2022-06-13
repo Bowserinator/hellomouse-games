@@ -186,6 +186,7 @@ window.onmousedown = e => {
 
     UPDATE_ROTATION.f();
     connection.send(JSON.stringify({ type: 'MOVE', action: Action.FIRE, direction: dir }));
+    gameState.tanks[gameState.tankIndex].powerups.forEach(p => p.onFire(gameState));
 };
 
 window.onmouseup = e => {
