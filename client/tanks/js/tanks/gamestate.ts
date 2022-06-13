@@ -62,6 +62,7 @@ export default class GameState {
     mazeSeed: number;
 
     // Clientside only:
+    powerupItemLayer?: HTMLCanvasElement;
     mazeLayer?: HTMLCanvasElement;
     mazeShadowLayer?: HTMLCanvasElement;
     particles: Array<Particle>;
@@ -129,6 +130,7 @@ export default class GameState {
     addPowerupItem(powerup: PowerupItem) {
         this.powerupItems.push(powerup);
         this.addedPowerupItems.add(powerup);
+        this.updatePowerupItemLayer();
     }
 
     removeBullet(bullet: Bullet) {
@@ -156,6 +158,7 @@ export default class GameState {
         // TODO: more efficent splice
         this.removedPowerupItems.add(powerup);
         this.powerupItems = this.powerupItems.filter(p => p !== powerup);
+        this.updatePowerupItemLayer();
     }
 
     killTank(tank: Tank) {
@@ -230,11 +233,27 @@ export default class GameState {
         this.lastUpdate = Date.now();
     }
 
+    updatePowerupItemLayer() {
+        if (!this.isClientSide) return;
+
+        const canvas = this.powerupItemLayer;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        const camera = new Camera(new Vector(0, 0), ctx); // TODO: cache?
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        this.powerupItems.forEach(p => p.draw(camera, this));
+    }
+
     draw() {
         if (this.mazeShadowLayer)
             this.camera.drawImage(this.mazeShadowLayer, 0, 0);
 
-        this.powerupItems.forEach(p => p.draw(this.camera, this));
+        if (this.powerupItemLayer)
+            this.camera.drawImage(this.powerupItemLayer, 0, 0);
+
+        // this.powerupItems.forEach(p => p.draw(this.camera, this));
         this.tanks.forEach(tank => tank.draw(this.camera, this));
 
         if (this.mazeLayer)
@@ -285,6 +304,13 @@ export default class GameState {
             if (this.isClientSide) {
                 this.mazeLayer = generateMazeImage(this.walls, w, h);
                 this.mazeShadowLayer = generateMazeShadowImage(this.walls, w, h);
+
+                if (this.mazeLayer) {
+                    this.powerupItemLayer = document.createElement('canvas');
+                    this.powerupItemLayer.width = this.mazeLayer.width;
+                    this.powerupItemLayer.height = this.mazeLayer.height;
+                    this.updatePowerupItemLayer();
+                }
             }
         } else if (message.type === TankSync.TANK_DIED)
             this.tanks[message.id].isDead = true;
@@ -315,10 +341,13 @@ export default class GameState {
             );
             item.randomID = message.id;
             this.addPowerupItem(item);
-        } else if (message.type === TankSync.DELETE_POWERUP_ITEM)
+        } else if (message.type === TankSync.DELETE_POWERUP_ITEM) {
             this.powerupItems = this.powerupItems.filter(p => p.randomID !== message.id);
-        else if (message.type === TankSync.GIVE_POWERUP)
+            this.updatePowerupItemLayer();
+        } else if (message.type === TankSync.GIVE_POWERUP) {
             this.giveTankPowerup(this.tanks[message.id], message.powerup);
+            this.updatePowerupItemLayer();
+        }
         return true;
     }
 }
