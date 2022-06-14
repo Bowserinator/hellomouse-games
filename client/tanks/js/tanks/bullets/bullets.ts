@@ -513,7 +513,7 @@ export class LaserBullet extends Bullet {
 
             // Hit tanks
             for (let tank of gameState.tanks.filter((t: Tank) => !t.isDead))
-                if (tank.collider.collidesWithLine(start, end) && !gameState.isClientSide) {
+                if (!gameState.isClientSide && tank.collider.collidesWithLine(start, end)) {
                     if (tank.invincible)
                         continue;
                     if (tank.id !== this.firedBy && this.firedBy > -1) // No points for suicide shots

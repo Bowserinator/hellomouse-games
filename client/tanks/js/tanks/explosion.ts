@@ -4,6 +4,7 @@ import Particle from './particle.js';
 import Camera from '../renderer/camera.js';
 import { ExplosionGraphics, ParticleGraphics } from '../types.js';
 import gradient from '../renderer/gradient.js';
+import Tank from './tank.js';
 
 /**
  * On screen explosion
@@ -40,6 +41,20 @@ export default class Explosion {
     update(gameState: GameState, timestep: number) {
         if (Date.now() - this.createdTimestep > this.duration)
             gameState.removeExplosion(this);
+
+        // Perform damage to tanks only
+        // (Not bullets since some explosions spawn bullets)
+        if (this.damageRadius > 0)
+            for (let tank of gameState.tanks.filter((t: Tank) => !t.isDead))
+                if (!gameState.isClientSide && tank.collider.collidesWithCircle(this.position, this.damageRadius)) {
+                    if (tank.invincible)
+                        continue;
+                    // if (tank.id !== this.firedBy && this.firedBy > -1) // No points for suicide shots
+                    //    gameState.tanks[this.firedBy].score++;
+                    gameState.killTank(tank);
+                }
+
+        // Spawn particles on first tick
         if (this.firstRun) {
             switch (this.graphics) {
                     case ExplosionGraphics.PARTICLES: {
