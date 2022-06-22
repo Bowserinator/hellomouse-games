@@ -72,6 +72,26 @@ class TankGame extends Game {
             id: this.playerTankIDMap[client.id]
         }));
 
+
+        // Send all current powerups + tanks
+        for (let tank of this.state.tanks) {
+            let syncMessage = tank.sync(false);
+            if (syncMessage.length)
+                client.connection.send(JSON.stringify({
+                    type: TankSync.GENERIC_TANK_SYNC,
+                    id: tank.id,
+                    data: syncMessage
+                }));
+        }
+        for (let powerup of this.state.powerupItems)
+            client.connection.send(JSON.stringify({
+                type: TankSync.ADD_POWERUP_ITEM,
+                position: powerup.position.l(),
+                powerup: powerup.powerup,
+                id: powerup.randomID
+            }));
+
+
         return canJoin;
     }
 
@@ -100,25 +120,23 @@ class TankGame extends Game {
     }
 
     sendTankUpdates() {
-        // TODO use a flag tank numbers modified or something
-        // TODO: also send other data like powerups
+        // Added tanks
         if (this.state.addedTanks.length)
             this.broadcast({
                 type: TankSync.UPDATE_ALL_TANKS,
                 positions: this.state.tanks.map(tank => tank.position.l()),
                 rotations: this.state.tanks.map(tank => tank.rotation)
             });
-        // Update tank movements
-        // TODO: batch this as well
-        for (let tankID of this.state.changedTankIDs) {
-            let tank = this.state.tanks[tankID];
-            this.broadcast({
-                type: TankSync.TANK_POS,
-                position: tank.position.l(),
-                rotation: tank.rotation,
-                movement: tank.movement,
-                id: tankID
-            });
+
+        // Send generic updates
+        for (let tank of this.state.tanks) {
+            let syncMessage = tank.sync();
+            if (syncMessage.length)
+                this.broadcast({
+                    type: TankSync.GENERIC_TANK_SYNC,
+                    id: tank.id,
+                    data: syncMessage
+                });
         }
 
         // Send tanks that have fired this tick
@@ -179,14 +197,6 @@ class TankGame extends Game {
         this.dontSyncBullets = this.state.bullets.length === 0;
     }
 
-    sendTankDeadUpdates() {
-        for (let tankID of this.state.killedTanks)
-            this.broadcast({
-                type: TankSync.TANK_DIED,
-                id: tankID
-            });
-    }
-
     sendNewExplosionUpdates() {
         let newExplosions = [...this.state.addedExplosions];
         if (newExplosions.length)
@@ -210,7 +220,6 @@ class TankGame extends Game {
         this.sendNewExplosionUpdates();
         this.sendBulletUpdates();
         this.syncBullets();
-        this.sendTankDeadUpdates();
         this.sendPowerupUpdates();
 
         this.state.clearDeltas();

@@ -37,6 +37,7 @@ interface SyncMessage {
     durations: Array<number>;
     graphics: Array<ExplosionGraphics>;
     powerup: Powerup;
+    data: string;
 }
 
 export default class GameState {
@@ -272,17 +273,10 @@ export default class GameState {
      * @return {boolean} Success / changed?
      */
     syncFromMessage(message: SyncMessage) {
-        if (message.type === TankSync.TANK_POS) {
+        if (message.type === TankSync.GENERIC_TANK_SYNC) {
             if (message.id === undefined || !this.tanks[message.id])
                 return false;
-
-            this.tanks[message.id].movement = message.movement;
-            this.tanks[message.id].position = new Vector(...message.position);
-
-            // Client is free to lie about own rotation since you can rotate
-            // instantly anyways, so this prevents rotation stuttering
-            if (message.id !== this.tankIndex)
-                this.tanks[message.id].rotation = message.rotation;
+            this.tanks[message.id].fromSync(message.id, message.data, this);
         } else if (message.type === TankSync.UPDATE_ALL_TANKS) {
             this.tanks = [];
 
@@ -313,9 +307,7 @@ export default class GameState {
                     this.updatePowerupItemLayer();
                 }
             }
-        } else if (message.type === TankSync.TANK_DIED)
-            this.tanks[message.id].isDead = true;
-        else if (message.type === TankSync.SYNC_ALL_BULLETS) {
+        } else if (message.type === TankSync.SYNC_ALL_BULLETS) {
             this.bullets = [];
             for (let i = 0; i < message.positions.length; i++) {
                 this.bullets.push(Bullet.bulletFromType(

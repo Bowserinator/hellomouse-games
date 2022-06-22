@@ -23,16 +23,16 @@ export enum PowerupCategory {
 export enum TankSync {
     ADD_BULLET,
     REMOVE_BULLETS,
-    TANK_POS,
     MAP_UPDATE,
     UPDATE_ALL_TANKS,
-    TANK_DIED,
     SYNC_ALL_BULLETS,
     ADD_EXPLOSIONS,
     ADD_POWERUP_ITEM,
     DELETE_POWERUP_ITEM,
     GIVE_POWERUP,
-    TANK_FIRED
+    TANK_FIRED,
+
+    GENERIC_TANK_SYNC
 }
 
 export enum BulletType {

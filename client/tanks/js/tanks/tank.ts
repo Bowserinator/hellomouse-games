@@ -40,6 +40,8 @@ export default class Tank extends Renderable {
     firedBullets: Array<Bullet>;
     turretImageUrl: string;
 
+    syncDataDiff: Array<any>;
+
     speed: number;
 
     constructor(pos: Vector, rotation: number, id = -1) {
@@ -80,6 +82,74 @@ export default class Tank extends Renderable {
         this.score = 0;
 
         this.createCollider();
+    }
+
+    /**
+     * Returns parameters to sync to clients
+     * @param {boolean} diff If false will force send all data
+     * @returns Object to send
+     */
+    sync(diff = true) {
+        let truthyStuff =
+            (this.isDead ? 1 : 0) +
+            (this.invincible ? 2 : 0) +
+            (this.stealthed ? 4 : 0);
+
+        let data = [
+            this.position.l()         // 0
+                .map(x => Math.round(x)).join('|'),
+            this.rotation.toFixed(2), // 1
+            this.movement.join('|'),  // 2
+            truthyStuff.toString(36), // 3
+            this.score                // 4
+        ];
+        let trimmedData = [...data];
+        let trimmedDataStr;
+
+        // Trim data with previous diff
+        if (diff && this.syncDataDiff) {
+            // Start from 1, ID always synced
+            for (let i = 0; i < this.syncDataDiff.length; i++)
+                if (trimmedData[i] === this.syncDataDiff[i])
+                    trimmedData[i] = '';
+            // Resulting str is like A,B,C,...
+            // but can be '' if nothing changed (should be ignored and not sent by server)
+            trimmedDataStr = trimmedData.some(x => x !== '') ? trimmedData.join(',') : '';
+        } else
+            trimmedDataStr = trimmedData.join(',');
+
+        if (diff) // Update old diff
+            this.syncDataDiff = [...data];
+        return trimmedDataStr;
+    }
+
+    /**
+     * Sync client given data
+     * @param {any} data Data from sync()
+     */
+    fromSync(id: number, data: any, gameState: GameState) {
+        if (!data.length) return;
+        let arr = data.split(',');
+
+        if (arr[0] !== '')
+            this.position = new Vector(...(arr[0].split('|').map((x: string) => +x)) as [number, number]);
+        if (arr[2] !== '')
+            this.movement = arr[2].split('|').map((x: string) => parseInt(x));
+        if (arr[4] !== '')
+            this.score = arr[4];
+
+        // Process truthy stuff
+        if (arr[3] !== '') {
+            let truthyStuff = parseInt(arr[3], 36);
+            this.isDead = (truthyStuff & 1) !== 0;
+            this.invincible = (truthyStuff & 2) !== 0;
+            this.stealthed = (truthyStuff & 4) !== 0;
+        }
+
+        // Client is free to lie about own rotation since you can rotate
+        // instantly anyways, so this prevents rotation stuttering
+        if (id !== gameState.tankIndex && arr[1] !== '')
+            this.rotation = +arr[1];
     }
 
     createCollider() {
