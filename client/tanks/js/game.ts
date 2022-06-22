@@ -17,21 +17,6 @@ const ctx = canvas.getContext('2d');
 const uuid = window.location.search.substr(1).split('=')[0];
 
 
-/**
- * Fill square centered on (x, y)
- * @param {number} x
- * @param {number} y
- * @param {number} width
- * @param {string} color
- */
-function drawCenteredSquare(x, y, width, color) {
-    ctx.fillStyle = color;
-    ctx.fillRect(x - width / 2, y - width / 2, width, width);
-}
-
-
-
-
 // Game state, shared with client.js
 const gameState = new GameState(true);
 window.gameState = gameState;
@@ -147,6 +132,22 @@ window.onkeyup = e => {
     }
 };
 
+setInterval(() => {
+    // Mouse realign
+    if (!mouseMoved) return;
+    let [x, y] = mousepos;
+    let dir = getDir(x, y);
+    if (dir[0] === 0 && dir[1] === 0)
+        return;
+
+    let rot = Math.atan2(dir[1], dir[0]);
+    if (rot < 0) rot += Math.PI * 2; // Makes turning less jittery
+
+    window.gameState.tanks[gameState.tankIndex].rotation =
+        window.gameState.tanks[gameState.tankIndex].visualTurretRotation =
+        rot;
+    UPDATE_ROTATION.call();
+}, 50);
 
 const UPDATE_ROTATION = new RateLimited(
     100, () => {
@@ -159,10 +160,16 @@ const UPDATE_ROTATION = new RateLimited(
     }
 );
 
+let mousepos = [0, 0];
+let mouseMoved = false;
+
 window.onmousemove = e => {
+    mouseMoved = true;
     const rect = canvas.getBoundingClientRect();
     let x = e.clientX - rect.left;
     let y = e.clientY - rect.top;
+    mousepos = [x, y];
+
     let dir = getDir(x, y);
     if (dir[0] === 0 && dir[1] === 0)
         return;
