@@ -120,6 +120,19 @@ class TankGame extends Game {
                 id: tankID
             });
         }
+
+        // Send tanks that have fired this tick
+        let tanksFiredThisTick = [];
+        for (let tank of this.state.tanks)
+            if (tank.firedThisTick) {
+                tank.firedThisTick = false;
+                tanksFiredThisTick.push(tank.id);
+            }
+        if (tanksFiredThisTick.length)
+            this.broadcast({
+                type: TankSync.TANK_FIRED,
+                ids: tanksFiredThisTick
+            });
     }
 
     sendBulletUpdates() {

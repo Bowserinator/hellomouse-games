@@ -31,7 +31,8 @@ export enum TankSync {
     ADD_EXPLOSIONS,
     ADD_POWERUP_ITEM,
     DELETE_POWERUP_ITEM,
-    GIVE_POWERUP
+    GIVE_POWERUP,
+    TANK_FIRED
 }
 
 export enum BulletType {

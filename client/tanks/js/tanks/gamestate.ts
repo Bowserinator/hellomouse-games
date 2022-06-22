@@ -20,6 +20,7 @@ interface SyncMessage {
     velocity: [number, number];
     rotation: number;
     id: number;
+    ids: Array<number>;
     type: TankSync;
     bulletType: BulletType;
     bulletTypes: Array<BulletType>;
@@ -347,7 +348,8 @@ export default class GameState {
         } else if (message.type === TankSync.GIVE_POWERUP) {
             this.giveTankPowerup(this.tanks[message.id], message.powerup);
             this.updatePowerupItemLayer();
-        }
+        } else if (message.type === TankSync.TANK_FIRED && this.isClientSide)
+            message.ids.forEach(id => this.tanks[id].powerups.forEach(p => p.onFire(this)));
         return true;
     }
 }

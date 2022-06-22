@@ -8,7 +8,7 @@ import {
     TANK_SPEED, TANK_SIZE, TANK_TURRET_SIZE, TANK_FIRE_DELAY,
     TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE } from '../vars.js';
 
-import { StealthPowerup, PowerupSingleton, ShieldPowerup, LaserPowerup, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
+import { PowerupSingleton, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
 
 import Camera from '../renderer/camera.js';
 import Renderable from '../renderer/renderable.js';
@@ -32,6 +32,7 @@ export default class Tank extends Renderable {
     movement: Array<Direction>;
     isFiring: boolean;
     isDead: boolean;
+    firedThisTick: boolean; // Has it fired this tick?
     id: number;
     score: number;
     invincible: boolean;
@@ -72,6 +73,7 @@ export default class Tank extends Renderable {
         this.movement = [Direction.NONE, Direction.NONE]; // horz, vert, none = not moving in that dir
         this.isFiring = false;
         this.isDead = false;
+        this.firedThisTick = false;
 
         // Other
         this.speed = TANK_SPEED;
@@ -109,6 +111,11 @@ export default class Tank extends Renderable {
 
         if (isOwnTank) {
             let [pos, vel] = this.getFiringPositionAndDirection();
+
+            // If its going to fire through a wall don't render (not allowed)
+            if (gamestate.walls.some(wall => wall.collider.collidesWithLine(this.position, pos)))
+                return;
+
             this.fakeBullet.firedBy = this.id;
             this.fakeBullet.setCenter(pos);
             this.fakeBullet.setVelocityFromDir(vel);
@@ -199,16 +206,21 @@ export default class Tank extends Renderable {
         if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
             this.firedBullets = this.firedBullets.filter(b => !b.isDead && b.type === this.bulletType);
             if (this.firedBullets.length < (this.fakeBullet.config.maxAmmo || 1)) {
-                let bullet = Bullet.bulletFromType(
-                    this.bulletType,
-                    ...this.getFiringPositionAndDirection());
-                bullet.firedBy = this.id;
-                bullet.onFire(gameState);
-                this.powerups.forEach(powerup => powerup.onFire(gameState));
+                // Check if firing would collide with a wall
+                // Only fire if it doesn't
+                let [pos, vel] = this.getFiringPositionAndDirection();
+                if (!gameState.walls.some(wall => wall.collider.collidesWithLine(this.position, pos))) {
+                    let bullet = Bullet.bulletFromType(this.bulletType, pos, vel);
+                    bullet.firedBy = this.id;
+                    bullet.onFire(gameState);
+                    this.powerups.forEach(powerup => powerup.onFire(gameState));
 
-                gameState.addBullet(bullet);
-                this.firedBullets.push(bullet);
-                this.lastFired = Date.now();
+                    gameState.addBullet(bullet);
+                    this.firedBullets.push(bullet);
+                    this.lastFired = Date.now();
+                    this.firedThisTick = true; // Removed by server
+                    // TODO: make this broadcast sync itself
+                }
             }
         }
 
