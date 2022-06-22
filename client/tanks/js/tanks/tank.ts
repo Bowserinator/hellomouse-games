@@ -194,9 +194,13 @@ export default class Tank extends Renderable {
         this.position.y += this.velocity.y * timestep;
         this.createCollider();
 
-        for (let wall of gameState.walls)
-            if (wall.collider.collidesWith(this.collider)) {
-                this.position = this.collider.getSnapPosition(wall.collider)[0];
+        // Wall + tank collisions
+        for (let collider of [
+            ...gameState.walls,
+            ...gameState.tanks.filter(tank => !tank.isDead && tank.id !== this.id)
+        ].map(x => x.collider))
+            if (collider.collidesWith(this.collider)) {
+                this.position = this.collider.getSnapPosition(collider)[0];
                 this.position.x += TANK_SIZE / 2;
                 this.position.y += TANK_SIZE / 2;
                 this.velocity = new Vector(0, 0);
