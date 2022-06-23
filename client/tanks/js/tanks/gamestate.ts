@@ -117,22 +117,26 @@ export default class GameState {
     addBullet(bullet: Bullet) {
         this.bullets.push(bullet);
         this.addedBullets.add(bullet);
+        return bullet;
     }
 
     addExplosion(explosion: Explosion) {
         this.explosions.push(explosion);
         this.addedExplosions.add(explosion);
+        return explosion;
     }
 
     addParticle(particle: Particle) {
         if (!this.isClientSide) return;
         this.particles.push(particle);
+        return particle;
     }
 
     addPowerupItem(powerup: PowerupItem) {
         this.powerupItems.push(powerup);
         this.addedPowerupItems.add(powerup);
         this.updatePowerupItemLayer();
+        return powerup;
     }
 
     removeBullet(bullet: Bullet) {
@@ -246,6 +250,11 @@ export default class GameState {
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         this.powerupItems.forEach(p => p.draw(camera, this));
+    }
+
+    scoreKill(killedTank: Tank, firedBy: number) {
+        if (killedTank.id !== firedBy && firedBy > -1) // No points for suicide shots
+            this.tanks[firedBy].score++;
     }
 
     draw() {

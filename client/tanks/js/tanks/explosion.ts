@@ -20,6 +20,7 @@ export default class Explosion {
     damageRadius: number;
     graphicsRadius: number;
     duration: number;
+    firedBy: number;
     graphics: ExplosionGraphics;
     createdTimestep: number;
     firstRun: boolean;
@@ -41,6 +42,11 @@ export default class Explosion {
         this.graphics = graphics;
         this.createdTimestep = Date.now();
         this.firstRun = true;
+        this.firedBy = -1;
+    }
+
+    setFiredBy(firedBy: number) {
+        this.firedBy = firedBy;
     }
 
     update(gameState: GameState, timestep: number) {
@@ -54,8 +60,7 @@ export default class Explosion {
                 if (!gameState.isClientSide && tank.collider.collidesWithCircle(this.position, this.damageRadius)) {
                     if (tank.invincible)
                         continue;
-                    // if (tank.id !== this.firedBy && this.firedBy > -1) // No points for suicide shots
-                    //    gameState.tanks[this.firedBy].score++;
+                    gameState.scoreKill(tank, this.firedBy);
                     gameState.killTank(tank);
                 }
 

@@ -135,8 +135,7 @@ export class Bullet extends Renderable {
             if (this.collider.collidesWith(tank.collider) && !gameState.isClientSide) {
                 if (tank.invincible)
                     continue;
-                if (tank.id !== this.firedBy && this.firedBy > -1) // No points for suicide shots
-                    gameState.tanks[this.firedBy].score++;
+                gameState.scoreKill(tank, this.firedBy);
                 gameState.killTank(tank);
                 gameState.removeBullet(this);
                 return false;
@@ -347,7 +346,8 @@ export class MagneticMineBullet extends Bullet {
 
     onRemove(gameState: GameState) {
         super.onRemove(gameState);
-        gameState.addExplosion(new Explosion(this.getCenter(), 70, 70, 300, ExplosionGraphics.CLUSTER));
+        gameState.addExplosion(new Explosion(this.getCenter(), 70, 70, 300, ExplosionGraphics.CLUSTER))
+            .setFiredBy(this.firedBy);
     }
 
     update(gameState: GameState, timestep: number) {
@@ -420,6 +420,7 @@ export class BombBullet extends Bullet {
             let bullet = new SmallBullet(
                 this.getCenter().add(Vector.vecFromRotation(angle, 10)),
                 Vector.vecFromRotation(angle, 1));
+            bullet.firedBy = this.firedBy;
             gameState.addBullet(bullet);
         }
     }
@@ -454,7 +455,8 @@ export class HighSpeedBullet extends Bullet {
 
     onRemove(gameState: GameState) {
         super.onRemove(gameState);
-        gameState.addExplosion(new Explosion(this.getCenter(), 5, 6, 100, ExplosionGraphics.PARTICLES));
+        gameState.addExplosion(new Explosion(this.getCenter(), 5, 6, 100, ExplosionGraphics.PARTICLES))
+            .setFiredBy(this.firedBy);
     }
 }
 
@@ -538,8 +540,7 @@ export class LaserBullet extends Bullet {
                 if (!gameState.isClientSide && tank.collider.collidesWithLine(start, end)) {
                     if (tank.invincible)
                         continue;
-                    if (tank.id !== this.firedBy && this.firedBy > -1) // No points for suicide shots
-                        gameState.tanks[this.firedBy].score++;
+                    gameState.scoreKill(tank, this.firedBy);
                     gameState.killTank(tank);
                     return false;
                 }
@@ -620,6 +621,7 @@ export class SmallBullet extends Bullet {
             let bullet = new SmallBullet(
                 this.getCenter(),
                 Vector.vecFromRotation(thisAngle + angleOffset, 1));
+            bullet.firedBy = this.firedBy;
             gameState.addBullet(bullet);
         }
     }
@@ -745,8 +747,10 @@ export class RocketBullet extends Bullet {
                     RocketBullet.warningTime, ParticleGraphics.WARNING));
 
             let center = this.getCenter();
-            gameState.addExplosion(new Explosion(center, 0, 60, 300, ExplosionGraphics.SHOCKWAVE));
-            gameState.addExplosion(new Explosion(center, 0, 120, 300, ExplosionGraphics.PARTICLES));
+            gameState.addExplosion(new Explosion(center, 0, 60, 300, ExplosionGraphics.SHOCKWAVE))
+                .setFiredBy(this.firedBy);
+            gameState.addExplosion(new Explosion(center, 0, 120, 300, ExplosionGraphics.PARTICLES))
+                .setFiredBy(this.firedBy);
             RocketBullet.spawnedWarnings.add(this.randomID);
         }
 
@@ -756,7 +760,8 @@ export class RocketBullet extends Bullet {
                 gameState.addExplosion(new Explosion(
                     this.targetCenter.add(delta),
                     RocketBullet.rocketRadius, RocketBullet.rocketRadius,
-                    800, ExplosionGraphics.SIMPLE));
+                    800, ExplosionGraphics.SIMPLE))
+                    .setFiredBy(this.firedBy);
             gameState.removeBullet(this);
             return false;
         }

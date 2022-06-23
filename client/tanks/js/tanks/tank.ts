@@ -141,7 +141,7 @@ export default class Tank extends Renderable {
         if (arr[2] !== '')
             this.movement = arr[2].split('|').map((x: string) => parseInt(x));
         if (arr[4] !== '')
-            this.score = arr[4];
+            this.score = parseInt(arr[4]);
 
         // Process truthy stuff
         if (arr[3] !== '') {
