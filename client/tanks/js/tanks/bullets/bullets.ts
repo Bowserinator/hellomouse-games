@@ -583,7 +583,7 @@ export class SmallBullet extends Bullet {
         size: new Vector(4, 4),
         speed: 1000,
         despawnTime: 200,
-        imageUrls: ['/tanks/img/normal_bullet.png']
+        imageUrls: ['/tanks/img/small_bullet.png']
     };
 
     static despawnTimeRange: [number, number] = [400, 800];

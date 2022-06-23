@@ -42,6 +42,7 @@ class AbstractBulletPowerup extends PowerupState {
         this.bulletType = bulletType;
         this.fireSound = fireSound;
         this.tank.changeBulletType(this.bulletType);
+        this.tank.firedBullets = [];
         this.tank.turretImageUrl = TANK_TURRET_IMAGE_URLS[powerup] || TANK_TURRET_IMAGE_URLS[Powerup.NONE];
     }
 

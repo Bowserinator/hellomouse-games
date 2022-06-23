@@ -42,7 +42,7 @@ export default class Tank extends Renderable {
     score: number;
     invincible: boolean;
     stealthed: boolean;
-    firedBullets: Array<Bullet>;
+    firedBullets: Array<Bullet>; // Only used for tracking ammo count, may not match bullets on screen
     turretImageUrl: string;
 
     syncDataDiff: Array<any>;
@@ -188,13 +188,12 @@ export default class Tank extends Renderable {
             let [pos, vel] = this.getFiringPositionAndDirection();
 
             // If its going to fire through a wall don't render (not allowed)
-            if (gamestate.walls.some(wall => wall.collider.collidesWithLine(this.position, pos)))
-                return;
-
-            this.fakeBullet.firedBy = this.id;
-            this.fakeBullet.setCenter(pos);
-            this.fakeBullet.setVelocityFromDir(vel);
-            this.fakeBullet.drawFirePreview(camera, gamestate);
+            if (!gamestate.walls.some(wall => wall.collider.collidesWithLine(this.position, pos))) {
+                this.fakeBullet.firedBy = this.id;
+                this.fakeBullet.setCenter(pos);
+                this.fakeBullet.setVelocityFromDir(vel);
+                this.fakeBullet.drawFirePreview(camera, gamestate);
+            }
         }
         this.powerups.forEach(powerup => powerup.draw(camera));
     }

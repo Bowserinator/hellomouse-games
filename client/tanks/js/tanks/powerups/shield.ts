@@ -6,7 +6,7 @@ import { PowerupState } from './powerup.js';
 import { Powerup, PowerupCategory } from '../../types.js';
 import { playSound, addSoundsToPreload } from '../../sound/sound.js';
 
-addSoundsToPreload(['/tanks/sound/shield.ogg']);
+addSoundsToPreload(['/tanks/sound/shield.mp3']);
 
 const SHIELD_DURATION = 6000; // How long the shield lasts
 const SHIELD_WARNING = 1000; // Time (ms) before shield goes down to flicker
@@ -72,7 +72,7 @@ export class ShieldPowerup extends PowerupState {
         this.lastHitTime = 0;
         this.tank.invincible = true;
 
-        playSound('/tanks/sound/shield.ogg');
+        playSound('/tanks/sound/shield.mp3');
     }
 
     draw(camera: Camera) {
