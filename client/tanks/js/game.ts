@@ -184,8 +184,10 @@ window.onmousemove = e => {
 };
 
 window.onmousedown = e => {
-    // Fire gun TODO
-    // TODO: get curent tank position & shit
+    // Only fire on left click
+    if (e.button !== 0) return;
+
+    // Fire gun
     const rect = canvas.getBoundingClientRect();
     let x = e.clientX - rect.left;
     let y = e.clientY - rect.top;
