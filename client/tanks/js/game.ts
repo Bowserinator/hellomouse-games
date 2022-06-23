@@ -30,6 +30,10 @@ function getDir(x, y) {
     ];
 }
 
+function isConnected() {
+    return connection.readyState === WebSocket.OPEN;
+}
+
 
 function drawBoard() {
     // if (gameState.tanks[0]) {
@@ -111,6 +115,7 @@ function keyToDirection(key) {
 
 const keys = {};
 window.onkeydown = e => {
+    if (!isConnected()) return;
     e = e || window.event;
 
     let dir = keyToDirection(e.key);
@@ -122,6 +127,7 @@ window.onkeydown = e => {
 };
 
 window.onkeyup = e => {
+    if (!isConnected()) return;
     e = e || window.event;
     if (keys[e.key]) {
         keys[e.key] = 0;
@@ -151,6 +157,7 @@ setInterval(() => {
 
 const UPDATE_ROTATION = new RateLimited(
     100, () => {
+        if (!isConnected()) return;
         let rotation = window.gameState.tanks[gameState.tankIndex].rotation;
         connection.send(JSON.stringify({
             type: 'MOVE',
@@ -184,6 +191,8 @@ window.onmousemove = e => {
 };
 
 window.onmousedown = e => {
+    if (!isConnected()) return;
+
     // Only fire on left click
     if (e.button !== 0) return;
 
@@ -198,6 +207,8 @@ window.onmousedown = e => {
 };
 
 window.onmouseup = e => {
+    if (!isConnected()) return;
+
     // Fire gun TODO
     // TODO: get curent tank position & shit
     connection.send(JSON.stringify({ type: 'MOVE', action: Action.STOP_FIRE }));
@@ -217,3 +228,13 @@ function animFrame(timestamp) {
     window.requestAnimationFrame(animFrame);
 }
 window.requestAnimationFrame(animFrame);
+
+
+const DISCONNECT_BANNER = document.getElementById('disconnect-banner');
+setInterval(() => {
+    if (!DISCONNECT_BANNER) return;
+    if (connection.readyState !== WebSocket.CLOSED)
+        DISCONNECT_BANNER.style.top = '-100px';
+    else
+        DISCONNECT_BANNER.style.top = '0';
+}, 500);

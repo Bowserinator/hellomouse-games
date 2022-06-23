@@ -1,3 +1,16 @@
 body {
     background-color: #eee;
 }
+
+#disconnect-banner {
+    background-color: #ff5131;
+    z-index: 999;
+    position: fixed;
+    left: 0;
+
+    width: 100%;
+    padding: 14px;
+    text-align: center;
+    font-size: 16pt;
+    transition: top 0.2s;
+}
