@@ -127,8 +127,13 @@ export class Bullet extends Renderable {
         // Hit other bullets
         for (let bullet of gameState.bullets)
             if (!bullet.isDead && !bullet.invincible && bullet !== this &&
-                this.collider.collidesWith(bullet.collider) && !gameState.isClientSide)
+                this.collider.collidesWith(bullet.collider) && !gameState.isClientSide) {
                 gameState.removeBullet(bullet);
+                if (!this.invincible) {
+                    gameState.removeBullet(this);
+                    return false;
+                }
+            }
 
         // Hit tanks
         for (let tank of gameState.tanks.filter((t: Tank) => !t.isDead))
