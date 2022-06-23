@@ -4,7 +4,9 @@ import GameState from '../gamestate.js';
 import { TANK_SIZE } from '../../vars.js';
 import { PowerupState } from './powerup.js';
 import { Powerup, PowerupCategory } from '../../types.js';
-import Vector from '../vector2d.js';
+import { playSound, addSoundsToPreload } from '../../sound/sound.js';
+
+addSoundsToPreload(['/tanks/sound/shield.ogg']);
 
 const SHIELD_DURATION = 6000; // How long the shield lasts
 const SHIELD_WARNING = 1000; // Time (ms) before shield goes down to flicker
@@ -69,6 +71,8 @@ export class ShieldPowerup extends PowerupState {
         this.flicker = false;
         this.lastHitTime = 0;
         this.tank.invincible = true;
+
+        playSound('/tanks/sound/shield.ogg');
     }
 
     draw(camera: Camera) {

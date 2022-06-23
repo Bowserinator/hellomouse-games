@@ -9,6 +9,12 @@ import Camera from '../../renderer/camera.js';
 import Renderable from '../../renderer/renderable.js';
 import { drawShield } from '../powerups/shield.js';
 import Particle from '../particle.js';
+import { playSoundAt, addSoundsToPreload } from '../../sound/sound.js';
+
+addSoundsToPreload([
+    '/tanks/sound/beep.mp3',
+    '/tanks/sound/bullet_bounce.ogg'
+]);
 
 interface BulletConfig {
     imageUrls: Array<string>; // Abs urls to image, ie /tanks/img/...
@@ -22,6 +28,7 @@ interface BulletConfig {
     rotate?: boolean; // Rotate texture? (No for symmetric textures)
     allowBounce?: boolean; // Can bounce (otherwise dies on wall)
     bounceEnergy?: number; // 1 (default) = bounce with same, 2 = bounce = double velocity, 0.5 = halve, etc...
+    bounceSound?: string; // Src to sound it plays when bounces, undefined = no sound
 }
 
 
@@ -103,6 +110,9 @@ export class Bullet extends Renderable {
             gameState.removeBullet(this);
             return false;
         }
+
+        if (this.config.bounceSound && bounces)
+            playSoundAt(this.config.bounceSound, this.collider.position, gameState, 0.5);
 
         if (this.config.rotate)
             this.rotation = Math.atan2(this.velocity.y, this.velocity.x);
@@ -263,7 +273,8 @@ export class NormalBullet extends Bullet {
         size: new Vector(7, 7),
         speed: 300,
         despawnTime: 10000,
-        maxAmmo: 5
+        maxAmmo: 5,
+        bounceSound: '/tanks/sound/bullet_bounce.ogg'
     };
 
     constructor(position: Vector, direction: Vector) {
@@ -294,21 +305,25 @@ export class MagneticMineBullet extends Bullet {
     static FLICKER_RATE = 400; // Time in ms for each frame of the primed animation
     static MAX_VELOCITY_COMPONENT = 300; // Max component for velocity after seeking
     static ACCELERATION = 500; // Acceleration when seeking
+    static BEEP_DELAY = 800; // Beep every this ms
     /* eslint-enable @typescript-eslint/naming-convention */
 
     createdTime: number;
+    lastSoundPlayedTime: number;
 
     constructor(position: Vector, direction: Vector) {
         super(position, direction, MagneticMineBullet.config);
         this.createdTime = Date.now();
+        this.lastSoundPlayedTime = 0;
     }
 
     getExtra(): any {
-        return this.createdTime;
+        return [this.createdTime, this.lastSoundPlayedTime];
     }
 
     syncExtra(extra: any) {
-        this.createdTime = extra;
+        this.createdTime = extra[0];
+        this.lastSoundPlayedTime = extra[1];
     }
 
     draw(camera: Camera, gameState: GameState) {
@@ -342,6 +357,12 @@ export class MagneticMineBullet extends Bullet {
         if (deltaT > MagneticMineBullet.PRIME_TIME + MagneticMineBullet.SEEK_TIME)
             gameState.removeBullet(this);
         else if (deltaT > MagneticMineBullet.PRIME_TIME) {
+            // Beep
+            if (Date.now() - this.lastSoundPlayedTime > MagneticMineBullet.BEEP_DELAY) {
+                this.lastSoundPlayedTime = Date.now();
+                playSoundAt('/tanks/sound/beep.mp3', this.collider.position, gameState, 0.5);
+            }
+
             // Primed, accelerate towards nearest tank
             // Also becomes invincible to other bullets
             this.invincible = true;
@@ -381,7 +402,8 @@ export class BombBullet extends Bullet {
         size: new Vector(16, 16),
         speed: 150,
         despawnTime: 10000,
-        imageSize: new Vector(24, 24)
+        imageSize: new Vector(24, 24),
+        bounceSound: '/tanks/sound/bullet_bounce.ogg'
     };
 
     static bulletsToFire = 50; // Bullets to spawn in explosion

@@ -5,6 +5,11 @@ import Camera from '../renderer/camera.js';
 import { ExplosionGraphics, ParticleGraphics } from '../types.js';
 import gradient from '../renderer/gradient.js';
 import Tank from './tank.js';
+import { playSoundAt, addSoundsToPreload } from '../sound/sound.js';
+
+addSoundsToPreload([
+    '/tanks/sound/explode2.mp3'
+]);
 
 /**
  * On screen explosion
@@ -54,8 +59,12 @@ export default class Explosion {
                     gameState.killTank(tank);
                 }
 
-        // Spawn particles on first tick
         if (this.firstRun) {
+            // Play sound on first tick
+            if (this.graphics !== ExplosionGraphics.PARTICLES && this.graphics !== ExplosionGraphics.SHOCKWAVE)
+                playSoundAt('/tanks/sound/explode2.mp3', this.position, gameState);
+
+            // Spawn particles on first tick
             switch (this.graphics) {
                     case ExplosionGraphics.PARTICLES: {
                         this._spawnParticles(gameState, 10, this.position, 400,

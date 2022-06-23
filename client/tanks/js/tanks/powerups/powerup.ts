@@ -55,6 +55,7 @@ export class PowerupState {
 
     /**
      * Triggered when the tank "fires", useful for bullet-type powerups
+     * (Both server & client side)
      * @param {GameState} gameState GameState
      */
     onFire(gameState: GameState) {

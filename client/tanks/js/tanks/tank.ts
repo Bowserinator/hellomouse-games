@@ -12,6 +12,11 @@ import { PowerupSingleton, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js
 
 import Camera from '../renderer/camera.js';
 import Renderable from '../renderer/renderable.js';
+import { playSoundAt, addSoundsToPreload } from '../sound/sound.js';
+
+addSoundsToPreload([
+    '/tanks/sound/tank_fire_normal.mp3'
+]);
 
 const TURRET_SIZE = new Vector(TANK_TURRET_SIZE, TANK_TURRET_SIZE);
 
@@ -243,6 +248,15 @@ export default class Tank extends Renderable {
         this.updateRotation('targetBaseRotation', 'realBaseRotation', TANK_BASE_ROTATION_RATE, timestep);
     }
 
+    onFireClientSide(gameState: GameState) {
+        // Only normal plays this, all other bullets play from the powerup
+        if (this.bulletType === BulletType.NORMAL)
+            playSoundAt('/tanks/sound/tank_fire_normal.mp3', this.position, gameState);
+
+        // Sync client side powerups
+        this.powerups.forEach(p => p.onFire(gameState));
+    }
+
     update(gameState: GameState, timestep: number) {
         if (this.isDead) return;
 
@@ -293,7 +307,6 @@ export default class Tank extends Renderable {
                     this.firedBullets.push(bullet);
                     this.lastFired = Date.now();
                     this.firedThisTick = true; // Removed by server
-                    // TODO: make this broadcast sync itself
                 }
             }
         }

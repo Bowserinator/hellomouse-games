@@ -4,6 +4,9 @@ import GameState from '../gamestate.js';
 import { TANK_SIZE } from '../../vars.js';
 import { PowerupState } from './powerup.js';
 import { Powerup, PowerupCategory } from '../../types.js';
+import { playSound, addSoundsToPreload } from '../../sound/sound.js';
+
+addSoundsToPreload(['/tanks/sound/stealth.ogg']);
 
 const STEALTH_DURATION = 10000; // How long the stealth lasts
 const STEALTH_WARNING = 1000; // Time (ms) before stealth begins to flicker
@@ -55,6 +58,8 @@ export class StealthPowerup extends PowerupState {
         super(tank, Powerup.STEALTH, PowerupCategory.TANK);
         this.start = Date.now();
         this.tank.stealthed = true;
+
+        playSound('/tanks/sound/stealth.ogg');
     }
 
     draw(camera: Camera) {

@@ -341,7 +341,7 @@ export default class GameState {
             this.giveTankPowerup(this.tanks[message.id], message.powerup);
             this.updatePowerupItemLayer();
         } else if (message.type === TankSync.TANK_FIRED && this.isClientSide)
-            message.ids.forEach(id => this.tanks[id].powerups.forEach(p => p.onFire(this)));
+            message.ids.forEach(id => this.tanks[id].onFireClientSide(this));
         return true;
     }
 }
