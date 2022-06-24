@@ -11,7 +11,7 @@ import Particle from './particle.js';
 import { generateMaze, getMazeSize } from './map-gen.js';
 import { PowerupItem } from './powerups/powerup-item.js';
 import { createPowerupFromType } from './powerups/powerups.js';
-import { CELL_SIZE, MAX_POWERUP_ITEMS, POWERUP_ITEM_SIZE, DELAY_POWERUP_SPAWN, POWERUPS_TO_SPAWN_AT_ONCE } from '../vars.js';
+import { CELL_SIZE, MAX_POWERUP_ITEMS, POWERUP_ITEM_SIZE, DELAY_POWERUP_SPAWN, POWERUPS_TO_SPAWN_AT_ONCE, TANK_SIZE } from '../vars.js';
 
 interface SyncMessage {
     seed: number;
@@ -198,6 +198,29 @@ export default class GameState {
         this.addedPowerupItems.clear();
         this.removedPowerupItems.clear();
         this.addedPowerups.clear();
+    }
+
+    /** Randomly spread all (alive) players through the maze */
+    spreadTanks() {
+        // Relocate all tanks outside of maze for now
+        const aliveTanks = this.tanks.filter(tank => !tank.isDead);
+        aliveTanks.forEach(tank => {
+            tank.position.x = -100;
+            tank.position.y = -100;
+            tank.createCollider();
+        });
+
+        const size = getMazeSize(this.mazeSeed);
+        for (let tank of aliveTanks) {
+            let [x, y] = [0, 0];
+            while (!x || !y || aliveTanks.some(t => t.collider.contains(new Vector(x, y)))) {
+                x = CELL_SIZE / 2 + CELL_SIZE * Math.round(Math.random() * size);
+                y = CELL_SIZE / 2 + CELL_SIZE * Math.round(Math.random() * size);
+            }
+            tank.position.x = x;
+            tank.position.y = y;
+            tank.createCollider();
+        }
     }
 
     /**

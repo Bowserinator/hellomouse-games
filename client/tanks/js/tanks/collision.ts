@@ -79,6 +79,16 @@ export default class Collider {
     }
 
     /**
+     * Is position inside or on collider
+     * @param {Vector} position Position
+     * @return {boolean}
+     */
+    contains(position: Vector) {
+        return this.position.x <= position.x && this.position.x + this.size.x >= position.x &&
+            this.position.y <= position.y && this.position.y + this.size.y >= position.y;
+    }
+
+    /**
      * Does the line intersect the bounding box at any point?
      * (From start to end)
      * @param {Vector} start Start of the line

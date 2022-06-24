@@ -48,6 +48,12 @@ class TankGame extends Game {
         this.mapSeed = Math.floor(Math.random() * 100000000);
         generateMaze(this.state, this.mapSeed);
         this.state.mazeSeed = this.mapSeed;
+
+        // Pre-generate tank array
+        // TODO: move to lobby start
+        for (let i = 0; i < 5; i++)
+            this.state.addTank(new Tank(new Vector(20, 20), 0));
+        this.state.spreadTanks();
     }
 
     // @ts-ignore:next-line
@@ -61,17 +67,26 @@ class TankGame extends Game {
             return false;
 
         let canJoin = super.onJoin(client);
-        if (canJoin && !this.playerTankIDMap[client.id])
-            this.playerTankIDMap[client.id] = this.state.addTank(new Tank(
-                new Vector(20, 20), 0
-            )) - 1;
+        if (canJoin && !this.playerTankIDMap[client.id]) {
+            let foundSlot = false;
+            for (let i = 0; i < this.state.tanks.length; i++)
+                if (!Object.values(this.playerTankIDMap).includes(i)) {
+                    this.playerTankIDMap[client.id] = i;
+                    foundSlot = true;
+                    break;
+                }
 
+            // No empty slots left
+            if (!foundSlot)
+                return false;
+        }
+
+        // Send map information
         client.connection.send(JSON.stringify({
             type: TankSync.MAP_UPDATE,
             seed: this.mapSeed,
             id: this.playerTankIDMap[client.id]
         }));
-
 
         // Send all current powerups + tanks
         for (let tank of this.state.tanks) {
@@ -90,7 +105,6 @@ class TankGame extends Game {
                 powerup: powerup.powerup,
                 id: powerup.randomID
             }));
-
 
         return canJoin;
     }
