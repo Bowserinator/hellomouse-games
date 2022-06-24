@@ -27,3 +27,7 @@ export const SHADOW_COLOR = '#ddd';
 export const SHADOW_SIZE_X = 10;
 export const SHADOW_SIZE_Y = 10;
 export const POWERUP_ITEM_SIZE = 36;
+
+export const TANK_COLORS = [
+    ''
+];

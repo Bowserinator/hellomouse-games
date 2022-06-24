@@ -33,6 +33,8 @@ export default class Tank extends Renderable {
     rotation: number; // Turret rotation, synced
     visualTurretRotation: number; // Visual only
     fakeBullet: Bullet; // Used for visual path preview
+    tint: [number, number, number];
+    tintPrefix: string;
 
     movement: Array<Direction>;
     isFiring: boolean;
@@ -87,6 +89,17 @@ export default class Tank extends Renderable {
         this.score = 0;
 
         this.createCollider();
+
+        // TODO: remove
+        let x = () => Math.round(Math.random( ) * 255);
+        this.setTint([x(), x(), x()]);
+    }
+
+    setTint(color: [number, number, number]) {
+        if (this.imageUrls)
+            this.loadTintVariants(color);
+        this.tint = color;
+        this.tintPrefix = Renderable.rgbToStr(color);
     }
 
     /**
@@ -106,7 +119,8 @@ export default class Tank extends Renderable {
             this.rotation.toFixed(2), // 1
             this.movement.join('|'),  // 2
             truthyStuff.toString(36), // 3
-            this.score                // 4
+            this.score,               // 4
+            this.tint.join('|')       // 5
         ];
         let trimmedData = [...data];
         let trimmedDataStr;
@@ -142,6 +156,8 @@ export default class Tank extends Renderable {
             this.movement = arr[2].split('|').map((x: string) => parseInt(x));
         if (arr[4] !== '')
             this.score = parseInt(arr[4]);
+        if (arr[5] !== '')
+            this.setTint(arr[5].split('|').map((x: string) => parseInt(x)));
 
         // Process truthy stuff
         if (arr[3] !== '') {
@@ -172,15 +188,15 @@ export default class Tank extends Renderable {
 
     draw(camera: Camera, gamestate: GameState) {
         if (this.isDead) return;
-        if (!this.isLoaded()) return;
+        if (!this.isLoaded(this.tintPrefix)) return;
 
         const isOwnTank = gamestate.tanks[gamestate.tankIndex] === this;
         if (this.stealthed)
             camera.ctx.globalAlpha = isOwnTank ? 0.2 : 0;
 
-        camera.drawImageRotated(this.images[this.imageUrls[0][0]],
+        camera.drawImageRotated(this.images[this.tintPrefix + this.imageUrls[0][0]],
             this.position.x, this.position.y, this.realBaseRotation);
-        camera.drawImageRotated(this.images[this.turretImageUrl],
+        camera.drawImageRotated(this.images[this.tintPrefix + this.turretImageUrl],
             this.position.x, this.position.y, this.visualTurretRotation);
         if (this.stealthed) camera.ctx.globalAlpha = 1;
 
