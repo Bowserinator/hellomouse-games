@@ -1,6 +1,8 @@
 import { Powerup } from '../../types.js';
 import Tank from '../tank.js';
+import Vector2D from '../vector2d.js';
 import { BombPowerup, FastBulletPowerup, LaserPowerup, MagnetPowerup, RocketPowerup, ShotgunPowerup } from './bullet-powerups.js';
+import { PowerupItem } from './powerup-item.js';
 import { ShieldPowerup } from './shield.js';
 import { StealthPowerup } from './stealth.js';
 
@@ -31,3 +33,7 @@ export function createPowerupFromType(powerup: Powerup, tank: Tank) {
     }
     throw new Error('Unknown powerup type ' + powerup);
 }
+
+
+// Create a powerup item to preload all images
+new PowerupItem(new Vector2D(0, 0), Powerup.BOMB);
