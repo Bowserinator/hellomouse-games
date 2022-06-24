@@ -1,9 +1,10 @@
 body {
     background-color: #eee;
+    font-family: 'Rajdhani', sans-serif;
 }
 
 #disconnect-banner {
-    background-color: #ff5131;
+    background-color: #ff5f52;
     z-index: 999;
     position: fixed;
     left: 0;
