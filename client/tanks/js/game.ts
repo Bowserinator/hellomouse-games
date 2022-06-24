@@ -23,6 +23,8 @@ window.gameState = gameState;
 
 
 function getDir(x, y) {
+    if (!gameState.camera || !gameState.tanks || !gameState.tanks[gameState.tankIndex])
+        return;
     let pos = gameState.camera.worldToScreen(...gameState.tanks[gameState.tankIndex].position.l());
     return [
         x - pos[0],

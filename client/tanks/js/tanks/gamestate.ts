@@ -1,4 +1,4 @@
-import { Direction, TankSync, BulletType, ExplosionGraphics, Powerup, PowerupCategory } from '../types.js';
+import { Direction, TankSync, BulletType, ExplosionGraphics, Powerup } from '../types.js';
 import { Bullet } from './bullets/bullets.js';
 import Camera from '../renderer/camera.js';
 import { generateMazeImage, generateMazeShadowImage } from '../renderer/maze-image-gen.js';
@@ -11,7 +11,7 @@ import Particle from './particle.js';
 import { generateMaze, getMazeSize } from './map-gen.js';
 import { PowerupItem } from './powerups/powerup-item.js';
 import { createPowerupFromType } from './powerups/powerups.js';
-import { CELL_SIZE, MAX_POWERUP_ITEMS, POWERUP_ITEM_SIZE } from '../vars.js';
+import { CELL_SIZE, MAX_POWERUP_ITEMS, POWERUP_ITEM_SIZE, DELAY_POWERUP_SPAWN, POWERUPS_TO_SPAWN_AT_ONCE } from '../vars.js';
 
 interface SyncMessage {
     seed: number;
@@ -50,6 +50,7 @@ export default class GameState {
     powerupItems: Array<PowerupItem>;
 
     lastUpdate: number;
+    lastPowerupSpawn: number;
     addedBullets: Set<Bullet>;
     removedBulletIds: Set<number>;
     addedTanks: Array<number>;
@@ -60,7 +61,8 @@ export default class GameState {
     removedPowerupItems: Set<PowerupItem>;
     addedPowerups: Set<[Powerup, number]>; // Powerup, tankid
 
-    camera: Camera;
+    camera: Camera; // Set in game.js
+    zeroCameraCache: Camera; // Cached camera
     mazeSeed: number;
 
     // Clientside only:
@@ -80,6 +82,7 @@ export default class GameState {
         this.powerupItems = [];
         this.mazeSeed = 0;
 
+        this.lastPowerupSpawn = Date.now();
         this.lastUpdate = Date.now(); // Time of last update as UNIX timestamp
         this.addedBullets = new Set();
         this.removedBulletIds = new Set();
@@ -90,11 +93,6 @@ export default class GameState {
         this.addedPowerupItems = new Set();
         this.removedPowerupItems = new Set();
         this.addedPowerups = new Set();
-
-        // TODO: delete
-        if (!isClientSide)
-            for (let i = 0; i < 30; i++)
-                this.spawnRandomPowerup();
     }
 
     /**
@@ -145,7 +143,6 @@ export default class GameState {
 
         let i = this.bullets.indexOf(bullet);
         if (i > -1) this.removedBulletIds.add(i);
-        // TODO: more efficent splice
         this.bullets = this.bullets.filter((b: Bullet) => b !== bullet);
     }
 
@@ -156,12 +153,10 @@ export default class GameState {
     }
 
     removeParticle(particle: Particle) {
-        // TODO: more efficent splice
         this.particles = this.particles.filter(p => p !== particle);
     }
 
     removePowerupItem(powerup: PowerupItem) {
-        // TODO: more efficent splice
         this.removedPowerupItems.add(powerup);
         this.powerupItems = this.powerupItems.filter(p => p !== powerup);
         this.updatePowerupItemLayer();
@@ -237,6 +232,12 @@ export default class GameState {
         this.explosions.forEach(explosion => explosion.update(this, timestep));
         this.powerupItems.forEach(item => item.update(this, timestep));
         this.lastUpdate = Date.now();
+
+        if (!this.isClientSide && this.lastUpdate - this.lastPowerupSpawn > DELAY_POWERUP_SPAWN) {
+            this.lastPowerupSpawn = this.lastUpdate;
+            for (let i = 0; i < POWERUPS_TO_SPAWN_AT_ONCE; i++)
+                this.spawnRandomPowerup();
+        }
     }
 
     updatePowerupItemLayer() {
@@ -246,7 +247,8 @@ export default class GameState {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-        const camera = new Camera(new Vector(0, 0), ctx); // TODO: cache?
+        const camera = this.zeroCameraCache || new Camera(new Vector(0, 0), ctx);
+        this.zeroCameraCache = camera;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         this.powerupItems.forEach(p => p.draw(camera, this));

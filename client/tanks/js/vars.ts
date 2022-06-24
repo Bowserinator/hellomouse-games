@@ -1,6 +1,8 @@
 
 // Game
-export const MAX_POWERUP_ITEMS = 10;
+export const MAX_POWERUP_ITEMS = 20;
+export const DELAY_POWERUP_SPAWN = 10000; // How often (ms) to spawn a powerup
+export const POWERUPS_TO_SPAWN_AT_ONCE = 2;
 
 // Tanks
 export const TANK_SIZE = 50; // Visual + collision

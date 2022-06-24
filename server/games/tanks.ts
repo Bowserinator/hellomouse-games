@@ -211,10 +211,6 @@ class TankGame extends Game {
     }
 
     gameLoop() {
-        // TODO:
-        // Send all added bullets
-        // send all deleted bullets
-
         this.sendTankUpdates();
         this.state.update();
         this.sendNewExplosionUpdates();
@@ -228,7 +224,7 @@ class TankGame extends Game {
     startGameLoop() {
         if (this.interval !== null)
             this.endGameLoop();
-        setInterval(this.gameLoop.bind(this), UPDATE_EVERY_N_MS); // TODO
+        this.interval = setInterval(this.gameLoop.bind(this), UPDATE_EVERY_N_MS);
     }
 
     endGameLoop() {
@@ -252,7 +248,7 @@ class TankGame extends Game {
         let clientID = this.playerTankIDMap[client.id];
         let isVertical = [Direction.UP, Direction.DOWN].includes(message.dir) ? 1 : 0;
 
-        if (this.state.tanks[clientID].isDead)
+        if (!this.state.tanks[clientID] || this.state.tanks[clientID].isDead)
             return;
 
         if (message.action === Action.MOVE_BEGIN)
@@ -274,12 +270,11 @@ class TankGame extends Game {
         } else if (message.action === Action.STOP_FIRE)
             // Request to cease firing
             this.state.tanks[clientID].isFiring = false;
-            // TODO: test if this would mean quick taps dont register
-            // test with higher update
-        else if (message.action === Action.UPDATE_ROTATION && typeof message.rotation === 'number')
-            // TODO: bound check +
-            //  && typeof message.rotation === 'number'
+        else if (message.action === Action.UPDATE_ROTATION && typeof message.rotation === 'number') {
+            if (message.rotation < -5 || message.rotation > 5)
+                return;
             this.state.tanks[clientID].rotation = message.rotation;
+        }
         this.state.changedTankIDs.add(clientID);
     }
 }
