@@ -67,7 +67,7 @@ function drawBoard() {
 
     if (gameState.mazeLayer) {
         // Center on tank for large mazes, snapping to edges
-        if (gameState.mazeLayer.width > canvas.width * 1.2)
+        if (gameState.mazeLayer.width > canvas.width - 2 * CAMERA_EDGE_MARGIN)
             gameState.camera.position.x =
                 Math.min(gameState.mazeLayer.width - canvas.width + CAMERA_EDGE_MARGIN, gameState.camera.position.x);
         else // Center on maze is screen is wide enough
