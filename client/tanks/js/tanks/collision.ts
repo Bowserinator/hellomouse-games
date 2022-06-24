@@ -165,7 +165,7 @@ export default class Collider {
 
             // Bounce off of shields
             for (let tank of gameState.tanks)
-                if (tank.invincible && this.collidesWithCircle(tank.position, SHIELD_RADIUS)) {
+                if (!tank.isDead && tank.invincible && this.collidesWithCircle(tank.position, SHIELD_RADIUS)) {
                     let center = new Vector(this.position.x + this.size.x / 2, this.position.y + this.size.y / 2);
                     let newVelocity = (new Vector(
                         center.x - tank.position.x,

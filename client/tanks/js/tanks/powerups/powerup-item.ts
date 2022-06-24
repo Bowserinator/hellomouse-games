@@ -45,7 +45,7 @@ export class PowerupItem extends Renderable {
     update(gameState: GameState, timestep: number) {
         // If collide with tank give powerup
         for (let tank of gameState.tanks)
-            if (tank.collider.collidesWith(this.collider)) {
+            if (!tank.isDead && tank.collider.collidesWith(this.collider)) {
                 gameState.giveTankPowerup(tank, this.powerup);
                 gameState.removePowerupItem(this);
                 return;
