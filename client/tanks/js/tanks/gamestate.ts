@@ -216,10 +216,17 @@ export default class GameState {
         if (this.powerupItems.length > Math.min(MAX_POWERUP_ITEMS, size * size))
             return;
 
-        // Pick unoccupied spot
-        while (!x || !y || this.powerupItems.some(i => i.collider.position.x === x && i.collider.position.y === y)) {
+        // Pick unoccupied spot away from tanks
+        let attempts = 0;
+        while (!x || !y ||
+            this.powerupItems.some(i => i.collider.position.x === x && i.collider.position.y === y) ||
+            this.tanks
+                .filter(tank => !tank.isDead)
+                .some(tank => tank.position.distance(new Vector(x, y)) < CELL_SIZE)) {
             x = CELL_SIZE / 2 + CELL_SIZE * Math.round(Math.random() * size) - POWERUP_ITEM_SIZE / 2;
             y = CELL_SIZE / 2 + CELL_SIZE * Math.round(Math.random() * size) - POWERUP_ITEM_SIZE / 2;
+            attempts++;
+            if (attempts > 10) return;
         }
         this.addPowerupItem(new PowerupItem(new Vector(x, y), powerup as Powerup));
     }
