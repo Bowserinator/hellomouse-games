@@ -214,8 +214,8 @@ export default class GameState {
         for (let tank of aliveTanks) {
             let [x, y] = [0, 0];
             while (!x || !y || aliveTanks.some(t => t.collider.contains(new Vector(x, y)))) {
-                x = CELL_SIZE / 2 + CELL_SIZE * Math.round(Math.random() * size);
-                y = CELL_SIZE / 2 + CELL_SIZE * Math.round(Math.random() * size);
+                x = CELL_SIZE / 2 + CELL_SIZE * Math.round(Math.random() * (size - 1));
+                y = CELL_SIZE / 2 + CELL_SIZE * Math.round(Math.random() * (size - 1));
             }
             tank.position.x = x;
             tank.position.y = y;
