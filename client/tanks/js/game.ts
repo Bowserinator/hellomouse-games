@@ -66,8 +66,13 @@ function drawBoard() {
     gameState.camera.position.y = Math.max(-CAMERA_EDGE_MARGIN, gameState.camera.position.y);
 
     if (gameState.mazeLayer) {
-        gameState.camera.position.x =
-            Math.min(gameState.mazeLayer.width - canvas.width + CAMERA_EDGE_MARGIN, gameState.camera.position.x);
+        // Center on tank for large mazes, snapping to edges
+        if (gameState.mazeLayer.width > canvas.width)
+            gameState.camera.position.x =
+                Math.min(gameState.mazeLayer.width - canvas.width + CAMERA_EDGE_MARGIN, gameState.camera.position.x);
+        else // Center on maze is screen is wide enough
+            gameState.camera.position.x = -canvas.width / 2 + gameState.mazeLayer.width / 2;
+
         gameState.camera.position.y =
             Math.min(gameState.mazeLayer.height - canvas.height + CAMERA_EDGE_MARGIN, gameState.camera.position.y);
     }
