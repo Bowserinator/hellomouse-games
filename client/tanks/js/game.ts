@@ -148,6 +148,7 @@ setInterval(() => {
     if (!mouseMoved) return;
     let [x, y] = mousepos;
     let dir = getDir(x, y);
+    if (!dir) return;
     if (dir[0] === 0 && dir[1] === 0)
         return;
 
@@ -183,6 +184,7 @@ window.onmousemove = e => {
     mousepos = [x, y];
 
     let dir = getDir(x, y);
+    if (!dir) return;
     if (dir[0] === 0 && dir[1] === 0)
         return;
 
