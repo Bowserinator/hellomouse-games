@@ -341,11 +341,22 @@ export class MagneticMineBullet extends Bullet {
             this.imageUrl = this.config.imageUrls[Math.floor(deltaT / FLICKER_RATE) % 2];
             let imgSize = this.config.imageSize ? this.config.imageSize.x : this.config.size.x;
 
+            let closest = gameState.getNearestTank(this.getCenter());
+            let targetColor = closest ? closest.tintPrefix : '';
+            targetColor = targetColor || '#ccc'; // Default
+
+            // Draw shield
             drawShield(camera, this.getCenter().l(), {
                 radius: imgSize / 2 + 1,
-                color: 'red', // TODO: color of the tank being targetted
-                shadowColor: 'red'
+                color: targetColor,
+                shadowColor: targetColor
             });
+            // Draw targetting line
+            if (closest) {
+                camera.ctx.globalAlpha = 0.4;
+                camera.drawLine(this.getCenter().l(), closest.position.l(), 1, targetColor);
+                camera.ctx.globalAlpha = 1;
+            }
         }
     }
 
