@@ -72,8 +72,6 @@ function drawBoard() {
             Math.min(gameState.mazeLayer.height - canvas.height + CAMERA_EDGE_MARGIN, gameState.camera.position.y);
     }
 
-    gameState.update();
-
     gameState.draw();
 
     if (keys[' ']) // Fire
@@ -230,6 +228,12 @@ function animFrame(timestamp) {
     window.requestAnimationFrame(animFrame);
 }
 window.requestAnimationFrame(animFrame);
+
+
+// TODO
+setInterval(() => {
+    gameState.update();
+}, 30);
 
 
 const DISCONNECT_BANNER = document.getElementById('disconnect-banner');
