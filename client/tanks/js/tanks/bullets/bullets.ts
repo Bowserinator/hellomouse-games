@@ -174,6 +174,7 @@ export class Bullet extends Renderable {
 
     draw(camera: Camera, gameState: GameState) {
         if (!this.isLoaded()) return;
+        if (!gameState.isVisible(this.collider, 20)) return;
 
         const bulletCenter = this.getCenter();
         const imageUrl = this.imageUrl;
@@ -331,6 +332,7 @@ export class MagneticMineBullet extends Bullet {
     }
 
     draw(camera: Camera, gameState: GameState) {
+        if (!gameState.isVisible(this.collider, 20)) return;
         super.draw(camera, gameState);
 
         const deltaT = Date.now() - this.createdTime;

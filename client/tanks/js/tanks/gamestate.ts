@@ -1,7 +1,7 @@
 import { Direction, TankSync, BulletType, ExplosionGraphics, Powerup } from '../types.js';
 import { Bullet } from './bullets/bullets.js';
 import Camera from '../renderer/camera.js';
-import { generateMazeImage, generateMazeShadowImage } from '../renderer/maze-image-gen.js';
+import { generateMazeImage } from '../renderer/maze-image-gen.js';
 
 import Vector from './vector2d.js';
 import Wall from './wall.js';
@@ -11,7 +11,7 @@ import Particle from './particle.js';
 import { generateMaze, getMazeSize } from './map-gen.js';
 import { PowerupItem } from './powerups/powerup-item.js';
 import { createPowerupFromType } from './powerups/powerups.js';
-import { CELL_SIZE, MAX_POWERUP_ITEMS, POWERUP_ITEM_SIZE, DELAY_POWERUP_SPAWN, POWERUPS_TO_SPAWN_AT_ONCE, TANK_SIZE } from '../vars.js';
+import { CELL_SIZE, MAX_POWERUP_ITEMS, POWERUP_ITEM_SIZE, DELAY_POWERUP_SPAWN, POWERUPS_TO_SPAWN_AT_ONCE } from '../vars.js';
 import Collider from './collision.js';
 
 interface SyncMessage {
@@ -67,7 +67,6 @@ export default class GameState {
     mazeSeed: number;
 
     // Clientside only:
-    powerupItemLayer?: HTMLCanvasElement;
     mazeLayer?: HTMLCanvasElement;
     mazeShadowLayer?: HTMLCanvasElement;
     particles: Array<Particle>;
@@ -134,7 +133,6 @@ export default class GameState {
     addPowerupItem(powerup: PowerupItem) {
         this.powerupItems.push(powerup);
         this.addedPowerupItems.add(powerup);
-        this.updatePowerupItemLayer();
         return powerup;
     }
 
@@ -160,7 +158,6 @@ export default class GameState {
     removePowerupItem(powerup: PowerupItem) {
         this.removedPowerupItems.add(powerup);
         this.powerupItems = this.powerupItems.filter(p => p !== powerup);
-        this.updatePowerupItemLayer();
     }
 
     killTank(tank: Tank) {
@@ -271,40 +268,37 @@ export default class GameState {
         }
     }
 
-    updatePowerupItemLayer() {
-        if (!this.isClientSide) return;
-
-        const canvas = this.powerupItemLayer;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        const camera = this.zeroCameraCache || new Camera(new Vector(0, 0), ctx);
-        this.zeroCameraCache = camera;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        this.powerupItems.forEach(p => p.draw(camera, this));
-    }
-
     scoreKill(killedTank: Tank, firedBy: number) {
         if (killedTank.id !== firedBy && firedBy > -1) // No points for suicide shots
             this.tanks[firedBy].score++;
     }
 
+    /**
+     * Is a collider visible (in viewport)
+     * @param collider Collider to check again
+     * @param margin Margin to expand past edge of screen (total)
+     * @returns Is visible? (In camera viewport?)
+     */
+    isVisible(collider: Collider, margin = 0) {
+        const [w, h] = [this.camera.ctx.canvas.width + margin, this.camera.ctx.canvas.height + margin];
+        const [cx, cy] = [this.camera.position.x, this.camera.position.y];
+
+        const xMatch = collider.position.x + collider.size.x >= cx && collider.position.x <= cx + w;
+        const yMatch = collider.position.y + collider.size.y >= cy && collider.position.y <= cy + h;
+        return xMatch && yMatch;
+    }
+
     /** Draw arrows on edges to show where other players are */
     drawOtherPlayerMarkers() {
         const [w, h] = [this.camera.ctx.canvas.width, this.camera.ctx.canvas.height];
-        const [cx, cy] = [this.camera.position.x, this.camera.position.y];
+        const MARGIN = 10;
+        const ARROW_SIZE = 10;
 
         for (let tank of this.tanks) {
             if (tank.isDead || tank.stealthed || tank === this.tanks[this.tankIndex])
                 continue;
 
-            const xMatch = tank.collider.position.x >= cx && tank.collider.position.x <= cx + w;
-            const yMatch = tank.collider.position.y >= cy && tank.collider.position.y <= cy + h;
-            const MARGIN = 10;
-            const ARROW_SIZE = 10;
-
-            if (!xMatch || !yMatch) {
+            if (!this.isVisible(tank.collider)) {
                 const [tx, ty] = this.camera.worldToScreen(...tank.position.l());
                 let x = Math.max(MARGIN, Math.min(w - MARGIN, tx));
                 let y = Math.max(MARGIN, Math.min(h - MARGIN, ty));
@@ -340,20 +334,17 @@ export default class GameState {
     }
 
     draw() {
-        if (this.mazeShadowLayer)
-            this.camera.drawImage(this.mazeShadowLayer, 0, 0);
+        // if (this.mazeShadowLayer)
+        //    this.camera.drawImage(this.mazeShadowLayer, 0, 0);
 
-        if (this.powerupItemLayer)
-            this.camera.drawImage(this.powerupItemLayer, 0, 0);
-
-        // this.powerupItems.forEach(p => p.draw(this.camera, this));
+        this.powerupItems.forEach(p => p.draw(this.camera, this));
         this.tanks.forEach(tank => tank.draw(this.camera, this));
 
         if (this.mazeLayer)
             this.camera.drawImage(this.mazeLayer, 0, 0);
+
         this.particles.forEach(particle => particle.draw(this.camera, this));
         this.bullets.forEach(bullet => bullet.draw(this.camera, this));
-
         this.explosions.forEach(explosion => explosion.draw(this.camera, this));
 
         this.drawOtherPlayerMarkers();
@@ -389,17 +380,8 @@ export default class GameState {
             this.tankIndex = message.id;
             this.mazeSeed = message.seed;
             let [w, h] = generateMaze(this, message.seed);
-            if (this.isClientSide) {
+            if (this.isClientSide)
                 this.mazeLayer = generateMazeImage(this.walls, w, h);
-                this.mazeShadowLayer = generateMazeShadowImage(this.walls, w, h);
-
-                if (this.mazeLayer) {
-                    this.powerupItemLayer = document.createElement('canvas');
-                    this.powerupItemLayer.width = this.mazeLayer.width;
-                    this.powerupItemLayer.height = this.mazeLayer.height;
-                    this.updatePowerupItemLayer();
-                }
-            }
         } else if (message.type === TankSync.SYNC_ALL_BULLETS) {
             this.bullets = [];
             for (let i = 0; i < message.positions.length; i++) {
@@ -427,13 +409,11 @@ export default class GameState {
             );
             item.randomID = message.id;
             this.addPowerupItem(item);
-        } else if (message.type === TankSync.DELETE_POWERUP_ITEM) {
+        } else if (message.type === TankSync.DELETE_POWERUP_ITEM)
             this.powerupItems = this.powerupItems.filter(p => p.randomID !== message.id);
-            this.updatePowerupItemLayer();
-        } else if (message.type === TankSync.GIVE_POWERUP) {
+        else if (message.type === TankSync.GIVE_POWERUP)
             this.giveTankPowerup(this.tanks[message.id], message.powerup);
-            this.updatePowerupItemLayer();
-        } else if (message.type === TankSync.TANK_FIRED && this.isClientSide)
+        else if (message.type === TankSync.TANK_FIRED && this.isClientSide)
             message.ids.forEach(id => this.tanks[id].onFireClientSide(this));
         return true;
     }

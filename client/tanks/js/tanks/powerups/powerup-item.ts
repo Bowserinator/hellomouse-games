@@ -35,6 +35,9 @@ export class PowerupItem extends Renderable {
     }
 
     draw(camera: Camera, gameState: GameState) {
+        if (!gameState.isVisible(this.collider))
+            return;
+
         // Draw image
         if (this.images[POWERUP_TEXTURE_MAP[this.powerup]])
             camera.drawImage(this.images[POWERUP_TEXTURE_MAP[this.powerup]], ...this.position.l());

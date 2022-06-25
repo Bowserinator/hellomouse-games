@@ -194,6 +194,7 @@ export default class Tank extends Renderable {
     draw(camera: Camera, gamestate: GameState) {
         if (this.isDead) return;
         if (!this.isLoaded(this.tintPrefix)) return;
+        if (!gamestate.isVisible(this.collider, 60)) return;
 
         const isOwnTank = gamestate.tanks[gamestate.tankIndex] === this;
         if (this.stealthed)
