@@ -12,6 +12,7 @@ import { generateMaze, getMazeSize } from './map-gen.js';
 import { PowerupItem } from './powerups/powerup-item.js';
 import { createPowerupFromType } from './powerups/powerups.js';
 import { CELL_SIZE, MAX_POWERUP_ITEMS, POWERUP_ITEM_SIZE, DELAY_POWERUP_SPAWN, POWERUPS_TO_SPAWN_AT_ONCE, TANK_SIZE } from '../vars.js';
+import Collider from './collision.js';
 
 interface SyncMessage {
     seed: number;
@@ -289,6 +290,55 @@ export default class GameState {
             this.tanks[firedBy].score++;
     }
 
+    /** Draw arrows on edges to show where other players are */
+    drawOtherPlayerMarkers() {
+        const [w, h] = [this.camera.ctx.canvas.width, this.camera.ctx.canvas.height];
+        const [cx, cy] = [this.camera.position.x, this.camera.position.y];
+
+        for (let tank of this.tanks) {
+            if (tank.isDead || tank.stealthed || tank === this.tanks[this.tankIndex])
+                continue;
+
+            const xMatch = tank.collider.position.x >= cx && tank.collider.position.x <= cx + w;
+            const yMatch = tank.collider.position.y >= cy && tank.collider.position.y <= cy + h;
+            const MARGIN = 10;
+            const ARROW_SIZE = 10;
+
+            if (!xMatch || !yMatch) {
+                const [tx, ty] = this.camera.worldToScreen(...tank.position.l());
+                let x = Math.max(MARGIN, Math.min(w - MARGIN, tx));
+                let y = Math.max(MARGIN, Math.min(h - MARGIN, ty));
+
+                if (y === h - MARGIN) { // Bottom
+                    this.camera.ctx.beginPath();
+                    this.camera.ctx.moveTo(x, y);
+                    this.camera.ctx.lineTo(x - ARROW_SIZE, y - ARROW_SIZE);
+                    this.camera.ctx.lineTo(x + ARROW_SIZE, y - ARROW_SIZE);
+                } else if (y === MARGIN) { // Top
+                    this.camera.ctx.beginPath();
+                    this.camera.ctx.moveTo(x, y);
+                    this.camera.ctx.lineTo(x - ARROW_SIZE, y + ARROW_SIZE);
+                    this.camera.ctx.lineTo(x + ARROW_SIZE, y + ARROW_SIZE);
+                } else if (x === w - MARGIN) { // Right
+                    this.camera.ctx.beginPath();
+                    this.camera.ctx.moveTo(x, y);
+                    this.camera.ctx.lineTo(x - ARROW_SIZE, y + ARROW_SIZE);
+                    this.camera.ctx.lineTo(x - ARROW_SIZE, y - ARROW_SIZE);
+                } else if (x === MARGIN) { // Left
+                    this.camera.ctx.beginPath();
+                    this.camera.ctx.moveTo(x, y);
+                    this.camera.ctx.lineTo(x + ARROW_SIZE, y + ARROW_SIZE);
+                    this.camera.ctx.lineTo(x + ARROW_SIZE, y - ARROW_SIZE);
+                }
+                this.camera.ctx.closePath();
+                this.camera.ctx.strokeStyle = 'black';
+                this.camera.ctx.stroke();
+                this.camera.ctx.fillStyle = tank.tintPrefix;
+                this.camera.ctx.fill();
+            }
+        }
+    }
+
     draw() {
         if (this.mazeShadowLayer)
             this.camera.drawImage(this.mazeShadowLayer, 0, 0);
@@ -305,6 +355,8 @@ export default class GameState {
         this.bullets.forEach(bullet => bullet.draw(this.camera, this));
 
         this.explosions.forEach(explosion => explosion.draw(this.camera, this));
+
+        this.drawOtherPlayerMarkers();
     }
 
     /**
