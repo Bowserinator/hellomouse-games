@@ -197,7 +197,7 @@ window.onmousemove = e => {
     UPDATE_ROTATION.call();
 };
 
-window.onmousedown = e => {
+canvas.onmousedown = e => {
     if (!isConnected()) return;
 
     // Only fire on left click
@@ -213,7 +213,7 @@ window.onmousedown = e => {
     connection.send(JSON.stringify({ type: 'MOVE', action: Action.FIRE, direction: dir }));
 };
 
-window.onmouseup = e => {
+canvas.onmouseup = e => {
     if (!isConnected()) return;
 
     // Fire gun TODO
