@@ -31,8 +31,8 @@
     <canvas id="board" oncontextmenu="return false;"></canvas>
     <div id="sidebar">
         <h1>TANKS</h1>
-        <button>Other games</button>
-        <button>Tutorial</button>
+        <button onclick="window.open('/', '_blank')">Other games</button>
+        <button onclick="document.getElementById('tutorial').style.display = 'block'">Tutorial</button>
         <button>Settings</button>
         <hr>
         <div id="scores">
@@ -64,6 +64,64 @@
                 <span class="username">Bowserinator</span>
                 <span class="score-number">12</span>
             </p>
+        </div>
+    </div>
+
+    <div class="modal-darken" id="tutorial" style="display: none">
+        <div class="modal">
+            <button class="modal-close-button" onclick="document.getElementById('tutorial').style.display = 'none'">X</button>
+            <h2>Controls</h2>
+            <ul>
+                <li><b>WASD</b> - Move tank</li>
+                <li><b>Left Click</b> - Fire gun</li>
+                <li><b>Mouse</b> - Aim</li>
+            </ul>
+
+            <h2>Gameplay</h2>
+            <ul>
+                <li>Goal is to get as many kills as possible (Suicide shots don't count)</li>
+                <li>Rounds end when one or fewer players are left</li>
+                <li>Pick up powerups to get special shots / abilities</li>
+                <li>Powerups spawn randomly in pairs every 10s</li>
+                <li>Bullets are destroyed when they hit another bullet (with some exceptions)</li>
+                <li>All bullet-type powerups conflict, and shield + stealth conflict. Getting a new conflicting powerup will replace the old one.</li>
+            </ul>
+
+            <h2>Powerups</h2>
+            <ul>
+                <li>
+                    <img src="/tanks/img/items/bomb.png" class="powerup-tutorial-img">
+                    <b>Bomb</b> - Explodes into shrapnel when hit or after a delay
+                </li>
+                <li>
+                    <img src="/tanks/img/items/fast.png" class="powerup-tutorial-img">
+                    <b>Railgun</b> - Hypersonic railgun pellet. Moves very fast, doesn't bounce
+                </li>
+                <li>
+                    <img src="/tanks/img/items/laser.png" class="powerup-tutorial-img">
+                    <b>Laser</b> - Fires instantly. Bounces and instantly kills everything it hits
+                </li>
+                <li>
+                    <img src="/tanks/img/items/magnet.png" class="powerup-tutorial-img">
+                    <b>Magnetic Mine</b> - Arms itself after 1s, then gravitates towards nearest tank. Cannot be killed once armed
+                </li>
+                <li>
+                    <img src="/tanks/img/items/rocket.png" class="powerup-tutorial-img">
+                    <b>Rocket Artillery</b> - Calls down rocket artillery onto the nearest player. Impact zones are marked
+                </li>
+                <li>
+                    <img src="/tanks/img/items/shotgun.png" class="powerup-tutorial-img">
+                    <b>Shotgun</b> - Short range burst of many small bullets
+                </li>
+                <li>
+                    <img src="/tanks/img/items/shield.png" class="powerup-tutorial-img">
+                    <b>Shield</b> - Player gets a force field that deflects all lasers and bullets for 6s. Tank cannot be killed
+                </li>
+                <li>
+                    <img src="/tanks/img/items/stealth.png" class="powerup-tutorial-img">
+                    <b>Stealth</b> - Makes you invisible to other players and any targeting (ie rocket artillery + magnetic mine)
+                </li>
+            </ul>
         </div>
     </div>
 

@@ -37,12 +37,7 @@ body {
     user-select: none;
 }
 
-/* Game title */
-#sidebar > h1 {
-    margin: 0 0 10px 0;
-}
-
-#sidebar > button {
+button {
     margin: 0;
     display: block;
     padding: 7px;
@@ -60,10 +55,15 @@ body {
     transition: background-color 0.2s, color 0.2s;
 }
 
-#sidebar > button:hover {
+button:hover {
     background-color: rgba(255, 255, 255, 0.1);
     color: white;
     cursor: pointer;
+}
+
+/* Game title */
+#sidebar > h1 {
+    margin: 0 0 10px 0;
 }
 
 #sidebar .score {
@@ -93,4 +93,29 @@ body {
 #sidebar .score.dead {
     opacity: 0.4;
     filter: grayscale(40%);
+}
+
+/* Game modals */
+.modal {
+    width: 600px;
+    max-width: 90%;
+    max-height: 90%;
+    background-color: #111;
+    color: #eee;
+    border: 2px solid black;
+
+    position: relative;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.powerup-tutorial-img {
+    width: 18px;
+    height: 18px;
+    margin-right: 4px;
+    position: relative;
+    top: 4px;
 }

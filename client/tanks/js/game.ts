@@ -251,3 +251,13 @@ setInterval(() => {
     else
         DISCONNECT_BANNER.style.top = '0';
 }, 500);
+
+
+// Close modals on ESC
+let tutorialModal = document.getElementById('tutorial');
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+        tutorialModal.style.display = 'none';
+    }
+});
