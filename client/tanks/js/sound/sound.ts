@@ -4,6 +4,17 @@ import Vector from '../tanks/vector2d.js';
 
 const SOUND_DISTANCE_DECAY = 0.999; // Sound volume *= this ^ (distance to sound)
 
+let globalVolume = 1;
+
+/**
+ * Set global volume level
+ * @param val Value (0 = 0%, 1 = 100%, 2 = 200%) for global volume
+ */
+export function setGlobalVolume(val: number) {
+    globalVolume = val;
+}
+
+
 let context = typeof AudioContext !== 'undefined' ? new AudioContext() : null;
 let buffers: Record<string, AudioBuffer> = {};
 
@@ -54,7 +65,7 @@ async function playSoundRaw(buffer: AudioBuffer, volume = 1, time = 0) {
     source.buffer = buffer;
     source.connect(gainNode);
     gainNode.connect(context.destination);
-    gainNode.gain.value = volume;
+    gainNode.gain.value = volume * globalVolume;
     source.start(time);
 }
 

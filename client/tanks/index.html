@@ -33,7 +33,7 @@
         <h1>TANKS</h1>
         <button onclick="window.open('/', '_blank')">Other games</button>
         <button onclick="document.getElementById('tutorial').style.display = 'block'">Tutorial</button>
-        <button>Settings</button>
+        <button onclick="document.getElementById('settings').style.display = 'block'">Settings</button>
         <hr>
         <div id="scores">
             <p class="score" style="background-color: blue">
@@ -122,6 +122,15 @@
                     <b>Stealth</b> - Makes you invisible to other players and any targeting (ie rocket artillery + magnetic mine)
                 </li>
             </ul>
+        </div>
+    </div>
+
+    <div class="modal-darken" id="settings" style="display: none">
+        <div class="modal">
+            <button class="modal-close-button" onclick="document.getElementById('settings').style.display = 'none'">X</button>
+            <h2>Settings</h2>
+            <input id="volume" min="0" max="100" value="50" type="range">
+            <label for="volume">Volume</label>
         </div>
     </div>
 

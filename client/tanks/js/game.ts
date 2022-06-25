@@ -9,6 +9,7 @@ import Camera from './renderer/camera.js';
 import { CAMERA_EDGE_MARGIN } from './vars.js';;
 
 import connection from './client.js';
+import { setGlobalVolume } from './sound/sound.js';
 
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
@@ -254,10 +255,19 @@ setInterval(() => {
 
 
 // Close modals on ESC
-let tutorialModal = document.getElementById('tutorial');
+const tutorialModal = document.getElementById('tutorial');
+const settingsModal = document.getElementById('settings');
 
 document.addEventListener('keydown', event => {
-    if (event.key === 'Escape') {
+    if (event.key === 'Escape' && tutorialModal && settingsModal) {
         tutorialModal.style.display = 'none';
+        settingsModal.style.display = 'none';
     }
 });
+
+// Volume slider
+const volumeSlider = document.getElementById('volume');
+if (volumeSlider)
+    volumeSlider.onchange = e => {
+        setGlobalVolume(volumeSlider.value / 100);
+    };
