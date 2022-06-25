@@ -223,7 +223,7 @@ window.onmouseup = e => {
 
 window.onresize = () => {
     // TODO aspect ratio this shit
-    canvas.width = window.innerWidth;
+    canvas.width = window.innerWidth - 250; // Space for sidebar
     canvas.style.width = canvas.width + 'px';
     canvas.height = window.innerHeight;
     canvas.style.height = canvas.height + 'px';
