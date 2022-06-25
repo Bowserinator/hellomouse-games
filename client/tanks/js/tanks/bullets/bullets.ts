@@ -775,7 +775,7 @@ export class RocketBullet extends Bullet {
             for (let delta of this.offsetLocations)
                 gameState.addExplosion(new Explosion(
                     this.targetCenter.add(delta),
-                    RocketBullet.rocketRadius, RocketBullet.rocketRadius,
+                    RocketBullet.rocketRadius * 1.5, RocketBullet.rocketRadius,
                     800, ExplosionGraphics.SIMPLE))
                     .setFiredBy(this.firedBy);
             gameState.removeBullet(this);
