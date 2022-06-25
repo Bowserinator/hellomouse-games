@@ -198,7 +198,10 @@ export default class GameState {
         this.addedPowerups.clear();
     }
 
-    /** Randomly spread all (alive) players through the maze */
+    /**
+     * Randomly spread all (alive) players through the maze
+     * Also randomizes starting rotations
+     */
     spreadTanks() {
         // Relocate all tanks outside of maze for now
         const aliveTanks = this.tanks.filter(tank => !tank.isDead);
@@ -217,6 +220,7 @@ export default class GameState {
             }
             tank.position.x = x;
             tank.position.y = y;
+            tank.rotation = Math.random() * Math.PI * 2;
             tank.createCollider();
         }
     }
