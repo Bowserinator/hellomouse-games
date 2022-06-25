@@ -2,7 +2,7 @@ import GameState from '../tanks/gamestate.js';
 import BufferLoader from './buffer-loader.js';
 import Vector from '../tanks/vector2d.js';
 
-const SOUND_DISTANCE_DECAY = 0.994; // Sound volume *= this ^ (distance to sound)
+const SOUND_DISTANCE_DECAY = 0.997; // Sound volume *= this ^ (distance to sound)
 
 let globalVolume = 0.5;
 

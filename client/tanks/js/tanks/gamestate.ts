@@ -248,8 +248,8 @@ export default class GameState {
             this.tanks
                 .filter(tank => !tank.isDead)
                 .some(tank => tank.position.distance(new Vector(x, y)) < CELL_SIZE)) {
-            x = CELL_SIZE / 2 + CELL_SIZE * Math.round(Math.random() * size) - POWERUP_ITEM_SIZE / 2;
-            y = CELL_SIZE / 2 + CELL_SIZE * Math.round(Math.random() * size) - POWERUP_ITEM_SIZE / 2;
+            x = CELL_SIZE / 2 + CELL_SIZE * Math.round(Math.random() * (size - 1)) - POWERUP_ITEM_SIZE / 2;
+            y = CELL_SIZE / 2 + CELL_SIZE * Math.round(Math.random() * (size - 1)) - POWERUP_ITEM_SIZE / 2;
             attempts++;
             if (attempts > 10) return;
         }
