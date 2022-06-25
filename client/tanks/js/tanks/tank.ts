@@ -35,6 +35,7 @@ export default class Tank extends Renderable {
     fakeBullet: Bullet; // Used for visual path preview
     tint: [number, number, number];
     tintPrefix: string;
+    username: string;
 
     movement: Array<Direction>;
     isFiring: boolean;
@@ -86,6 +87,7 @@ export default class Tank extends Renderable {
 
         // Other
         this.speed = TANK_SPEED;
+        this.username = `Player${Math.floor(Math.random() * 100000)}`;
         this.score = 0;
 
         this.createCollider();
@@ -120,7 +122,8 @@ export default class Tank extends Renderable {
             this.movement.join('|'),  // 2
             truthyStuff.toString(36), // 3
             this.score,               // 4
-            this.tint.join('|')       // 5
+            this.tint.join('|'),      // 5
+            this.username             // 6
         ];
         let trimmedData = [...data];
         let trimmedDataStr;
@@ -158,6 +161,8 @@ export default class Tank extends Renderable {
             this.score = parseInt(arr[4]);
         if (arr[5] !== '')
             this.setTint(arr[5].split('|').map((x: string) => parseInt(x)));
+        if (arr[6] !== '')
+            this.username = arr[6];
 
         // Process truthy stuff
         if (arr[3] !== '') {
@@ -212,6 +217,23 @@ export default class Tank extends Renderable {
             }
         }
         this.powerups.forEach(powerup => powerup.draw(camera));
+
+        // Draw nametag
+        if (!this.stealthed && !this.isDead) {
+            let tx = this.position.x;
+            let ty = this.position.y - TANK_SIZE / 2 - 10;
+            const WIDTH = 120; // Width of nametag
+
+            camera.fillRect([tx - WIDTH / 2, ty - 13], [WIDTH, 20], 'rgba(0, 0, 0, 0.3)');
+            camera.ctx.textAlign = 'center';
+            camera.ctx.fillStyle = 'white';
+            camera.ctx.font = '10pt Rajdhani';
+
+            let slicedusername = this.username;
+            while (camera.ctx.measureText(slicedusername).width > WIDTH)
+                slicedusername = slicedusername.slice(0, slicedusername.length - 1);
+            camera.ctx.fillText(slicedusername, ...camera.worldToScreen(tx, ty));
+        }
     }
 
     onDeath(gameState: GameState) {
