@@ -10,6 +10,7 @@ import { CAMERA_EDGE_MARGIN, ROTATE_FAST, ROTATE_SLOW } from './vars.js';;
 
 import connection from './client.js';
 import { setGlobalVolume } from './sound/sound.js';
+import { startScoreKeeping } from './score.js';
 
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
@@ -22,6 +23,7 @@ const uuid = window.location.search.substr(1).split('=')[0];
 const gameState = new GameState(true);
 window.gameState = gameState;
 
+startScoreKeeping(gameState);
 
 function getDir(x, y) {
     if (!gameState.camera || !gameState.tanks || !gameState.tanks[gameState.tankIndex])
