@@ -4,6 +4,10 @@ export const MAX_POWERUP_ITEMS = 20;
 export const DELAY_POWERUP_SPAWN = 10000; // How often (ms) to spawn a powerup
 export const POWERUPS_TO_SPAWN_AT_ONCE = 2;
 
+// Keyboard rotation rates (rad / 50ms)
+export const ROTATE_FAST = 0.2;
+export const ROTATE_SLOW = 0.1;
+
 // Tanks
 export const TANK_SIZE = 50; // Visual + collision
 export const TANK_TURRET_SIZE = 96; // Only visual

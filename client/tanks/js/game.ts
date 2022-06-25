@@ -6,7 +6,7 @@ import Collider from './tanks/collision.js';
 import GameState from './tanks/gamestate.js';
 import { Direction, Action, TankSync } from './types.js';
 import Camera from './renderer/camera.js';
-import { CAMERA_EDGE_MARGIN } from './vars.js';;
+import { CAMERA_EDGE_MARGIN, ROTATE_FAST, ROTATE_SLOW } from './vars.js';;
 
 import connection from './client.js';
 import { setGlobalVolume } from './sound/sound.js';
@@ -39,21 +39,6 @@ function isConnected() {
 
 
 function drawBoard() {
-    // if (gameState.tanks[0]) {
-    //     if (keys['a'])
-    //         gameState.tanks[0].movement[0] = Direction.LEFT;
-    //     else if (keys['d'])
-    //         gameState.tanks[0].movement[0] = Direction.RIGHT;
-    //     else
-    //         gameState.tanks[0].movement[0] = Direction.NONE;
-    //     if (keys['w'])
-    //         gameState.tanks[0].movement[1] = Direction.UP;
-    //     else if (keys['s'])
-    //         gameState.tanks[0].movement[1] = Direction.DOWN;
-    //     else
-    //         gameState.tanks[0].movement[1] = Direction.NONE;
-    // }
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (!gameState.camera) // TODO move
@@ -79,9 +64,6 @@ function drawBoard() {
     }
 
     gameState.draw();
-
-    if (keys[' ']) // Fire
-        console.log('Fire');
 }
 
 
@@ -119,53 +101,72 @@ function keyToDirection(key) {
     return null;
 }
 
-const keys = {};
+const keys: Record<string, number> = {};
 window.onkeydown = e => {
     if (!isConnected()) return;
     e = e || window.event;
 
-    let dir = keyToDirection(e.key);
+    let dir = keyToDirection(e.key.toLowerCase());
     if (dir !== null)
         connection.send(JSON.stringify({ type: 'MOVE', action: Action.MOVE_BEGIN, dir: dir }));
 
-    keys[e.key] = 1;
+    keys[e.key.toLowerCase()] = 1;
+
+    if (keys[' ']) { // Fire
+        // Fire gun
+        let rot = gameState.tanks[gameState.tankIndex].rotation;
+        let dir = [Math.cos(rot), Math.sin(rot)];
+
+        UPDATE_ROTATION.f();
+        connection.send(JSON.stringify({ type: 'MOVE', action: Action.FIRE, direction: dir }));
+    }
     // TODO: send if valid
 };
 
 window.onkeyup = e => {
     if (!isConnected()) return;
     e = e || window.event;
-    if (keys[e.key]) {
-        keys[e.key] = 0;
+    if (keys[e.key.toLowerCase()]) {
+        keys[e.key.toLowerCase()] = 0;
 
-        let dir = keyToDirection(e.key);
+        let dir = keyToDirection(e.key.toLowerCase());
         if (dir !== null)
             connection.send(JSON.stringify({ type: 'MOVE', action: Action.MOVE_END, dir: dir }));
+
+        if (!keys[' '])
+            connection.send(JSON.stringify({ type: 'MOVE', action: Action.STOP_FIRE }));
     }
 };
 
 setInterval(() => {
-    // Mouse realign
-    if (!mouseMoved) return;
-    let [x, y] = mousepos;
-    let dir = getDir(x, y);
-    if (!dir) return;
-    if (dir[0] === 0 && dir[1] === 0)
+    if (!gameState.tanks[gameState.tankIndex])
         return;
 
-    let rot = Math.atan2(dir[1], dir[0]);
-    if (rot < 0) rot += Math.PI * 2; // Makes turning less jittery
+    // Keyboard rotation
+    const turnRate = keys['shift'] ? ROTATE_SLOW : ROTATE_FAST;
+    let changedRot = false;
 
-    window.gameState.tanks[gameState.tankIndex].rotation =
-        window.gameState.tanks[gameState.tankIndex].visualTurretRotation =
-        rot;
-    UPDATE_ROTATION.call();
+    if (keys['arrowleft']) {
+        gameState.tanks[gameState.tankIndex].rotation -= turnRate;
+        changedRot = true;
+    } else if (keys['arrowright']) {
+        gameState.tanks[gameState.tankIndex].rotation += turnRate;
+        changedRot = true;
+    }
+
+    if (changedRot) {
+        if (gameState.tanks[gameState.tankIndex].rotation > Math.PI * 2)
+            gameState.tanks[gameState.tankIndex].rotation -= Math.PI * 2;
+        if (gameState.tanks[gameState.tankIndex].rotation < 0)
+            gameState.tanks[gameState.tankIndex].rotation += Math.PI * 2;
+        UPDATE_ROTATION.call();
+    }
 }, 50);
 
 const UPDATE_ROTATION = new RateLimited(
     100, () => {
         if (!isConnected()) return;
-        let rotation = window.gameState.tanks[gameState.tankIndex].rotation;
+        let rotation = gameState.tanks[gameState.tankIndex].rotation;
         connection.send(JSON.stringify({
             type: 'MOVE',
             action: Action.UPDATE_ROTATION,
@@ -174,15 +175,11 @@ const UPDATE_ROTATION = new RateLimited(
     }
 );
 
-let mousepos = [0, 0];
-let mouseMoved = false;
 
 window.onmousemove = e => {
-    mouseMoved = true;
     const rect = canvas.getBoundingClientRect();
     let x = e.clientX - rect.left;
     let y = e.clientY - rect.top;
-    mousepos = [x, y];
 
     let dir = getDir(x, y);
     if (!dir) return;
@@ -192,8 +189,8 @@ window.onmousemove = e => {
     let rot = Math.atan2(dir[1], dir[0]);
     if (rot < 0) rot += Math.PI * 2; // Makes turning less jittery
 
-    window.gameState.tanks[gameState.tankIndex].rotation =
-        window.gameState.tanks[gameState.tankIndex].visualTurretRotation =
+    gameState.tanks[gameState.tankIndex].rotation =
+        gameState.tanks[gameState.tankIndex].visualTurretRotation =
         rot;
     UPDATE_ROTATION.call();
 };
@@ -205,10 +202,9 @@ canvas.onmousedown = e => {
     if (e.button !== 0) return;
 
     // Fire gun
-    const rect = canvas.getBoundingClientRect();
-    let x = e.clientX - rect.left;
-    let y = e.clientY - rect.top;
-    let dir = getDir(x, y);
+    // TODO: abstract
+    let rot = gameState.tanks[gameState.tankIndex].rotation;
+    let dir = [Math.cos(rot), Math.sin(rot)];
 
     UPDATE_ROTATION.f();
     connection.send(JSON.stringify({ type: 'MOVE', action: Action.FIRE, direction: dir }));
