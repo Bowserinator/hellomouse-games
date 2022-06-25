@@ -15,7 +15,7 @@ export const TANK_BASE_ROTATION_RATE = 10; // Rad/s, visual only
 export const TANK_TURRET_ROTATION_RATE = 10; // Rad/s, visual only
 
 export const TANK_SPEED = 200;
-export const TANK_FIRE_DELAY = 100;
+export const TANK_FIRE_DELAY = 200;
 
 // Maze generation
 export const CELL_SIZE = 130;
