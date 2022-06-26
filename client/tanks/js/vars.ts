@@ -32,6 +32,23 @@ export const SHADOW_SIZE_X = 10;
 export const SHADOW_SIZE_Y = 10;
 export const POWERUP_ITEM_SIZE = 36;
 
-export const TANK_COLORS = [
-    ''
-];
+export const TANK_COLORS: Array<[number, number, number]> = [
+    '#009688', // Teal
+    '#43a047', // Green
+    '#f44336', // Red
+    '#ff5722', // Orange
+    '#42a5f5', // Blue
+    '#ffa726', // Gold
+    '#ba68c8', // Violet
+    '#9c27b0', // Purple
+    '#546e7a', // Gray
+    '#ff4081'  // Pink
+].map(color => {
+    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
+    if (!result) throw new Error('Invalid color: ' + color);
+    return [
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16)
+    ];
+});
