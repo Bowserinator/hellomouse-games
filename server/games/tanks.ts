@@ -51,7 +51,7 @@ class TankGame extends Game {
 
         // Pre-generate tank array
         // TODO: move to lobby start
-        for (let i = 0; i < 5; i++)
+        for (let i = 0; i < 8; i++)
             this.state.addTank(new Tank(new Vector(20, 20), 0));
         this.state.spreadTanks();
     }
@@ -268,7 +268,7 @@ class TankGame extends Game {
         if (message.action === Action.MOVE_BEGIN)
             // Request to move in a certain direction
             this.state.tanks[clientID].movement[isVertical] = message.dir;
-        else if (message.action === Action.MOVE_END)
+        else if (message.action === Action.MOVE_END && message.dir === this.state.tanks[clientID].movement[isVertical])
             // Request to stop moving in a certain direction
             this.state.tanks[clientID].movement[isVertical] = Direction.NONE;
         else if (message.action === Action.FIRE) {
