@@ -54,14 +54,6 @@ class TankGame extends Game {
         this.mapSeed = Math.floor(Math.random() * 100000000);
         generateMaze(this.state, this.mapSeed);
         this.state.mazeSeed = this.mapSeed;
-
-        // Pre-generate tank array
-        // TODO: move to lobby start
-        for (let i = 0; i < 8; i++) {
-            this.state.addTank(new Tank(new Vector(20, 20), 0));
-            this.state.tanks[i].setTint(TANK_COLORS[i]);
-        }
-        this.state.spreadTanks();
     }
 
     // @ts-ignore:next-line
@@ -76,17 +68,10 @@ class TankGame extends Game {
 
         let canJoin = super.onJoin(client);
         if (canJoin && !this.playerTankIDMap[client.id]) {
-            let foundSlot = false;
-            for (let i = 0; i < this.state.tanks.length; i++)
-                if (!Object.values(this.playerTankIDMap).includes(i)) {
-                    this.playerTankIDMap[client.id] = i;
-                    foundSlot = true;
-                    break;
-                }
-
-            // No empty slots left
-            if (!foundSlot)
-                return false;
+            this.state.addTank(new Tank(new Vector(20, 20), 0));
+            const i = this.state.tanks.length - 1;
+            this.state.tanks[i].setTint(TANK_COLORS[i]); // TODO: find unused TANK_COLOR
+            this.playerTankIDMap[client.id] = i;
         }
 
         // Send map information
@@ -95,21 +80,6 @@ class TankGame extends Game {
             seed: this.mapSeed,
             id: this.playerTankIDMap[client.id]
         }));
-
-        // Send all current powerups + tanks
-        // for (let tank of this.state.tanks) {
-        //     let syncMessage = tank.sync(false);
-        //     if (syncMessage.length)
-        //         client.connection.send(JSON.stringify({
-        //             type: TankSync.GENERIC_TANK_SYNC,
-        //             id: tank.id,
-        //             data: syncMessage
-        //         }));
-        // }
-        this.broadcast({
-            type: TankSync.CREATE_ALL_TANKS,
-            data: this.state.tanks.map(tank => tank.sync(false))
-        });
 
         for (let powerup of this.state.powerupItems)
             client.connection.send(JSON.stringify({
@@ -150,9 +120,8 @@ class TankGame extends Game {
         // Added tanks
         if (this.state.addedTanks.length)
             this.broadcast({
-                type: TankSync.UPDATE_ALL_TANKS,
-                positions: this.state.tanks.map(tank => tank.position.l()),
-                rotations: this.state.tanks.map(tank => tank.rotation)
+                type: TankSync.CREATE_ALL_TANKS,
+                data: this.state.tanks.map(tank => tank.sync(false))
             });
 
         // Send generic updates

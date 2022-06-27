@@ -365,12 +365,6 @@ export default class GameState {
             if (message.id === undefined || !this.tanks[message.id])
                 return false;
             this.tanks[message.id].fromSync(message.id, message.data, this);
-        } else if (message.type === TankSync.UPDATE_ALL_TANKS) {
-            this.tanks = [];
-
-            // TODO: keep old tanks if not necessary to create new one
-            for (let i = 0; i < message.positions.length; i++)
-                this.addTank(new Tank(new Vector(...message.positions[i]), message.rotations[i], i));
         } else if (message.type === TankSync.ADD_BULLET) {
             let bullet = Bullet.bulletFromType(message.bulletType,
                 new Vector(...message.position), new Vector(...message.velocity));

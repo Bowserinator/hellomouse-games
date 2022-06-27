@@ -29,8 +29,6 @@
         "**/*.ts",
         "**/*.cjs",
         ".eslintrc.cjs",
-        "config.cjs",
-        "src/strings.json",
         "package.json"
     ]
 }
