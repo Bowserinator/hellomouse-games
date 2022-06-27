@@ -176,6 +176,10 @@ input[type=text]:focus {
     background-color: #666;
 }
 
+.text-button:disabled {
+    cursor: not-allowed;
+}
+
 .color-button {
     width: 40px;
     height: 40px;

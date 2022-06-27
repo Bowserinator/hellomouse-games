@@ -62,6 +62,9 @@ export default class GameState {
     removedPowerupItems: Set<PowerupItem>;
     addedPowerups: Set<[Powerup, number]>; // Powerup, tankid
 
+    totalRounds: number;
+    round: number;
+
     camera: Camera; // Set in game.js
     zeroCameraCache: Camera; // Cached camera
     mazeSeed: number;
@@ -93,6 +96,9 @@ export default class GameState {
         this.addedPowerupItems = new Set();
         this.removedPowerupItems = new Set();
         this.addedPowerups = new Set();
+
+        this.totalRounds = 20;
+        this.round = 0;
     }
 
     /**

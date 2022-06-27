@@ -1,6 +1,6 @@
 // Lobby logic, does not interact with main game
 
-import { TANK_COLORS, TANK_TEXT_COLORS } from './vars.js';
+import { ROUND_ARRAY, TANK_COLORS, TANK_TEXT_COLORS } from './vars.js';
 import { TankSync } from './types.js';
 import GameState from './tanks/gamestate.js';
 import { getScoreElements } from './score.js';
@@ -45,9 +45,11 @@ if (usernameInput)
 const roundButtons = [...document.getElementById('round-buttons').getElementsByTagName('button')];
 roundButtons.forEach((btn, i) => {
     btn.onclick = () => {
-        console.log('Round number', i);
-        roundButtons.forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
+        // @ts-expect-error
+        window.connection.send(JSON.stringify({
+            type: TankSync.CHANGE_ROUNDS,
+            round: i
+        }));
     };
 });
 
@@ -56,6 +58,7 @@ roundButtons.forEach((btn, i) => {
 interface LobbyMessage {
     type: TankSync;
     colors: Array<number>; // Array of the color index of each tank in the game
+    round: number;
 }
 
 export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) {
@@ -75,6 +78,13 @@ export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) 
             scoreElements[i].style.backgroundColor = Renderable.rgbToStr(TANK_COLORS[colorIndex]);
             scoreElements[i].style.color = TANK_TEXT_COLORS[colorIndex];
         }
+    } else if (message.type === TankSync.CHANGE_ROUNDS) {
+        gameState.totalRounds = ROUND_ARRAY[message.round];
+        roundButtons.forEach(b => b.classList.remove('selected'));
+        roundButtons[message.round].classList.add('selected');
+
+        if (gameState.tankIndex !== 0)
+            roundButtons.forEach(b => b.disabled = true);
     }
 }
 

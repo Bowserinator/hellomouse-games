@@ -6,7 +6,7 @@ import { Direction, Action, TankSync } from '../../client/tanks/js/types.js';
 import Tank from '../../client/tanks/js/tanks/tank.js';
 import Vector from '../../client/tanks/js/tanks/vector2d.js';
 import { generateMaze } from '../../client/tanks/js/tanks/map-gen.js';
-import { TANK_COLORS } from '../../client/tanks/js/vars.js';
+import { ROUND_ARRAY, TANK_COLORS } from '../../client/tanks/js/vars.js';
 
 interface IntentMessage {
     action: Action;
@@ -18,6 +18,7 @@ interface IntentMessage {
 interface LobbyMessage {
     type: TankSync;
     color: number;
+    round: number;
 }
 
 const MAX_PLAYERS = 4;
@@ -80,6 +81,11 @@ class TankGame extends Game {
             seed: this.mapSeed,
             id: this.playerTankIDMap[client.id]
         }));
+
+        this.broadcast({
+            type: TankSync.CHANGE_ROUNDS,
+            round: ROUND_ARRAY.indexOf(this.state.totalRounds)
+        });
 
         for (let powerup of this.state.powerupItems)
             client.connection.send(JSON.stringify({
@@ -245,6 +251,8 @@ class TankGame extends Game {
         if (!this.state.tanks[clientID])
             return;
 
+        // TODO: check if in lobby
+
         if (message.type === TankSync.CHANGE_COLOR) {
             const tankColorIndexMap = this.state.tanks.map(tank => TANK_COLORS.indexOf(tank.tint));
             if (TANK_COLORS[message.color] && !tankColorIndexMap.some(x => x === message.color)) {
@@ -254,6 +262,13 @@ class TankGame extends Game {
             this.broadcast({
                 type: TankSync.CHANGE_COLOR,
                 colors: tankColorIndexMap
+            });
+        } else if (message.type === TankSync.CHANGE_ROUNDS) {
+            if (clientID !== 0) return; // Only host can change round count
+            this.state.totalRounds = ROUND_ARRAY[message.round] || this.state.totalRounds;
+            this.broadcast({
+                type: TankSync.CHANGE_ROUNDS,
+                round: ROUND_ARRAY[message.round] ? message.round : 3
             });
         }
     }
