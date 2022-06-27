@@ -67,6 +67,8 @@ class TankGame extends Game {
         if (this.players.length >= MAX_PLAYERS)
             return false;
 
+        // TODO: if not in lobby reconnect
+
         let canJoin = super.onJoin(client);
         if (canJoin && !this.playerTankIDMap[client.id]) {
             this.state.addTank(new Tank(new Vector(20, 20), 0));
@@ -78,14 +80,8 @@ class TankGame extends Game {
         // Send map information
         client.connection.send(JSON.stringify({
             type: TankSync.MAP_UPDATE,
-            seed: this.mapSeed,
-            id: this.playerTankIDMap[client.id]
+            seed: this.mapSeed
         }));
-
-        this.broadcast({
-            type: TankSync.CHANGE_ROUNDS,
-            round: ROUND_ARRAY.indexOf(this.state.totalRounds)
-        });
 
         for (let powerup of this.state.powerupItems)
             client.connection.send(JSON.stringify({
@@ -95,7 +91,33 @@ class TankGame extends Game {
                 id: powerup.randomID
             }));
 
+        client.connection.send(JSON.stringify({
+            type: TankSync.CHANGE_ROUNDS,
+            round: ROUND_ARRAY.indexOf(this.state.totalRounds)
+        }));
+
         return canJoin;
+    }
+
+    onDisconnect(client: Client) {
+        let clientID = this.playerTankIDMap[client.id];
+        delete this.playerTankIDMap[client.id];
+        super.onDisconnect(client);
+        if (!this.state.tanks[clientID])
+            return;
+
+        // TODO: if not in lobby just mark tank as perma dead
+
+        // All players with higher ids are shifted down 1
+        for (let key of Object.keys(this.playerTankIDMap))
+            if (this.playerTankIDMap[key] > clientID) {
+                this.state.tanks[this.playerTankIDMap[key]].id--;
+                this.playerTankIDMap[key]--;
+            }
+
+        // Delete tank
+        this.state.tanks.splice(clientID, 1);
+        this.recreateAllTanks();
     }
 
     sendPowerupUpdates() {
@@ -122,13 +144,29 @@ class TankGame extends Game {
             });
     }
 
+
+    /**
+     * Call this when a tank is added or removed
+     * Will force all clients to recreate their tank array
+     * and reset their tankIndex
+     */
+    recreateAllTanks() {
+        const msg = {
+            type: TankSync.CREATE_ALL_TANKS,
+            data: this.state.tanks.map(tank => tank.sync(false)),
+            id: 0
+        };
+        for (let client of this.players) {
+            if (client === null) continue;
+            msg.id = this.playerTankIDMap[client.id];
+            client.connection.sendUTF(JSON.stringify(msg));
+        }
+    }
+
     sendTankUpdates() {
         // Added tanks
         if (this.state.addedTanks.length)
-            this.broadcast({
-                type: TankSync.CREATE_ALL_TANKS,
-                data: this.state.tanks.map(tank => tank.sync(false))
-            });
+            this.recreateAllTanks();
 
         // Send generic updates
         for (let tank of this.state.tanks) {

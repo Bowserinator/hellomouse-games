@@ -381,7 +381,6 @@ export default class GameState {
         } else if (message.type === TankSync.REMOVE_BULLETS)
             this.bullets = this.bullets.filter((b, i) => !message.indices.includes(i));
         else if (message.type === TankSync.MAP_UPDATE) {
-            this.tankIndex = message.id;
             this.mazeSeed = message.seed;
             let [w, h] = generateMaze(this, message.seed);
             if (this.isClientSide)
@@ -425,6 +424,7 @@ export default class GameState {
                 this.addTank(new Tank(new Vector(-10, -10), 0));
                 const i = this.tanks.length - 1;
                 this.tanks[i].fromSync(i, syncMessage, this);
+                this.tankIndex = message.id;
             }
         }
         return true;
