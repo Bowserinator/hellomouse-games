@@ -78,6 +78,10 @@ button:hover {
     height: 27px;
 }
 
+#sidebar .score.you {
+    border: 3px solid white;
+}
+
 #sidebar .score > .username {
     width: 160px;
 }
