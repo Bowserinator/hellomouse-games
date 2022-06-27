@@ -192,6 +192,7 @@ input[type=text]:focus {
 
 .color-button:disabled {
     opacity: 0.15;
+    cursor: not-allowed;
 }
 
 .selectable-button {

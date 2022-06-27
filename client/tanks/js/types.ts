@@ -24,6 +24,7 @@ export enum TankSync {
     // Lobby
     CHANGE_COLOR,
     CHANGE_ROUNDS,
+    CREATE_ALL_TANKS,
 
     // Game
     ADD_BULLET,

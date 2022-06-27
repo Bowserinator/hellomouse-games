@@ -97,15 +97,20 @@ class TankGame extends Game {
         }));
 
         // Send all current powerups + tanks
-        for (let tank of this.state.tanks) {
-            let syncMessage = tank.sync(false);
-            if (syncMessage.length)
-                client.connection.send(JSON.stringify({
-                    type: TankSync.GENERIC_TANK_SYNC,
-                    id: tank.id,
-                    data: syncMessage
-                }));
-        }
+        // for (let tank of this.state.tanks) {
+        //     let syncMessage = tank.sync(false);
+        //     if (syncMessage.length)
+        //         client.connection.send(JSON.stringify({
+        //             type: TankSync.GENERIC_TANK_SYNC,
+        //             id: tank.id,
+        //             data: syncMessage
+        //         }));
+        // }
+        this.broadcast({
+            type: TankSync.CREATE_ALL_TANKS,
+            data: this.state.tanks.map(tank => tank.sync(false))
+        });
+
         for (let powerup of this.state.powerupItems)
             client.connection.send(JSON.stringify({
                 type: TankSync.ADD_POWERUP_ITEM,

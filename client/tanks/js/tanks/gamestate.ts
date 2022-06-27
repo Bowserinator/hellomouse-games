@@ -419,6 +419,14 @@ export default class GameState {
             this.giveTankPowerup(this.tanks[message.id], message.powerup);
         else if (message.type === TankSync.TANK_FIRED && this.isClientSide)
             message.ids.forEach(id => this.tanks[id].onFireClientSide(this));
+        else if (message.type === TankSync.CREATE_ALL_TANKS) {
+            this.tanks = [];
+            for (let syncMessage of message.data) {
+                this.addTank(new Tank(new Vector(-10, -10), 0));
+                const i = this.tanks.length - 1;
+                this.tanks[i].fromSync(i, syncMessage, this);
+            }
+        }
         return true;
     }
 }

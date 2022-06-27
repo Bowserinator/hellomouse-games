@@ -103,10 +103,6 @@ usernameInput.onkeydown = e => {
 function submitUsername() {
     if (!usernameInput) return;
 
-    console.log('Username submit', usernameInput.value);
-
-    // TODO: check regex + length != 0
-
     // @ts-expect-error
     window.connection.send(JSON.stringify({
         type: 'USERNAME',
