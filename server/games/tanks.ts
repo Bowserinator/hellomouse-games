@@ -161,6 +161,11 @@ class TankGame extends Game {
             msg.id = this.playerTankIDMap[client.id];
             client.connection.sendUTF(JSON.stringify(msg));
         }
+        const tankColorIndexMap = this.state.tanks.map(tank => TANK_COLORS.indexOf(tank.tint));
+        this.broadcast({
+            type: TankSync.CHANGE_COLOR,
+            colors: tankColorIndexMap
+        });
     }
 
     sendTankUpdates() {
