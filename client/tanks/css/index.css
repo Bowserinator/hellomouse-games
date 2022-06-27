@@ -14,7 +14,7 @@ body {
     width: 100%;
     padding: 14px;
     text-align: center;
-    font-size: 16pt;
+    padding: 7px 14px;
     transition: top 0.2s;
 }
 
