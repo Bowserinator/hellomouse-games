@@ -6,12 +6,18 @@ import { Direction, Action, TankSync } from '../../client/tanks/js/types.js';
 import Tank from '../../client/tanks/js/tanks/tank.js';
 import Vector from '../../client/tanks/js/tanks/vector2d.js';
 import { generateMaze } from '../../client/tanks/js/tanks/map-gen.js';
+import { TANK_COLORS } from '../../client/tanks/js/vars.js';
 
 interface IntentMessage {
     action: Action;
     dir: Direction;
     direction: [number, number];
     rotation: number;
+}
+
+interface LobbyMessage {
+    type: TankSync;
+    color: number;
 }
 
 const MAX_PLAYERS = 4;
@@ -51,8 +57,10 @@ class TankGame extends Game {
 
         // Pre-generate tank array
         // TODO: move to lobby start
-        for (let i = 0; i < 8; i++)
+        for (let i = 0; i < 8; i++) {
             this.state.addTank(new Tank(new Vector(20, 20), 0));
+            this.state.tanks[i].setTint(TANK_COLORS[i]);
+        }
         this.state.spreadTanks();
     }
 
@@ -244,6 +252,24 @@ class TankGame extends Game {
     endGameLoop() {
         if (this.interval !== null)
             clearInterval(this.interval);
+    }
+
+    onMessage(client: Client, message: LobbyMessage) {
+        let clientID = this.playerTankIDMap[client.id];
+        if (!this.state.tanks[clientID])
+            return;
+
+        if (message.type === TankSync.CHANGE_COLOR) {
+            const tankColorIndexMap = this.state.tanks.map(tank => TANK_COLORS.indexOf(tank.tint));
+            if (TANK_COLORS[message.color] && !tankColorIndexMap.some(x => x === message.color)) {
+                this.state.tanks[clientID].setTint(TANK_COLORS[message.color]);
+                tankColorIndexMap[clientID] = message.color;
+            }
+            this.broadcast({
+                type: TankSync.CHANGE_COLOR,
+                colors: tankColorIndexMap
+            });
+        }
     }
 
     /**

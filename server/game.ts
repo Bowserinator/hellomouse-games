@@ -66,6 +66,15 @@ export default class Game {
     }
 
     /**
+     * Called when a message is recieved that isn't a standard defined message type
+     * @param {Client} client
+     * @param {Object} message
+     */
+    onMessage(client: Client, message: object) {
+        // Do nothing, override
+    }
+
+    /**
      * Called when a client disconnects
      * @param {Client} client
      */

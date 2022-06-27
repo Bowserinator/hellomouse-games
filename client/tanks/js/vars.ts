@@ -35,10 +35,12 @@ export const POWERUP_ITEM_SIZE = 36;
 export const TANK_COLORS: Array<[number, number, number]> = [
     '#009688', // Teal
     '#43a047', // Green
+    '#9ccc65', // Green 2
+    '#c0ca33', // Lime
     '#f44336', // Red
-    '#ff5722', // Orange
+    '#f57f17', // Orange
+    '#ffeb3b', // Yellow
     '#42a5f5', // Blue
-    '#ffa726', // Gold
     '#ba68c8', // Violet
     '#9c27b0', // Purple
     '#546e7a', // Gray
@@ -52,3 +54,9 @@ export const TANK_COLORS: Array<[number, number, number]> = [
         parseInt(result[3], 16)
     ];
 });
+export const TANK_TEXT_COLORS: Array<string> = [
+    'white', 'white', 'black',
+    'black', 'white', 'white',
+    'black', 'black', 'white',
+    'white', 'white', 'white'];
+

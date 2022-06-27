@@ -29,6 +29,29 @@
     </div>
 
     <canvas id="board" oncontextmenu="return false;"></canvas>
+
+    <div id="lobby">
+        <h1>USER CONFIG</h1>
+        <label for="username">Username <span id="username-char-count">(0 / 16)</span></label><br>
+        <input type="text" id="username" maxlength="16" autocomplete="off">
+        <button class="text-button">Submit</button>
+        <br><br>
+
+        <label>Color</label><br>
+        <div id="color-buttons"></div><br>
+
+        <label>Rounds</label><br>
+        <div id="round-buttons">
+            <button class="selectable-button text-button">5</button>
+            <button class="selectable-button text-button">10</button>
+            <button class="selectable-button text-button">15</button>
+            <button class="selectable-button selected text-button">20</button>
+        </div>
+
+        <br><hr>
+        <button class="text-button">Start Game!</button>
+    </div>
+
     <div id="sidebar">
         <h1>TANKS</h1>
         <button onclick="window.open('/', '_blank')">Other games</button>
@@ -106,6 +129,7 @@
         </div>
     </div>
 
+    <script src="./js/lobby.js" type="module"></script>
     <script src="/shared/js/index.js"></script>
     <script src="./js/tanks/map-gen.js" type="module"></script>
     <script src="./js/game.js" type="module"></script>

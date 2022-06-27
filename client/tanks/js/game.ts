@@ -11,6 +11,7 @@ import { CAMERA_EDGE_MARGIN, ROTATE_FAST, ROTATE_SLOW } from './vars.js';;
 import connection from './client.js';
 import { setGlobalVolume } from './sound/sound.js';
 import { startScoreKeeping } from './score.js';
+import { handleLobbyMessage } from './lobby.js';
 
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
@@ -22,6 +23,7 @@ const uuid = window.location.search.substr(1).split('=')[0];
 // Game state, shared with client.js
 const gameState = new GameState(true);
 window.gameState = gameState;
+window.connection = connection;
 
 startScoreKeeping(gameState);
 
@@ -91,6 +93,7 @@ connection.onmessage = message => {
         history.pushState({}, '', url);
     }
 
+    handleLobbyMessage(message, gameState);
     gameState.syncFromMessage(message);
 };
 

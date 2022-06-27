@@ -91,9 +91,8 @@ export default class Tank extends Renderable {
         this.score = 0;
 
         this.createCollider();
-
-        // TODO: remove
-        this.setTint(TANK_COLORS[Math.floor(Math.random() * TANK_COLORS.length)]);
+        this.tint = [0, 0, 0];
+        this.tintPrefix = '';
     }
 
     setTint(color: [number, number, number]) {

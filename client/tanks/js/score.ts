@@ -1,6 +1,15 @@
 import GameState from './tanks/gamestate';
+import { TANK_COLORS, TANK_TEXT_COLORS } from './vars.js';
 
 let scoreElements: Array<HTMLElement> = [];
+
+/**
+ * Ref to score elements
+ * @returns score elements
+ */
+export function getScoreElements() {
+    return scoreElements;
+}
 
 /**
  * Begin polling the score board
@@ -38,6 +47,7 @@ export function createScoreElements(gameState: GameState) {
 
         newScore.classList.add('score');
         newScore.style.backgroundColor = tank.tintPrefix;
+        newScore.style.color = TANK_TEXT_COLORS[TANK_COLORS.indexOf(tank.tint)] || 'black';
 
         if (tank.isDead)
             newScore.classList.add('dead');

@@ -163,6 +163,7 @@ wsServer.on('request', (request: any) => {
             if (game.syncAfterMove)
                 gameStateSync(game.uuid);
         }
+        game.onMessage(client, message);
     });
 
     // On disconnect

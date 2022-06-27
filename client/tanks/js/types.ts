@@ -21,6 +21,12 @@ export enum PowerupCategory {
 }
 
 export enum TankSync {
+    // Lobby
+    CHANGE_USERNAME,
+    CHANGE_COLOR,
+    READY,
+
+    // Game
     ADD_BULLET,
     REMOVE_BULLETS,
     MAP_UPDATE,
@@ -31,7 +37,6 @@ export enum TankSync {
     DELETE_POWERUP_ITEM,
     GIVE_POWERUP,
     TANK_FIRED,
-
     GENERIC_TANK_SYNC
 }
 

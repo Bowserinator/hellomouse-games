@@ -56,9 +56,12 @@ button {
 }
 
 button:hover {
-    background-color: rgba(255, 255, 255, 0.1);
     color: white;
     cursor: pointer;
+}
+
+#sidebar button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Game title */
@@ -69,6 +72,7 @@ button:hover {
 #sidebar .score {
     margin: 4px;
     background-color: red;
+    color: black;
     padding: 7px;
     border-radius: 2px;
     height: 27px;
@@ -118,6 +122,80 @@ button:hover {
     margin-right: 4px;
     position: relative;
     top: 4px;
+}
+
+/* Lobby */
+#lobby {
+    width: calc(100% - 250px);
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+
+    background-color: #222;
+    color: #ddd;
+    padding: 40px;
+}
+
+#lobby label {
+    font-size: 14pt;
+}
+
+input[type=text] {
+    outline: none;
+    border: none;
+    padding: 14px;
+
+    background-color: #333;
+    color: #ddd;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15pt;
+    border-radius: 2px;
+    transition: background-color 0.2s;
+}
+
+input[type=text]:focus {
+    background-color: #444;
+}
+
+.text-button {
+    width: auto;
+    display: inline-block;
+    font-size: 15pt;
+    height: 54px;
+    padding: 7px 14px; 
+    background-color: #444;
+}
+
+.text-button:hover {
+    background-color: #666;
+}
+
+.color-button {
+    width: 40px;
+    height: 40px;
+    background-color: red;
+    display: inline-block;
+    margin: 0 3px 3px 0;
+    filter: brightness(90%);
+    transition: filter 0.2s;
+}
+
+.color-button:hover {
+    filter: brightness(100%);
+}
+
+.color-button:disabled {
+    opacity: 0.15;
+}
+
+.selectable-button {
+    border: 3px solid transparent;
+}
+
+.selectable-button.selected {
+    border: 3px solid white;
 }
 
 
