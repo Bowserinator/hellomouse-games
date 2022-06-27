@@ -29,12 +29,14 @@ for (let i = 0; i < TANK_COLORS.length; i++) {
     colorButtons.push(button);
 }
 
-// Char counter
-const usernameInput = document.getElementById('username');
+// Char counter + validation
+const usernameInput: HTMLInputElement | null = document.getElementById('username') as HTMLInputElement | null;
 if (usernameInput)
     usernameInput.oninput = () => {
+        // Delete non-alphanumeric _
+        usernameInput.value = usernameInput.value.replace(/[^A-Za-z0-9_]/g, '');
+
         const label = document.getElementById('username-char-count');
-        // @ts-expect-error
         if (label) label.innerText = `(${usernameInput.value.length} / 16)`;
     };
 
@@ -51,7 +53,12 @@ roundButtons.forEach((btn, i) => {
 
 
 // Handle connections
-export function handleLobbyMessage(message, gameState: GameState) {
+interface LobbyMessage {
+    type: TankSync;
+    colors: Array<number>; // Array of the color index of each tank in the game
+}
+
+export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) {
     // Update colors
     if (message.type === TankSync.CHANGE_COLOR) {
         colorButtons.forEach(btn => btn.disabled = false);
@@ -71,7 +78,7 @@ export function handleLobbyMessage(message, gameState: GameState) {
     }
 }
 
-// Repeat requesting a color
+// Repeat requesting a color until loaded
 const requestInitialColor = setInterval(() => {
     if (!getScoreElements().length) return;
     // @ts-expect-error
@@ -81,3 +88,28 @@ const requestInitialColor = setInterval(() => {
     }));
     clearInterval(requestInitialColor);
 }, 50);
+
+
+// Username change
+const usernameButton = document.getElementById('username-button');
+// @ts-expect-error
+usernameButton.onclick = submitUsername;
+// @ts-expect-error
+usernameInput.onkeydown = e => {
+    if (e.key === 'Enter') submitUsername();
+};
+
+/** Attempt to submit a username change */
+function submitUsername() {
+    if (!usernameInput) return;
+
+    console.log('Username submit', usernameInput.value);
+
+    // TODO: check regex + length != 0
+
+    // @ts-expect-error
+    window.connection.send(JSON.stringify({
+        type: 'USERNAME',
+        username: usernameInput.value
+    }));
+}

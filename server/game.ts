@@ -88,6 +88,14 @@ export default class Game {
     }
 
     /**
+     * Called when a client's username is changed
+     * @param {Client} client
+     */
+    onUsernameChange(client: Client) {
+        // Override
+    }
+
+    /**
      * Are all players ready?
      * @return {boolean}
      */

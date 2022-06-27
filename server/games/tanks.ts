@@ -254,6 +254,18 @@ class TankGame extends Game {
             clearInterval(this.interval);
     }
 
+
+    onUsernameChange(client: Client) {
+        // TODO: only change if in lobby state
+        //  If not also change client username
+
+        let clientID = this.playerTankIDMap[client.id];
+        if (!this.state.tanks[clientID])
+            return;
+
+        this.state.tanks[clientID].setUsername(client.username);
+    }
+
     onMessage(client: Client, message: LobbyMessage) {
         let clientID = this.playerTankIDMap[client.id];
         if (!this.state.tanks[clientID])

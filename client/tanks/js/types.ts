@@ -22,9 +22,8 @@ export enum PowerupCategory {
 
 export enum TankSync {
     // Lobby
-    CHANGE_USERNAME,
     CHANGE_COLOR,
-    READY,
+    CHANGE_ROUNDS,
 
     // Game
     ADD_BULLET,

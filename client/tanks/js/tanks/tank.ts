@@ -6,7 +6,7 @@ import Explosion from './explosion.js';
 import { Bullet } from './bullets/bullets.js';
 import {
     TANK_SPEED, TANK_SIZE, TANK_TURRET_SIZE, TANK_FIRE_DELAY,
-    TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE, TANK_COLORS } from '../vars.js';
+    TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE } from '../vars.js';
 
 import { PowerupSingleton, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
 
@@ -93,6 +93,10 @@ export default class Tank extends Renderable {
         this.createCollider();
         this.tint = [0, 0, 0];
         this.tintPrefix = '';
+    }
+
+    setUsername(username: string) {
+        this.username = username;
     }
 
     setTint(color: [number, number, number]) {

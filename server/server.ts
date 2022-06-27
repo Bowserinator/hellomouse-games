@@ -52,7 +52,7 @@ function error(client: Client, err: string, code = '') {
 
 // Code
 // --------------------------
-let clients = new Set();
+let clients: Set<Client> = new Set();
 
 // HTTP Server for websocket
 const server = config.https
@@ -148,9 +148,12 @@ wsServer.on('request', (request: any) => {
             // Missing or invalid username
             if (!message.username || !config.validateUsername(message.username))
                 return error(client, 'Invalid username', 'BAD_USERNAME');
-            client.username = message.username;
+            // Already taken
+            if ([...clients].filter(c => c !== client).map(c => c.username).includes(message.username))
+                return error(client, 'Username already taken', 'ALREADY_TAKEN_USERNAME');
 
-            // TODO: broadcast
+            client.username = message.username;
+            game.onUsernameChange(client);
         } else if (message.type === 'READY') // Ready up
             client.ready = !client.ready;
             // TODO: broadcast ready state
