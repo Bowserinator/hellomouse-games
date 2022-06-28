@@ -13,7 +13,7 @@ import Renderable from './renderer/renderable.js';
  */
 function connectionOpen() {
     // @ts-expect-error
-    return window.connection && !window.connection.readyState === WebSocket.OPEN;
+    return window.connection && window.connection.readyState === WebSocket.OPEN;
 }
 
 
