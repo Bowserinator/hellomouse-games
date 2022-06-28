@@ -10,7 +10,6 @@ export default class Game {
         this.uuid = '';
         this.players = [];
         this.playerCount = 0;
-
         this.syncAfterMove = true;
     }
 
@@ -122,5 +121,14 @@ export default class Game {
         for (let client of this.players)
             if (client !== null)
                 client.connection.sendUTF(msg);
+    }
+
+    /**
+     * Called when the game is removed from the
+     * list of activate games (no more players)
+     * Any cleanup should be done here
+     */
+    onRemove() {
+        // Override
     }
 }

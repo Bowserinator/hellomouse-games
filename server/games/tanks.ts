@@ -258,6 +258,10 @@ class TankGame extends Game {
         });
     }
 
+    onRemove() {
+        this.endGameLoop();
+    }
+
     /** Set tank ready states, call after ready state changes */
     setReadyStates() {
         for (let player of this.players) {

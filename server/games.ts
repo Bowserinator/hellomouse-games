@@ -56,6 +56,7 @@ function removeGame(uuid: string) {
     for (let player of games[uuid].players)
         if (player !== null)
             player.gameID = '';
+    games[uuid].onRemove();
 
     delete games[uuid];
 }
