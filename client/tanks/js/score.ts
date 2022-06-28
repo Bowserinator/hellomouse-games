@@ -1,4 +1,5 @@
-import GameState from './tanks/gamestate';
+import Renderable from './renderer/renderable.js';
+import GameState from './tanks/gamestate.js';
 import { TANK_COLORS, TANK_TEXT_COLORS } from './vars.js';
 
 let scoreElements: Array<HTMLElement> = [];
@@ -19,8 +20,9 @@ export function startScoreKeeping(gameState: GameState) {
     setInterval(() => {
         // Update round number
         const roundLabel = document.getElementById('round');
-        if (roundLabel)
-            roundLabel.innerText = `ROUND ${gameState.round} / ${gameState.totalRounds}`;
+        const newRoundText = `ROUND ${gameState.round} / ${gameState.totalRounds}`;
+        if (roundLabel && roundLabel.innerText !== newRoundText)
+            roundLabel.innerText = newRoundText;
 
         // Update score board
         if (gameState.tanks.length !== scoreElements.length)
@@ -29,10 +31,13 @@ export function startScoreKeeping(gameState: GameState) {
             // Set scores
             for (let i = 0; i < gameState.tanks.length; i++) {
                 const tank = gameState.tanks[i];
-                // @ts-expect-error
-                scoreElements[i].querySelector('.username').innerText = tank.username;
-                // @ts-expect-error
-                scoreElements[i].querySelector('.score-number').innerText = tank.score;
+                const usernameLabel: HTMLParagraphElement | null = scoreElements[i].querySelector('.username');
+                const scoreLabel: HTMLParagraphElement | null = scoreElements[i].querySelector('.score-number');
+
+                if (usernameLabel && usernameLabel.innerText !== tank.username)
+                    usernameLabel.innerText = tank.username;
+                if (scoreLabel && scoreLabel.innerText !== '' + tank.score)
+                    scoreLabel.innerText = tank.score + '';
 
                 if (tank.isDead || !tank.ready)
                     scoreElements[i].classList.add('dead');
@@ -53,9 +58,9 @@ export function createScoreElements(gameState: GameState) {
 
         newScore.classList.add('score');
         newScore.style.backgroundColor = tank.tintPrefix;
-        newScore.style.color = TANK_TEXT_COLORS[TANK_COLORS.indexOf(tank.tint)] || 'black';
+        // Convert colors to strings so indexOf works
+        newScore.style.color = TANK_TEXT_COLORS[TANK_COLORS.map(Renderable.rgbToStr).indexOf(Renderable.rgbToStr(tank.tint))] || 'black';
 
-        // TODO: dont update if not in lobby
         if (tank.isDead || !tank.ready)
             newScore.classList.add('dead');
         if (i === gameState.tankIndex)

@@ -143,10 +143,15 @@ class TankGame extends Game {
         this.recreateAllTanks();
     }
 
-    /** Filter out tanks with missing players in lobby state */
-    filterMissingTanks() {
+    /**
+     * Called once when game ends
+     * - Filter out tanks with missing players in lobby state
+     * - Unready all players if they want to play again
+     */
+    onGameEnd() {
         if (this.alreadyFilteredMissingTanks) return;
 
+        // Filter missing player tanks
         let tankToClientMap: Record<number, string> = {};
         for (let key of Object.keys(this.playerTankIDMap))
             tankToClientMap[this.playerTankIDMap[key]] = key;
@@ -160,6 +165,14 @@ class TankGame extends Game {
             }
         }
         this.alreadyFilteredMissingTanks = true;
+
+        // Unready all players
+        this.state.tanks.forEach(tank => tank.ready = false);
+        this.players.forEach(player => {
+            if (player !== null)
+                player.ready = false;
+        });
+        this.setReadyStates();
         this.recreateAllTanks();
     }
 
@@ -197,7 +210,7 @@ class TankGame extends Game {
             this.syncBullets();
             this.sendPowerupUpdates();
         } else
-            this.filterMissingTanks();
+            this.onGameEnd();
 
         this.state.clearDeltas();
     }

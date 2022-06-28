@@ -84,7 +84,7 @@ export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) 
                 if (!scoreElements[i])
                     continue;
                 scoreElements[i].style.backgroundColor = Renderable.rgbToStr(TANK_COLORS[colorIndex]);
-                scoreElements[i].style.color = TANK_TEXT_COLORS[colorIndex];
+                scoreElements[i].style.color = TANK_TEXT_COLORS[colorIndex] || 'black';
             }
             break;
         }
@@ -111,6 +111,10 @@ export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) 
                 } else
                     startGameButton.innerText = gameState.tanks[gameState.tankIndex].ready
                         ? 'Unready Self' : 'Ready Self';
+
+            // Update round buttons
+            if (gameState.tankIndex !== 0)
+                roundButtons.forEach(b => b.disabled = true);
             break;
         }
 
