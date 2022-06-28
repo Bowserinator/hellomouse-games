@@ -168,6 +168,9 @@ export default class GameState {
                 this.timeSinceRoundEnded = Date.now();
             else if (this.timeSinceRoundEnded > 0 && Date.now() - this.timeSinceRoundEnded > DELAY_AFTER_WIN_ROUND) {
                 this.timeSinceRoundEnded = -1;
+
+                // Give a point to all surviving tanks
+                this.getAliveTanks().forEach(tank => tank.score++);
                 this.startRound();
             }
     }
