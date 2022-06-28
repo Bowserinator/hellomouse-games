@@ -63,4 +63,3 @@ export const TANK_TEXT_COLORS: Array<string> = [
     'black', 'white', 'white',
     'black', 'black', 'white',
     'white', 'white', 'white'];
-

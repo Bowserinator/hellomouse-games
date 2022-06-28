@@ -7,6 +7,16 @@ import { getScoreElements } from './score.js';
 import Renderable from './renderer/renderable.js';
 
 
+/**
+ * Check if window connection is open
+ * @returns Is the connection open?
+ */
+function connectionOpen() {
+    // @ts-expect-error
+    return window.connection && !window.connection.readyState === WebSocket.OPEN;
+}
+
+
 // Create color buttons from tank colors
 const buttonDiv = document.getElementById('color-buttons');
 const colorButtons: Array<HTMLButtonElement> = [];
@@ -16,8 +26,11 @@ for (let i = 0; i < TANK_COLORS.length; i++) {
 
     const color = TANK_COLORS[i];
     const button = document.createElement('button');
+    button.ariaLabel = 'Button of color ' + Renderable.rgbToStr(color);
     button.classList.add('color-button', 'selectable-button');
     button.onclick = () => {
+        if (!connectionOpen()) return;
+
         // @ts-expect-error
         window.connection.send(JSON.stringify({
             type: TankSync.CHANGE_COLOR,
@@ -30,21 +43,22 @@ for (let i = 0; i < TANK_COLORS.length; i++) {
 }
 
 // Char counter + validation
-const usernameInput: HTMLInputElement | null = document.getElementById('username') as HTMLInputElement | null;
-if (usernameInput)
-    usernameInput.oninput = () => {
-        // Delete non-alphanumeric _
-        usernameInput.value = usernameInput.value.replace(/[^A-Za-z0-9_]/g, '');
+const usernameInput: HTMLInputElement = document.getElementById('username') as HTMLInputElement;
+usernameInput.oninput = () => {
+    // Delete non-alphanumeric _
+    usernameInput.value = usernameInput.value.replace(/[^A-Za-z0-9_]/g, '');
 
-        const label = document.getElementById('username-char-count');
-        if (label) label.innerText = `(${usernameInput.value.length} / 16)`;
-    };
+    const label = document.getElementById('username-char-count');
+    if (label) label.innerText = `(${usernameInput.value.length} / 16)`;
+};
 
 // Round selection
 // @ts-expect-error
 const roundButtons = [...document.getElementById('round-buttons').getElementsByTagName('button')];
 roundButtons.forEach((btn, i) => {
     btn.onclick = () => {
+        if (!connectionOpen()) return;
+
         // @ts-expect-error
         window.connection.send(JSON.stringify({
             type: TankSync.CHANGE_ROUNDS,
@@ -53,8 +67,6 @@ roundButtons.forEach((btn, i) => {
     };
 });
 
-
-// Winner modal
 
 /**
  * Update the leaderboard table in the winner modal
@@ -110,7 +122,7 @@ interface LobbyMessage {
     scores: Array<[string, number]>;
 }
 
-const startGameButton: HTMLButtonElement | null = document.getElementById('start-game') as HTMLButtonElement | null;
+const startGameButton: HTMLButtonElement = document.getElementById('start-game') as HTMLButtonElement;
 
 export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) {
     switch (message.type) {
@@ -151,13 +163,12 @@ export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) 
         case TankSync.CREATE_ALL_TANKS:
         case TankSync.GENERIC_TANK_SYNC: {
             // Only two message types that cause a ready state change
-            if (startGameButton)
-                if (gameState.tankIndex === 0) {
-                    startGameButton.innerText = 'Start Game!';
-                    startGameButton.disabled = !gameState.tanks.every(tank => tank.ready) || gameState.tanks.length < 2;
-                } else
-                    startGameButton.innerText = gameState.tanks[gameState.tankIndex].ready
-                        ? 'Unready Self' : 'Ready Self';
+            if (gameState.tankIndex === 0) {
+                startGameButton.innerText = 'Start Game!';
+                startGameButton.disabled = !gameState.tanks.every(tank => tank.ready) || gameState.tanks.length < 2;
+            } else
+                startGameButton.innerText = gameState.tanks[gameState.tankIndex].ready
+                    ? 'Unready Self' : 'Ready Self';
 
             // Update round buttons
             if (gameState.tankIndex !== 0)
@@ -185,6 +196,8 @@ export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) 
 // Repeat requesting a color until loaded
 const requestInitialColor = setInterval(() => {
     if (!getScoreElements().length) return;
+    if (!connectionOpen()) return;
+
     // @ts-expect-error
     window.connection.send(JSON.stringify({
         type: TankSync.CHANGE_COLOR,
@@ -195,17 +208,15 @@ const requestInitialColor = setInterval(() => {
 
 
 // Username change
-const usernameButton = document.getElementById('username-button');
-// @ts-expect-error
+const usernameButton = document.getElementById('username-button') as HTMLButtonElement;
 usernameButton.onclick = submitUsername;
-// @ts-expect-error
 usernameInput.onkeydown = e => {
     if (e.key === 'Enter') submitUsername();
 };
 
 /** Attempt to submit a username change */
 function submitUsername() {
-    if (!usernameInput) return;
+    if (!connectionOpen()) return;
 
     // @ts-expect-error
     window.connection.send(JSON.stringify({
@@ -216,10 +227,11 @@ function submitUsername() {
 
 
 // Ready or start game
-if (startGameButton)
-    startGameButton.onclick = () => {
-        // @ts-expect-error
-        window.connection.send(JSON.stringify({
-            type: 'READY'
-        }));
-    };
+startGameButton.onclick = () => {
+    if (!connectionOpen()) return;
+
+    // @ts-expect-error
+    window.connection.send(JSON.stringify({
+        type: 'READY'
+    }));
+};

@@ -31,12 +31,12 @@ export function startScoreKeeping(gameState: GameState) {
             // Set scores
             for (let i = 0; i < gameState.tanks.length; i++) {
                 const tank = gameState.tanks[i];
-                const usernameLabel: HTMLParagraphElement | null = scoreElements[i].querySelector('.username');
-                const scoreLabel: HTMLParagraphElement | null = scoreElements[i].querySelector('.score-number');
+                const usernameLabel: HTMLParagraphElement = scoreElements[i].querySelector('.username') as HTMLParagraphElement;
+                const scoreLabel: HTMLParagraphElement = scoreElements[i].querySelector('.score-number') as HTMLParagraphElement;
 
-                if (usernameLabel && usernameLabel.innerText !== tank.username)
+                if (usernameLabel.innerText !== tank.username)
                     usernameLabel.innerText = tank.username;
-                if (scoreLabel && scoreLabel.innerText !== '' + tank.score)
+                if (scoreLabel.innerText !== '' + tank.score)
                     scoreLabel.innerText = tank.score + '';
 
                 if (tank.isDead || !tank.ready)
@@ -71,15 +71,13 @@ export function createScoreElements(gameState: GameState) {
         username.innerText = tank.username;
         const score = document.createElement('span');
         score.classList.add('score-number');
-        // @ts-expect-error
-        score.innerText = tank.score;
+        score.innerText = tank.score + '';
 
         newScore.appendChild(username);
         newScore.appendChild(score);
         scoreElements.push(newScore);
     }
 
-    const container = document.getElementById('scores');
-    // @ts-expect-error
+    const container = document.getElementById('scores') as HTMLDivElement;
     container.replaceChildren(...scoreElements);
 }

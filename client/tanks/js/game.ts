@@ -2,45 +2,63 @@ import Vector from './tanks/vector2d.js';
 import GameState from './tanks/gamestate.js';
 import { Direction, Action } from './types.js';
 import Camera from './renderer/camera.js';
-import { CAMERA_EDGE_MARGIN, ROTATE_FAST, ROTATE_SLOW } from './vars.js';;
+import { CAMERA_EDGE_MARGIN, ROTATE_FAST, ROTATE_SLOW } from './vars.js';
 
 import connection from './client.js';
 import { setGlobalVolume } from './sound/sound.js';
 import { startScoreKeeping } from './score.js';
 import { handleLobbyMessage } from './lobby.js';
 
-const canvas: HTMLCanvasElement | null = document.getElementById('board') as HTMLCanvasElement;
-const ctx = canvas.getContext('2d');
+const canvas: HTMLCanvasElement = document.getElementById('board') as HTMLCanvasElement;
+const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
 // url?<GAME UUID>=
 const uuid = window.location.search.substr(1).split('=')[0];
 
 // Game state, shared with client.js
 const gameState = new GameState(true);
+// Hack
+// @ts-expect-error
 window.gameState = gameState;
+// @ts-expect-error
 window.connection = connection;
 
-function getDir(x, y) {
-    if (!gameState.camera || !gameState.tanks || !gameState.tanks[gameState.tankIndex])
-        return;
-    let pos = gameState.camera.worldToScreen(...gameState.tanks[gameState.tankIndex].position.l());
-    return [
-        x - pos[0],
-        y - pos[1]
-    ];
+
+/**
+ * ----------------------------------
+ * Invite link
+ * - Click to copy invite link
+ * ----------------------------------
+ */
+const inviteLink = document.getElementById('link') as HTMLParagraphElement;
+const gameLink = document.getElementById('game-link') as HTMLParagraphElement;
+
+/**
+ * Used in the copy link to clipboard
+ * @param {string} text Text to copy
+ */
+function copyLinkToClipboard(text: string) {
+    gameLink.classList.add('flash');
+    setTimeout(() => gameLink.classList.remove('flash'), 500);
+    // @ts-expect-error
+    copyToClipboard(text);
 }
 
-function isConnected() {
-    return connection.readyState === WebSocket.OPEN;
-}
+gameLink.onclick = () => copyLinkToClipboard(inviteLink.innerText);
 
 
+/**
+ * ----------------------------------
+ * Board + gamestate updating and rendering
+ * ----------------------------------
+ */
 function drawBoard() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (!gameState.camera) // TODO move
+    if (!gameState.camera)
         gameState.camera = new Camera(new Vector(0, 0), ctx);
 
+    // This is all centering the camera
     if (gameState.tanks[gameState.tankIndex])
         gameState.camera.position = gameState.tanks[gameState.tankIndex].position.add(
             new Vector(-canvas.width / 2, -canvas.height / 2));
@@ -60,9 +78,33 @@ function drawBoard() {
             Math.min(gameState.mazeLayer.height - canvas.height + CAMERA_EDGE_MARGIN, gameState.camera.position.y);
     }
 
+    // Actually draw the state
     gameState.draw();
 }
 
+function animFrame() {
+    drawBoard();
+    window.requestAnimationFrame(animFrame);
+}
+window.requestAnimationFrame(animFrame);
+
+
+// Update rate should be the same as server
+setInterval(() => gameState.update(), 30);
+
+
+/**
+ * ----------------------------------
+ * Connection handling
+ * ----------------------------------
+ */
+
+/**
+ * @returns Is connection currently connected
+ */
+function isConnected() {
+    return connection.readyState === WebSocket.OPEN;
+}
 
 connection.onopen = () => {
     if (uuid.length === 0) // Create a new game
@@ -71,10 +113,16 @@ connection.onopen = () => {
         connection.send((JSON.stringify({ type: 'JOIN', gameID: uuid })));
 };
 
+interface ServerMessage {
+    type: string;
+    data: string;
+    code: string;
+    uuid: string;
+    error: string;
+}
 
-connection.onmessage = message => {
-    message = JSON.parse(message.data);
-    // console.log(message);
+connection.onmessage = (msg: { data: string }) => {
+    let message = JSON.parse(msg.data) as ServerMessage;
 
     if (message.type === 'ERROR') {
         if (message.code === 'NO_GAME')
@@ -84,15 +132,40 @@ connection.onmessage = message => {
         // Game UUID recieved
         let url = window.location.href.split('?')[0] + '?' + message.uuid;
         history.pushState({}, '', url);
-        document.getElementById('link').innerText = url;
+        inviteLink.innerText = url;
     }
 
-    gameState.syncFromMessage(message);
-    handleLobbyMessage(message, gameState);
+    gameState.syncFromMessage(message as any);
+    handleLobbyMessage(message as any, gameState);
 };
 
 
-function keyToDirection(key) {
+/**
+ * ----------------------------------
+ * User controls (keyboard, mouse, etc...)
+ * ----------------------------------
+ */
+
+/**
+ * Convert an asbsolute screen position to a delta from the tank
+ * Basically, convert mouse coord -> vector from tank center
+ * @param x screen x
+ * @param y screen y
+ * @returns [dx, dy]
+ */
+function getDir(x: number, y: number) {
+    if (!gameState.camera || !gameState.tanks || !gameState.tanks[gameState.tankIndex])
+        return;
+    let pos = gameState.camera.worldToScreen(...gameState.tanks[gameState.tankIndex].position.l());
+    return [x - pos[0], y - pos[1]];
+}
+
+/**
+ * Convert key name -> direction
+ * @param key Key press code
+ * @returns Direction or null if not a valid key
+ */
+function keyToDirection(key: string) {
     if (key === 'a') return Direction.LEFT;
     else if (key === 'd') return Direction.RIGHT;
     else if (key === 'w') return Direction.UP;
@@ -106,20 +179,17 @@ window.onkeydown = e => {
     e = e || window.event;
 
     let dir = keyToDirection(e.key.toLowerCase());
-    if (dir !== null)
+    if (dir !== null) // Can send a move request in a valid direction
         connection.send(JSON.stringify({ type: 'MOVE', action: Action.MOVE_BEGIN, dir: dir }));
 
     keys[e.key.toLowerCase()] = 1;
 
-    if (keys[' ']) { // Fire
-        // Fire gun
+    if (keys[' ']) { // Fire fun
         let rot = gameState.tanks[gameState.tankIndex].rotation;
-        let dir = [Math.cos(rot), Math.sin(rot)];
-
+        let direction = [Math.cos(rot), Math.sin(rot)];
         UPDATE_ROTATION.f();
-        connection.send(JSON.stringify({ type: 'MOVE', action: Action.FIRE, direction: dir }));
+        connection.send(JSON.stringify({ type: 'MOVE', action: Action.FIRE, direction: direction }));
     }
-    // TODO: send if valid
 };
 
 window.onkeyup = e => {
@@ -131,7 +201,6 @@ window.onkeyup = e => {
         let dir = keyToDirection(e.key.toLowerCase());
         if (dir !== null)
             connection.send(JSON.stringify({ type: 'MOVE', action: Action.MOVE_END, dir: dir }));
-
         if (!keys[' '])
             connection.send(JSON.stringify({ type: 'MOVE', action: Action.STOP_FIRE }));
     }
@@ -162,6 +231,7 @@ setInterval(() => {
     }
 }, 50);
 
+// @ts-expect-error
 const UPDATE_ROTATION = new RateLimited(
     100, () => {
         if (!isConnected()) return;
@@ -174,16 +244,13 @@ const UPDATE_ROTATION = new RateLimited(
     }
 );
 
-
 window.onmousemove = e => {
     const rect = canvas.getBoundingClientRect();
     let x = e.clientX - rect.left;
     let y = e.clientY - rect.top;
 
     let dir = getDir(x, y);
-    if (!dir) return;
-    if (dir[0] === 0 && dir[1] === 0)
-        return;
+    if (!dir || (dir[0] === 0 && dir[1] === 0)) return;
 
     let rot = Math.atan2(dir[1], dir[0]);
     if (rot < 0) rot += Math.PI * 2; // Makes turning less jittery
@@ -211,34 +278,32 @@ canvas.onmousedown = e => {
 
 canvas.onmouseup = e => {
     if (!isConnected()) return;
-
-    // Fire gun TODO
-    // TODO: get curent tank position & shit
     connection.send(JSON.stringify({ type: 'MOVE', action: Action.STOP_FIRE }));
 };
 
+
+/**
+ * ---------------------------
+ * Window resizing
+ * ---------------------------
+ */
 window.onresize = () => {
-    // TODO aspect ratio this shit
     canvas.width = window.innerWidth - 250; // Space for sidebar
     canvas.style.width = canvas.width + 'px';
     canvas.height = window.innerHeight;
     canvas.style.height = canvas.height + 'px';
 };
+// @ts-expect-error
 window.onresize();
 
-function animFrame(timestamp) {
-    drawBoard();
-    window.requestAnimationFrame(animFrame);
-}
-window.requestAnimationFrame(animFrame);
 
-
-// TODO
-setInterval(() => {
-    gameState.update();
-}, 30);
-
-
+/**
+ * ----------------------------------
+ * Disconnect banner
+ * - Appears when no longer connected to server
+ * - Poll every 500ms for disconnect
+ * ----------------------------------
+ */
 const DISCONNECT_BANNER = document.getElementById('disconnect-banner');
 setInterval(() => {
     if (!DISCONNECT_BANNER) return;
@@ -249,7 +314,11 @@ setInterval(() => {
 }, 500);
 
 
-// Close modals on ESC
+/**
+ * ----------------------------------
+ * Close modals on ESC
+ * ----------------------------------
+ */
 const tutorialModal = document.getElementById('tutorial');
 const settingsModal = document.getElementById('settings');
 const winnerModal = document.getElementById('winner-modal');
@@ -262,30 +331,21 @@ document.addEventListener('keydown', event => {
     }
 });
 
-// Volume slider
-const volumeSlider = document.getElementById('volume');
-if (volumeSlider)
-    volumeSlider.onchange = e => {
-        setGlobalVolume(volumeSlider.value / 100);
-    };
-
-
-startScoreKeeping(gameState);
-
-
-// Invite link
-const inviteLink = document.getElementById('link') as HTMLParagraphElement;
-const gameLink = document.getElementById('game-link') as HTMLParagraphElement;
 
 /**
- * Used in the copy link to clipboard
- * @param {string} text Text to copy
+ * ----------------------------------
+ * Volume slider in settings
+ * ----------------------------------
  */
-function copyLinkToClipboard(text: string) {
-    gameLink.classList.add('flash');
-    setTimeout(() => gameLink.classList.remove('flash'), 500);
-    // @ts-expect-error
-    copyToClipboard(text);
-}
+const volumeSlider = document.getElementById('volume') as HTMLInputElement;
+volumeSlider.onchange = e => {
+    setGlobalVolume(+volumeSlider.value / 100);
+};
 
-gameLink.onclick = () => copyLinkToClipboard(inviteLink.innerText);
+
+/**
+ * ----------------------------------
+ * Score keeping sidebar
+ * ----------------------------------
+ */
+startScoreKeeping(gameState);
