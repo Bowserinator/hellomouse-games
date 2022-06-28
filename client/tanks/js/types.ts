@@ -25,6 +25,7 @@ export enum TankSync {
     CHANGE_COLOR,
     CHANGE_ROUNDS,
     CREATE_ALL_TANKS,   // On join, requests all player tanks
+    ANNOUNCE_WINNER,    // End of game, announce all player's scores
 
     // Game
     STATE_SYNC,         // Game state stuff sync

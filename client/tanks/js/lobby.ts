@@ -54,6 +54,52 @@ roundButtons.forEach((btn, i) => {
 });
 
 
+// Winner modal
+
+/**
+ * Update the leaderboard table in the winner modal
+ * @param scores Array of [username, score]
+ */
+function updateWinnersModal(scores: Array<[string, number]>) {
+    const table = document.getElementById('leaderboard');
+    if (!table) return;
+
+    let newHTML = `<tr><th>Rank</th><th>Player</th><th>Score</th></tr>`;
+
+    let winnerCount = 0;
+    let startIndex = 0;
+    let position = 1;
+
+    scores.sort((a, b) => b[1] - a[1]);
+    while (scores[startIndex]) {
+        // Consume all with same score
+        const matchScore = scores[startIndex][1];
+        const noClass = winnerCount >= 3; // Too many ties
+
+        while (scores[startIndex] && scores[startIndex][1] === matchScore) {
+            let className = [
+                '',
+                ' class="first"',
+                ' class="second"',
+                ' class="third"'
+            ][position] || '';
+            if (noClass)
+                className = ''; // Too many ties
+
+            newHTML += `<tr${className}>
+                <td>${position}</td>
+                <td>${scores[startIndex][0]}</td>
+                <td>${scores[startIndex][1]}</td>
+            </tr>`;
+            startIndex++;
+            winnerCount++;
+        }
+        position++;
+    }
+    table.innerHTML = newHTML;
+}
+
+
 // Handle connections
 interface LobbyMessage {
     type: TankSync | string;
@@ -61,6 +107,7 @@ interface LobbyMessage {
     round: number;
     ready: string;
     id: number;
+    scores: Array<[string, number]>;
 }
 
 const startGameButton: HTMLButtonElement | null = document.getElementById('start-game') as HTMLButtonElement | null;
@@ -122,6 +169,14 @@ export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) 
         case TankSync.STATE_SYNC: {
             // @ts-expect-error
             document.getElementById('lobby').style.display = gameState.inLobby ? 'block' : 'none';
+            break;
+        }
+
+        // Announce winners
+        case TankSync.ANNOUNCE_WINNER: {
+            // @ts-expect-error
+            document.getElementById('winner-modal').style.display = 'block';
+            updateWinnersModal(message.scores);
             break;
         }
     }

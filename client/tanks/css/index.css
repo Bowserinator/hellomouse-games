@@ -12,9 +12,9 @@ body {
     left: 0;
 
     width: 100%;
-    padding: 14px;
-    text-align: center;
     padding: 7px 14px;
+    text-align: center;
+    font-size: 13pt;
     transition: top 0.2s;
 }
 
@@ -197,7 +197,6 @@ input[type=text]:focus {
 
 .color-button:disabled {
     opacity: 0.15;
-    cursor: not-allowed;
 }
 
 .selectable-button {
@@ -207,6 +206,44 @@ input[type=text]:focus {
 .selectable-button.selected {
     border: 3px solid white;
 }
+
+
+/* Leaderboard */
+.leaderboard {
+    width: 100%;
+    font-size: 16pt;
+    border: none;
+    border-collapse: collapse;
+}
+
+.leaderboard td,
+.leaderboard th {
+    text-align: left;
+    padding: 4px 8px;
+    border: none;
+    margin: 0;
+    color: #aaa;
+}
+
+.leaderboard th {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.leaderboard .first td {
+    background-color: #ffc778;
+    color: rgba(0, 0, 0, 0.8);
+}
+
+.leaderboard .second td {
+    background-color: #d9d9d9;
+    color: rgba(0, 0, 0, 0.8);
+}
+
+.leaderboard .third td {
+    background-color: #faa76b;
+    color: rgba(0, 0, 0, 0.8);
+}
+
 
 
 /* Scrollbar*/

@@ -251,11 +251,13 @@ setInterval(() => {
 // Close modals on ESC
 const tutorialModal = document.getElementById('tutorial');
 const settingsModal = document.getElementById('settings');
+const winnerModal = document.getElementById('winner-modal');
 
 document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && tutorialModal && settingsModal) {
+    if (event.key === 'Escape' && tutorialModal && settingsModal && winnerModal) {
         tutorialModal.style.display = 'none';
         settingsModal.style.display = 'none';
+        winnerModal.style.display = 'none';
     }
 });
 

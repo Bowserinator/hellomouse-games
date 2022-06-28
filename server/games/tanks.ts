@@ -147,9 +147,20 @@ class TankGame extends Game {
      * Called once when game ends
      * - Filter out tanks with missing players in lobby state
      * - Unready all players if they want to play again
+     * - Reset scores + send game results
      */
     onGameEnd() {
         if (this.alreadyFilteredMissingTanks) return;
+
+        // Send scores
+        if (this.state.tanks.length > 1) // If <= 1 then its first join (bit hacky but it works)
+            this.broadcast({
+                type: TankSync.ANNOUNCE_WINNER,
+                scores: this.state.tanks.map(tank => [tank.username, tank.score])
+            });
+
+        // Reset scores
+        this.state.tanks.forEach(tank => tank.score = 0);
 
         // Filter missing player tanks
         let tankToClientMap: Record<number, string> = {};
