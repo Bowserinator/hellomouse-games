@@ -40,6 +40,7 @@ let preloadInterval = setInterval(() => {
         }
     );
     bufferLoader.load();
+    clearInterval(preloadInterval);
 }, 50);
 
 

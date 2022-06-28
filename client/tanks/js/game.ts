@@ -1,10 +1,6 @@
-import { Bullet } from './tanks/bullets/bullets.js';
 import Vector from './tanks/vector2d.js';
-import Wall from './tanks/wall.js';
-import Tank from './tanks/tank.js';
-import Collider from './tanks/collision.js';
 import GameState from './tanks/gamestate.js';
-import { Direction, Action, TankSync } from './types.js';
+import { Direction, Action } from './types.js';
 import Camera from './renderer/camera.js';
 import { CAMERA_EDGE_MARGIN, ROTATE_FAST, ROTATE_SLOW } from './vars.js';;
 
@@ -13,19 +9,16 @@ import { setGlobalVolume } from './sound/sound.js';
 import { startScoreKeeping } from './score.js';
 import { handleLobbyMessage } from './lobby.js';
 
-const canvas = document.getElementById('board');
+const canvas: HTMLCanvasElement | null = document.getElementById('board') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d');
 
 // url?<GAME UUID>=
 const uuid = window.location.search.substr(1).split('=')[0];
 
-
 // Game state, shared with client.js
 const gameState = new GameState(true);
 window.gameState = gameState;
 window.connection = connection;
-
-startScoreKeeping(gameState);
 
 function getDir(x, y) {
     if (!gameState.camera || !gameState.tanks || !gameState.tanks[gameState.tankIndex])
@@ -272,3 +265,6 @@ if (volumeSlider)
     volumeSlider.onchange = e => {
         setGlobalVolume(volumeSlider.value / 100);
     };
+
+
+startScoreKeeping(gameState);
