@@ -17,6 +17,12 @@ export function getScoreElements() {
  */
 export function startScoreKeeping(gameState: GameState) {
     setInterval(() => {
+        // Update round number
+        const roundLabel = document.getElementById('round');
+        if (roundLabel)
+            roundLabel.innerText = `ROUND ${gameState.round} / ${gameState.totalRounds}`;
+
+        // Update score board
         if (gameState.tanks.length !== scoreElements.length)
             createScoreElements(gameState);
         else

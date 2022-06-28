@@ -13,6 +13,7 @@ import { PowerupSingleton, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js
 import Camera from '../renderer/camera.js';
 import Renderable from '../renderer/renderable.js';
 import { playSoundAt, addSoundsToPreload } from '../sound/sound.js';
+import performStateDiff from '../util/diff.js';
 
 addSoundsToPreload([
     '/tanks/sound/tank_fire_normal.mp3'
@@ -130,23 +131,9 @@ export default class Tank extends Renderable {
             this.tint.join('|'),      // 5
             this.username             // 6
         ];
-        let trimmedData = [...data];
-        let trimmedDataStr;
-
-        // Trim data with previous diff
-        if (diff && this.syncDataDiff) {
-            // Start from 1, ID always synced
-            for (let i = 0; i < this.syncDataDiff.length; i++)
-                if (trimmedData[i] === this.syncDataDiff[i])
-                    trimmedData[i] = '';
-            // Resulting str is like A,B,C,...
-            // but can be '' if nothing changed (should be ignored and not sent by server)
-            trimmedDataStr = trimmedData.some(x => x !== '') ? trimmedData.join(',') : '';
-        } else
-            trimmedDataStr = trimmedData.join(',');
-
-        this.syncDataDiff = [...data]; // Update old diff
-        return trimmedDataStr;
+        const diffResult = performStateDiff(data, diff, this.syncDataDiff);
+        this.syncDataDiff = diffResult[1];
+        return diffResult[0];
     }
 
     /**

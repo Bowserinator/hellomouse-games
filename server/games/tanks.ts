@@ -257,7 +257,14 @@ class TankGame extends Game {
             });
     }
 
+    sendGameStateUpdates() {
+        const stateSync = this.state.sync();
+        if (stateSync)
+            this.broadcast({ type: TankSync.STATE_SYNC, data: stateSync });
+    }
+
     gameLoop() {
+        this.sendGameStateUpdates();
         this.sendTankUpdates();
         this.state.update();
         this.sendNewExplosionUpdates();

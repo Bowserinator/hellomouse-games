@@ -13,6 +13,7 @@ import { PowerupItem } from './powerups/powerup-item.js';
 import { createPowerupFromType } from './powerups/powerups.js';
 import { CELL_SIZE, MAX_POWERUP_ITEMS, POWERUP_ITEM_SIZE, DELAY_POWERUP_SPAWN, POWERUPS_TO_SPAWN_AT_ONCE } from '../vars.js';
 import Collider from './collision.js';
+import performStateDiff from '../util/diff.js';
 
 interface SyncMessage {
     seed: number;
@@ -74,6 +75,10 @@ export default class GameState {
     mazeShadowLayer?: HTMLCanvasElement;
     particles: Array<Particle>;
 
+    // State diff
+    syncDataDiff: Array<any>;
+    inLobby: boolean;
+
     constructor(isClientSide = false) {
         this.isClientSide = isClientSide;
         this.tanks = [];
@@ -99,6 +104,9 @@ export default class GameState {
 
         this.totalRounds = 20;
         this.round = 0;
+
+        this.syncDataDiff = [];
+        this.inLobby = true;
     }
 
     /**
@@ -361,6 +369,23 @@ export default class GameState {
     }
 
     /**
+     * Return a sync object
+     * @param {boolean} diff Perform a diff with previous state
+     * @return Object to send
+     */
+    sync(diff = true) {
+        let data = [
+            this.totalRounds,        // 0
+            this.round,              // 1
+            this.inLobby ? '1' : '0' // 2
+        ];
+
+        const diffResult = performStateDiff(data, diff, this.syncDataDiff);
+        this.syncDataDiff = diffResult[1];
+        return diffResult[0];
+    }
+
+    /**
      * Update state on client from a server message
      * Call from client side only
      * @param {SyncMessgae} message
@@ -426,6 +451,17 @@ export default class GameState {
                 this.tanks[i].fromSync(i, syncMessage, this);
                 this.tankIndex = message.id;
             }
+        } else if (message.type === TankSync.STATE_SYNC) {
+            const data = message.data;
+            if (!data.length) return;
+            let arr = data.split(',');
+
+            if (arr[0] !== '')
+                this.totalRounds = parseInt(arr[0]);
+            if (arr[1] !== '')
+                this.round = parseInt(arr[1]);
+            if (arr[2] !== '')
+                this.inLobby = arr[2] === '1';
         }
         return true;
     }
