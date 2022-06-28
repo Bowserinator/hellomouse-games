@@ -1,7 +1,7 @@
 import Camera from '../../renderer/camera.js';
 import Renderable from '../../renderer/renderable.js';
 import GameState from '../gamestate.js';
-import { Powerup } from '../../types.js';
+import { Powerup, TankSync } from '../../types.js';
 import Vector from '../vector2d.js';
 import Collider from '../collision.js';
 import { POWERUP_ITEM_SIZE } from '../../vars.js';
@@ -32,6 +32,19 @@ export class PowerupItem extends Renderable {
         this.powerup = powerup;
         this.collider = new Collider(position, POWERUP_ITEM_SIZE_VECTOR);
         this.randomID = Math.round(Math.random() * 100000);
+    }
+
+    /**
+     * Get sync message for when this item is added
+     * @returns A sync message that can be directly broadcast
+     */
+    toAddedSyncMessage() {
+        return {
+            type: TankSync.ADD_POWERUP_ITEM,
+            position: this.position.l(),
+            powerup: this.powerup,
+            id: this.randomID
+        };
     }
 
     draw(camera: Camera, gameState: GameState) {

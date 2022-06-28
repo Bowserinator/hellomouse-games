@@ -1,10 +1,9 @@
 import Vector from '../vector2d.js';
 import Collider from '../collision.js';
-import Tank from '../tank.js';
 import GameState from '../gamestate.js';
 import Explosion from '../explosion.js';
 
-import { BulletType, ExplosionGraphics, ParticleGraphics } from '../../types.js';
+import { BulletType, ExplosionGraphics, ParticleGraphics, TankSync } from '../../types.js';
 import Camera from '../../renderer/camera.js';
 import Renderable from '../../renderer/renderable.js';
 import { drawShield } from '../powerups/shield.js';
@@ -83,6 +82,20 @@ export class Bullet extends Renderable {
             this.config.maxAmmo = 1;
     }
 
+    /**
+     * Get sync message for when this bullet is added
+     * @returns Sync obj that can be directly broadcasted
+     */
+    toAddedSyncMessage() {
+        return {
+            type: TankSync.ADD_BULLET,
+            position: this.collider.position.l(),
+            velocity: this.velocity.l(),
+            extra: this.getExtra(),
+            bulletType: this.type
+        };
+    }
+
     getExtra(): any {
     }
 
@@ -136,7 +149,7 @@ export class Bullet extends Renderable {
             }
 
         // Hit tanks
-        for (let tank of gameState.tanks.filter((t: Tank) => !t.isDead))
+        for (let tank of gameState.getAliveTanks())
             if (this.collider.collidesWith(tank.collider) && !gameState.isClientSide) {
                 if (tank.invincible)
                     continue;
@@ -234,20 +247,20 @@ export class Bullet extends Renderable {
      */
     static bulletClassFromType(type: BulletType) {
         switch (type) {
-                case BulletType.NORMAL:
-                    return NormalBullet;
-                case BulletType.FAST:
-                    return HighSpeedBullet;
-                case BulletType.MAGNET:
-                    return MagneticMineBullet;
-                case BulletType.LASER:
-                    return LaserBullet;
-                case BulletType.BOMB:
-                    return BombBullet;
-                case BulletType.SMALL:
-                    return SmallBullet;
-                case BulletType.ROCKET:
-                    return RocketBullet;
+            case BulletType.NORMAL:
+                return NormalBullet;
+            case BulletType.FAST:
+                return HighSpeedBullet;
+            case BulletType.MAGNET:
+                return MagneticMineBullet;
+            case BulletType.LASER:
+                return LaserBullet;
+            case BulletType.BOMB:
+                return BombBullet;
+            case BulletType.SMALL:
+                return SmallBullet;
+            case BulletType.ROCKET:
+                return RocketBullet;
         }
         throw new Error(`Unknown bullet type ${type}`);
     }
@@ -554,7 +567,7 @@ export class LaserBullet extends Bullet {
                     gameState.removeBullet(bullet);
 
             // Hit tanks
-            for (let tank of gameState.tanks.filter((t: Tank) => !t.isDead))
+            for (let tank of gameState.getAliveTanks())
                 if (!gameState.isClientSide && tank.collider.collidesWithLine(start, end)) {
                     if (tank.invincible)
                         continue;

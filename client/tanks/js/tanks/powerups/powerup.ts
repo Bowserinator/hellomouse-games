@@ -13,6 +13,12 @@ export class PowerupState {
     type: Powerup;
     category: PowerupCategory;
 
+    /**
+     * Construct a new powerup state
+     * @param tank Tank this belongs to
+     * @param type Enum type
+     * @param category Enum category, same category powerups conflict
+     */
     constructor(tank: Tank, type: Powerup, category: PowerupCategory) {
         this.type = type;
         this.tank = tank;
@@ -47,7 +53,7 @@ export class PowerupState {
     /**
      * Perform a server-side update
      * @param {GameState} gameState GameState
-     * @param {number} timestep ms
+     * @param {number} timestep Delta since last tick in s
      */
     update(gameState: GameState, timestep: number) {
         // Override

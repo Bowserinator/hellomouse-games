@@ -117,6 +117,7 @@ export default class Game {
      * @param {object} message
      */
     broadcast(message: object) {
+        if (!message) return;
         let msg = JSON.stringify(message);
         for (let client of this.players)
             if (client !== null)

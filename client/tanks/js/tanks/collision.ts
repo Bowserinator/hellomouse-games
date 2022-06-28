@@ -11,6 +11,11 @@ export default class Collider {
     position: Vector;
     size: Vector;
 
+    /**
+     * Construct a rectangular collider
+     * @param position Top left corner
+     * @param size Size (rectangle)
+     */
     constructor(position: Vector, size: Vector) {
         this.position = position;
         this.size = size;
@@ -206,7 +211,11 @@ export default class Collider {
         return [velocity, bounceCount, bouncePositions];
     }
 
-    /** Debug draw method */
+    /**
+     * Debug draw method, draws stroked rectangle
+     * @param camera Camera obj
+     * @param color Color of outline
+     */
     draw(camera: Camera, color = 'green') {
         camera.drawRect(
             this.position.l() as [number, number],

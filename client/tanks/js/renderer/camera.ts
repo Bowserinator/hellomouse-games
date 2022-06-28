@@ -120,6 +120,13 @@ export default class Camera {
         ctx.fill();
     }
 
+    /**
+     * Draw a line
+     * @param p1 Start point
+     * @param p2 End point
+     * @param thickness Line thickness
+     * @param color Line color
+     */
     drawLine(p1: [number, number], p2: [number, number], thickness: number, color: string) {
         let ctx = this.ctx;
         p1 = this.worldToScreen(...p1);

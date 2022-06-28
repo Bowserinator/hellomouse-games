@@ -1,4 +1,4 @@
-import { Powerup, Direction, BulletType, ExplosionGraphics } from '../types.js';
+import { Powerup, Direction, BulletType, ExplosionGraphics, TankSync } from '../types.js';
 import Collider from './collision.js';
 import Vector from './vector2d.js';
 import GameState from './gamestate.js';
@@ -93,20 +93,43 @@ export default class Tank extends Renderable {
         this.score = 0;
         this.ready = false;
 
-        this.createCollider();
+        this.updateCollider();
         this.tint = [0, 0, 0];
         this.tintPrefix = '';
     }
 
+    /**
+     * Set a new username
+     * @param username New username
+     */
     setUsername(username: string) {
         this.username = username;
     }
 
+    /**
+     * Set a new tint color for the tank
+     * @param color Color as an RGB array
+     */
     setTint(color: [number, number, number]) {
         if (this.imageUrls)
             this.loadTintVariants(color);
         this.tint = color;
         this.tintPrefix = Renderable.rgbToStr(color);
+    }
+
+    /**
+     * Get a message that can be directly broadcasted
+     * @returns Sync message to broadcast, {} if no delta
+     */
+    toSyncMessage() {
+        let syncMessage = this.sync();
+        if (syncMessage.length)
+            return {
+                type: TankSync.GENERIC_TANK_SYNC,
+                id: this.id,
+                data: syncMessage
+            };
+        return {};
     }
 
     /**
@@ -170,13 +193,27 @@ export default class Tank extends Renderable {
             this.rotation = +arr[1];
     }
 
-    createCollider() {
+    /**
+     * Update the collider of the tank
+     * If there is no collider create it
+     */
+    updateCollider() {
         let [x, y] = this.position.l();
         x -= TANK_SIZE / 2;
         y -= TANK_SIZE / 2;
-        this.collider = new Collider(new Vector(x, y), new Vector(TANK_SIZE, TANK_SIZE));
+        if (!this.collider)
+            this.collider = new Collider(new Vector(x, y), new Vector(TANK_SIZE, TANK_SIZE));
+        else {
+            this.collider.position.x = x;
+            this.collider.position.y = y;
+        }
     }
 
+    /**
+     * Change the bullet type of the tank, updates
+     * firing indicator + bullet type
+     * @param bulletType New bullet type
+     */
     changeBulletType(bulletType: BulletType) {
         this.bulletType = bulletType;
         this.fakeBullet = Bullet.bulletFromType(this.bulletType,
@@ -248,6 +285,13 @@ export default class Tank extends Renderable {
         return [pos, dir];
     }
 
+    /**
+     * Helper to change tank rotation
+     * @param target End up rotating here
+     * @param visual Current visual rotation
+     * @param rate How fast (rad / s) to rotate at most
+     * @param timestep Timestep since last update tick (s)
+     */
     updateRotation(target: string, visual: string, rate: number, timestep: number) {
         let targetRotation = (this as any)[target];
         while (targetRotation < 0)
@@ -271,6 +315,10 @@ export default class Tank extends Renderable {
             (this as any)[visual] += Math.PI * 2;
     }
 
+    /**
+     * Update the base (not the turret) rotation to match velocity
+     * @param timestep Timestep since last delta
+     */
     updateBaseRotation(timestep: number) {
         // Update current target base rotation
         if (!this.velocity.isZero())
@@ -278,6 +326,10 @@ export default class Tank extends Renderable {
         this.updateRotation('targetBaseRotation', 'realBaseRotation', TANK_BASE_ROTATION_RATE, timestep);
     }
 
+    /**
+     * Called when the tank is fired client side
+     * @param gameState GameState
+     */
     onFireClientSide(gameState: GameState) {
         // Only normal plays this, all other bullets play from the powerup
         if (this.bulletType === BulletType.NORMAL)
@@ -306,7 +358,7 @@ export default class Tank extends Renderable {
 
         this.position.x += this.velocity.x * timestep;
         this.position.y += this.velocity.y * timestep;
-        this.createCollider();
+        this.updateCollider();
 
         // Wall + tank collisions
         for (let collider of [
@@ -318,7 +370,7 @@ export default class Tank extends Renderable {
                 this.position.x += TANK_SIZE / 2;
                 this.position.y += TANK_SIZE / 2;
                 this.velocity = new Vector(0, 0);
-                this.createCollider();
+                this.updateCollider();
             }
 
         if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {

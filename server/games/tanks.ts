@@ -21,7 +21,7 @@ interface LobbyMessage {
     round: number;
 }
 
-const MAX_PLAYERS = 4;
+const MAX_PLAYERS = 8;
 
 // If tick length is too high tank collision becomes buggy
 // Recommended: 30 ms or below
@@ -80,19 +80,14 @@ class TankGame extends Game {
                 this.state.tanks[i].ready = true;
         }
 
-        // Send map information
+        // Send map, powerups & round information
         client.connection.send(JSON.stringify({
             type: TankSync.MAP_UPDATE,
             seed: this.mapSeed
         }));
 
         for (let powerup of this.state.powerupItems)
-            client.connection.send(JSON.stringify({
-                type: TankSync.ADD_POWERUP_ITEM,
-                position: powerup.position.l(),
-                powerup: powerup.powerup,
-                id: powerup.randomID
-            }));
+            client.connection.send(JSON.stringify(powerup.toAddedSyncMessage()));
 
         client.connection.send(JSON.stringify({
             type: TankSync.CHANGE_ROUNDS,
@@ -124,31 +119,6 @@ class TankGame extends Game {
         this.recreateAllTanks();
     }
 
-    sendPowerupUpdates() {
-        // Powerup items
-        for (let add of this.state.addedPowerupItems)
-            this.broadcast({
-                type: TankSync.ADD_POWERUP_ITEM,
-                position: add.position.l(),
-                powerup: add.powerup,
-                id: add.randomID
-            });
-        for (let remove of this.state.removedPowerupItems)
-            this.broadcast({
-                type: TankSync.DELETE_POWERUP_ITEM,
-                id: remove.randomID
-            });
-
-        // Powerups
-        for (let add of this.state.addedPowerups)
-            this.broadcast({
-                type: TankSync.GIVE_POWERUP,
-                id: add[1],
-                powerup: add[0]
-            });
-    }
-
-
     /**
      * Call this when a tank is added or removed
      * Will force all clients to recreate their tank array
@@ -170,99 +140,7 @@ class TankGame extends Game {
         this.setReadyStates();
     }
 
-    sendTankUpdates() {
-        // Added tanks
-        if (this.state.addedTanks.length)
-            this.recreateAllTanks();
-
-        // Send generic updates
-        for (let tank of this.state.tanks) {
-            let syncMessage = tank.sync();
-            if (syncMessage.length)
-                this.broadcast({
-                    type: TankSync.GENERIC_TANK_SYNC,
-                    id: tank.id,
-                    data: syncMessage
-                });
-        }
-
-        // Send tanks that have fired this tick
-        let tanksFiredThisTick = [];
-        for (let tank of this.state.tanks)
-            if (tank.firedThisTick) {
-                tank.firedThisTick = false;
-                tanksFiredThisTick.push(tank.id);
-            }
-        if (tanksFiredThisTick.length)
-            this.broadcast({
-                type: TankSync.TANK_FIRED,
-                ids: tanksFiredThisTick
-            });
-    }
-
-    sendBulletUpdates() {
-        // Send created / deleted bullets after state update
-        for (let bullet of this.state.addedBullets)
-            this.broadcast({
-                type: TankSync.ADD_BULLET,
-                position: bullet.collider.position.l(),
-                velocity: bullet.velocity.l(),
-                extra: bullet.getExtra(),
-                bulletType: bullet.type
-            });
-
-
-        // Send remove bullet state update
-        if (this.state.removedBulletIds.size)
-            this.broadcast({
-                type: TankSync.REMOVE_BULLETS,
-                indices: [...this.state.removedBulletIds]
-            });
-    }
-
-    syncBullets() {
-        if (this.syncCount % SYNC_BULLETS_EVERY_N_TIMES !== 0)
-            return;
-        if (this.state.bullets.length === 0 && this.dontSyncBullets)
-            return;
-
-        let extras: Record<number, any> = {};
-        for (let i = 0; i < this.state.bullets.length; i++) {
-            let extra = this.state.bullets[i].getExtra();
-            if (extra !== undefined)
-                extras[i] = extra;
-        }
-
-        this.broadcast({
-            type: TankSync.SYNC_ALL_BULLETS,
-            positions: this.state.bullets.map(b => b.collider.position.l()),
-            velocities: this.state.bullets.map(b => b.velocity.l()),
-            bulletTypes: this.state.bullets.map(b => b.type),
-            extras
-        });
-
-        this.dontSyncBullets = this.state.bullets.length === 0;
-    }
-
-    sendNewExplosionUpdates() {
-        let newExplosions = [...this.state.addedExplosions];
-        if (newExplosions.length)
-            this.broadcast({
-                type: TankSync.ADD_EXPLOSIONS,
-                positions: newExplosions.map(e => e.position.l()),
-                damageRadii: newExplosions.map(e => e.damageRadius),
-                graphicsRadii: newExplosions.map(e => e.graphicsRadius),
-                durations: newExplosions.map(e => e.duration),
-                graphics: newExplosions.map(e => e.graphics)
-            });
-    }
-
-    sendGameStateUpdates() {
-        const stateSync = this.state.sync();
-        if (stateSync)
-            this.broadcast({ type: TankSync.STATE_SYNC, data: stateSync });
-    }
-
+    /** Main game loop */
     gameLoop() {
         this.sendGameStateUpdates();
         this.sendTankUpdates();
@@ -275,17 +153,18 @@ class TankGame extends Game {
         this.state.clearDeltas();
     }
 
+    /** Start main game loop */
     startGameLoop() {
         if (this.interval !== null)
             this.endGameLoop();
         this.interval = setInterval(this.gameLoop.bind(this), UPDATE_EVERY_N_MS);
     }
 
+    /** End main game loop */
     endGameLoop() {
         if (this.interval !== null)
             clearInterval(this.interval);
     }
-
 
     /**
      * Broadcast a change to colors
@@ -335,20 +214,28 @@ class TankGame extends Game {
 
         // TODO: check if in lobby
 
-        if (message.type === TankSync.CHANGE_COLOR) {
-            const tankColorIndexMap = this.state.tanks.map(tank => TANK_COLORS.indexOf(tank.tint));
-            if (TANK_COLORS[message.color] && !tankColorIndexMap.some(x => x === message.color)) {
-                this.state.tanks[clientID].setTint(TANK_COLORS[message.color]);
-                tankColorIndexMap[clientID] = message.color;
+        switch (message.type) {
+            // User changes color
+            case TankSync.CHANGE_COLOR: {
+                const tankColorIndexMap = this.state.tanks.map(tank => TANK_COLORS.indexOf(tank.tint));
+                if (TANK_COLORS[message.color] && !tankColorIndexMap.some(x => x === message.color)) {
+                    this.state.tanks[clientID].setTint(TANK_COLORS[message.color]);
+                    tankColorIndexMap[clientID] = message.color;
+                }
+                this.broadcastChangeColor(tankColorIndexMap);
+                break;
             }
-            this.broadcastChangeColor(tankColorIndexMap);
-        } else if (message.type === TankSync.CHANGE_ROUNDS) {
-            if (clientID !== 0) return; // Only host can change round count
-            this.state.totalRounds = ROUND_ARRAY[message.round] || this.state.totalRounds;
-            this.broadcast({
-                type: TankSync.CHANGE_ROUNDS,
-                round: ROUND_ARRAY[message.round] ? message.round : 3
-            });
+
+            // Host changes number of rounds in the game, default 20 (3rd item in array)
+            case TankSync.CHANGE_ROUNDS: {
+                if (clientID !== 0) return; // Only host can change round count
+                this.state.totalRounds = ROUND_ARRAY[message.round] || this.state.totalRounds;
+                this.broadcast({
+                    type: TankSync.CHANGE_ROUNDS,
+                    round: ROUND_ARRAY[message.round] ? message.round : 3 // 3rd in array = 20
+                });
+                break;
+            }
         }
     }
 
@@ -371,31 +258,136 @@ class TankGame extends Game {
         if (!this.state.tanks[clientID] || this.state.tanks[clientID].isDead)
             return;
 
-        if (message.action === Action.MOVE_BEGIN)
-            // Request to move in a certain direction
-            this.state.tanks[clientID].movement[isVertical] = message.dir;
-        else if (message.action === Action.MOVE_END && message.dir === this.state.tanks[clientID].movement[isVertical])
-            // Request to stop moving in a certain direction
-            this.state.tanks[clientID].movement[isVertical] = Direction.NONE;
-        else if (message.action === Action.FIRE) {
-            // Request to begin firing, setting the tank's rotation to that direction
-            if (message.direction === undefined)
-                return;
-            let angle = Math.atan2(message.direction[1], message.direction[0]);
-            if (Number.isNaN(angle))
-                return;
+        switch (message.action) {
+            case Action.MOVE_BEGIN: {
+                // Request to move in a certain direction
+                this.state.tanks[clientID].movement[isVertical] = message.dir;
+                break;
+            }
+            case Action.MOVE_END: {
+                // Request to stop moving in a certain direction
+                if (message.dir === this.state.tanks[clientID].movement[isVertical])
+                    this.state.tanks[clientID].movement[isVertical] = Direction.NONE;
+                break;
+            }
+            case Action.FIRE: {
+                // Request to begin firing, setting the tank's rotation to that direction
+                if (message.direction === undefined)
+                    return;
+                let angle = Math.atan2(message.direction[1], message.direction[0]);
+                if (Number.isNaN(angle))
+                    return;
 
-            this.state.tanks[clientID].isFiring = true;
-            this.state.tanks[clientID].rotation = angle;
-        } else if (message.action === Action.STOP_FIRE)
-            // Request to cease firing
-            this.state.tanks[clientID].isFiring = false;
-        else if (message.action === Action.UPDATE_ROTATION && typeof message.rotation === 'number') {
-            if (message.rotation < -5 || message.rotation > 5)
-                return;
-            this.state.tanks[clientID].rotation = message.rotation;
+                this.state.tanks[clientID].isFiring = true;
+                this.state.tanks[clientID].rotation = angle;
+                break;
+            }
+            case Action.STOP_FIRE: {
+                // Request to cease firing
+                this.state.tanks[clientID].isFiring = false;
+                break;
+            }
+            case Action.UPDATE_ROTATION: {
+                if (message.rotation < -5 || message.rotation > 5)
+                    return;
+                this.state.tanks[clientID].rotation = message.rotation;
+                break;
+            }
         }
         this.state.changedTankIDs.add(clientID);
+    }
+
+    // --------------------------------------------
+    // Send sync message methods
+    // --------------------------------------------
+
+    sendTankUpdates() {
+        // Added tanks
+        if (this.state.addedTanks.length)
+            this.recreateAllTanks();
+
+        // Send generic updates
+        for (let tank of this.state.tanks)
+            this.broadcast(tank.toSyncMessage());
+
+        // Send tanks that have fired this tick
+        let tanksFiredThisTick = [];
+        for (let tank of this.state.tanks)
+            if (tank.firedThisTick) {
+                tank.firedThisTick = false;
+                tanksFiredThisTick.push(tank.id);
+            }
+        if (tanksFiredThisTick.length)
+            this.broadcast({ type: TankSync.TANK_FIRED, ids: tanksFiredThisTick });
+    }
+
+    sendBulletUpdates() {
+        // Send created / deleted bullets after state update
+        for (let bullet of this.state.addedBullets)
+            this.broadcast(bullet.toAddedSyncMessage());
+
+        // Send remove bullet state update
+        if (this.state.removedBulletIds.size)
+            this.broadcast({ type: TankSync.REMOVE_BULLETS, indices: [...this.state.removedBulletIds] });
+    }
+
+    syncBullets() {
+        // Special force sync all bullets to avoid sim desync
+        // Only do every n update loops, if there are no bullets
+        // only sync once to indicate to client there are no bullets, then
+        // don't sync until there are bullets again
+
+        if (this.syncCount % SYNC_BULLETS_EVERY_N_TIMES !== 0)
+            return;
+        if (this.state.bullets.length === 0 && this.dontSyncBullets)
+            return;
+
+        let extras: Record<number, any> = {};
+        for (let i = 0; i < this.state.bullets.length; i++) {
+            let extra = this.state.bullets[i].getExtra();
+            if (extra !== undefined)
+                extras[i] = extra;
+        }
+
+        this.broadcast({
+            type: TankSync.SYNC_ALL_BULLETS,
+            positions: this.state.bullets.map(b => b.collider.position.l()),
+            velocities: this.state.bullets.map(b => b.velocity.l()),
+            bulletTypes: this.state.bullets.map(b => b.type),
+            extras
+        });
+        this.dontSyncBullets = this.state.bullets.length === 0;
+    }
+
+    sendNewExplosionUpdates() {
+        let newExplosions = [...this.state.addedExplosions];
+        if (newExplosions.length)
+            this.broadcast({
+                type: TankSync.ADD_EXPLOSIONS,
+                positions: newExplosions.map(e => e.position.l()),
+                damageRadii: newExplosions.map(e => e.damageRadius),
+                graphicsRadii: newExplosions.map(e => e.graphicsRadius),
+                durations: newExplosions.map(e => e.duration),
+                graphics: newExplosions.map(e => e.graphics)
+            });
+    }
+
+    sendGameStateUpdates() {
+        const stateSync = this.state.sync();
+        if (stateSync)
+            this.broadcast({ type: TankSync.STATE_SYNC, data: stateSync });
+    }
+
+    sendPowerupUpdates() {
+        // Powerup items
+        for (let add of this.state.addedPowerupItems)
+            this.broadcast(add.toAddedSyncMessage());
+        for (let remove of this.state.removedPowerupItems)
+            this.broadcast({ type: TankSync.DELETE_POWERUP_ITEM, id: remove.randomID });
+
+        // Powerups
+        for (let add of this.state.addedPowerups)
+            this.broadcast({ type: TankSync.GIVE_POWERUP, id: add[1], powerup: add[0] });
     }
 }
 

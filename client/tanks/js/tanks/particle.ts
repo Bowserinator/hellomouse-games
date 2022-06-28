@@ -35,53 +35,63 @@ export default class Particle {
         this.createdTimestep = Date.now();
     }
 
+    /**
+     * Update tick
+     * @param gameState GameState
+     * @param timestep Update delta in s
+     */
     update(gameState: GameState, timestep: number) {
         if (Date.now() - this.createdTimestep > this.duration)
             gameState.removeParticle(this);
         this.position = this.position.add(this.velocity.mul(timestep));
     }
 
+    /**
+     * Draw the particle
+     * @param camera Camera
+     * @param gameState GameState
+     */
     draw(camera: Camera, gameState: GameState) {
         let multi = (Date.now() - this.createdTimestep) / this.duration;
         multi = 1 - Math.min(1, multi);
 
         switch (this.graphics) {
-                case ParticleGraphics.SIMPLE: {
-                    camera.fillCircle(this.position.l(), multi * this.radius, '#333');
-                    break;
-                }
-                case ParticleGraphics.SPARKS: {
-                    let color = `hsl(${30 + this.random % 30},100%,${50 + this.random % 50}%)`;
-                    camera.ctx.globalCompositeOperation = 'lighter';
-                    camera.ctx.globalAlpha = multi;
-                    camera.fillCircle(this.position.l(), multi * this.radius, color);
-                    camera.ctx.globalCompositeOperation = 'source-over';
-                    camera.ctx.globalAlpha = 1;
-                    break;
-                }
-                case ParticleGraphics.WARNING: {
-                    const [cx, cy] = this.position.l();
-                    const THICKNESS = 5;
-                    const COLOR = '#c62828';
+            case ParticleGraphics.SIMPLE: {
+                camera.fillCircle(this.position.l(), multi * this.radius, '#333');
+                break;
+            }
+            case ParticleGraphics.SPARKS: {
+                let color = `hsl(${30 + this.random % 30},100%,${50 + this.random % 50}%)`;
+                camera.ctx.globalCompositeOperation = 'lighter';
+                camera.ctx.globalAlpha = multi;
+                camera.fillCircle(this.position.l(), multi * this.radius, color);
+                camera.ctx.globalCompositeOperation = 'source-over';
+                camera.ctx.globalAlpha = 1;
+                break;
+            }
+            case ParticleGraphics.WARNING: {
+                const [cx, cy] = this.position.l();
+                const THICKNESS = 5;
+                const COLOR = '#c62828';
 
-                    let m = Math.min(1, 10 * (1 - multi));
-                    let r = m * this.radius;
+                let m = Math.min(1, 10 * (1 - multi));
+                let r = m * this.radius;
 
-                    camera.ctx.globalAlpha = m;
-                    camera.ctx.lineWidth = THICKNESS;
+                camera.ctx.globalAlpha = m;
+                camera.ctx.lineWidth = THICKNESS;
 
-                    camera.drawCircle([cx, cy], r, COLOR);
-                    // Uncomment for X shape instead
-                    // const delta = this.radius / Math.sqrt(2);
-                    // camera.drawLine([cx - delta, cy - delta], [cx + delta, cy + delta], THICKNESS, COLOR);
-                    // camera.drawLine([cx - delta, cy + delta], [cx + delta, cy - delta], THICKNESS, COLOR);
-                    camera.drawLine([cx, cy - r], [cx, cy + r], THICKNESS, COLOR);
-                    camera.drawLine([cx - r, cy], [cx + r, cy], THICKNESS, COLOR);
+                camera.drawCircle([cx, cy], r, COLOR);
+                // Uncomment for X shape instead
+                // const delta = this.radius / Math.sqrt(2);
+                // camera.drawLine([cx - delta, cy - delta], [cx + delta, cy + delta], THICKNESS, COLOR);
+                // camera.drawLine([cx - delta, cy + delta], [cx + delta, cy - delta], THICKNESS, COLOR);
+                camera.drawLine([cx, cy - r], [cx, cy + r], THICKNESS, COLOR);
+                camera.drawLine([cx - r, cy], [cx + r, cy], THICKNESS, COLOR);
 
-                    camera.ctx.lineWidth = 1;
-                    camera.ctx.globalAlpha = 1;
-                    break;
-                }
+                camera.ctx.lineWidth = 1;
+                camera.ctx.globalAlpha = 1;
+                break;
+            }
         }
     }
 }

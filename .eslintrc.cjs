@@ -17,7 +17,7 @@ module.exports = {
     extends: ['@hellomouse/typescript'],
     ignorePatterns: ['build/**'],
     rules: {
-        '@typescript-eslint/indent': ['error', 4, { SwitchCase: 2 }],
+        '@typescript-eslint/indent': ['error', 4, { SwitchCase: 1 }],
         'curly': ['error', 'multi'],
         'padded-blocks': [
             'error',
@@ -48,7 +48,7 @@ module.exports = {
         'no-else-return': 'error',
         'no-undef-init': 'error',
         'no-multi-spaces': ['error', { ignoreEOLComments: true }],
-        "@typescript-eslint/no-var-requires": "off",
+        '@typescript-eslint/no-var-requires': 'off',
         '@typescript-eslint/naming-convention': [
             'error',
             { selector: 'default', format: ['camelCase'], leadingUnderscore: 'allow' },
