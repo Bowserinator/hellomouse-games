@@ -53,8 +53,15 @@
             <button class="selectable-button selected text-button">20</button>
         </div>
 
-        <br><hr>
+        <br><br>
         <button id="start-game" class="text-button">Start Game!</button>
+
+        <br><br><hr>
+        <p>Click the box below to copy an invite link. Players can only join when the game is in a lobby.</p>
+        <p class="game-link" id="game-link">
+            <small>Click to copy invite link</small><br>
+            <span id="link">Loading...</span>
+        </p>
     </div>
 
     <div id="sidebar">
@@ -138,9 +145,10 @@
 
     <div class="modal-darken" id="winner-modal" style="display: none">
         <div class="modal">
-            <button class="modal-close-button" onclick="document.getElementById('winner-modal').style.display = 'none'">X</button>
+            <button class="modal-close-button"
+                onclick="document.getElementById('winner-modal').style.display = 'none'">X</button>
             <h2>Game is Over!</h2>
-
+    
             <table class="leaderboard" id="leaderboard"></table>
         </div>
     </div>

@@ -84,6 +84,7 @@ connection.onmessage = message => {
         // Game UUID recieved
         let url = window.location.href.split('?')[0] + '?' + message.uuid;
         history.pushState({}, '', url);
+        document.getElementById('link').innerText = url;
     }
 
     gameState.syncFromMessage(message);
@@ -270,3 +271,21 @@ if (volumeSlider)
 
 
 startScoreKeeping(gameState);
+
+
+// Invite link
+const inviteLink = document.getElementById('link') as HTMLParagraphElement;
+const gameLink = document.getElementById('game-link') as HTMLParagraphElement;
+
+/**
+ * Used in the copy link to clipboard
+ * @param {string} text Text to copy
+ */
+function copyLinkToClipboard(text: string) {
+    gameLink.classList.add('flash');
+    setTimeout(() => gameLink.classList.remove('flash'), 500);
+    // @ts-expect-error
+    copyToClipboard(text);
+}
+
+gameLink.onclick = () => copyLinkToClipboard(inviteLink.innerText);

@@ -5,6 +5,10 @@ body {
     overflow: hidden;
 }
 
+hr {
+    border-bottom: 1px solid #444;
+}
+
 #disconnect-banner {
     background-color: #ff5f52;
     z-index: 999;
@@ -244,6 +248,40 @@ input[type=text]:focus {
     color: rgba(0, 0, 0, 0.8);
 }
 
+
+
+/* Invite link */
+.game-link > small {
+    color: #bbb;
+}
+
+.game-link {
+    font-size: 12pt;
+    margin-bottom: 0;
+
+    border-bottom: 1px solid #777;
+    white-space: nowrap;
+    color: #ddd;
+    background-color: rgba(0, 0, 0, 0.02);
+    padding: 12px;
+    overflow-x: auto;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+@keyframes flash {
+    from {
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+    to {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+}
+
+.game-link.flash {
+    animation: flash 0.3s ease-in-out 0s;
+}
 
 
 /* Scrollbar*/
