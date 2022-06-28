@@ -260,7 +260,8 @@ export default class Tank extends Renderable {
             let [pos, vel] = this.getFiringPositionAndDirection();
 
             // If its going to fire through a wall don't render (not allowed)
-            if (!gamestate.walls.some(wall => wall.collider.collidesWithLine(this.position, pos))) {
+            if (this.fakeBullet.config.alwaysDrawFirePreview ||
+                !gamestate.walls.some(wall => wall.collider.collidesWithLine(this.position, pos))) {
                 this.fakeBullet.firedBy = this.id;
                 this.fakeBullet.setCenter(pos);
                 this.fakeBullet.setVelocityFromDir(vel);

@@ -22,6 +22,7 @@ interface BulletConfig {
     despawnTime: number; // Time in ms to despawn
     type: BulletType;
 
+    alwaysDrawFirePreview?: boolean; // Always render fire preview, even if turret is in a wall (default: false)
     maxAmmo?: number; // (1 default) Max bullets that can be fired until one despawns
     imageSize?: Vector; // If different from size
     rotate?: boolean; // Rotate texture? (No for symmetric textures)
@@ -72,6 +73,8 @@ export class Bullet extends Renderable {
         this.invincible = false;
 
         // Config defaults
+        if (this.config.alwaysDrawFirePreview === undefined)
+            this.config.alwaysDrawFirePreview = false;
         if (this.config.rotate === undefined)
             this.config.rotate = false;
         if (this.config.allowBounce === undefined)
@@ -686,7 +689,8 @@ export class RocketBullet extends Bullet {
         speed: 0,
         despawnTime: 999999, // Manual despawn
         imageUrls: [],
-        maxAmmo: 9999
+        maxAmmo: 9999,
+        alwaysDrawFirePreview: true
     };
 
     static warningTime = 1500; // Warning labels in ms
