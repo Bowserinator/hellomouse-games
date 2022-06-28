@@ -75,6 +75,9 @@ class TankGame extends Game {
             const i = this.state.tanks.length - 1;
             this.state.tanks[i].setTint(TANK_COLORS[i]); // TODO: find unused TANK_COLOR
             this.playerTankIDMap[client.id] = i;
+
+            if (i === 0) // Host always ready
+                this.state.tanks[i].ready = true;
         }
 
         // Send map information
@@ -115,7 +118,8 @@ class TankGame extends Game {
                 this.playerTankIDMap[key]--;
             }
 
-        // Delete tank
+        // Delete tank + update ready state of host
+        this.state.tanks[0].ready = true;
         this.state.tanks.splice(clientID, 1);
         this.recreateAllTanks();
     }
@@ -161,11 +165,9 @@ class TankGame extends Game {
             msg.id = this.playerTankIDMap[client.id];
             client.connection.sendUTF(JSON.stringify(msg));
         }
-        const tankColorIndexMap = this.state.tanks.map(tank => TANK_COLORS.indexOf(tank.tint));
-        this.broadcast({
-            type: TankSync.CHANGE_COLOR,
-            colors: tankColorIndexMap
-        });
+
+        this.broadcastChangeColor();
+        this.setReadyStates();
     }
 
     sendTankUpdates() {
@@ -278,6 +280,30 @@ class TankGame extends Game {
     }
 
 
+    /**
+     * Broadcast a change to colors
+     * @param {boolean} includeColors Include color changes
+     * @param {Array<number> | null} tankColorIndexMap Alternative tank color index map to use
+     * */
+    broadcastChangeColor(tankColorIndexMap: Array<number> | null = null) {
+        this.broadcast({
+            type: TankSync.CHANGE_COLOR,
+            colors: tankColorIndexMap || this.state.tanks.map(tank => TANK_COLORS.indexOf(tank.tint))
+        });
+    }
+
+    /** Set tank ready states, call after ready state changes */
+    setReadyStates() {
+        for (let player of this.players) {
+            if (player === null) continue;
+            const id = this.playerTankIDMap[player.id];
+            if (this.state.tanks[id]) {
+                if (id === 0) player.ready = true; // Host always ready
+                this.state.tanks[id].ready = player.ready;
+            }
+        }
+    }
+
     onUsernameChange(client: Client) {
         // TODO: only change if in lobby state
         //  If not also change client username
@@ -287,6 +313,12 @@ class TankGame extends Game {
             return;
 
         this.state.tanks[clientID].setUsername(client.username);
+    }
+
+    onReady(client: Client) {
+        if (this.playerTankIDMap[client.id] === 0)
+            client.ready = true; // Host always ready
+        this.setReadyStates();
     }
 
     onMessage(client: Client, message: LobbyMessage) {
@@ -302,10 +334,7 @@ class TankGame extends Game {
                 this.state.tanks[clientID].setTint(TANK_COLORS[message.color]);
                 tankColorIndexMap[clientID] = message.color;
             }
-            this.broadcast({
-                type: TankSync.CHANGE_COLOR,
-                colors: tankColorIndexMap
-            });
+            this.broadcastChangeColor(tankColorIndexMap);
         } else if (message.type === TankSync.CHANGE_ROUNDS) {
             if (clientID !== 0) return; // Only host can change round count
             this.state.totalRounds = ROUND_ARRAY[message.round] || this.state.totalRounds;

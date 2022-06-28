@@ -28,7 +28,7 @@ export function startScoreKeeping(gameState: GameState) {
                 // @ts-expect-error
                 scoreElements[i].querySelector('.score-number').innerText = tank.score;
 
-                if (tank.isDead)
+                if (tank.isDead || !tank.ready)
                     scoreElements[i].classList.add('dead');
                 else scoreElements[i].classList.remove('dead');
             }
@@ -49,7 +49,8 @@ export function createScoreElements(gameState: GameState) {
         newScore.style.backgroundColor = tank.tintPrefix;
         newScore.style.color = TANK_TEXT_COLORS[TANK_COLORS.indexOf(tank.tint)] || 'black';
 
-        if (tank.isDead)
+        // TODO: dont update if not in lobby
+        if (tank.isDead || !tank.ready)
             newScore.classList.add('dead');
         if (i === gameState.tankIndex)
             newScore.classList.add('you');

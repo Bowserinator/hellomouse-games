@@ -44,6 +44,7 @@ export default class Tank extends Renderable {
     id: number;
     score: number;
     invincible: boolean;
+    ready: boolean; // Lobby only
     stealthed: boolean;
     firedBullets: Array<Bullet>; // Only used for tracking ammo count, may not match bullets on screen
     turretImageUrl: string;
@@ -89,6 +90,7 @@ export default class Tank extends Renderable {
         this.speed = TANK_SPEED;
         this.username = `Player${Math.floor(Math.random() * 100000)}`;
         this.score = 0;
+        this.ready = false;
 
         this.createCollider();
         this.tint = [0, 0, 0];
@@ -115,7 +117,8 @@ export default class Tank extends Renderable {
         let truthyStuff =
             (this.isDead ? 1 : 0) +
             (this.invincible ? 2 : 0) +
-            (this.stealthed ? 4 : 0);
+            (this.stealthed ? 4 : 0) +
+            (this.ready ? 8 : 0);
 
         let data = [
             this.position.l()         // 0
@@ -142,8 +145,7 @@ export default class Tank extends Renderable {
         } else
             trimmedDataStr = trimmedData.join(',');
 
-        if (diff) // Update old diff
-            this.syncDataDiff = [...data];
+        this.syncDataDiff = [...data]; // Update old diff
         return trimmedDataStr;
     }
 
@@ -172,6 +174,7 @@ export default class Tank extends Renderable {
             this.isDead = (truthyStuff & 1) !== 0;
             this.invincible = (truthyStuff & 2) !== 0;
             this.stealthed = (truthyStuff & 4) !== 0;
+            this.ready = (truthyStuff & 8) !== 0;
         }
 
         // Client is free to lie about own rotation since you can rotate

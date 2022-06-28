@@ -56,10 +56,14 @@ roundButtons.forEach((btn, i) => {
 
 // Handle connections
 interface LobbyMessage {
-    type: TankSync;
+    type: TankSync | string;
     colors: Array<number>; // Array of the color index of each tank in the game
     round: number;
+    ready: string;
+    id: number;
 }
+
+const startGameButton: HTMLButtonElement | null = document.getElementById('start-game') as HTMLButtonElement | null;
 
 export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) {
     // Update colors
@@ -75,6 +79,9 @@ export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) 
                 colorButtons[colorIndex].disabled = false;
             } else
                 colorButtons[colorIndex].disabled = true;
+
+            if (!scoreElements[i])
+                continue;
             scoreElements[i].style.backgroundColor = Renderable.rgbToStr(TANK_COLORS[colorIndex]);
             scoreElements[i].style.color = TANK_TEXT_COLORS[colorIndex];
         }
@@ -85,7 +92,15 @@ export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) 
 
         if (gameState.tankIndex !== 0)
             roundButtons.forEach(b => b.disabled = true);
-    }
+    } else if (message.type === TankSync.CREATE_ALL_TANKS || message.type === TankSync.GENERIC_TANK_SYNC)
+        // Only two message types that cause a ready state change
+        if (startGameButton)
+            if (gameState.tankIndex === 0) {
+                startGameButton.innerText = 'Start Game!';
+                startGameButton.disabled = !gameState.tanks.every(tank => tank.ready) || gameState.tanks.length < 2;
+            } else
+                startGameButton.innerText = gameState.tanks[gameState.tankIndex].ready
+                    ? 'Unready Self' : 'Ready Self';
 }
 
 // Repeat requesting a color until loaded
@@ -119,3 +134,13 @@ function submitUsername() {
         username: usernameInput.value
     }));
 }
+
+
+// Ready or start game
+if (startGameButton)
+    startGameButton.onclick = () => {
+        // @ts-expect-error
+        window.connection.send(JSON.stringify({
+            type: 'READY'
+        }));
+    };

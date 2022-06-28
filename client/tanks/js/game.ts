@@ -93,8 +93,8 @@ connection.onmessage = message => {
         history.pushState({}, '', url);
     }
 
-    handleLobbyMessage(message, gameState);
     gameState.syncFromMessage(message);
+    handleLobbyMessage(message, gameState);
 };
 
 

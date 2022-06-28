@@ -154,10 +154,10 @@ wsServer.on('request', (request: any) => {
 
             client.username = message.username;
             game.onUsernameChange(client);
-        } else if (message.type === 'READY') // Ready up
+        } else if (message.type === 'READY') { // Ready up
             client.ready = !client.ready;
-            // TODO: broadcast ready state
-        else if (message.type === 'MOVE') { // Move
+            game.onReady(client);
+        } else if (message.type === 'MOVE') { // Move
             try {
                 game.onMove(client, message);
             } catch (e) {

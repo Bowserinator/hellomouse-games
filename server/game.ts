@@ -96,6 +96,14 @@ export default class Game {
     }
 
     /**
+     * Called when a client changes ready state
+     * @param {Client} client
+     */
+    onReady(client: Client) {
+        // Override
+    }
+
+    /**
      * Are all players ready?
      * @return {boolean}
      */

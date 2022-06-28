@@ -172,12 +172,13 @@ input[type=text]:focus {
     background-color: #444;
 }
 
-.text-button:hover {
+.text-button:hover:not(:disabled) {
     background-color: #666;
 }
 
 .text-button:disabled {
     cursor: not-allowed;
+    filter: brightness(60%);
 }
 
 .color-button {
