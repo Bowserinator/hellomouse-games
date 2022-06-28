@@ -137,12 +137,14 @@ wsServer.on('request', (request: any) => {
             if (!message.message)
                 return error(client, 'Invalid chat message', 'BAD_CHAT');
             // Strip html content, broadcast
+            let stripedMessage = message.message
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            if (stripedMessage.length > 1000)
+                stripedMessage = stripedMessage.slice(0, 998) + '..';
             game.broadcast({
                 type: 'CHAT',
-                message: message.message
-                    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-                    .slice(0, 1000) // TODO: add ...
+                message: stripedMessage
             });
         } else if (message.type === 'USERNAME') { // Username change
             // Missing or invalid username

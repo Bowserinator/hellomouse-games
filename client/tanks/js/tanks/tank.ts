@@ -42,6 +42,7 @@ export default class Tank extends Renderable {
     isFiring: boolean;
     isDead: boolean;
     firedThisTick: boolean; // Has it fired this tick?
+    missingPlayer: boolean; // If true player has disconnected
     id: number;
     score: number;
     invincible: boolean;
@@ -86,6 +87,7 @@ export default class Tank extends Renderable {
         this.isFiring = false;
         this.isDead = false;
         this.firedThisTick = false;
+        this.missingPlayer = false;
 
         // Other
         this.speed = TANK_SPEED;
@@ -96,6 +98,23 @@ export default class Tank extends Renderable {
         this.updateCollider();
         this.tint = [0, 0, 0];
         this.tintPrefix = '';
+    }
+
+    /** (Server + client side) reset relevant properties for a round */
+    reset() {
+        this.turretImageUrl = TANK_TURRET_IMAGE_URLS[Powerup.NONE];
+        this.changeBulletType(BulletType.NORMAL);
+        this.powerups = [];
+
+        this.velocity = new Vector(0, 0);
+        this.lastFired = 0; // UNIX timestamp last fired a bullet
+        this.invincible = false;
+        this.stealthed = false;
+        this.firedBullets = [];
+        this.movement = [Direction.NONE, Direction.NONE];
+        this.isFiring = false;
+        this.isDead = false;
+        this.firedThisTick = false;
     }
 
     /**
@@ -142,7 +161,8 @@ export default class Tank extends Renderable {
             (this.isDead ? 1 : 0) +
             (this.invincible ? 2 : 0) +
             (this.stealthed ? 4 : 0) +
-            (this.ready ? 8 : 0);
+            (this.ready ? 8 : 0) +
+            (this.missingPlayer ? 16 : 0);
 
         let data = [
             this.position.l()         // 0
@@ -185,6 +205,7 @@ export default class Tank extends Renderable {
             this.invincible = (truthyStuff & 2) !== 0;
             this.stealthed = (truthyStuff & 4) !== 0;
             this.ready = (truthyStuff & 8) !== 0;
+            this.missingPlayer = (truthyStuff & 16) !== 0;
         }
 
         // Client is free to lie about own rotation since you can rotate
@@ -341,6 +362,10 @@ export default class Tank extends Renderable {
 
     update(gameState: GameState, timestep: number) {
         if (this.isDead) return;
+        if (this.missingPlayer) {
+            gameState.killTank(this);
+            return;
+        }
 
         // @ts-ignore:next-line
         let dirMap: Record<Direction, number> = {};

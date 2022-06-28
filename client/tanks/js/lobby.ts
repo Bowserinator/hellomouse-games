@@ -66,41 +66,61 @@ interface LobbyMessage {
 const startGameButton: HTMLButtonElement | null = document.getElementById('start-game') as HTMLButtonElement | null;
 
 export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) {
-    // Update colors
-    if (message.type === TankSync.CHANGE_COLOR) {
-        colorButtons.forEach(btn => btn.disabled = false);
-        const scoreElements = getScoreElements();
+    switch (message.type) {
+        // Update colors
+        case TankSync.CHANGE_COLOR: {
+            colorButtons.forEach(btn => btn.disabled = false);
+            const scoreElements = getScoreElements();
 
-        for (let i = 0; i < message.colors.length; i++) {
-            const colorIndex = message.colors[i];
-            if (i === gameState.tankIndex) {
-                colorButtons.forEach(btn => btn.classList.remove('selected'));
-                colorButtons[colorIndex].classList.add('selected');
-                colorButtons[colorIndex].disabled = false;
-            } else
-                colorButtons[colorIndex].disabled = true;
+            for (let i = 0; i < message.colors.length; i++) {
+                const colorIndex = message.colors[i];
+                if (i === gameState.tankIndex) {
+                    colorButtons.forEach(btn => btn.classList.remove('selected'));
+                    colorButtons[colorIndex].classList.add('selected');
+                    colorButtons[colorIndex].disabled = false;
+                } else
+                    colorButtons[colorIndex].disabled = true;
 
-            if (!scoreElements[i])
-                continue;
-            scoreElements[i].style.backgroundColor = Renderable.rgbToStr(TANK_COLORS[colorIndex]);
-            scoreElements[i].style.color = TANK_TEXT_COLORS[colorIndex];
+                if (!scoreElements[i])
+                    continue;
+                scoreElements[i].style.backgroundColor = Renderable.rgbToStr(TANK_COLORS[colorIndex]);
+                scoreElements[i].style.color = TANK_TEXT_COLORS[colorIndex];
+            }
+            break;
         }
-    } else if (message.type === TankSync.CHANGE_ROUNDS) {
-        gameState.totalRounds = ROUND_ARRAY[message.round];
-        roundButtons.forEach(b => b.classList.remove('selected'));
-        roundButtons[message.round].classList.add('selected');
 
-        if (gameState.tankIndex !== 0)
-            roundButtons.forEach(b => b.disabled = true);
-    } else if (message.type === TankSync.CREATE_ALL_TANKS || message.type === TankSync.GENERIC_TANK_SYNC)
-        // Only two message types that cause a ready state change
-        if (startGameButton)
-            if (gameState.tankIndex === 0) {
-                startGameButton.innerText = 'Start Game!';
-                startGameButton.disabled = !gameState.tanks.every(tank => tank.ready) || gameState.tanks.length < 2;
-            } else
-                startGameButton.innerText = gameState.tanks[gameState.tankIndex].ready
-                    ? 'Unready Self' : 'Ready Self';
+        // Change round number
+        case TankSync.CHANGE_ROUNDS: {
+            gameState.totalRounds = ROUND_ARRAY[message.round];
+            roundButtons.forEach(b => b.classList.remove('selected'));
+            roundButtons[message.round].classList.add('selected');
+
+            if (gameState.tankIndex !== 0)
+                roundButtons.forEach(b => b.disabled = true);
+            break;
+        }
+
+        // Change in tank ready state
+        case TankSync.CREATE_ALL_TANKS:
+        case TankSync.GENERIC_TANK_SYNC: {
+            // Only two message types that cause a ready state change
+            if (startGameButton)
+                if (gameState.tankIndex === 0) {
+                    startGameButton.innerText = 'Start Game!';
+                    startGameButton.disabled = !gameState.tanks.every(tank => tank.ready) || gameState.tanks.length < 2;
+                } else
+                    startGameButton.innerText = gameState.tanks[gameState.tankIndex].ready
+                        ? 'Unready Self' : 'Ready Self';
+            break;
+        }
+
+        // Change in is in lobby, hide / show user config screen
+        case TankSync.STATE_SYNC: {
+            // @ts-expect-error
+            document.getElementById('lobby').style.display = gameState.inLobby ? 'block' : 'none';
+            break;
+        }
+    }
 }
 
 // Repeat requesting a color until loaded

@@ -6,7 +6,7 @@ import { Direction, Action, TankSync } from '../../client/tanks/js/types.js';
 import Tank from '../../client/tanks/js/tanks/tank.js';
 import Vector from '../../client/tanks/js/tanks/vector2d.js';
 import { generateMaze } from '../../client/tanks/js/tanks/map-gen.js';
-import { ROUND_ARRAY, TANK_COLORS } from '../../client/tanks/js/vars.js';
+import { PRE_ROUND_DELAY, ROUND_ARRAY, TANK_COLORS } from '../../client/tanks/js/vars.js';
 
 interface IntentMessage {
     action: Action;
@@ -37,6 +37,7 @@ class TankGame extends Game {
 
     dontSyncBullets: boolean; // Temp flag
     syncCount: number;
+    alreadyFilteredMissingTanks: boolean;
 
     constructor() {
         super();
@@ -47,6 +48,7 @@ class TankGame extends Game {
         this.playerTankIDMap = {}; // Map client.id -> index in tank array
         this.syncCount = 0;
         this.dontSyncBullets = false;
+        this.alreadyFilteredMissingTanks = false;
 
         this.startGameLoop();
     }
@@ -67,10 +69,33 @@ class TankGame extends Game {
         if (this.players.length >= MAX_PLAYERS)
             return false;
 
-        // TODO: if not in lobby reconnect
-
         let canJoin = super.onJoin(client);
-        if (canJoin && !this.playerTankIDMap[client.id]) {
+        if (!canJoin) return false;
+
+        if (!this.state.inLobby) {
+            // Try to reconnect to a missing player tank
+            let allowJoin = false;
+            for (let i = 0; i < this.state.tanks.length; i++) {
+                const tank = this.state.tanks[i];
+                if (tank.missingPlayer) {
+                    this.playerTankIDMap[client.id] = i;
+                    tank.missingPlayer = false;
+                    allowJoin = true;
+                    break;
+                }
+            }
+            if (!allowJoin) return false; // Reject joins outside of lobby
+
+            // Send game state + tanks
+            client.connection.sendUTF(JSON.stringify({
+                type: TankSync.CREATE_ALL_TANKS,
+                data: this.state.tanks.map(tank => tank.sync(false)),
+                id: this.playerTankIDMap[client.id]
+            }));
+            this.broadcast({ type: TankSync.STATE_SYNC, data: this.state.sync(false) });
+        }
+
+        if (this.state.inLobby && !this.playerTankIDMap[client.id]) {
             this.state.addTank(new Tank(new Vector(20, 20), 0));
             const i = this.state.tanks.length - 1;
             this.state.tanks[i].setTint(TANK_COLORS[i]); // TODO: find unused TANK_COLOR
@@ -80,12 +105,7 @@ class TankGame extends Game {
                 this.state.tanks[i].ready = true;
         }
 
-        // Send map, powerups & round information
-        client.connection.send(JSON.stringify({
-            type: TankSync.MAP_UPDATE,
-            seed: this.mapSeed
-        }));
-
+        // Send powerups & round information
         for (let powerup of this.state.powerupItems)
             client.connection.send(JSON.stringify(powerup.toAddedSyncMessage()));
 
@@ -94,7 +114,7 @@ class TankGame extends Game {
             round: ROUND_ARRAY.indexOf(this.state.totalRounds)
         }));
 
-        return canJoin;
+        return true;
     }
 
     onDisconnect(client: Client) {
@@ -104,7 +124,11 @@ class TankGame extends Game {
         if (!this.state.tanks[clientID])
             return;
 
-        // TODO: if not in lobby just mark tank as perma dead
+        // If not in lobby just mark tank as missing a player so user can reconnect
+        if (!this.state.inLobby) {
+            this.state.tanks[clientID].missingPlayer = true;
+            return;
+        }
 
         // All players with higher ids are shifted down 1
         for (let key of Object.keys(this.playerTankIDMap))
@@ -116,6 +140,26 @@ class TankGame extends Game {
         // Delete tank + update ready state of host
         this.state.tanks[0].ready = true;
         this.state.tanks.splice(clientID, 1);
+        this.recreateAllTanks();
+    }
+
+    /** Filter out tanks with missing players in lobby state */
+    filterMissingTanks() {
+        if (this.alreadyFilteredMissingTanks) return;
+
+        let tankToClientMap: Record<number, string> = {};
+        for (let key of Object.keys(this.playerTankIDMap))
+            tankToClientMap[this.playerTankIDMap[key]] = key;
+
+        this.state.tanks = this.state.tanks.filter(tank => !tank.missingPlayer);
+        for (let i = 0; i < this.state.tanks.length; i++) {
+            const tank = this.state.tanks[i];
+            if (i !== tank.id) {
+                this.playerTankIDMap[tankToClientMap[tank.id]] = i;
+                tank.id = i;
+            }
+        }
+        this.alreadyFilteredMissingTanks = true;
         this.recreateAllTanks();
     }
 
@@ -145,10 +189,15 @@ class TankGame extends Game {
         this.sendGameStateUpdates();
         this.sendTankUpdates();
         this.state.update();
-        this.sendNewExplosionUpdates();
-        this.sendBulletUpdates();
-        this.syncBullets();
-        this.sendPowerupUpdates();
+
+        if (!this.state.inLobby) {
+            this.alreadyFilteredMissingTanks = false;
+            this.sendNewExplosionUpdates();
+            this.sendBulletUpdates();
+            this.syncBullets();
+            this.sendPowerupUpdates();
+        } else
+            this.filterMissingTanks();
 
         this.state.clearDeltas();
     }
@@ -164,6 +213,13 @@ class TankGame extends Game {
     endGameLoop() {
         if (this.interval !== null)
             clearInterval(this.interval);
+    }
+
+    /**  Exit the lobby state and initiate the main game board */
+    startGame() {
+        // Conditions to start: 2 or more players all ready
+        if (this.everyoneReady() && this.state.tanks.length >= 2)
+            this.state.startGame();
     }
 
     /**
@@ -191,19 +247,24 @@ class TankGame extends Game {
     }
 
     onUsernameChange(client: Client) {
-        // TODO: only change if in lobby state
-        //  If not also change client username
-
         let clientID = this.playerTankIDMap[client.id];
         if (!this.state.tanks[clientID])
             return;
+
+        // Not in lobby, prohibit interaction
+        if (!this.state.inLobby) {
+            client.username = this.state.tanks[clientID].username;
+            return;
+        }
 
         this.state.tanks[clientID].setUsername(client.username);
     }
 
     onReady(client: Client) {
-        if (this.playerTankIDMap[client.id] === 0)
+        if (this.playerTankIDMap[client.id] === 0) {
             client.ready = true; // Host always ready
+            this.startGame();
+        }
         this.setReadyStates();
     }
 
@@ -212,7 +273,8 @@ class TankGame extends Game {
         if (!this.state.tanks[clientID])
             return;
 
-        // TODO: check if in lobby
+        // Not in lobby, prohibit interaction
+        if (!this.state.inLobby) return;
 
         switch (message.type) {
             // User changes color
@@ -258,19 +320,29 @@ class TankGame extends Game {
         if (!this.state.tanks[clientID] || this.state.tanks[clientID].isDead)
             return;
 
+        // Prevent inputs a certain time right after a round starts
+        // to avoid misclicks / advantages
+        const NO_CONTROLS = Date.now() - this.state.timeRoundStarted < PRE_ROUND_DELAY;
+
         switch (message.action) {
             case Action.MOVE_BEGIN: {
+                if (NO_CONTROLS) return;
+
                 // Request to move in a certain direction
                 this.state.tanks[clientID].movement[isVertical] = message.dir;
                 break;
             }
             case Action.MOVE_END: {
+                if (NO_CONTROLS) return;
+
                 // Request to stop moving in a certain direction
                 if (message.dir === this.state.tanks[clientID].movement[isVertical])
                     this.state.tanks[clientID].movement[isVertical] = Direction.NONE;
                 break;
             }
             case Action.FIRE: {
+                if (NO_CONTROLS) return;
+
                 // Request to begin firing, setting the tank's rotation to that direction
                 if (message.direction === undefined)
                     return;
@@ -283,6 +355,8 @@ class TankGame extends Game {
                 break;
             }
             case Action.STOP_FIRE: {
+                if (NO_CONTROLS) return;
+
                 // Request to cease firing
                 this.state.tanks[clientID].isFiring = false;
                 break;

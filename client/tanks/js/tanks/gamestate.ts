@@ -11,7 +11,7 @@ import Particle from './particle.js';
 import { generateMaze, getMazeSize } from './map-gen.js';
 import { PowerupItem } from './powerups/powerup-item.js';
 import { createPowerupFromType } from './powerups/powerups.js';
-import { CELL_SIZE, MAX_POWERUP_ITEMS, POWERUP_ITEM_SIZE, DELAY_POWERUP_SPAWN, POWERUPS_TO_SPAWN_AT_ONCE } from '../vars.js';
+import { CELL_SIZE, MAX_POWERUP_ITEMS, POWERUP_ITEM_SIZE, DELAY_POWERUP_SPAWN, POWERUPS_TO_SPAWN_AT_ONCE, DELAY_AFTER_WIN_ROUND } from '../vars.js';
 import Collider from './collision.js';
 import performStateDiff from '../util/diff.js';
 
@@ -69,6 +69,9 @@ export default class GameState {
 
     totalRounds: number;
     round: number;
+    previousRound: number; // Client only
+    timeSinceRoundEnded: number; // Server only
+    timeRoundStarted: number; // Server only
 
     camera: Camera; // Set in game.js
     zeroCameraCache: Camera; // Cached camera
@@ -112,8 +115,61 @@ export default class GameState {
 
         this.totalRounds = 20;
         this.round = 0;
+        this.previousRound = 0;
         this.inLobby = true;
+        this.timeSinceRoundEnded = -1;
+        this.timeRoundStarted = -1;
         this.syncDataDiff = [];
+    }
+
+    /** Go from lobby -> game */
+    startGame() {
+        this.inLobby = false;
+        this.tanks.forEach(tank => tank.score = 0); // Reset scores
+        this.startRound();
+    }
+
+    /** Start a new round */
+    startRound() {
+        this.timeRoundStarted = Date.now();
+
+        if (!this.isClientSide)
+            this.round++;
+
+        // Revive all tanks, remove powerups
+        this.tanks.forEach(tank => tank.reset());
+        this.walls = [];
+        this.bullets = [];
+        this.explosions = [];
+        this.particles = [];
+        this.powerupItems = [];
+        this.lastPowerupSpawn = Date.now();
+
+        // All rounds elapsed
+        if (!this.isClientSide && this.round > this.totalRounds) {
+            this.round = 0;
+            this.inLobby = true;
+            return;
+        }
+
+        // Regnerate maze + move tanks around
+        if (!this.isClientSide) {
+            let mapSeed = Math.floor(Math.random() * 100000000);
+            generateMaze(this, mapSeed);
+            this.mazeSeed = mapSeed;
+            this.spreadTanks();
+        }
+    }
+
+    /** Advance round if can (Server side only) */
+    advanceRoundCheck() {
+        if (!this.isClientSide)
+            if (this.timeSinceRoundEnded < 0 && this.getAliveTanks().length <= 1)
+                this.timeSinceRoundEnded = Date.now();
+            else if (this.timeSinceRoundEnded > 0 && Date.now() - this.timeSinceRoundEnded > DELAY_AFTER_WIN_ROUND) {
+                this.timeSinceRoundEnded = -1;
+                this.startRound();
+            }
     }
 
     /**
@@ -220,18 +276,24 @@ export default class GameState {
     /** Update tick, called BOTH on client & server */
     update() {
         let timestep = (Date.now() - this.lastUpdate) / 1000;
-        this.particles.forEach(particle => particle.update(this, timestep));
-        this.tanks.forEach(tank => tank.update(this, timestep));
-        this.bullets.forEach(bullet => bullet.update(this, timestep));
-        this.explosions.forEach(explosion => explosion.update(this, timestep));
-        this.powerupItems.forEach(item => item.update(this, timestep));
-        this.lastUpdate = Date.now();
 
-        if (!this.isClientSide && this.lastUpdate - this.lastPowerupSpawn > DELAY_POWERUP_SPAWN) {
-            this.lastPowerupSpawn = this.lastUpdate;
-            for (let i = 0; i < POWERUPS_TO_SPAWN_AT_ONCE; i++)
-                this.spawnRandomPowerup();
+        if (!this.inLobby) {
+            this.advanceRoundCheck();
+
+            this.particles.forEach(particle => particle.update(this, timestep));
+            this.tanks.forEach(tank => tank.update(this, timestep));
+            this.bullets.forEach(bullet => bullet.update(this, timestep));
+            this.explosions.forEach(explosion => explosion.update(this, timestep));
+            this.powerupItems.forEach(item => item.update(this, timestep));
+
+            if (!this.isClientSide && this.lastUpdate - this.lastPowerupSpawn > DELAY_POWERUP_SPAWN) {
+                this.lastPowerupSpawn = this.lastUpdate;
+                for (let i = 0; i < POWERUPS_TO_SPAWN_AT_ONCE; i++)
+                    this.spawnRandomPowerup();
+            }
         }
+
+        this.lastUpdate = Date.now();
     }
 
     /**
@@ -329,9 +391,10 @@ export default class GameState {
      */
     sync(diff = true) {
         let data = [
-            this.totalRounds,        // 0
-            this.round,              // 1
-            this.inLobby ? '1' : '0' // 2
+            this.totalRounds,         // 0
+            this.round,               // 1
+            this.inLobby ? '1' : '0', // 2
+            this.mazeSeed             // 3
         ];
 
         const diffResult = performStateDiff(data, diff, this.syncDataDiff);
@@ -378,15 +441,6 @@ export default class GameState {
                     if (message.extras[i])
                         this.bullets[this.bullets.length - 1].syncExtra(message.extras[i]);
                 }
-                break;
-            }
-
-            // New map seed
-            case TankSync.MAP_UPDATE: {
-                this.mazeSeed = message.seed;
-                let [w, h] = generateMaze(this, message.seed);
-                if (this.isClientSide)
-                    this.mazeLayer = generateMazeImage(this.walls, w, h);
                 break;
             }
 
@@ -447,10 +501,20 @@ export default class GameState {
 
                 if (arr[0] !== '')
                     this.totalRounds = parseInt(arr[0]);
-                if (arr[1] !== '')
+                if (arr[1] !== '') {
                     this.round = parseInt(arr[1]);
+                    if (this.round !== this.previousRound) {
+                        this.previousRound = this.round;
+                        this.startRound();
+                    }
+                }
                 if (arr[2] !== '')
                     this.inLobby = arr[2] === '1';
+                if (arr[3] !== '') {
+                    this.mazeSeed = parseInt(arr[3]);
+                    let [w, h] = generateMaze(this, this.mazeSeed);
+                    this.mazeLayer = generateMazeImage(this.walls, w, h);
+                }
                 break;
             }
         }

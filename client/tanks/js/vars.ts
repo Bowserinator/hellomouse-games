@@ -4,7 +4,9 @@ export const MAX_POWERUP_ITEMS = 20;
 export const DELAY_POWERUP_SPAWN = 10000; // How often (ms) to spawn a powerup
 export const POWERUPS_TO_SPAWN_AT_ONCE = 2;
 
-export const ROUND_ARRAY = [5, 10, 15, 20];
+export const ROUND_ARRAY = [5, 10, 15, 20]; // Round selection, make sure matches HTML!
+export const DELAY_AFTER_WIN_ROUND = 3000; // Delay in ms after a player wins a round to go to next round
+export const PRE_ROUND_DELAY = 1000; // Delay to prevent inputs before a round starts
 
 // Keyboard rotation rates (rad / 50ms)
 export const ROTATE_FAST = 0.2;

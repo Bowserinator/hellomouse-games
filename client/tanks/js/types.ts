@@ -30,7 +30,6 @@ export enum TankSync {
     STATE_SYNC,         // Game state stuff sync
     ADD_BULLET,
     REMOVE_BULLETS,
-    MAP_UPDATE,         // Maze layout (seed) change
     SYNC_ALL_BULLETS,   // Recreate all bullets (done periodically to avoid desync)
     ADD_EXPLOSIONS,
     ADD_POWERUP_ITEM,
