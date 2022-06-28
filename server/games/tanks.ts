@@ -40,10 +40,12 @@ class TankGame extends Game {
     alreadyFilteredMissingTanks: boolean;
 
     constructor() {
-        super();
+        super({
+            syncAfterMove: false, // Done in game loop
+            maxLobbies: 10        // This game is a bit expensive to run
+        });
         this.state = new GameState();
         this.interval = null;
-        this.syncAfterMove = false; // Syncing handled in game loop
 
         this.playerTankIDMap = {}; // Map client.id -> index in tank array
         this.syncCount = 0;

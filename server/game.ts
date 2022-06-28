@@ -4,13 +4,21 @@ export default class Game {
     uuid: string;
     players: Array<Client | null>;
     playerCount: number;
-    syncAfterMove: boolean;
+    type: string;
+    config: GameConfig;
 
-    constructor() {
+    constructor(config: GameConfig = {}) {
         this.uuid = '';
         this.players = [];
         this.playerCount = 0;
-        this.syncAfterMove = true;
+        this.type = ''; // Set in games.js
+        this.config = config;
+
+        // Config defaults
+        if (this.config.syncAfterMove === undefined)
+            this.config.syncAfterMove = true;
+        if (this.config.maxLobbies === undefined)
+            this.config.maxLobbies = 100;
     }
 
     /** Called when game is created */

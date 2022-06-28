@@ -1,6 +1,6 @@
 import config from './config.js';
 import Client from './client.js';
-import { createGame, removeGame, games } from './games.js';
+import { createGame, removeGame, games, canCreateGame } from './games.js';
 
 import { server as webSocketServer } from 'websocket';
 import http from 'http';
@@ -111,6 +111,10 @@ wsServer.on('request', (request: any) => {
                 return error(client, 'You\'re already in a game!', 'ALREADY_IN_GAME');
             if (!message.gameType) // Failed: missing game type
                 return error(client, 'Missing game type', 'NO_TYPE');
+
+            const canCreate = canCreateGame(message.gameType);
+            if (canCreate !== '')
+                return error(client, canCreate, 'FAILED_CREATE');
             if (!createGame(message.gameType, client))
                 return error(client, `Could not create game of type '${message.gameType}'`,
                     'FAILED_CREATE');
@@ -165,7 +169,7 @@ wsServer.on('request', (request: any) => {
             } catch (e) {
                 signale.error(e);
             }
-            if (game.syncAfterMove)
+            if (game.config.syncAfterMove)
                 gameStateSync(game.uuid);
         }
         game.onMessage(client, message);

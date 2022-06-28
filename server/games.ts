@@ -10,6 +10,11 @@ import Game from './game.js';
 const GAMES: any = {};
 const GAME_TYPES: Array<string> = [];
 
+export const games: { [id: string]: Game } = {}; // UUID: game
+const gameCount: Record<string, number> = {}; // Type: count
+const gameConfigs: { [id: string]: GameConfig } = {};
+
+// Load all games
 glob.sync('./server/games/**/*.js').forEach(async (file:string) => {
     let typeSplit = file.split('/');
     let type = typeSplit[typeSplit.length - 1].split('.')[0];
@@ -21,11 +26,24 @@ glob.sync('./server/games/**/*.js').forEach(async (file:string) => {
 
     GAMES[type] = (await import(path.resolve(file))).default;
     GAME_TYPES.push(type);
+    gameConfigs[type] = new GAMES[type]().config;
 });
 
-let games: { [id: string]: Game };
-games = {}; // UUID: game
 
+/**
+ * Check if a game of a type can be created
+ * @param {string} type
+ * @returns {string} Error message, or '' if legal
+ */
+export function canCreateGame(type: string) {
+    if (!GAME_TYPES.includes(type))
+        return `Error: Game of type '${type}' does not exist`;
+    // Can't be undefined since a default is generated in the game
+    // @ts-expect-error
+    if (!gameConfigs[type] || gameCount[type] >= gameConfigs[type].maxLobbies)
+        return `Error: Too many '${type}' lobbies currently active, try again later`;
+    return '';
+}
 
 /**
  * Create a game
@@ -33,7 +51,7 @@ games = {}; // UUID: game
  * @param {Client} host
  * @return {boolean} Allowed to create
  */
-function createGame(type: string, host: Client): boolean {
+export function createGame(type: string, host: Client): boolean {
     if (!GAME_TYPES.includes(type))
         return false;
 
@@ -41,8 +59,13 @@ function createGame(type: string, host: Client): boolean {
 
     game.uuid = crypto.randomBytes(16).toString('hex');
     game.onRoomCreate();
+    game.type = type;
     games[game.uuid] = game;
     host.gameID = game.uuid;
+
+    if (!gameCount[game.type])
+        gameCount[game.type] = 0;
+    gameCount[game.type]++;
 
     return true;
 }
@@ -51,14 +74,13 @@ function createGame(type: string, host: Client): boolean {
  * Remove a game from active games list
  * @param {string} uuid of game to remove
  */
-function removeGame(uuid: string) {
+export function removeGame(uuid: string) {
     if (!games[uuid]) return;
     for (let player of games[uuid].players)
         if (player !== null)
             player.gameID = '';
+    gameCount[games[uuid].type]--;
     games[uuid].onRemove();
 
     delete games[uuid];
 }
-
-export { createGame, removeGame, games };

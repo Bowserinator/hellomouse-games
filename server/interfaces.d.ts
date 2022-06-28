@@ -12,3 +12,9 @@ interface MessageData {
     message?: string;
     username?: string;
 }
+
+// Game config
+interface GameConfig {
+    syncAfterMove?: boolean;
+    maxLobbies?: number;
+}
