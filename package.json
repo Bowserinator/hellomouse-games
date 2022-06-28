@@ -6,10 +6,11 @@
   "scripts": {
     "serve": "cd build && node server/server.js",
     "build": "tsc -p tsconfig.json",
-    "scss": "sass --style=compressed --watch scss/:client/",
+    "scssHot": "sass --style=compressed --watch scss/:client/",
+    "scss": "sass --style=compressed scss/:client/",
     "copyfiles": "cp -RTn ./client ./build/client",
-    "minify": "minify-all-js ./build/client",
-    "buildAll": "npm-run-all build copyfiles minify"
+    "minify": "minify-all-js ./build",
+    "buildAll": "npm-run-all build scss copyfiles minify"
   },
   "devDependencies": {
     "@babel/core": "^7.17.10",

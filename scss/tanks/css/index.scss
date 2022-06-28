@@ -1,0 +1,336 @@
+body {
+    background-color: #eee;
+    font-family: 'Rajdhani', sans-serif;
+    margin: 0;
+    overflow: hidden;
+}
+
+// Dark theme <hr>
+hr {  border-bottom: 1px solid #444; }
+
+button {
+    margin: 0;
+    display: block;
+    padding: 7px;
+    width: 100%;
+    border-radius: 2px;
+
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16pt;
+    text-align: left;
+
+    border: none;
+    outline: none;
+    background-color: transparent;
+    color: #ddd;
+    transition: background-color 0.2s, color 0.2s;
+
+    &:hover {
+        color: white;
+        cursor: pointer;
+    }
+}
+
+input[type=text] {
+    outline: none;
+    border: none;
+    padding: 14px;
+
+    background-color: #333;
+    color: #ddd;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15pt;
+    border-radius: 2px;
+    transition: background-color 0.2s;
+
+    &:focus {
+        background-color: #444;
+    }
+}
+
+
+// When disconnected from the server
+#disconnect-banner {
+    background-color: #ff5f52;
+    z-index: 999;
+    position: fixed;
+    left: 0;
+
+    width: 100%;
+    padding: 7px 14px;
+    text-align: center;
+    font-size: 13pt;
+    transition: top 0.2s;
+}
+
+
+// ------------------
+// Sidebar stuff
+// ------------------
+#sidebar {
+    background-color: #222;
+    border-left: 3px solid #444;
+    color: white;
+
+    z-index: 990;
+    position: fixed;
+    right: 0;
+    top: 0;
+
+    box-sizing: border-box;
+    padding: 14px;
+    width: 250px;
+    height: 100%;
+    text-align: left;
+    font-size: 16pt;
+    user-select: none;
+}
+
+#sidebar button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+// Game title
+#sidebar > h1 {
+    margin: 0 0 10px 0;
+}
+
+#sidebar .score {
+    margin: 4px;
+    background-color: red;
+    color: black;
+    padding: 7px;
+    border-radius: 2px;
+    height: 27px;
+
+    &.you { // Indicate which score is the player's
+        border: 3px solid white;
+    }
+    &.dead { // When user is dead or not ready
+        opacity: 0.4;
+        filter: grayscale(40%);
+    }
+
+    // Text inside, truncated
+    & > .username {
+        width: 160px;
+    }
+    & > .score-number {
+        float: right;
+        width: 30px;
+    }
+    & > .username,
+    & > .score-number {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+    }
+}
+
+
+// ------------------
+// Modals
+// ------------------
+.modal {
+    width: 600px;
+    max-width: 90%;
+    max-height: 90%;
+    background-color: #111;
+    color: #eee;
+    border: 2px solid black;
+
+    position: relative;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.powerup-tutorial-img {
+    width: 18px;
+    height: 18px;
+    margin-right: 4px;
+    position: relative;
+    top: 4px;
+}
+
+
+
+// ------------------
+// Lobby
+// ------------------
+#lobby {
+    width: calc(100% - 250px);
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+
+    background-color: #222;
+    color: #ddd;
+    padding: 40px;
+
+    label {
+        font-size: 14pt;
+    }
+}
+
+.text-button {
+    width: auto;
+    display: inline-block;
+    font-size: 15pt;
+    height: 54px;
+    padding: 7px 14px; 
+    background-color: #444;
+
+    &:hover:not(:disabled) {
+        background-color: #666;
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        filter: brightness(60%);
+    }
+}
+
+.color-button {
+    width: 40px;
+    height: 40px;
+    background-color: red;
+    display: inline-block;
+    margin: 0 3px 3px 0;
+    filter: brightness(90%);
+    transition: filter 0.2s;
+
+    &:hover {
+        filter: brightness(100%);
+    }
+    &:disabled {
+        opacity: 0.15;
+    }
+}
+
+.selectable-button {
+    border: 3px solid transparent;
+
+    &.selected {
+        border: 3px solid white;
+    }
+}
+
+
+// ------------------
+// Leaderboard table
+// ------------------
+.leaderboard {
+    width: 100%;
+    font-size: 16pt;
+    border: none;
+    border-collapse: collapse;
+
+    td, th {
+        text-align: left;
+        padding: 4px 8px;
+        border: none;
+        margin: 0;
+        color: #aaa;
+    }
+
+    th {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .first td {
+        background-color: #ffc778;
+        color: rgba(0, 0, 0, 0.8);
+    }
+    .second td {
+        background-color: #d9d9d9;
+        color: rgba(0, 0, 0, 0.8);
+    }
+    .third td {
+        background-color: #faa76b;
+        color: rgba(0, 0, 0, 0.8);
+    }
+}
+
+
+
+// ------------------
+// Invite link
+// ------------------
+.game-link {
+    font-size: 12pt;
+    margin-bottom: 0;
+
+    border-bottom: 1px solid #777;
+    white-space: nowrap;
+    color: #ddd;
+    background-color: rgba(0, 0, 0, 0.02);
+    padding: 12px;
+    overflow-x: auto;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    user-select: none;
+
+    & > small {
+        color: #bbb;
+    }
+}
+
+@keyframes flash {
+    from { background-color: rgba(0, 0, 0, 0.4); }
+    to { background-color: rgba(0, 0, 0, 0.02); }
+}
+
+.game-link.flash {
+    animation: flash 0.3s ease-in-out 0s;
+}
+
+
+
+// Thinner scrollbar
+::-webkit-scrollbar {
+    width: 4px;
+    height: 2px;
+}
+
+::-webkit-scrollbar-button {
+    width: 0px;
+    height: 0px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #e1e1e1;
+    border: 0px none #ffffff;
+    border-radius: 50px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #ffffff;
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: #000000;
+}
+
+::-webkit-scrollbar-track {
+    background: #666666;
+    border: 0px none #ffffff;
+    border-radius: 50px;
+}
+
+::-webkit-scrollbar-track:hover {
+    background: #666666;
+}
+
+::-webkit-scrollbar-track:active {
+    background: #333333;
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
