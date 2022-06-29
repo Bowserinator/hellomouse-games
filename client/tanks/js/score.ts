@@ -25,9 +25,11 @@ export function startScoreKeeping(gameState: GameState) {
             roundLabel.innerText = newRoundText;
 
         // Update score board
-        if (gameState.tanks.length !== scoreElements.length)
+        if (gameState.tanks.length !== scoreElements.length) {
             createScoreElements(gameState);
-        else
+            // @ts-expect-error
+            beep();
+        } else
             // Set scores
             for (let i = 0; i < gameState.tanks.length; i++) {
                 const tank = gameState.tanks[i];

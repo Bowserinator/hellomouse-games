@@ -48,6 +48,11 @@ input[type=text] {
     }
 }
 
+.modal-close-button {
+    float: right;
+    width: 30px;
+}
+
 // Ping indicator
 #ping {
     z-index: 500;
