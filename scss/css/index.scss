@@ -1,0 +1,75 @@
+// Main page to show off all the games
+body {
+    padding: 30px;
+    font-family: 'Lato', sans-serif;
+    background-color: #fafafa;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Raleway', sans-serif;
+}
+
+.heading {
+    margin: 0;
+}
+
+:root {
+    --shadow-color: 0deg 0% 66%;
+    --shadow-elevation-low:
+        0px 0.6px 0.5px hsl(var(--shadow-color) / 0.91),
+        0px 2.3px 1.7px -4.9px hsl(var(--shadow-color) / 0.46);
+    --shadow-elevation-medium:
+        0px 0.6px 0.5px hsl(var(--shadow-color) / 0.84),
+        0px 2px 1.5px -2.5px hsl(var(--shadow-color) / 0.57),
+        -0.2px 11.5px 8.7px -4.9px hsl(var(--shadow-color) / 0.29);
+    --shadow-elevation-high:
+        0px 0.6px 0.5px hsl(var(--shadow-color) / 0.94),
+        0px 1.5px 1.1px -1.2px hsl(var(--shadow-color) / 0.76),
+        -0.1px 7.4px 5.6px -2.5px hsl(var(--shadow-color) / 0.57),
+        -0.3px 23.3px 17.7px -3.7px hsl(var(--shadow-color) / 0.38),
+        -0.7px 54.3px 41.1px -4.9px hsl(var(--shadow-color) / 0.2);
+}
+
+.card {
+    width: 330px;
+    max-width: 90%;
+    display: inline-block;
+    margin: 0 15px 15px 0;
+
+    text-decoration: none;
+    color: black;
+
+    box-shadow: var(--shadow-elevation-low);
+    transition: box-shadow 0.2s;
+    background-color: white;
+
+    // Card body
+    & > .body {
+        padding: 15px;
+
+        // Card title
+        & > h2 {
+            font-size: 16pt;
+            margin: 0;
+        }
+
+        & > p {
+            margin: 5px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    // Card image
+    & > img {
+        width: 100%;
+        height: 170px;
+        object-fit: cover;
+    }
+}
+
+.card:hover {
+    box-shadow: var(--shadow-elevation-medium);
+    cursor: pointer;
+}
