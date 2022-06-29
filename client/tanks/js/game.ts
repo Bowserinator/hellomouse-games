@@ -2,12 +2,13 @@ import Vector from './tanks/vector2d.js';
 import GameState from './tanks/gamestate.js';
 import { Direction, Action } from './types.js';
 import Camera from './renderer/camera.js';
-import { CAMERA_EDGE_MARGIN, ROTATE_FAST, ROTATE_SLOW } from './vars.js';
+import { CAMERA_EDGE_MARGIN, ROTATE_FAST, ROTATE_SLOW, SPECTATE_DELAY } from './vars.js';
 
 import connection from './client.js';
 import { setGlobalVolume } from './sound/sound.js';
 import { startScoreKeeping } from './score.js';
 import { handleLobbyMessage } from './lobby.js';
+import Tank from './tanks/tank.js';
 
 const canvas: HTMLCanvasElement = document.getElementById('board') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
@@ -52,16 +53,14 @@ gameLink.onclick = () => copyLinkToClipboard(inviteLink.innerText);
  * Board + gamestate updating and rendering
  * ----------------------------------
  */
-function drawBoard() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (!gameState.camera)
-        gameState.camera = new Camera(new Vector(0, 0), ctx);
-
-    // This is all centering the camera
-    if (gameState.tanks[gameState.tankIndex])
-        gameState.camera.position = gameState.tanks[gameState.tankIndex].position.add(
-            new Vector(-canvas.width / 2, -canvas.height / 2));
+/**
+ * Center a camera on a tank + take into account arena size
+ * @param tank? Tank to center camera on
+ */
+function centerCamera(tank?: Tank) {
+    if (tank)
+        gameState.camera.position = tank.position.add(new Vector(-canvas.width / 2, -canvas.height / 2));
 
     gameState.camera.position.x = Math.max(-CAMERA_EDGE_MARGIN, gameState.camera.position.x);
     gameState.camera.position.y = Math.max(-CAMERA_EDGE_MARGIN, gameState.camera.position.y);
@@ -77,16 +76,72 @@ function drawBoard() {
         gameState.camera.position.y =
             Math.min(gameState.mazeLayer.height - canvas.height + CAMERA_EDGE_MARGIN, gameState.camera.position.y);
     }
+}
+
+let spectateIndex = 0; // Who are you spectating?
+let lastDieTime = -1; // Last time you died, or -1 if alive
+
+/**
+ * Get a tank to currently spectate based on spectateIndex
+ * @returns Tank
+ */
+function getSpectateTank() {
+    const aliveTanks = gameState.getAliveTanks();
+    const l = aliveTanks.length;
+    if (!l) return undefined;
+    return aliveTanks[((spectateIndex % l) + l) % l];
+}
+
+
+function drawBoard() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (!gameState.camera)
+        gameState.camera = new Camera(new Vector(0, 0), ctx);
+
+    // Center on self, or if dead, spectate another player
+    let tankToCenterOn: Tank | undefined = gameState.tanks[gameState.tankIndex];
+    if (tankToCenterOn && tankToCenterOn.isDead) {
+        if (lastDieTime < 0)
+            lastDieTime = Date.now();
+    } else
+        lastDieTime = -1;
+
+    // Spectate after a short delay after dying
+    const isSpectating = lastDieTime > 0 && Date.now() - lastDieTime > SPECTATE_DELAY;
+    if (isSpectating) tankToCenterOn = getSpectateTank();
+
+    centerCamera(tankToCenterOn);
 
     // Actually draw the state
     gameState.draw();
+
+    // Render if spectating message
+    if (tankToCenterOn && isSpectating) {
+        ctx.font = '14pt Rajdhani';
+
+        const spectatingMessage = `You are spectating ${tankToCenterOn.username}`;
+        const helpString = 'Press LEFT or RIGHT to switch user';
+        const x = canvas.width / 2;
+        const y = canvas.height - 100;
+
+        const width = Math.max(
+            ctx.measureText(helpString).width,
+            ctx.measureText(spectatingMessage).width
+        ) + 25;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(x - width / 2, y - 20, width, 50);
+
+        ctx.fillStyle = 'white';
+        ctx.fillText(spectatingMessage, x, y);
+        ctx.fillText(helpString, x, y + 23);
+    }
+
+    window.requestAnimationFrame(drawBoard);
 }
 
-function animFrame() {
-    drawBoard();
-    window.requestAnimationFrame(animFrame);
-}
-window.requestAnimationFrame(animFrame);
+window.requestAnimationFrame(drawBoard);
 
 
 // Update rate should be the same as server
@@ -185,6 +240,12 @@ window.onkeydown = e => {
     let dir = keyToDirection(e.key.toLowerCase());
     if (dir !== null) // Can send a move request in a valid direction
         connection.send(JSON.stringify({ type: 'MOVE', action: Action.MOVE_BEGIN, dir: dir }));
+
+    // Spectator change tank
+    if (e.key.toLowerCase() === 'arrowleft')
+        spectateIndex++;
+    else if (e.key.toLowerCase() === 'arrowright')
+        spectateIndex--;
 
     keys[e.key.toLowerCase()] = 1;
 

@@ -7,6 +7,7 @@ export const POWERUPS_TO_SPAWN_AT_ONCE = 2;
 export const ROUND_ARRAY = [5, 10, 15, 20]; // Round selection, make sure matches HTML!
 export const DELAY_AFTER_WIN_ROUND = 3000; // Delay in ms after a player wins a round to go to next round
 export const PRE_ROUND_DELAY = 1000; // Delay to prevent inputs before a round starts
+export const SPECTATE_DELAY = 1500; // Delay after dying before spectating
 
 // Keyboard rotation rates (rad / 50ms)
 export const ROTATE_FAST = 0.2;
