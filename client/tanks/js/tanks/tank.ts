@@ -382,8 +382,10 @@ export default class Tank extends Renderable {
         this.updateBaseRotation(timestep);
         this.updateRotation('rotation', 'visualTurretRotation', TANK_TURRET_ROTATION_RATE, timestep);
 
-        this.position.x += this.velocity.x * timestep;
-        this.position.y += this.velocity.y * timestep;
+        if (!gameState.shouldInhibitMovement()) {
+            this.position.x += this.velocity.x * timestep;
+            this.position.y += this.velocity.y * timestep;
+        }
         this.updateCollider();
 
         // Wall + tank collisions
@@ -399,7 +401,7 @@ export default class Tank extends Renderable {
                 this.updateCollider();
             }
 
-        if (this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
+        if (!gameState.shouldInhibitMovement() && this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
             this.firedBullets = this.firedBullets.filter(b => !b.isDead && b.type === this.bulletType);
             if (this.firedBullets.length < (this.fakeBullet.config.maxAmmo || 1)) {
                 // Check if firing would collide with a wall

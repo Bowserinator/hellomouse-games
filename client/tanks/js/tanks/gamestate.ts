@@ -11,7 +11,7 @@ import Particle from './particle.js';
 import { generateMaze, getMazeSize } from './map-gen.js';
 import { PowerupItem } from './powerups/powerup-item.js';
 import { createPowerupFromType } from './powerups/powerups.js';
-import { CELL_SIZE, MAX_POWERUP_ITEMS, POWERUP_ITEM_SIZE, DELAY_POWERUP_SPAWN, POWERUPS_TO_SPAWN_AT_ONCE, DELAY_AFTER_WIN_ROUND } from '../vars.js';
+import { CELL_SIZE, MAX_POWERUP_ITEMS, POWERUP_ITEM_SIZE, DELAY_POWERUP_SPAWN, POWERUPS_TO_SPAWN_AT_ONCE, DELAY_AFTER_WIN_ROUND, PRE_ROUND_DELAY } from '../vars.js';
 import Collider from './collision.js';
 import performStateDiff from '../util/diff.js';
 
@@ -217,6 +217,16 @@ export default class GameState {
      */
     getAliveTanks() {
         return this.tanks.filter(tank => !tank.isDead);
+    }
+
+    /**
+     * Should inhibit movement? Applies to firing and moving, but not rotation
+     * @returns Should inhibit moving
+     */
+    shouldInhibitMovement() {
+        // Prevent inputs a certain time right after a round starts
+        // to avoid misclicks / advantages
+        return Date.now() - this.timeRoundStarted < PRE_ROUND_DELAY;
     }
 
     /**

@@ -6,7 +6,7 @@ import { Direction, Action, TankSync } from '../../client/tanks/js/types.js';
 import Tank from '../../client/tanks/js/tanks/tank.js';
 import Vector from '../../client/tanks/js/tanks/vector2d.js';
 import { generateMaze } from '../../client/tanks/js/tanks/map-gen.js';
-import { PRE_ROUND_DELAY, ROUND_ARRAY, TANK_COLORS } from '../../client/tanks/js/vars.js';
+import { ROUND_ARRAY, TANK_COLORS } from '../../client/tanks/js/vars.js';
 
 interface IntentMessage {
     action: Action;
@@ -350,29 +350,19 @@ class TankGame extends Game {
         if (!this.state.tanks[clientID] || this.state.tanks[clientID].isDead)
             return;
 
-        // Prevent inputs a certain time right after a round starts
-        // to avoid misclicks / advantages
-        const NO_CONTROLS = Date.now() - this.state.timeRoundStarted < PRE_ROUND_DELAY;
-
         switch (message.action) {
             case Action.MOVE_BEGIN: {
-                if (NO_CONTROLS) return;
-
                 // Request to move in a certain direction
                 this.state.tanks[clientID].movement[isVertical] = message.dir;
                 break;
             }
             case Action.MOVE_END: {
-                if (NO_CONTROLS) return;
-
                 // Request to stop moving in a certain direction
                 if (message.dir === this.state.tanks[clientID].movement[isVertical])
                     this.state.tanks[clientID].movement[isVertical] = Direction.NONE;
                 break;
             }
             case Action.FIRE: {
-                if (NO_CONTROLS) return;
-
                 // Request to begin firing, setting the tank's rotation to that direction
                 if (message.direction === undefined)
                     return;
@@ -385,8 +375,6 @@ class TankGame extends Game {
                 break;
             }
             case Action.STOP_FIRE: {
-                if (NO_CONTROLS) return;
-
                 // Request to cease firing
                 this.state.tanks[clientID].isFiring = false;
                 break;
