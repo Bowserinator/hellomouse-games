@@ -127,6 +127,12 @@ wsServer.on('request', (request: any) => {
             });
             gameStateSync(client.gameID);
             return;
+        } else if (message.type === 'PING') {
+            if (!message.ping || Number.isNaN(message.ping)) return;
+            return send(client, {
+                type: 'PING',
+                ping: message.ping
+            });
         }
 
         // All of the remaining parses require the user to be in a game:

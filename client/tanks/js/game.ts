@@ -119,6 +119,7 @@ interface ServerMessage {
     code: string;
     uuid: string;
     error: string;
+    ping: number;
 }
 
 connection.onmessage = (msg: { data: string }) => {
@@ -133,6 +134,9 @@ connection.onmessage = (msg: { data: string }) => {
         let url = window.location.href.split('?')[0] + '?' + message.uuid;
         history.pushState({}, '', url);
         inviteLink.innerText = url;
+    } else if (message.type === 'PING') {
+        const ping = document.getElementById('ping') as HTMLParagraphElement;
+        ping.innerText = 'Ping: ' + (Date.now() - +message.ping) + ' ms';
     }
 
     gameState.syncFromMessage(message as any);
@@ -306,6 +310,11 @@ window.onresize();
  */
 const DISCONNECT_BANNER = document.getElementById('disconnect-banner');
 setInterval(() => {
+    // Ping server
+    if (isConnected())
+        // @ts-expect-error
+        window.connection.send(JSON.stringify({ type: 'PING', ping: Date.now() }));
+
     if (!DISCONNECT_BANNER) return;
     if (connection.readyState !== WebSocket.CLOSED)
         DISCONNECT_BANNER.style.top = '-100px';

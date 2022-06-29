@@ -48,6 +48,17 @@ input[type=text] {
     }
 }
 
+// Ping indicator
+#ping {
+    z-index: 500;
+    background-color: rgba(0, 0, 0, 0.4);
+    color: white;
+    padding: 6px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    user-select: none;
+}
 
 // When disconnected from the server
 #disconnect-banner {

@@ -11,6 +11,7 @@ interface MessageData {
     gameType?: string;
     message?: string;
     username?: string;
+    ping?: number;
 }
 
 // Game config
