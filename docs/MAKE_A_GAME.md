@@ -245,7 +245,7 @@ Under `scss/shared/css/index.scss`:
 `.modal` - Easy modal placement, only requires you to style the modal:
 
 ```html
-<div class="modal-darken" style="display: none"></div>
+<div class="modal-darken" style="display: none">
 	<div class="modal">
 		<!-- Modal content -->
 	</div>
