@@ -36,7 +36,7 @@ import display from "./display.js";
 import calculateDistances from "./distances.js";
 import solve from "./solve.js";
 import braid from "./braid.js";
-import analyze from "./analyze.js";
+import analyze from "./amaze.js";
 
 //Publicly exposed APIs should go in Maze
 
