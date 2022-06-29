@@ -272,7 +272,8 @@ class TankGame extends Game {
             if (this.state.tanks[id]) {
                 if (id === 0) player.ready = true; // Host always ready
                 this.state.tanks[id].ready = player.ready;
-            }
+            } else
+                player.ready = true; // There should be no players that are not assigned a tank but just in case
         }
     }
 

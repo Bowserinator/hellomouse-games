@@ -115,7 +115,7 @@ export default class Game {
      * @return {boolean}
      */
     everyoneReady(): boolean {
-        return this.players.every(x => x !== null && x.ready);
+        return this.players.filter(x => x !== null).every(x => (x as Client).ready);
     }
 
     /**
