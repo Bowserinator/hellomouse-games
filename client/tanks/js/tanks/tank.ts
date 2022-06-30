@@ -6,7 +6,7 @@ import Explosion from './explosion.js';
 import { Bullet } from './bullets/bullets.js';
 import {
     TANK_SPEED, TANK_SIZE, TANK_TURRET_SIZE, TANK_FIRE_DELAY,
-    TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE, UPDATE_EVERY_N_MS, MAX_LATENCY_COMP_MS, SYNC_DISTANCE_THRESHOLD, MAX_PREV_TANK_POS } from '../vars.js';
+    TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE, UPDATE_EVERY_N_MS, MAX_LATENCY_COMP_MS, SYNC_DISTANCE_THRESHOLD, MAX_PREV_TANK_POS, MAX_LERP_DISTANCE_THRESHOLD, POS_SMOOTHING_RATE } from '../vars.js';
 
 import { PowerupSingleton, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
 
@@ -57,7 +57,10 @@ export default class Tank extends Renderable {
     speed: number;
     oldSpeed: number;
     dirMapCache: Record<Direction, number>;
+
+    // Lag comp
     previousLocations: Array<[number, Vector]>;
+    targetLocation: Vector; // Client only
 
     constructor(pos: Vector, rotation: number, id = -1) {
         super([
@@ -99,6 +102,7 @@ export default class Tank extends Renderable {
         // @ts-expect-error
         this.dirMapCache = {};
         this.previousLocations = []; // Used for lag comp
+        this.targetLocation = this.position;
 
         this.username = `Player${Math.floor(Math.random() * 100000)}`;
         this.score = 0;
@@ -201,8 +205,11 @@ export default class Tank extends Renderable {
         let arr = data.split(',');
 
         if (arr[0] !== '') {
-            let newPos = new Vector(...(arr[0].split('|').map((x: string) => +x)) as [number, number]);
-            if (newPos.distance(this.position) > SYNC_DISTANCE_THRESHOLD)
+            const newPos = new Vector(...(arr[0].split('|').map((x: string) => +x)) as [number, number]);
+            const dis = newPos.distance(this.position);
+            if (gameState.tankIndex !== this.id || dis > SYNC_DISTANCE_THRESHOLD)
+                this.targetLocation = newPos;
+            if (dis > MAX_LERP_DISTANCE_THRESHOLD)
                 this.position = newPos;
         }
         if (arr[2] !== '' && gameState.tankIndex !== this.id)
@@ -449,45 +456,17 @@ export default class Tank extends Renderable {
             }
     }
 
-    /**
-     * Perform movement lag compensation on the server side
-     * @param gameState GameState
-     * @param time Time the move was passed (A Date.now(), must be before now)
-     * @param desiredMovement Desired movement direction [x, y] in Direction enums
-     */
-    performMovementLagCompensation(gameState: GameState, time: number | undefined,
-        desiredMovement: [Direction, Direction]) {
-        if (!time) return;
-        let timestep = Date.now() - time;
-
-        if (timestep < 0) return; // Not possible, hacking
-        if (gameState.shouldInhibitMovement()) return;
-
-        timestep = Math.min(MAX_LATENCY_COMP_MS / 1000, timestep / 1000);
-
-        // Perform rollback, interpolate between previous positions
-        for (let i = this.previousLocations.length - 1; i >= 0; i--) {
-            const [t, prevLoc] = this.previousLocations[i];
-            if (t < time || i === 0) {
-                const nextLoc = this.previousLocations[i + 1] || [Date.now(), this.position];
-                const timePercent = invInterlop(time, t, nextLoc[0]);
-
-                this.position.x = interpol(prevLoc.x, nextLoc[1].x, timePercent);
-                this.position.y = interpol(prevLoc.y, nextLoc[1].y, timePercent);
-                this.updateCollider();
-                break;
-            }
-        }
-
-        // Perform current move
-        this.performMove(gameState, desiredMovement, timestep, false);
-    }
-
     update(gameState: GameState, timestep: number) {
         if (this.isDead) return;
         if (this.missingPlayer) {
             gameState.killTank(this);
             return;
+        }
+
+        // If client ease to target location
+        if (gameState.isClientSide) {
+            this.position.x = interpol(this.position.x, this.targetLocation.x, POS_SMOOTHING_RATE);
+            this.position.y = interpol(this.position.y, this.targetLocation.y, POS_SMOOTHING_RATE);
         }
 
         // Store previous locations

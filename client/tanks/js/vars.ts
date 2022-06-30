@@ -10,9 +10,16 @@ export const SYNC_BULLETS_EVERY_N_TIMES = 10; // How many iterations to sync bul
 export const MAX_LATENCY_COMP_MS = 250;
 
 // Avoid microstutters: don't change location until it differs by at least this amount:
-export const SYNC_DISTANCE_THRESHOLD = 20;
+export const SYNC_DISTANCE_THRESHOLD = 6;
 
-// Better position rollnack
+// Smoothing rate for lerping server location. Too low makes the arena feel frictionless,
+// too high feels too jumpy
+export const POS_SMOOTHING_RATE = 0.6;
+
+// Beyond this error don't smoothly move the tank
+export const MAX_LERP_DISTANCE_THRESHOLD = 200;
+
+// Better position rollback
 export const MAX_PREV_TANK_POS = Math.ceil(MAX_LATENCY_COMP_MS / UPDATE_EVERY_N_MS);
 
 // Game

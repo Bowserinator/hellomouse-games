@@ -344,31 +344,16 @@ class TankGame extends Game {
         if (!this.state.tanks[clientID] || this.state.tanks[clientID].isDead)
             return;
 
-        // Helper to perform move lag compensation
-        const moveCompensate = (direction: Direction) => {
-            const tank = this.state.tanks[clientID];
-            let movement = [...tank.movement] as [Direction, Direction];
-            movement[isVertical] = direction;
-
-            // Don't move compensate if direction is the same
-            if (tank.movement[0] === movement[0] && tank.movement[1] === movement[1])
-                return;
-            tank.performMovementLagCompensation(this.state, message.time, movement);
-        };
-
         switch (message.action) {
             case Action.MOVE_BEGIN: {
                 // Request to move in a certain direction
-                moveCompensate(message.dir);
                 this.state.tanks[clientID].movement[isVertical] = message.dir;
                 break;
             }
             case Action.MOVE_END: {
                 // Request to stop moving in a certain direction
-                if (message.dir === this.state.tanks[clientID].movement[isVertical]) {
-                    moveCompensate(Direction.NONE);
+                if (message.dir === this.state.tanks[clientID].movement[isVertical])
                     this.state.tanks[clientID].movement[isVertical] = Direction.NONE;
-                }
                 break;
             }
             case Action.FIRE: {
