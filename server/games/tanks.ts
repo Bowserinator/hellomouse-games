@@ -6,7 +6,7 @@ import { Direction, Action, TankSync } from '../../client/tanks/js/types.js';
 import Tank from '../../client/tanks/js/tanks/tank.js';
 import Vector from '../../client/tanks/js/tanks/vector2d.js';
 import { generateMaze } from '../../client/tanks/js/tanks/map-gen.js';
-import { MAX_LATENCY_COMP_MS, MAX_PLAYERS, ROUND_ARRAY, SYNC_BULLETS_EVERY_N_TIMES, TANK_COLORS, UPDATE_EVERY_N_MS } from '../../client/tanks/js/vars.js';
+import { MAX_PLAYERS, ROUND_ARRAY, SYNC_BULLETS_EVERY_N_TIMES, TANK_COLORS, UPDATE_EVERY_N_MS } from '../../client/tanks/js/vars.js';
 
 interface IntentMessage {
     action: Action;
@@ -26,7 +26,6 @@ class TankGame extends Game {
     state: GameState;
     interval: ReturnType<typeof setInterval> | null;
     playerTankIDMap: Record<string, number>;
-    lagCompCallMap: Record<string, number>;
     mapSeed: number;
 
     dontSyncBullets: boolean; // Temp flag
@@ -42,7 +41,6 @@ class TankGame extends Game {
         this.interval = null;
 
         this.playerTankIDMap = {}; // Map client.id -> index in tank array
-        this.lagCompCallMap = {}; // Map client.id -> last Date.now() lag comped
         this.syncCount = 0;
         this.dontSyncBullets = false;
         this.alreadyFilteredMissingTanks = false;
@@ -347,7 +345,7 @@ class TankGame extends Game {
             return;
 
         // Helper to perform move lag compensation
-        const moveCompensate = (direction: Direction, lagComp: boolean) => {
+        const moveCompensate = (direction: Direction) => {
             const tank = this.state.tanks[clientID];
             let movement = [...tank.movement] as [Direction, Direction];
             movement[isVertical] = direction;
@@ -355,25 +353,20 @@ class TankGame extends Game {
             // Don't move compensate if direction is the same
             if (tank.movement[0] === movement[0] && tank.movement[1] === movement[1])
                 return;
-            // Lag comped too recently
-            if (this.lagCompCallMap[client.id] && Date.now() - this.lagCompCallMap[client.id] < MAX_LATENCY_COMP_MS)
-                return;
-
-            this.lagCompCallMap[client.id] = Date.now();
-            tank.performMovementLagCompensation(this.state, message.time, movement, lagComp);
+            tank.performMovementLagCompensation(this.state, message.time, movement);
         };
 
         switch (message.action) {
             case Action.MOVE_BEGIN: {
                 // Request to move in a certain direction
-                moveCompensate(message.dir, true);
+                moveCompensate(message.dir);
                 this.state.tanks[clientID].movement[isVertical] = message.dir;
                 break;
             }
             case Action.MOVE_END: {
                 // Request to stop moving in a certain direction
                 if (message.dir === this.state.tanks[clientID].movement[isVertical]) {
-                    moveCompensate(Direction.NONE, false);
+                    moveCompensate(Direction.NONE);
                     this.state.tanks[clientID].movement[isVertical] = Direction.NONE;
                 }
                 break;

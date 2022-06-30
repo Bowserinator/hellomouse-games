@@ -6,7 +6,7 @@ import Explosion from './explosion.js';
 import { Bullet } from './bullets/bullets.js';
 import {
     TANK_SPEED, TANK_SIZE, TANK_TURRET_SIZE, TANK_FIRE_DELAY,
-    TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE, UPDATE_EVERY_N_MS, MAX_LATENCY_COMP_MS, SYNC_DISTANCE_THRESHOLD } from '../vars.js';
+    TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE, UPDATE_EVERY_N_MS, MAX_LATENCY_COMP_MS, SYNC_DISTANCE_THRESHOLD, MAX_PREV_TANK_POS } from '../vars.js';
 
 import { PowerupSingleton, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
 
@@ -14,6 +14,7 @@ import Camera from '../renderer/camera.js';
 import Renderable from '../renderer/renderable.js';
 import { playSoundAt, addSoundsToPreload } from '../sound/sound.js';
 import performStateDiff from '../util/diff.js';
+import { interpol, invInterlop } from '../util/interp.js';
 
 addSoundsToPreload([
     '/tanks/sound/tank_fire_normal.mp3'
@@ -56,6 +57,7 @@ export default class Tank extends Renderable {
     speed: number;
     oldSpeed: number;
     dirMapCache: Record<Direction, number>;
+    previousLocations: Array<[number, Vector]>;
 
     constructor(pos: Vector, rotation: number, id = -1) {
         super([
@@ -96,6 +98,7 @@ export default class Tank extends Renderable {
         this.oldSpeed = 0; // Used to sync dirmap
         // @ts-expect-error
         this.dirMapCache = {};
+        this.previousLocations = []; // Used for lag comp
 
         this.username = `Player${Math.floor(Math.random() * 100000)}`;
         this.score = 0;
@@ -121,6 +124,10 @@ export default class Tank extends Renderable {
         this.isFiring = false;
         this.isDead = false;
         this.firedThisTick = false;
+
+        this.speed = TANK_SPEED;
+        this.oldSpeed = 0;
+        this.previousLocations = [];
     }
 
     /**
@@ -198,7 +205,7 @@ export default class Tank extends Renderable {
             if (newPos.distance(this.position) > SYNC_DISTANCE_THRESHOLD)
                 this.position = newPos;
         }
-        if (arr[2] !== '')
+        if (arr[2] !== '' && gameState.tankIndex !== this.id)
             this.movement = arr[2].split('|').map((x: string) => parseInt(x));
         if (arr[4] !== '')
             this.score = parseInt(arr[4]);
@@ -447,21 +454,32 @@ export default class Tank extends Renderable {
      * @param gameState GameState
      * @param time Time the move was passed (A Date.now(), must be before now)
      * @param desiredMovement Desired movement direction [x, y] in Direction enums
-     * @param rollback True for MOVE_START, false for MOVE_END
-     *  (if true for MOVE_END leads to early stopping against walls)
      */
     performMovementLagCompensation(gameState: GameState, time: number | undefined,
-        desiredMovement: [Direction, Direction], rollback = true) {
+        desiredMovement: [Direction, Direction]) {
         if (!time) return;
         let timestep = Date.now() - time;
 
         if (timestep < 0) return; // Not possible, hacking
         if (gameState.shouldInhibitMovement()) return;
 
-        timestep = Math.min(MAX_LATENCY_COMP_MS / 1000, timestep);
+        timestep = Math.min(MAX_LATENCY_COMP_MS / 1000, timestep / 1000);
 
-        if (rollback)
-            this.performMove(gameState, this.movement, -timestep, false);
+        // Perform rollback, interpolate between previous positions
+        for (let i = this.previousLocations.length - 1; i >= 0; i--) {
+            const [t, prevLoc] = this.previousLocations[i];
+            if (t < time || i === 0) {
+                const nextLoc = this.previousLocations[i + 1] || [Date.now(), this.position];
+                const timePercent = invInterlop(time, t, nextLoc[0]);
+
+                this.position.x = interpol(prevLoc.x, nextLoc[1].x, timePercent);
+                this.position.y = interpol(prevLoc.y, nextLoc[1].y, timePercent);
+                this.updateCollider();
+                break;
+            }
+        }
+
+        // Perform current move
         this.performMove(gameState, desiredMovement, timestep, false);
     }
 
@@ -471,6 +489,11 @@ export default class Tank extends Renderable {
             gameState.killTank(this);
             return;
         }
+
+        // Store previous locations
+        this.previousLocations.push([Date.now(), this.position.copy()]);
+        if (this.previousLocations.length > MAX_PREV_TANK_POS)
+            this.previousLocations.shift();
 
         // Move + collisions
         this.performMove(gameState, this.movement, timestep, true);

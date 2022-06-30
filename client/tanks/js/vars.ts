@@ -7,10 +7,13 @@ export const SYNC_BULLETS_EVERY_N_TIMES = 10; // How many iterations to sync bul
 
 // Max latency (one way, ping = 2x this value) to lag compensate. Essentially
 // gives a player free roam within this region of time
-export const MAX_LATENCY_COMP_MS = 100;
+export const MAX_LATENCY_COMP_MS = 250;
 
 // Avoid microstutters: don't change location until it differs by at least this amount:
-export const SYNC_DISTANCE_THRESHOLD = 6;
+export const SYNC_DISTANCE_THRESHOLD = 20;
+
+// Better position rollnack
+export const MAX_PREV_TANK_POS = Math.ceil(MAX_LATENCY_COMP_MS / UPDATE_EVERY_N_MS);
 
 // Game
 export const MAX_PLAYERS = 8;
