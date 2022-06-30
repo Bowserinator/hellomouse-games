@@ -346,14 +346,14 @@ class TankGame extends Game {
 
         // Helper to perform move lag compensation
         const moveCompensate = (direction: Direction) => {
-            // const tank = this.state.tanks[clientID];
-            // let movement = [...tank.movement] as [Direction, Direction];
-            // movement[isVertical] = direction;
+            const tank = this.state.tanks[clientID];
+            let movement = [...tank.movement] as [Direction, Direction];
+            movement[isVertical] = direction;
 
-            // // Don't move compensate if direction is the same
-            // if (tank.movement[0] === movement[0] && tank.movement[1] === movement[1])
-            //     return;
-            // tank.performMovementLagCompensation(this.state, message.time, movement);
+            // Don't move compensate if direction is the same
+            if (tank.movement[0] === movement[0] && tank.movement[1] === movement[1])
+                return;
+            tank.performMovementLagCompensation(this.state, message.time, movement);
         };
 
         switch (message.action) {

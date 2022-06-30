@@ -6,7 +6,7 @@ import Explosion from './explosion.js';
 import { Bullet } from './bullets/bullets.js';
 import {
     TANK_SPEED, TANK_SIZE, TANK_TURRET_SIZE, TANK_FIRE_DELAY,
-    TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE, UPDATE_EVERY_N_MS, MAX_LATENCY_COMP_MS, SYNC_DISTANCE_THRESHOLD, MAX_PREV_TANK_POS, MAX_LERP_DISTANCE_THRESHOLD } from '../vars.js';
+    TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE, UPDATE_EVERY_N_MS, MAX_LATENCY_COMP_MS, SYNC_DISTANCE_THRESHOLD, MAX_PREV_TANK_POS, MAX_LERP_DISTANCE_THRESHOLD, POS_SMOOTHING_RATE } from '../vars.js';
 
 import { PowerupSingleton, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
 
@@ -499,8 +499,8 @@ export default class Tank extends Renderable {
 
         // If client ease to target location
         if (gameState.isClientSide) {
-            this.position.x = interpol(this.position.x, this.targetLocation.x, 0.5);
-            this.position.y = interpol(this.position.y, this.targetLocation.y, 0.5);
+            this.position.x = interpol(this.position.x, this.targetLocation.x, POS_SMOOTHING_RATE);
+            this.position.y = interpol(this.position.y, this.targetLocation.y, POS_SMOOTHING_RATE);
         }
 
         // Store previous locations
