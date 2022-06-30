@@ -19,6 +19,28 @@ function makeWall(pos: [number, number], size: [number, number]) {
 
 
 /**
+ * Cut some holes in the maze to create a more "open" map
+ * @param mazeStr Output str of maze generator
+ * @param seed RNG seed
+ * @returns New mazeStr
+ */
+function punchHoles(mazeStr: string, seed: number) {
+    let lines = mazeStr.split('\n');
+    let index = seed % 3;
+
+    const modAmount = Math.ceil(lines.length / 2);
+
+    for (let i = 1; i < lines.length - 1; i++)
+        for (let j = 1; j < lines[i].length - 1; j++) {
+            if (index % modAmount === 0)
+                lines[i] = lines[i].substring(0, j) + ' ' + lines[i].substring(j + 1);
+            index = (index * 101 + 17) % 59; // Arbritrary
+        }
+    return lines.join('\n');
+}
+
+
+/**
  * Get size of maze from seed
  * @param {number} seed Random seed
  * @returns Size of maze in cells
@@ -45,7 +67,10 @@ export function generateMaze(gameState: GameState, seed: number) {
     });
     m.generate();
 
-    const mazeStr = m.getString();
+    let mazeStr = m.getString();
+    if (seed % 3 === 0)
+        mazeStr = punchHoles(mazeStr, seed);
+
     const mazeRows = mazeStr.split('\n');
 
     // Generate horizontal walls
