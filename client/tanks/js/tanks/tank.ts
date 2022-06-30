@@ -456,40 +456,6 @@ export default class Tank extends Renderable {
             }
     }
 
-    /**
-     * Perform movement lag compensation on the server side
-     * @param gameState GameState
-     * @param time Time the move was passed (A Date.now(), must be before now)
-     * @param desiredMovement Desired movement direction [x, y] in Direction enums
-     */
-    performMovementLagCompensation(gameState: GameState, time: number | undefined,
-        desiredMovement: [Direction, Direction]) {
-        if (!time) return;
-        let timestep = Date.now() - time;
-
-        if (timestep < 0) return; // Not possible, hacking
-        if (gameState.shouldInhibitMovement()) return;
-
-        timestep = Math.min(MAX_LATENCY_COMP_MS / 1000, timestep / 1000);
-
-        // Perform rollback, interpolate between previous positions
-        for (let i = this.previousLocations.length - 1; i >= 0; i--) {
-            const [t, prevLoc] = this.previousLocations[i];
-            if (t < time || i === 0) {
-                const nextLoc = this.previousLocations[i + 1] || [Date.now(), this.position];
-                const timePercent = invInterlop(time, t, nextLoc[0]);
-
-                this.position.x = interpol(prevLoc.x, nextLoc[1].x, timePercent);
-                this.position.y = interpol(prevLoc.y, nextLoc[1].y, timePercent);
-                this.updateCollider();
-                break;
-            }
-        }
-
-        // Perform current move
-        this.performMove(gameState, desiredMovement, timestep, false);
-    }
-
     update(gameState: GameState, timestep: number) {
         if (this.isDead) return;
         if (this.missingPlayer) {
