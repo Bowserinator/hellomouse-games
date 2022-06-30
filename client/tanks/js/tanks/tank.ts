@@ -207,7 +207,7 @@ export default class Tank extends Renderable {
         if (arr[0] !== '') {
             const newPos = new Vector(...(arr[0].split('|').map((x: string) => +x)) as [number, number]);
             const dis = newPos.distance(this.position);
-            if (dis > SYNC_DISTANCE_THRESHOLD)
+            if (gameState.tankIndex !== this.id || dis > SYNC_DISTANCE_THRESHOLD)
                 this.targetLocation = newPos;
             if (dis > MAX_LERP_DISTANCE_THRESHOLD)
                 this.position = newPos;
