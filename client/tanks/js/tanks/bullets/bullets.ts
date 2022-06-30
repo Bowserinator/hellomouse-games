@@ -716,6 +716,7 @@ export class RocketBullet extends Bullet {
         this.targetCenter = position; // Temp, will change in update
         this.randomID = Math.round(Math.random() * 100000);
         this.lastDrawUpdate = 0;
+        this.invincible = true;
     }
 
     /**

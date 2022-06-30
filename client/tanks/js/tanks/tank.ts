@@ -6,7 +6,7 @@ import Explosion from './explosion.js';
 import { Bullet } from './bullets/bullets.js';
 import {
     TANK_SPEED, TANK_SIZE, TANK_TURRET_SIZE, TANK_FIRE_DELAY,
-    TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE, UPDATE_EVERY_N_MS, MAX_LATENCY_COMP_MS, SYNC_DISTANCE_THRESHOLD, MAX_PREV_TANK_POS, MAX_LERP_DISTANCE_THRESHOLD, POS_SMOOTHING_RATE } from '../vars.js';
+    TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE, UPDATE_EVERY_N_MS, SYNC_DISTANCE_THRESHOLD, MAX_PREV_TANK_POS, MAX_LERP_DISTANCE_THRESHOLD, POS_SMOOTHING_RATE } from '../vars.js';
 
 import { PowerupSingleton, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
 
@@ -14,7 +14,7 @@ import Camera from '../renderer/camera.js';
 import Renderable from '../renderer/renderable.js';
 import { playSoundAt, addSoundsToPreload } from '../sound/sound.js';
 import performStateDiff from '../util/diff.js';
-import { interpol, invInterlop } from '../util/interp.js';
+import { interpol } from '../util/interp.js';
 
 addSoundsToPreload([
     '/tanks/sound/tank_fire_normal.mp3'

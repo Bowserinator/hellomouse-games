@@ -148,7 +148,10 @@ window.requestAnimationFrame(drawBoard);
 
 
 // Update rate should be the same as server
-setInterval(() => gameState.update(), UPDATE_EVERY_N_MS);
+setInterval(() => {
+    gameState.update();
+    gameState.clearDeltas();
+}, UPDATE_EVERY_N_MS);
 
 
 /**
