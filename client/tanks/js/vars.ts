@@ -1,8 +1,23 @@
+// Game timings + lag comp
+
+// If tick length is too high tank collision becomes buggy
+// Recommended: 30 ms or below
+export const UPDATE_EVERY_N_MS = 30; // Game tick length
+export const SYNC_BULLETS_EVERY_N_TIMES = 10; // How many iterations to sync bullets
+
+// Max latency (one way, ping = 2x this value) to lag compensate. Essentially
+// gives a player free roam within this region of time
+export const MAX_LATENCY_COMP_MS = 100;
+
+// Avoid microstutters: don't change location until it differs by at least this amount:
+export const SYNC_DISTANCE_THRESHOLD = 6;
 
 // Game
+export const MAX_PLAYERS = 8;
 export const MAX_POWERUP_ITEMS = 20;
 export const DELAY_POWERUP_SPAWN = 10000; // How often (ms) to spawn a powerup
 export const POWERUPS_TO_SPAWN_AT_ONCE = 2;
+export const CONTROL_KEYS = ['w', 'a', 's', 'd']; // Up, left, down, right (all lowercase)
 
 export const ROUND_ARRAY = [5, 10, 15, 20]; // Round selection, make sure matches HTML!
 export const DELAY_AFTER_WIN_ROUND = 3000; // Delay in ms after a player wins a round to go to next round

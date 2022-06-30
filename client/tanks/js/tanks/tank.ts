@@ -6,7 +6,7 @@ import Explosion from './explosion.js';
 import { Bullet } from './bullets/bullets.js';
 import {
     TANK_SPEED, TANK_SIZE, TANK_TURRET_SIZE, TANK_FIRE_DELAY,
-    TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE } from '../vars.js';
+    TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE, UPDATE_EVERY_N_MS, MAX_LATENCY_COMP_MS, SYNC_DISTANCE_THRESHOLD } from '../vars.js';
 
 import { PowerupSingleton, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
 
@@ -38,7 +38,7 @@ export default class Tank extends Renderable {
     tintPrefix: string;
     username: string;
 
-    movement: Array<Direction>;
+    movement: [Direction, Direction];
     isFiring: boolean;
     isDead: boolean;
     firedThisTick: boolean; // Has it fired this tick?
@@ -54,6 +54,8 @@ export default class Tank extends Renderable {
     syncDataDiff: Array<any>;
 
     speed: number;
+    oldSpeed: number;
+    dirMapCache: Record<Direction, number>;
 
     constructor(pos: Vector, rotation: number, id = -1) {
         super([
@@ -91,6 +93,10 @@ export default class Tank extends Renderable {
 
         // Other
         this.speed = TANK_SPEED;
+        this.oldSpeed = 0; // Used to sync dirmap
+        // @ts-expect-error
+        this.dirMapCache = {};
+
         this.username = `Player${Math.floor(Math.random() * 100000)}`;
         this.score = 0;
         this.ready = false;
@@ -187,8 +193,11 @@ export default class Tank extends Renderable {
         if (!data.length) return;
         let arr = data.split(',');
 
-        if (arr[0] !== '')
-            this.position = new Vector(...(arr[0].split('|').map((x: string) => +x)) as [number, number]);
+        if (arr[0] !== '') {
+            let newPos = new Vector(...(arr[0].split('|').map((x: string) => +x)) as [number, number]);
+            if (newPos.distance(this.position) > SYNC_DISTANCE_THRESHOLD)
+                this.position = newPos;
+        }
         if (arr[2] !== '')
             this.movement = arr[2].split('|').map((x: string) => parseInt(x));
         if (arr[4] !== '')
@@ -361,30 +370,61 @@ export default class Tank extends Renderable {
         this.powerups.forEach(p => p.onFire(gameState));
     }
 
-    update(gameState: GameState, timestep: number) {
-        if (this.isDead) return;
-        if (this.missingPlayer) {
-            gameState.killTank(this);
-            return;
+    /**
+     * Get a direction map of Direction: velocity component
+     * @returns Dirmap
+     */
+    getDirMap() {
+        if (this.oldSpeed !== this.speed) {
+            this.oldSpeed = this.speed;
+            // @ts-ignore:next-line
+            let dirMap: Record<Direction, number> = {};
+            dirMap[Direction.LEFT] = -this.speed;
+            dirMap[Direction.UP] = -this.speed;
+            dirMap[Direction.RIGHT] = this.speed;
+            dirMap[Direction.DOWN] = this.speed;
+            dirMap[Direction.NONE] = 0;
+            this.dirMapCache = dirMap;
+            return dirMap;
+        }
+        return this.dirMapCache;
+    }
+
+    /**
+     * Client only move the tank, used to move the tank immediately
+     * to create an illusion of no latency
+     * @param gameState GameState
+     * @param movement Movement for [x, y] dir
+     */
+    clientSideMove(gameState: GameState, movement: [Direction, Direction]) {
+        if (!gameState.isClientSide || gameState.shouldInhibitMovement()) return;
+
+        const dirMap = this.getDirMap();
+        let [xDir, yDir] = [dirMap[movement[0]], dirMap[movement[1]]];
+        this.movement = movement;
+        this.velocity = new Vector(xDir, yDir);
+        this.updateBaseRotation(UPDATE_EVERY_N_MS / 1000);
+    }
+
+    /**
+     * Perform a movement in a given direction as well as perform collision
+     * @param gameState GameState
+     * @param movement Movement direction in [x, y] Direction enums
+     * @param timestep Timestep passed, negative = move backwards
+     */
+    performMove(gameState: GameState, movement: [Direction, Direction], timestep: number, updateRotation: boolean) {
+        const dirMap = this.getDirMap();
+        let [xDir, yDir] = [dirMap[movement[0]], dirMap[movement[1]]];
+
+        if (updateRotation) {
+            this.updateBaseRotation(timestep);
+            this.updateRotation('rotation', 'visualTurretRotation', TANK_TURRET_ROTATION_RATE, timestep);
         }
 
-        // @ts-ignore:next-line
-        let dirMap: Record<Direction, number> = {};
-        dirMap[Direction.LEFT] = -this.speed;
-        dirMap[Direction.UP] = -this.speed;
-        dirMap[Direction.RIGHT] = this.speed;
-        dirMap[Direction.DOWN] = this.speed;
-        dirMap[Direction.NONE] = 0;
-
-        let [xDir, yDir] = [dirMap[this.movement[0]], dirMap[this.movement[1]]];
         this.velocity = new Vector(xDir, yDir);
-
-        this.updateBaseRotation(timestep);
-        this.updateRotation('rotation', 'visualTurretRotation', TANK_TURRET_ROTATION_RATE, timestep);
-
         if (!gameState.shouldInhibitMovement()) {
-            this.position.x += this.velocity.x * timestep;
-            this.position.y += this.velocity.y * timestep;
+            this.position.x += timestep * this.velocity.x;
+            this.position.y += timestep * this.velocity.y;
         }
         this.updateCollider();
 
@@ -400,7 +440,42 @@ export default class Tank extends Renderable {
                 this.velocity = new Vector(0, 0);
                 this.updateCollider();
             }
+    }
 
+    /**
+     * Perform movement lag compensation on the server side
+     * @param gameState GameState
+     * @param time Time the move was passed (A Date.now(), must be before now)
+     * @param desiredMovement Desired movement direction [x, y] in Direction enums
+     * @param rollback True for MOVE_START, false for MOVE_END
+     *  (if true for MOVE_END leads to early stopping against walls)
+     */
+    performMovementLagCompensation(gameState: GameState, time: number | undefined,
+        desiredMovement: [Direction, Direction], rollback = true) {
+        if (!time) return;
+        let timestep = Date.now() - time;
+
+        if (timestep < 0) return; // Not possible, hacking
+        if (gameState.shouldInhibitMovement()) return;
+
+        timestep = Math.min(MAX_LATENCY_COMP_MS / 1000, timestep);
+
+        if (rollback)
+            this.performMove(gameState, this.movement, -timestep, false);
+        this.performMove(gameState, desiredMovement, timestep, false);
+    }
+
+    update(gameState: GameState, timestep: number) {
+        if (this.isDead) return;
+        if (this.missingPlayer) {
+            gameState.killTank(this);
+            return;
+        }
+
+        // Move + collisions
+        this.performMove(gameState, this.movement, timestep, true);
+
+        // Firing
         if (!gameState.shouldInhibitMovement() && this.isFiring && (Date.now() - this.lastFired) > TANK_FIRE_DELAY) {
             this.firedBullets = this.firedBullets.filter(b => !b.isDead && b.type === this.bulletType);
             if (this.firedBullets.length < (this.fakeBullet.config.maxAmmo || 1)) {

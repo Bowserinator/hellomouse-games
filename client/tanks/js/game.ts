@@ -2,13 +2,16 @@ import Vector from './tanks/vector2d.js';
 import GameState from './tanks/gamestate.js';
 import { Direction, Action } from './types.js';
 import Camera from './renderer/camera.js';
-import { CAMERA_EDGE_MARGIN, ROTATE_FAST, ROTATE_SLOW, SPECTATE_DELAY } from './vars.js';
+import { CAMERA_EDGE_MARGIN, CONTROL_KEYS, ROTATE_FAST, ROTATE_SLOW, SPECTATE_DELAY, UPDATE_EVERY_N_MS } from './vars.js';
 
-import connection from './client.js';
 import { setGlobalVolume } from './sound/sound.js';
 import { startScoreKeeping } from './score.js';
 import { handleLobbyMessage } from './lobby.js';
 import Tank from './tanks/tank.js';
+
+// createConnection() is in a shared JS file
+// @ts-expect-error
+const connection = createConnection();
 
 const canvas: HTMLCanvasElement = document.getElementById('board') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
@@ -59,9 +62,9 @@ gameLink.onclick = () => copyLinkToClipboard(inviteLink.innerText);
  * @param tank? Tank to center camera on
  */
 function centerCamera(tank?: Tank) {
-    if (tank)
-        gameState.camera.position = tank.position.add(new Vector(-canvas.width / 2, -canvas.height / 2));
+    if (!tank) return;
 
+    gameState.camera.position = tank.position.add(new Vector(-canvas.width / 2, -canvas.height / 2));
     gameState.camera.position.x = Math.max(-CAMERA_EDGE_MARGIN, gameState.camera.position.x);
     gameState.camera.position.y = Math.max(-CAMERA_EDGE_MARGIN, gameState.camera.position.y);
 
@@ -145,7 +148,7 @@ window.requestAnimationFrame(drawBoard);
 
 
 // Update rate should be the same as server
-setInterval(() => gameState.update(), 30);
+setInterval(() => gameState.update(), UPDATE_EVERY_N_MS);
 
 
 /**
@@ -225,29 +228,46 @@ function getDir(x: number, y: number) {
  * @returns Direction or null if not a valid key
  */
 function keyToDirection(key: string) {
-    if (key === 'a') return Direction.LEFT;
-    else if (key === 'd') return Direction.RIGHT;
-    else if (key === 'w') return Direction.UP;
-    else if (key === 's') return Direction.DOWN;
+    if (key === CONTROL_KEYS[1]) return Direction.LEFT;
+    else if (key === CONTROL_KEYS[3]) return Direction.RIGHT;
+    else if (key === CONTROL_KEYS[0]) return Direction.UP;
+    else if (key === CONTROL_KEYS[2]) return Direction.DOWN;
     return null;
 }
+
+/** Move the client pre-emptively client side */
+function moveTankClientSide() {
+    const tank = gameState.tanks[gameState.tankIndex];
+    if (tank && !tank.isDead) {
+        // Get a direction given a key that is active
+        const checkKeys = (a: string, b: string) => keys[a] ? a : (keys[b] ? b : '');
+        let dx = keyToDirection(checkKeys(CONTROL_KEYS[1], CONTROL_KEYS[3]));
+        let dy = keyToDirection(checkKeys(CONTROL_KEYS[0], CONTROL_KEYS[2]));
+        if (dx === null) dx = Direction.NONE;
+        if (dy === null) dy = Direction.NONE;
+        tank.clientSideMove(gameState, [dx, dy]);
+    }
+}
+
 
 const keys: Record<string, number> = {};
 window.onkeydown = e => {
     if (!isConnected()) return;
     e = e || window.event;
 
+    keys[e.key.toLowerCase()] = 1;
     let dir = keyToDirection(e.key.toLowerCase());
-    if (dir !== null) // Can send a move request in a valid direction
-        connection.send(JSON.stringify({ type: 'MOVE', action: Action.MOVE_BEGIN, dir: dir }));
+
+    if (dir !== null) { // Can send a move request in a valid direction
+        connection.send(JSON.stringify({ type: 'MOVE', action: Action.MOVE_BEGIN, dir: dir, time: Date.now() }));
+        moveTankClientSide();
+    }
 
     // Spectator change tank
     if (e.key.toLowerCase() === 'arrowleft')
         spectateIndex++;
     else if (e.key.toLowerCase() === 'arrowright')
         spectateIndex--;
-
-    keys[e.key.toLowerCase()] = 1;
 
     if (keys[' ']) { // Fire fun
         let rot = gameState.tanks[gameState.tankIndex].rotation;
@@ -264,8 +284,10 @@ window.onkeyup = e => {
         keys[e.key.toLowerCase()] = 0;
 
         let dir = keyToDirection(e.key.toLowerCase());
-        if (dir !== null)
-            connection.send(JSON.stringify({ type: 'MOVE', action: Action.MOVE_END, dir: dir }));
+        if (dir !== null) {
+            connection.send(JSON.stringify({ type: 'MOVE', action: Action.MOVE_END, dir: dir, time: Date.now() }));
+            moveTankClientSide();
+        }
         if (!keys[' '])
             connection.send(JSON.stringify({ type: 'MOVE', action: Action.STOP_FIRE }));
     }
