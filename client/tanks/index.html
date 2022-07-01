@@ -5,16 +5,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <meta name="description" content="Tanks - Hellomouse Games">
+    <meta name="description" content="Battlecruiser - Hellomouse Games">
     <meta name="author" content="Bowserinator">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Social meta -->
-    <meta property="og:title" content="Tanks - Hellomouse Games">
-    <meta property="og:description" content="A multiplayer tank game.">
+    <meta property="og:title" content="Battlecruiser - Hellomouse Games">
+    <meta property="og:description" content="A fancier Battleship clone.">
     <meta property="og:image" content="/tanks/img/thumbnail.jpg">
 
-    <title>Tanks</title>
+    <title>Battlecruiser</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,10 +24,7 @@
 </head>
 
 <body>
-    <script src="./js/lobby.js" type="module" defer></script>
     <script src="/shared/js/index.js" defer></script>
-    <script src="./js/tanks/map-gen.js" type="module" defer></script>
-    <script src="./js/game.js" type="module" defer></script>
 
     <div id="disconnect-banner" style="top: -100px;">
         Disconnected from server (Is server down?)
@@ -35,129 +32,6 @@
 
     <canvas id="board" oncontextmenu="return false;"></canvas>
 
-    <div id="ping">Ping: ??? ms</div>
-
-    <div id="lobby">
-        <h1>USER CONFIG</h1>
-        <label for="username">Username <span id="username-char-count">(0 / 16)</span></label><br>
-        <input type="text" id="username" maxlength="16" spellcheck="false" autocomplete="off">
-        <button id="username-button" class="text-button">Submit</button>
-        <br><br>
-
-        <label>Color</label><br>
-        <div id="color-buttons"></div><br>
-
-        <label>Rounds</label><br>
-        <div id="round-buttons">
-            <button class="selectable-button text-button">5</button>
-            <button class="selectable-button text-button">10</button>
-            <button class="selectable-button text-button">15</button>
-            <button class="selectable-button selected text-button">20</button>
-        </div>
-
-        <br><br>
-        <button id="start-game" class="text-button">Start Game!</button>
-
-        <br><br><hr>
-        <p>Click the box below to copy an invite link. Players can only join when the game is in a lobby.</p>
-        <p class="game-link" id="game-link">
-            <small>Click to copy invite link</small><br>
-            <span id="link">Loading...</span>
-        </p>
-    </div>
-
-    <div id="sidebar">
-        <h1>TANKS</h1>
-        <button onclick="window.open('/', '_blank')">Other games</button>
-        <button onclick="document.getElementById('tutorial').style.display = 'block'">Tutorial</button>
-        <button onclick="document.getElementById('settings').style.display = 'block'">Settings</button>
-        <hr>
-        <p id="round">ROUND 0 / ?</p>
-        <div id="scores"></div>
-    </div>
-
-    <div class="modal-darken" id="tutorial" style="display: none">
-        <div class="modal">
-            <button class="modal-close-button" onclick="document.getElementById('tutorial').style.display = 'none'">X</button>
-            <h2>Controls</h2>
-            <ul>
-                <li><b>WASD</b> - Move tank</li>
-                <li><b>Left Click / Space</b> - Fire gun</li>
-                <li><b>Left / Right Arrow</b> - Rotate (Hold shift for finer control)</li>
-                <li><b>Mouse</b> - Aim</li>
-            </ul>
-
-            <h2>Gameplay</h2>
-            <ul>
-                <li>Goal is to get as many kills as possible (Suicide shots don't count)</li>
-                <li>Rounds end when one or fewer players are left</li>
-                <li>You get an extra point for surviving to the end of the round</li>
-                <li>Pick up powerups to get special shots / abilities</li>
-                <li>Powerups spawn randomly in pairs every 10s</li>
-                <li>Bullets are destroyed when they hit another bullet (with some exceptions)</li>
-                <li>All bullet-type powerups conflict, and shield + stealth conflict. Getting a new conflicting powerup will replace the old one.</li>
-            </ul>
-
-            <h2>Powerups</h2>
-            <ul>
-                <li>
-                    <img src="/tanks/img/items/bomb.png" class="powerup-tutorial-img">
-                    <b>Bomb</b> - Explodes into shrapnel when hit or after a delay
-                </li>
-                <li>
-                    <img src="/tanks/img/items/fast.png" class="powerup-tutorial-img">
-                    <b>Railgun</b> - Hypersonic railgun pellet. Moves very fast, doesn't bounce
-                </li>
-                <li>
-                    <img src="/tanks/img/items/laser.png" class="powerup-tutorial-img">
-                    <b>Laser</b> - Fires instantly. Bounces and instantly kills everything it hits
-                </li>
-                <li>
-                    <img src="/tanks/img/items/magnet.png" class="powerup-tutorial-img">
-                    <b>Magnetic Mine</b> - Arms itself after 1s, then gravitates towards nearest tank. Cannot be killed once armed
-                </li>
-                <li>
-                    <img src="/tanks/img/items/rocket.png" class="powerup-tutorial-img">
-                    <b>Rocket Artillery</b> - Calls down rocket artillery onto the nearest player. Impact zones are marked
-                </li>
-                <li>
-                    <img src="/tanks/img/items/shotgun.png" class="powerup-tutorial-img">
-                    <b>Shotgun</b> - Short range burst of many small bullets
-                </li>
-                <li>
-                    <img src="/tanks/img/items/shield.png" class="powerup-tutorial-img">
-                    <b>Shield</b> - Player gets a force field that deflects all lasers and bullets for 6s. Tank cannot be killed
-                </li>
-                <li>
-                    <img src="/tanks/img/items/stealth.png" class="powerup-tutorial-img">
-                    <b>Stealth</b> - Makes you invisible to other players and any targeting (ie rocket artillery + magnetic mine)
-                </li>
-                <li>
-                    <img src="/tanks/img/items/teleport.png" class="powerup-tutorial-img">
-                    <b>Teleswap</b> - Swaps you with the nearest non-hidden player on fire (replaces gun turret)
-                </li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="modal-darken" id="settings" style="display: none">
-        <div class="modal">
-            <button class="modal-close-button" onclick="document.getElementById('settings').style.display = 'none'">X</button>
-            <h2>Settings</h2>
-            <input id="volume" min="0" max="100" value="50" type="range">
-            <label for="volume">Volume</label>
-        </div>
-    </div>
-
-    <div class="modal-darken" id="winner-modal" style="display: none">
-        <div class="modal">
-            <button class="modal-close-button"
-                onclick="document.getElementById('winner-modal').style.display = 'none'">X</button>
-            <h2>Game is Over!</h2>
-    
-            <table class="leaderboard" id="leaderboard"></table>
-        </div>
-    </div>
 </body>
 
 </html>

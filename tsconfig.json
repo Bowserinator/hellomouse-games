@@ -23,7 +23,11 @@
     },
     "exclude": [
         "node_modules",
-        "build"
+        "build",
+        "client/tanks",
+        "client/connect6",
+        "server/games/connect6.ts",
+        "server/tanks/tanks.ts"
     ],
     "include": [
         "**/*.ts",
