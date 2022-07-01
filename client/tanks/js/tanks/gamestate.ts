@@ -11,9 +11,10 @@ import Particle from './particle.js';
 import { generateMaze, getMazeSize } from './map-gen.js';
 import { PowerupItem } from './powerups/powerup-item.js';
 import { createPowerupFromType } from './powerups/powerups.js';
-import { CELL_SIZE, MAX_POWERUP_ITEMS, POWERUP_ITEM_SIZE, DELAY_POWERUP_SPAWN, POWERUPS_TO_SPAWN_AT_ONCE, DELAY_AFTER_WIN_ROUND, PRE_ROUND_DELAY } from '../vars.js';
+import { CELL_SIZE, MAX_POWERUP_ITEMS, POWERUP_ITEM_SIZE, DELAY_POWERUP_SPAWN, POWERUPS_TO_SPAWN_AT_ONCE, DELAY_AFTER_WIN_ROUND, PRE_ROUND_DELAY, TRANSITION_DURATION, TRANSITION_RECTS } from '../vars.js';
 import Collider from './collision.js';
 import performStateDiff from '../util/diff.js';
+import { interpol, invInterlop } from '../util/interp.js';
 
 interface SyncMessage {
     seed: number;
@@ -159,6 +160,43 @@ export default class GameState {
             this.mazeSeed = mapSeed;
             this.spreadTanks();
         }
+    }
+
+    /**
+     * Draw a rectangle sweeping animation
+     * between rounds. Client only.
+     */
+    drawRoundTransition() {
+        if (!this.isClientSide) return;
+
+        const start = DELAY_AFTER_WIN_ROUND - TRANSITION_DURATION / 2;
+
+        if (this.timeSinceRoundEnded < 0 && this.getAliveTanks().length <= 1)
+            this.timeSinceRoundEnded = Date.now();
+
+        // Play round transition
+        else if (this.timeSinceRoundEnded > 0 &&
+            Date.now() - this.timeSinceRoundEnded > DELAY_AFTER_WIN_ROUND - TRANSITION_DURATION / 2) {
+            const diff = Date.now() - (this.timeSinceRoundEnded + start);
+            const h = Math.round(this.camera.ctx.canvas.height / TRANSITION_RECTS + 10); // Extra height to avoid gaps
+            const cw = this.camera.ctx.canvas.width;
+
+            this.camera.ctx.fillStyle = 'black';
+            this.camera.ctx.strokeStyle = 'black';
+
+            for (let rect = 0; rect < TRANSITION_RECTS; rect++) {
+                const offset1 = rect * TRANSITION_DURATION / 4 / TRANSITION_RECTS;
+                const offset2 = (TRANSITION_RECTS - rect - 1) * TRANSITION_DURATION / 4 / TRANSITION_RECTS;
+                const p1 = Math.max(0, Math.min(1, invInterlop(diff, 0, TRANSITION_DURATION / 2 - offset1)));
+                const p2 = Math.max(0, Math.min(1, invInterlop(diff, TRANSITION_DURATION / 2 + offset2,
+                    TRANSITION_DURATION)));
+                const w = Math.max(0, Math.min(cw, interpol(0, cw, p1)));
+                const x = Math.max(0, Math.min(cw, interpol(0, cw, p2)));
+                this.camera.ctx.fillRect(x, rect * h, w, h);
+            }
+        }
+        if (Date.now() - this.timeSinceRoundEnded > DELAY_AFTER_WIN_ROUND + TRANSITION_DURATION / 2)
+            this.timeSinceRoundEnded = -1;
     }
 
     /** Advance round if can (Server side only) */
@@ -395,6 +433,7 @@ export default class GameState {
         this.explosions.forEach(explosion => explosion.draw(this.camera, this));
 
         this.drawOtherPlayerMarkers();
+        this.drawRoundTransition();
     }
 
     /**
