@@ -8,7 +8,7 @@ import { playSoundAt, addSoundsToPreload } from '../sound/sound.js';
 
 addSoundsToPreload([
     '/tanks/sound/explode2.mp3',
-    '/tanks/sounds/teleport.mp3'
+    '/tanks/sound/teleport.mp3'
 ]);
 
 /**

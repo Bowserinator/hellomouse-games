@@ -10,7 +10,7 @@ addSoundsToPreload([
     '/tanks/sound/tank_shotgun.mp3',
     '/tanks/sound/tank_fire_normal.mp3',
     '/tanks/sound/radio.ogg',
-    '/tanks/sounds/teleport.mp3'
+    '/tanks/sound/teleport.mp3'
 ]);
 
 // @ts-expect-error TS is stupid
