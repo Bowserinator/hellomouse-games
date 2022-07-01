@@ -238,6 +238,15 @@ export default class Tank extends Renderable {
     }
 
     /**
+     * Update position + collider
+     * @param pos New position
+     */
+    setPosition(pos: Vector) {
+        this.position = pos;
+        this.updateCollider();
+    }
+
+    /**
      * Update the collider of the tank
      * If there is no collider create it
      */

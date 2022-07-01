@@ -264,6 +264,8 @@ export class Bullet extends Renderable {
                 return SmallBullet;
             case BulletType.ROCKET:
                 return RocketBullet;
+            case BulletType.TELEPORT:
+                return TeleportBullet;
         }
         throw new Error(`Unknown bullet type ${type}`);
     }
@@ -824,6 +826,104 @@ export class RocketBullet extends Bullet {
         camera.ctx.globalCompositeOperation = 'screen';
         camera.ctx.globalAlpha = 0.2;
         camera.fillCircle(this.targetCenter.l(), RocketBullet.attackRadius, 'red');
+        camera.ctx.globalAlpha = 1;
+        camera.ctx.globalCompositeOperation = 'source-over';
+    }
+}
+
+
+/**
+ * Swaps the tank that fired it with another tank, not exactly a "bullet", but
+ * just an invisible entity
+ * @author Bowserinator
+ */
+export class TeleportBullet extends Bullet {
+    static config = {
+        type: BulletType.TELEPORT,
+        size: new Vector(0, 0),
+        speed: 0,
+        despawnTime: 999999, // Manual despawn
+        imageUrls: [],
+        maxAmmo: 9999,
+        alwaysDrawFirePreview: true
+    };
+
+    lastDrawUpdate: number; // Client side only, rate limits getNearestTank
+    targetCenter: number;
+
+    constructor(position: Vector, direction: Vector) {
+        super(position, direction, { ...TeleportBullet.config });
+        this.invincible = true;
+        this.lastDrawUpdate = 0;
+        this.targetCenter = -1;
+    }
+
+    updateTargetCenter(gameState: GameState) {
+        let nearest = gameState.getNearestTank(this.getCenter(), [gameState.tanks[this.firedBy]]);
+        if (!nearest && this.firedBy > -1) nearest = null; // No other tanks, target self
+        this.targetCenter = nearest === null ? -1 : nearest.id;
+    }
+
+    killStuff(gameState: GameState, timestep: number) {
+        return true; // The spawner has no effect
+    }
+
+    draw(camera: Camera, gameState: GameState) {
+        // Don't draw, invisible
+    }
+
+    onFire(gameState: GameState) {
+        if (!gameState.isClientSide) {
+            this.updateTargetCenter(gameState);
+
+            // Perform position swap
+            if (this.targetCenter >= 0) {
+                const thisTank = gameState.tanks[this.firedBy];
+                const thatTank = gameState.tanks[this.targetCenter];
+                const tempPos = thisTank.position.copy();
+                thisTank.setPosition(thatTank.position.copy());
+                thatTank.setPosition(tempPos);
+
+                gameState.addExplosion(new Explosion(thisTank.position.copy(), 0, 0, 100, ExplosionGraphics.TELE));
+                gameState.addExplosion(new Explosion(thatTank.position.copy(), 0, 0, 100, ExplosionGraphics.TELE));
+            }
+        }
+    }
+
+    drawFirePreview(camera: Camera, gameState: GameState) {
+        // Rate limit update target to every 50 ms
+        if (Date.now() - this.lastDrawUpdate > 50) {
+            this.updateTargetCenter(gameState);
+            this.lastDrawUpdate = Date.now();
+        }
+
+        if (this.targetCenter < 0) return;
+
+        // Draw a nice flow of particles from and to the tank
+        const thatTank = gameState.tanks[this.targetCenter];
+        const thisTank = gameState.tanks[this.firedBy];
+        const diff = thatTank.position.add(thisTank.position.mul(-1));
+        const angle = diff.angle();
+        const distance = Math.sqrt(diff.dot(diff));
+
+        const CIRCLE_RADIUS = 2;
+        const CIRCLE_SPACING = 18;
+        let offset = Vector.vecFromRotation(angle + Math.PI / 2, CIRCLE_RADIUS * 3);
+        const start = Math.floor(Date.now() / 20) % CIRCLE_SPACING;
+
+        camera.ctx.globalCompositeOperation = 'screen';
+        camera.ctx.globalAlpha = 0.2;
+
+        for (let r = start; r < distance; r += CIRCLE_SPACING) {
+            const circlePos = thisTank.position.add(Vector.vecFromRotation(angle, r)).add(offset);
+            camera.fillCircle(circlePos.l(), CIRCLE_RADIUS, 'blue');
+        }
+        offset = offset.mul(-1);
+        for (let r = CIRCLE_SPACING - start; r < distance; r += CIRCLE_SPACING) {
+            const circlePos = thisTank.position.add(Vector.vecFromRotation(angle, r)).add(offset);
+            camera.fillCircle(circlePos.l(), CIRCLE_RADIUS, 'blue');
+        }
+
         camera.ctx.globalAlpha = 1;
         camera.ctx.globalCompositeOperation = 'source-over';
     }

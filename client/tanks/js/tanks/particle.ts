@@ -92,6 +92,18 @@ export default class Particle {
                 camera.ctx.globalAlpha = 1;
                 break;
             }
+            case ParticleGraphics.TELE: {
+                camera.ctx.globalAlpha = multi / 2;
+                camera.ctx.shadowBlur = 10;
+                camera.ctx.shadowColor = '#1d97f5';
+                camera.ctx.globalCompositeOperation = 'lighter';
+
+                camera.fillRect([this.position.x - this.radius, this.position.y - 2.5], [this.radius * 2, 5], '#1d97f5');
+                camera.ctx.globalAlpha = 1;
+                camera.ctx.shadowBlur = 0;
+                camera.ctx.globalCompositeOperation = 'source-over';
+                break;
+            }
         }
     }
 }

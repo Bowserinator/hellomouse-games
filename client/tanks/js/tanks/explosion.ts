@@ -7,7 +7,8 @@ import gradient from '../renderer/gradient.js';
 import { playSoundAt, addSoundsToPreload } from '../sound/sound.js';
 
 addSoundsToPreload([
-    '/tanks/sound/explode2.mp3'
+    '/tanks/sound/explode2.mp3',
+    '/tanks/sounds/teleport.mp3'
 ]);
 
 /**
@@ -74,8 +75,11 @@ export default class Explosion {
 
         if (this.firstRun) {
             // Play sound on first tick
-            if (this.graphics !== ExplosionGraphics.PARTICLES && this.graphics !== ExplosionGraphics.SHOCKWAVE)
+            if (![ExplosionGraphics.PARTICLES, ExplosionGraphics.SHOCKWAVE, ExplosionGraphics.TELE]
+                .includes(this.graphics))
                 playSoundAt('/tanks/sound/explode2.mp3', this.position, gameState);
+            else if (this.graphics === ExplosionGraphics.TELE)
+                playSoundAt('/tanks/sound/teleport.mp3', this.position, gameState);
 
             // Spawn particles on first tick
             switch (this.graphics) {
@@ -91,6 +95,16 @@ export default class Explosion {
                         ParticleGraphics.SIMPLE, 8, 600);
                     this._spawnParticles(gameState, 60, this.position, 200,
                         ParticleGraphics.SPARKS, 8, 800);
+                    break;
+                }
+                case ExplosionGraphics.TELE: {
+                    for (let i = 0; i < 5; i++) {
+                        let speed = 30 * i;
+                        gameState.addParticle(new Particle(
+                            this.position.copy(), new Vector(0, speed), 40, 100 * (6 - i), ParticleGraphics.TELE));
+                        gameState.addParticle(new Particle(
+                            this.position.copy(), new Vector(0, -speed), 40, 100 * (6 - i), ParticleGraphics.TELE));
+                    }
                     break;
                 }
             }

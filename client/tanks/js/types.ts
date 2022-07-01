@@ -12,7 +12,7 @@ export enum Action {
 
 export enum Powerup {
     NONE, FAST, LASER, SHOTGUN, BOMB, MAGNET, ROCKET,
-    STEALTH, SHIELD
+    STEALTH, SHIELD, TELEPORT
 }
 
 // Powerups within the same category silent override each other
@@ -41,7 +41,7 @@ export enum TankSync {
 }
 
 export enum BulletType {
-    NORMAL, MAGNET, BOMB, SMALL, LASER, FAST, ROCKET
+    NORMAL, MAGNET, BOMB, SMALL, LASER, FAST, ROCKET, TELEPORT
 }
 
 export enum ExplosionGraphics {
@@ -49,11 +49,13 @@ export enum ExplosionGraphics {
     CLUSTER, // Cluster of many explosions, good for large explosions
     CIRCLE,  // Like cluster, but circular
     SHOCKWAVE, // Railgun shockwave
-    PARTICLES  // Tank death explosion
+    PARTICLES, // Tank death explosion
+    TELE       // Teleport particles
 }
 
 export enum ParticleGraphics {
-    SIMPLE, // Black circles, used for stuff like tanks
-    SPARKS, // Used for hotter stuff breaking apart
-    WARNING // Used for rocket artillery impact zone
+    SIMPLE,  // Black circles, used for stuff like tanks
+    SPARKS,  // Used for hotter stuff breaking apart
+    WARNING, // Used for rocket artillery impact zone
+    TELE     // Futuristic square effects
 }

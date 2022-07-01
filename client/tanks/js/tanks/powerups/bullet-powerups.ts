@@ -9,7 +9,8 @@ addSoundsToPreload([
     '/tanks/sound/laser.ogg',
     '/tanks/sound/tank_shotgun.mp3',
     '/tanks/sound/tank_fire_normal.mp3',
-    '/tanks/sound/radio.ogg'
+    '/tanks/sound/radio.ogg',
+    '/tanks/sounds/teleport.mp3'
 ]);
 
 // @ts-expect-error TS is stupid
@@ -21,6 +22,7 @@ TANK_TURRET_IMAGE_URLS[Powerup.BOMB] = '/tanks/img/turrets/bomb.png';
 TANK_TURRET_IMAGE_URLS[Powerup.MAGNET] = '/tanks/img/turrets/magnet.png';
 TANK_TURRET_IMAGE_URLS[Powerup.FAST] = '/tanks/img/turrets/fast.png';
 TANK_TURRET_IMAGE_URLS[Powerup.ROCKET] = '/tanks/img/turrets/rocket.png';
+TANK_TURRET_IMAGE_URLS[Powerup.TELEPORT] = '/tanks/img/turrets/teleport.png';
 
 
 /** An abstract bullet type powerup  */
@@ -96,5 +98,11 @@ export class BombPowerup extends AbstractBulletPowerup {
 export class RocketPowerup extends AbstractBulletPowerup {
     constructor(tank: Tank) {
         super(tank, BulletType.ROCKET, Powerup.ROCKET, '/tanks/sound/radio.ogg');
+    }
+}
+
+export class TeleportPowerup extends AbstractBulletPowerup {
+    constructor(tank: Tank) {
+        super(tank, BulletType.TELEPORT, Powerup.TELEPORT, '/tanks/sound/teleport.mp3');
     }
 }

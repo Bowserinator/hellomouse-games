@@ -1,7 +1,7 @@
 import { Powerup } from '../../types.js';
 import Tank from '../tank.js';
 import Vector2D from '../vector2d.js';
-import { BombPowerup, FastBulletPowerup, LaserPowerup, MagnetPowerup, RocketPowerup, ShotgunPowerup } from './bullet-powerups.js';
+import { BombPowerup, FastBulletPowerup, LaserPowerup, MagnetPowerup, RocketPowerup, ShotgunPowerup, TeleportPowerup } from './bullet-powerups.js';
 import { PowerupItem } from './powerup-item.js';
 import { ShieldPowerup } from './shield.js';
 import { StealthPowerup } from './stealth.js';
@@ -36,6 +36,8 @@ export function createPowerupFromType(powerup: Powerup, tank: Tank) {
             return new ShotgunPowerup(tank);
         case Powerup.STEALTH:
             return new StealthPowerup(tank);
+        case Powerup.TELEPORT:
+            return new TeleportPowerup(tank);
     }
     throw new Error('Unknown powerup type ' + powerup);
 }

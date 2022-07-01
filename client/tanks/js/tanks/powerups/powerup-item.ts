@@ -18,6 +18,7 @@ POWERUP_TEXTURE_MAP[Powerup.FAST] = '/tanks/img/items/fast.png';
 POWERUP_TEXTURE_MAP[Powerup.ROCKET] = '/tanks/img/items/rocket.png';
 POWERUP_TEXTURE_MAP[Powerup.SHIELD] = '/tanks/img/items/shield.png';
 POWERUP_TEXTURE_MAP[Powerup.STEALTH] = '/tanks/img/items/stealth.png';
+POWERUP_TEXTURE_MAP[Powerup.TELEPORT] = '/tanks/img/items/teleport.png';
 
 export class PowerupItem extends Renderable {
     powerup: Powerup;
