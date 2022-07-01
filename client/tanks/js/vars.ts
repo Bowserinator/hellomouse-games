@@ -19,9 +19,6 @@ export const POS_SMOOTHING_RATE = 0.6;
 // Beyond this error don't smoothly move the tank
 export const MAX_LERP_DISTANCE_THRESHOLD = 200;
 
-// Better position rollback
-export const MAX_PREV_TANK_POS = Math.ceil(MAX_LATENCY_COMP_MS / UPDATE_EVERY_N_MS);
-
 // Game
 export const MAX_PLAYERS = 8;
 export const MAX_POWERUP_ITEMS = 20;

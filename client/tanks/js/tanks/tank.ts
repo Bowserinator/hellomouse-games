@@ -6,7 +6,7 @@ import Explosion from './explosion.js';
 import { Bullet } from './bullets/bullets.js';
 import {
     TANK_SPEED, TANK_SIZE, TANK_TURRET_SIZE, TANK_FIRE_DELAY,
-    TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE, UPDATE_EVERY_N_MS, SYNC_DISTANCE_THRESHOLD, MAX_PREV_TANK_POS, MAX_LERP_DISTANCE_THRESHOLD, POS_SMOOTHING_RATE } from '../vars.js';
+    TANK_BASE_ROTATION_RATE, TANK_TURRET_ROTATION_RATE, UPDATE_EVERY_N_MS, SYNC_DISTANCE_THRESHOLD, MAX_LERP_DISTANCE_THRESHOLD, POS_SMOOTHING_RATE } from '../vars.js';
 
 import { PowerupSingleton, TANK_TURRET_IMAGE_URLS } from './powerups/powerups.js';
 
@@ -59,7 +59,6 @@ export default class Tank extends Renderable {
     dirMapCache: Record<Direction, number>;
 
     // Lag comp
-    previousLocations: Array<[number, Vector]>;
     targetLocation: Vector; // Client only
 
     constructor(pos: Vector, rotation: number, id = -1) {
@@ -101,7 +100,6 @@ export default class Tank extends Renderable {
         this.oldSpeed = 0; // Used to sync dirmap
         // @ts-expect-error
         this.dirMapCache = {};
-        this.previousLocations = []; // Used for lag comp
         this.targetLocation = this.position;
 
         this.username = `Player${Math.floor(Math.random() * 100000)}`;
@@ -131,7 +129,6 @@ export default class Tank extends Renderable {
 
         this.speed = TANK_SPEED;
         this.oldSpeed = 0;
-        this.previousLocations = [];
     }
 
     /**
@@ -189,7 +186,8 @@ export default class Tank extends Renderable {
             truthyStuff.toString(36), // 3
             this.score,               // 4
             this.tint.join('|'),      // 5
-            this.username             // 6
+            this.username,            // 6
+            Date.now()                // 7
         ];
         const diffResult = performStateDiff(data, diff, this.syncDataDiff);
         this.syncDataDiff = diffResult[1];
@@ -203,15 +201,8 @@ export default class Tank extends Renderable {
     fromSync(id: number, data: any, gameState: GameState) {
         if (!data.length) return;
         let arr = data.split(',');
+        let timestep = Date.now() - +arr[7];
 
-        if (arr[0] !== '') {
-            const newPos = new Vector(...(arr[0].split('|').map((x: string) => +x)) as [number, number]);
-            const dis = newPos.distance(this.position);
-            if (gameState.tankIndex !== this.id || dis > SYNC_DISTANCE_THRESHOLD)
-                this.targetLocation = newPos;
-            if (dis > MAX_LERP_DISTANCE_THRESHOLD)
-                this.position = newPos;
-        }
         if (arr[2] !== '' && gameState.tankIndex !== this.id)
             this.movement = arr[2].split('|').map((x: string) => parseInt(x));
         if (arr[4] !== '')
@@ -220,6 +211,20 @@ export default class Tank extends Renderable {
             this.setTint(arr[5].split('|').map((x: string) => parseInt(x)));
         if (arr[6] !== '')
             this.username = arr[6];
+
+        if (arr[0] !== '') {
+            const newPos = new Vector(...(arr[0].split('|').map((x: string) => +x)) as [number, number]);
+            const dis = newPos.distance(this.position);
+
+            // Only lerp location if server desyncs too far from the client
+            // or if not moving
+            if (gameState.tankIndex !== this.id ||
+                dis > Math.max(this.speed * timestep / 1000, SYNC_DISTANCE_THRESHOLD) ||
+                this.movement.every(d => d === Direction.NONE))
+                this.targetLocation = newPos;
+            if (dis > MAX_LERP_DISTANCE_THRESHOLD)
+                this.position = newPos;
+        }
 
         // Process truthy stuff
         if (arr[3] !== '') {
@@ -477,11 +482,6 @@ export default class Tank extends Renderable {
             this.position.x = interpol(this.position.x, this.targetLocation.x, POS_SMOOTHING_RATE);
             this.position.y = interpol(this.position.y, this.targetLocation.y, POS_SMOOTHING_RATE);
         }
-
-        // Store previous locations
-        this.previousLocations.push([Date.now(), this.position.copy()]);
-        if (this.previousLocations.length > MAX_PREV_TANK_POS)
-            this.previousLocations.shift();
 
         // Move + collisions
         this.performMove(gameState, this.movement, timestep, true);
