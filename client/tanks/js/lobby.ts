@@ -159,9 +159,7 @@ export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) 
             gameState.totalRounds = ROUND_ARRAY[message.round];
             roundButtons.forEach(b => b.classList.remove('selected'));
             roundButtons[message.round].classList.add('selected');
-
-            if (gameState.tankIndex !== 0)
-                roundButtons.forEach(b => b.disabled = true);
+            roundButtons.forEach(b => b.disabled = gameState.tankIndex !== 0);
             break;
         }
 
@@ -177,8 +175,7 @@ export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) 
                     ? 'Unready Self' : 'Ready Self';
 
             // Update round buttons
-            if (gameState.tankIndex !== 0)
-                roundButtons.forEach(b => b.disabled = true);
+            roundButtons.forEach(b => b.disabled = gameState.tankIndex !== 0);
             break;
         }
 
