@@ -93,7 +93,10 @@ class TankGame extends Game {
         if (this.state.inLobby && !this.playerTankIDMap[client.id]) {
             this.state.addTank(new Tank(new Vector(20, 20), 0));
             const i = this.state.tanks.length - 1;
-            this.state.tanks[i].setTint(TANK_COLORS[i]); // TODO: find unused TANK_COLOR
+
+            // Find an unused tank color
+            this.state.tanks[i].setTint(TANK_COLORS.filter(color =>
+                !this.state.tanks.map(tank => tank.tint.join(',')).some(c => c === color.join(',')))[0]);
             this.playerTankIDMap[client.id] = i;
 
             if (i === 0) // Host always ready

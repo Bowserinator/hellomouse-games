@@ -272,12 +272,8 @@ window.onkeydown = e => {
     else if (e.key.toLowerCase() === 'arrowright')
         spectateIndex--;
 
-    if (keys[' ']) { // Fire fun
-        let rot = gameState.tanks[gameState.tankIndex].rotation;
-        let direction = [Math.cos(rot), Math.sin(rot)];
-        UPDATE_ROTATION.f();
-        connection.send(JSON.stringify({ type: 'MOVE', action: Action.FIRE, direction: direction }));
-    }
+    if (keys[' '])
+        fireGun();
 };
 
 window.onkeyup = e => {
@@ -334,6 +330,14 @@ const UPDATE_ROTATION = new RateLimited(
     }
 );
 
+/** Fire tank gun */
+function fireGun() {
+    let rot = gameState.tanks[gameState.tankIndex].rotation;
+    let dir = [Math.cos(rot), Math.sin(rot)];
+    UPDATE_ROTATION.f();
+    connection.send(JSON.stringify({ type: 'MOVE', action: Action.FIRE, direction: dir }));
+}
+
 window.onmousemove = e => {
     const rect = canvas.getBoundingClientRect();
     let x = e.clientX - rect.left;
@@ -356,14 +360,7 @@ canvas.onmousedown = e => {
 
     // Only fire on left click
     if (e.button !== 0) return;
-
-    // Fire gun
-    // TODO: abstract
-    let rot = gameState.tanks[gameState.tankIndex].rotation;
-    let dir = [Math.cos(rot), Math.sin(rot)];
-
-    UPDATE_ROTATION.f();
-    connection.send(JSON.stringify({ type: 'MOVE', action: Action.FIRE, direction: dir }));
+    fireGun();
 };
 
 canvas.onmouseup = e => {
