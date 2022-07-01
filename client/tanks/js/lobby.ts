@@ -128,7 +128,10 @@ export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) 
     switch (message.type) {
         // Update colors
         case TankSync.CHANGE_COLOR: {
-            colorButtons.forEach(btn => btn.disabled = false);
+            colorButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.innerText = '';
+            });
             const scoreElements = getScoreElements();
 
             for (let i = 0; i < message.colors.length; i++) {
@@ -137,8 +140,11 @@ export function handleLobbyMessage(message: LobbyMessage, gameState: GameState) 
                     colorButtons.forEach(btn => btn.classList.remove('selected'));
                     colorButtons[colorIndex].classList.add('selected');
                     colorButtons[colorIndex].disabled = false;
-                } else
+                    colorButtons[colorIndex].innerText = '';
+                } else {
                     colorButtons[colorIndex].disabled = true;
+                    colorButtons[colorIndex].innerText = '⛔';
+                }
 
                 if (!scoreElements[i])
                     continue;
