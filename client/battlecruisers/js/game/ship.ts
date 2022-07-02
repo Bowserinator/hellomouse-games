@@ -1,11 +1,13 @@
 import { ROTATION } from '../types.js';
 import { drawLine } from '../util/draw.js';
+import { SHIP_OUTLINE_COLOR } from '../vars.js';
 
 interface ShipConfig {
     shape: Array<Array<number>>;
-    cwis: number; // CWIS range
-    aa: number;   // Anti-air range
-    abilities: Array<any>; // TODO
+    cwis?: number; // CWIS range
+    aa?: number;   // Anti-air range
+    stealth?: number; // Stealth range
+    abilities?: Array<any>; // TODO
 }
 
 export class AbstractShip {
@@ -32,6 +34,17 @@ export class AbstractShip {
         this.rotation = rotation;
         this.config = config;
 
+        // Set config defaults
+        if (this.config.aa === undefined)
+            this.config.aa = -1;
+        if (this.config.cwis === undefined)
+            this.config.cwis = -1;
+        if (this.config.stealth === undefined)
+            this.config.stealth = -1;
+        if (this.config.abilities === undefined)
+            this.config.abilities = [];
+
+        // Compute shape
         this.shape = config.shape.map(row => [...row]);
         for (let i = 0; i < rotation; i++)
             this.shape = this.shape[0].map((val, index) => this.shape.map(row => row[index]).reverse());
@@ -74,17 +87,139 @@ export class AbstractShip {
                 const ty = offset[1] + (this.position[1] + dy) * gridSize;
 
                 if (shouldPlaceEdge(dx, dy - 1)) // Top
-                    drawLine(ctx, [tx, ty], [tx + gridSize, ty], 'red');
+                    drawLine(ctx, [tx, ty], [tx + gridSize, ty], SHIP_OUTLINE_COLOR);
                 if (shouldPlaceEdge(dx, dy + 1)) // Bottom
-                    drawLine(ctx, [tx, ty + gridSize], [tx + gridSize, ty + gridSize], 'red');
+                    drawLine(ctx, [tx, ty + gridSize], [tx + gridSize, ty + gridSize], SHIP_OUTLINE_COLOR);
                 if (shouldPlaceEdge(dx - 1, dy)) // Left
-                    drawLine(ctx, [tx, ty], [tx, ty + gridSize], 'red');
+                    drawLine(ctx, [tx, ty], [tx, ty + gridSize], SHIP_OUTLINE_COLOR);
                 if (shouldPlaceEdge(dx + 1, dy)) // Right
-                    drawLine(ctx, [tx + gridSize, ty], [tx + gridSize, ty + gridSize], 'red');
+                    drawLine(ctx, [tx + gridSize, ty], [tx + gridSize, ty + gridSize], SHIP_OUTLINE_COLOR);
             }
     }
 
     onHit() {
 
+    }
+}
+
+
+/**
+ * Aircraft carrier, has good AA and allows
+ * spy planes to be launched
+ */
+export class CarrierShip extends AbstractShip {
+    static config = {
+        shape: [
+            [1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 0, 0]
+        ],
+        aa: 5,
+        abilities: []
+    };
+
+    constructor(position: [number, number], rotation: ROTATION) {
+        super('Carrier', position, rotation, CarrierShip.config);
+    }
+}
+
+/** Battlecruiser, enables extra salvos */
+export class BattlecruiserShip extends AbstractShip {
+    static config = {
+        shape: [[1, 1, 1, 1, 1, 1, 1]],
+        abilities: []
+    };
+
+    constructor(position: [number, number], rotation: ROTATION) {
+        super('Battlecruiser', position, rotation, BattlecruiserShip.config);
+    }
+}
+
+/** Cruiser, enables cruise missiles */
+export class CruiserShip extends AbstractShip {
+    static config = {
+        shape: [[1, 1, 1, 1, 1, 1]],
+        aa: 3,
+        abilities: []
+    };
+
+    constructor(position: [number, number], rotation: ROTATION) {
+        super('Cruiser', position, rotation, CruiserShip.config);
+    }
+}
+
+/** Nuke sub, allows firing tactical nukes */
+export class MissileSubmarineShip extends AbstractShip {
+    static config = {
+        shape: [[1, 1, 1, 1, 1]],
+        abilities: []
+    };
+
+    constructor(position: [number, number], rotation: ROTATION) {
+        super('Strategic Missile Submarine', position, rotation, MissileSubmarineShip.config);
+    }
+}
+
+/** AEGIS Ship, defends against missiles */
+export class AegisShip extends AbstractShip {
+    static config = {
+        shape: [[1, 1, 1, 1, 1]],
+        cwis: 4,
+        abilities: []
+    };
+
+    constructor(position: [number, number], rotation: ROTATION) {
+        super('AEGIS Cruiser', position, rotation, AegisShip.config);
+    }
+}
+
+/** Counterintelligence ship, stealths ships from sonar */
+export class CounterIntelShip extends AbstractShip {
+    static config = {
+        shape: [[1, 1, 1, 1]],
+        aa: 3,
+        abilities: []
+    };
+
+    constructor(position: [number, number], rotation: ROTATION) {
+        super('Counterintelligence Ship', position, rotation, CounterIntelShip.config);
+    }
+}
+
+/** Destroyer, allows for extra salvos */
+export class DestroyerShip extends AbstractShip {
+    static config = {
+        shape: [[1, 1, 1, 1]],
+        aa: 2,
+        abilities: []
+    };
+
+    constructor(position: [number, number], rotation: ROTATION) {
+        super('Destroyer', position, rotation, DestroyerShip.config);
+    }
+}
+
+/** Submarine, allows for sonar scans */
+export class SubmarineShip extends AbstractShip {
+    static config = {
+        shape: [[1, 1, 1]],
+        abilities: []
+    };
+
+    constructor(position: [number, number], rotation: ROTATION) {
+        super('Submarine', position, rotation, SubmarineShip.config);
+    }
+}
+
+/** Mine, explodes enemy's board when activated */
+export class MineShip extends AbstractShip {
+    static config = {
+        shape: [[1]],
+        cwis: -1,
+        aa: -1,
+        abilities: []
+    };
+
+    constructor(position: [number, number], rotation: ROTATION) {
+        super('Mine', position, rotation, MineShip.config);
     }
 }
