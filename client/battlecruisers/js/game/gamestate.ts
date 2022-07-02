@@ -1,4 +1,4 @@
-import { GAME_STATE, TURN } from '../types.js';
+import { GAME_STATE, MoveMessage, TURN } from '../types.js';
 import Player from './player.js';
 
 
@@ -27,6 +27,11 @@ export default class GameState {
 
     /** Draw the game state */
     draw() {
+
+    }
+
+    // TODO
+    onMove(playerIndex: number, message: MoveMessage) {
 
     }
 }

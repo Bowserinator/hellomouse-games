@@ -10,3 +10,11 @@ export enum GAME_STATE {
 export enum SHIP_TYPE {
 
 }
+
+export enum ROTATION {
+    R0 = 0, R90, R180, R270
+}
+
+export interface MoveMessage {
+    
+}

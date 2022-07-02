@@ -1,7 +1,15 @@
 
 
 class AbstractMarker {
-    constructor(color, position) {}
+    position: [number, number];
+    priority: number;
+    color: string;
+
+    constructor(color: string, position: [number, number], priority: number) {
+        this.color = color;
+        this.position = position;
+        this.priority = priority;
+    }
 
     draw() {}
 }
