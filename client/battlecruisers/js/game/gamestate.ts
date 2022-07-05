@@ -35,7 +35,7 @@ export default class GameState {
             new Player()
         ];
 
-        this.state = GAME_STATE.BATTLE; // TODO: LOBBY
+        this.state = GAME_STATE.PLACING; // TODO: LOBBY
         this.placingShip = 0;
         this.placingRotation = ROTATION.R0;
     }
@@ -58,19 +58,18 @@ export default class GameState {
     }
 
     drawPlacementState(ctx: CanvasRenderingContext2D) {
-        this.players[this.playerIndex].shipBoard.draw(ctx);
+        const board = this.getPlayer().shipBoard;
+        board.draw(ctx);
 
-        // TODO:
         const placingShip = this.getPlayer().ships[this.placingShip];
         if (!placingShip) return;
 
         placingShip.setRotation(this.placingRotation);
         placingShip.drawBoundingBox(
-            // TODO: dont hard code these
-            ctx, [10, 10], 20, this.getPlayer().shipBoard.canPlace(placingShip)
+            ctx, board.offset, board.gridSize, board.canPlace(placingShip)
                 ? SHIP_ALLOW_PLACE_COLOR : SHIP_NOT_ALLOW_PLACE_COLOR
         );
-        placingShip.drawPlacingRanges(ctx, [10, 10], 20);
+        placingShip.drawPlacingRanges(ctx, board.offset, board.gridSize);
     }
 
     /** Draw the game state */

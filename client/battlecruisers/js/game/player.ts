@@ -8,18 +8,21 @@ export default class Player {
     markerBoard: MarkerBoard;
     ships: Array<AbstractShip>; // Ships to place down
 
+    /** Construct a new player */
     constructor() {
         this.shipBoard = new ShipBoard([50, 50], 25);
         this.markerBoard = new MarkerBoard([50, 50], 25);
         this.reset();
     }
 
+    /** Reset a player for new game */
     reset() {
         this.markerBoard.reset();
         this.shipBoard.reset();
         this.createStartingShips();
     }
 
+    /** Set this.ships to all starting ships */
     createStartingShips() {
         const carrier = () => new CarrierShip([0, 0], ROTATION.R0);
         const bc = () => new BattlecruiserShip([0, 0], ROTATION.R0);

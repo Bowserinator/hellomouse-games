@@ -7,8 +7,6 @@ import { AbstractMarker } from './marker.js';
  * @author Bowserinator
  */
 export class MarkerBoard {
-    // Contains: markers?
-    // todo: store history of markers and rounds so u can show a single round maybe?
     markers: Array<AbstractMarker>;
     offset: [number, number];
     gridSize: number;
@@ -19,10 +17,16 @@ export class MarkerBoard {
         this.gridSize = gridSize;
     }
 
+    /** Reset board for new game */
     reset() {
         this.markers = [];
     }
 
+    /**
+     * Add a new marker, will override markers accordingly
+     * @param marker Marker to add
+     * @return Success? true if placed, false if a higher priority marker prevented placement
+     */
     addMarker(marker: AbstractMarker) {
         if (marker.position[0] < 0 || marker.position[0] >= BOARD_SIZE ||
             marker.position[1] < 0 || marker.position[1] >= BOARD_SIZE)
@@ -52,6 +56,10 @@ export class MarkerBoard {
         return canAdd;
     }
 
+    /**
+     * Draw the board
+     * @param ctx CTX
+     */
     draw(ctx: CanvasRenderingContext2D) {
         drawGrid(ctx, this.offset, this.gridSize);
         this.markers.forEach(marker => marker.draw(ctx, this.offset, this.gridSize));

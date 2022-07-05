@@ -1,6 +1,5 @@
 
 
-
 // TODO: load stuff
 
 import GameState from './game/gamestate.js';
@@ -95,8 +94,10 @@ document.onmousedown = e => {
         for (let s of board.ships)
             if (s.checkSpot(...loc)) {
                 board.removeShip(s);
-                if (e.button !== 2) // Pick with LEFT, just delete with RIGHT
+                if (e.button !== 2) { // Pick with LEFT, just delete with RIGHT
                     gameState.placingShip = ships.indexOf(s);
+                    gameState.placingRotation = s.rotation;
+                }
                 updatePlacementButtons();
                 return;
             }

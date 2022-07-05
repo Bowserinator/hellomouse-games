@@ -87,6 +87,14 @@ export class AbstractShip {
         return this.shape[y - this.position[1]][x - this.position[0]] !== 0;
     }
 
+    /**
+     * Draw a single placement range preview
+     * @param ctx CTX
+     * @param color Color to draw range
+     * @param offset Grid offset
+     * @param gridSize Grid size
+     * @param range Range (from center, square, total length = 2 * range + 1)
+     */
     drawPlacingRange(ctx: CanvasRenderingContext2D, color: string, offset: [number, number],
         gridSize: number, range: number) {
         const center = this.getCenter();
@@ -100,6 +108,12 @@ export class AbstractShip {
         ctx.stroke();
     }
 
+    /**
+     * Draw all placement range previews
+     * @param ctx CTX
+     * @param offset Grid offset
+     * @param gridSize Grid size
+     */
     drawPlacingRanges(ctx: CanvasRenderingContext2D, offset: [number, number], gridSize: number) {
         if (this.config.cwis && this.config.cwis >= 0)
             this.drawPlacingRange(ctx, CWIS_COLOR, offset, gridSize, this.config.cwis);
@@ -198,7 +212,7 @@ export class BattlecruiserShip extends AbstractShip {
 export class CruiserShip extends AbstractShip {
     static config = {
         shape: [[1, 1, 1, 1, 1, 1]],
-        aa: 3,
+        aa: 2,
         abilities: []
     };
 
@@ -249,7 +263,7 @@ export class CounterIntelShip extends AbstractShip {
 export class DestroyerShip extends AbstractShip {
     static config = {
         shape: [[1, 1, 1, 1]],
-        aa: 2,
+        aa: 1,
         abilities: []
     };
 

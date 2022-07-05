@@ -4,13 +4,20 @@ import { drawLine } from './draw.js';
 const ROW_LABEL = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const COL_LABEL = '12456789ΑαΒβΓγΔδΕεΖζΗηΘθΙιΚκΛλΜμΝνΞξΟοΠπΡρΣσ/ςΤτΥυΦφΧχΨψΩω'.split('');
 
+
+/**
+ * Default grid background drawing (grid lines + labels)
+ * @param ctx CTX
+ * @param offset Grid offset
+ * @param gridSize Grid size
+ */
 export default function drawGrid(ctx: CanvasRenderingContext2D, offset: [number, number], gridSize: number) {
     const [tx, ty] = offset;
     const s = BOARD_SIZE * gridSize;
 
     // Labels
     ctx.globalAlpha = 1;
-    ctx.font = '15px Quantico';
+    ctx.font = `${Math.round(gridSize * 0.75)}px Quantico`;
     ctx.fillStyle = GRID_OUTSIDE_COLOR;
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'center';

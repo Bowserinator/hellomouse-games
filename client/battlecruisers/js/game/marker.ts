@@ -4,19 +4,40 @@ export class AbstractMarker {
     position: [number, number];
     priority: number;
     color: string;
-    overwrite: boolean;
+    overwrite: boolean; // If false can co-exist with other markers
 
+    /**
+     * Construct a marker
+     * @param color Color to draw marker with
+     * @param position Position (grid pos, [0,0] = top left)
+     * @param priority Priority. Lower priority markers are replaced by higher ones in same spot
+     */
     constructor(color: string, position: [number, number], priority: number) {
+        if (this.constructor === AbstractMarker)
+            throw new Error('Can\'t instantiate abstract class!');
+
         this.color = color;
         this.position = position;
         this.priority = priority;
         this.overwrite = true;
     }
 
+    /**
+     * Draw the marker
+     * @param ctx CTX
+     * @param offset Grid offset
+     * @param gridSize Grid size
+     */
     draw(ctx: CanvasRenderingContext2D, offset: [number, number], gridSize: number) {
         // Override
     }
 
+    /**
+     * Helper to convert this position to canvas position
+     * @param offset Grid offset
+     * @param gridSize Grid size
+     * @returns [x, y] on canvas
+     */
     toCanvasPos(offset: [number, number], gridSize: number) {
         return [
             this.position[0] * gridSize + offset[0],
@@ -69,6 +90,7 @@ export class MaybeHitMarker extends AbstractMarker {
     }
 }
 
+// Overrides maybe hit since maybe misses are more definite
 export class MaybeMissMarker extends AbstractMarker {
     constructor(position: [number, number]) {
         super('white', position, 2);
