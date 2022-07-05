@@ -35,7 +35,7 @@ export default class GameState {
             new Player()
         ];
 
-        this.state = GAME_STATE.PLACING; // TODO: LOBBY
+        this.state = GAME_STATE.BATTLE; // TODO: LOBBY
         this.placingShip = 0;
         this.placingRotation = ROTATION.R0;
     }
@@ -78,6 +78,10 @@ export default class GameState {
         switch (this.state) {
             case GAME_STATE.PLACING: {
                 this.drawPlacementState(ctx);
+                break;
+            }
+            case GAME_STATE.BATTLE: {
+                this.players[this.playerIndex].markerBoard.draw(ctx);
                 break;
             }
         }

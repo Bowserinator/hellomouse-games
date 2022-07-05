@@ -4,7 +4,7 @@ export enum TURN {
 }
 
 export enum GAME_STATE {
-    LOBBY, PLACING, NORTH_TURN, SOUTH_TURN, END
+    LOBBY, PLACING, BATTLE, END
 }
 
 export enum SHIP_TYPE {

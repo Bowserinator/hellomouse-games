@@ -1,18 +1,21 @@
 import { ROTATION } from '../types.js';
-import { ShipBoard } from './board.js';
+import { ShipBoard } from './ship_board.js';
 import { AbstractShip, AegisShip, BattlecruiserShip, CarrierShip, CounterIntelShip, CruiserShip, DestroyerShip, MineShip, MissileSubmarineShip, SubmarineShip } from './ship.js';
-
+import { MarkerBoard } from './marker_board.js';
 
 export default class Player {
     shipBoard: ShipBoard;
+    markerBoard: MarkerBoard;
     ships: Array<AbstractShip>; // Ships to place down
 
     constructor() {
-        this.shipBoard = new ShipBoard([10, 10], 20);
+        this.shipBoard = new ShipBoard([10, 10], 25);
+        this.markerBoard = new MarkerBoard([10, 10], 25);
         this.reset();
     }
 
     reset() {
+        this.markerBoard.reset();
         this.shipBoard.reset();
         this.createStartingShips();
     }

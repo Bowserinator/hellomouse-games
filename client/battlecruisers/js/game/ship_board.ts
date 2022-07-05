@@ -1,5 +1,6 @@
 import { drawLine } from '../util/draw.js';
-import { AA_COLOR, BOARD_SIZE, CWIS_COLOR, GRID_LINE_COLOR, GRID_OUTSIDE_COLOR, STEALTH_COLOR } from '../vars.js';
+import drawGrid from '../util/draw_grid.js';
+import { AA_COLOR, BOARD_SIZE, CWIS_COLOR, STEALTH_COLOR } from '../vars.js';
 import { AbstractShip } from './ship.js';
 
 /**
@@ -182,33 +183,7 @@ export class ShipBoard {
      * @param ctx CTX to render to
      */
     draw(ctx: CanvasRenderingContext2D) {
-        // TODO: draw bounding box + grid lines
-        const [tx, ty] = this.offset;
-        const s = BOARD_SIZE * this.gridSize;
-
-        // TODO: abstract "draw grid" function with labels
-
-        // Bounding box
-        ctx.globalAlpha = 1;
-        drawLine(ctx, [tx, ty], [tx + s, ty], GRID_OUTSIDE_COLOR);
-        drawLine(ctx, [tx, ty + s], [tx + s, ty + s], GRID_OUTSIDE_COLOR);
-        drawLine(ctx, [tx, ty], [tx, ty + s], GRID_OUTSIDE_COLOR);
-        drawLine(ctx, [tx + s, ty], [tx + s, ty + s], GRID_OUTSIDE_COLOR);
-
-        // Grid
-        ctx.globalAlpha = 0.02;
-        ctx.fillStyle = GRID_LINE_COLOR;
-        for (let x = 0; x < BOARD_SIZE; x++)
-            for (let y = 0; y < BOARD_SIZE; y++)
-                if ((x + y) % 2 === 0)
-                    ctx.fillRect(tx + x * this.gridSize, ty + y * this.gridSize, this.gridSize, this.gridSize);
-
-        ctx.globalAlpha = 0.1;
-        for (let x = 1; x < BOARD_SIZE; x++)
-            drawLine(ctx, [tx + x * this.gridSize, ty], [tx + x * this.gridSize, ty + s], GRID_LINE_COLOR);
-        for (let y = 1; y < BOARD_SIZE; y++)
-            drawLine(ctx, [tx, ty + y * this.gridSize], [tx + s, ty + y * this.gridSize], GRID_LINE_COLOR);
-        ctx.globalAlpha = 1;
+        drawGrid(ctx, this.offset, this.gridSize);
 
         // Ranges
         this.drawMap(ctx, this.aa, AA_COLOR);
@@ -217,19 +192,5 @@ export class ShipBoard {
 
         // Ships
         this.ships.forEach(ship => ship.draw(ctx, this.offset, this.gridSize));
-    }
-}
-
-
-/**
- * Board that shows your hits on the enemy
- * @author Bowserinator
- */
-export class MarkerBoard {
-    // Contains: markers?
-    // todo: store history of markers and rounds so u can show a single round maybe?
-
-    constructor() {
-
     }
 }
