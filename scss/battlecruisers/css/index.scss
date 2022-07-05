@@ -1,0 +1,15 @@
+body {
+    background-color: black;
+    color: white;
+}
+
+
+#ship-placement-buttons {
+    position: fixed;
+    top: 0;
+    right: 0;
+
+    button {
+        display: block;
+    }
+}

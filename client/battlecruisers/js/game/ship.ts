@@ -1,6 +1,6 @@
 import { ROTATION } from '../types.js';
 import { drawLine } from '../util/draw.js';
-import { SHIP_OUTLINE_COLOR } from '../vars.js';
+import { AA_COLOR, CWIS_COLOR, SHIP_OUTLINE_COLOR, STEALTH_COLOR } from '../vars.js';
 
 interface ShipConfig {
     shape: Array<Array<number>>;
@@ -17,6 +17,7 @@ export class AbstractShip {
     size: [number, number];
     rotation: ROTATION;
     shape: Array<Array<number>>;
+    isPlaced: boolean;
 
     /**
      * Construct a ship (abstract)
@@ -33,6 +34,7 @@ export class AbstractShip {
         this.position = position;
         this.rotation = rotation;
         this.config = config;
+        this.isPlaced = false;
 
         // Set config defaults
         if (this.config.aa === undefined)
@@ -52,6 +54,26 @@ export class AbstractShip {
     }
 
     /**
+     * Get the center grid coordinate of the ship rounded down
+     * @returns [x, y]
+     */
+    getCenter(): [number, number] {
+        return [Math.floor(this.position[0] + this.size[0] / 2), Math.floor(this.position[1] + this.size[1] / 2)];
+    }
+
+    /**
+     * Change the ship rotation, updates size + shape + rotation
+     * @param rotation Rotation enum
+     */
+    setRotation(rotation: ROTATION) {
+        this.rotation = rotation;
+        this.shape = this.config.shape.map(row => [...row]);
+        for (let i = 0; i < rotation; i++)
+            this.shape = this.shape[0].map((val, index) => this.shape.map(row => row[index]).reverse());
+        this.size = [this.shape[0].length, this.shape.length];
+    }
+
+    /**
      * Check if a coordinate lands on this ship
      * @param x x coordinate
      * @param y y coordinate
@@ -59,19 +81,42 @@ export class AbstractShip {
      */
     checkSpot(x: number, y: number) {
         // Not in bounding box
-        if (x < this.position[0] || y < this.position[0] ||
+        if (x < this.position[0] || y < this.position[1] ||
             x >= this.position[0] + this.size[0] || y >= this.position[1] + this.size[1])
             return false;
         return this.shape[y - this.position[1]][x - this.position[0]] !== 0;
     }
 
+    drawPlacingRange(ctx: CanvasRenderingContext2D, color: string, offset: [number, number],
+        gridSize: number, range: number) {
+        const center = this.getCenter();
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.rect(
+            center[0] * gridSize - gridSize * range + offset[0],
+            center[1] * gridSize - gridSize * range + offset[1],
+            gridSize * (range * 2 + 1),
+            gridSize * (range * 2 + 1));
+        ctx.stroke();
+    }
+
+    drawPlacingRanges(ctx: CanvasRenderingContext2D, offset: [number, number], gridSize: number) {
+        if (this.config.cwis && this.config.cwis >= 0)
+            this.drawPlacingRange(ctx, CWIS_COLOR, offset, gridSize, this.config.cwis);
+        if (this.config.aa && this.config.aa >= 0)
+            this.drawPlacingRange(ctx, AA_COLOR, offset, gridSize, this.config.aa);
+        if (this.config.stealth && this.config.stealth >= 0)
+            this.drawPlacingRange(ctx, STEALTH_COLOR, offset, gridSize, this.config.stealth);
+    }
+
     /**
-     * Draw the ship bounding box
-     * @param ctx CTX
-     * @param offset Offset (top left corner) for the grid
-     * @param gridSize Grid cell size
+     * Fill the ship outline
+     * @param ctx ctx
+     * @param offset Grid offset
+     * @param gridSize Size of grid cell
+     * @param color Color to draw + fill
      */
-    draw(ctx: CanvasRenderingContext2D, offset: [number, number], gridSize: number) {
+    drawBoundingBox(ctx: CanvasRenderingContext2D, offset: [number, number], gridSize: number, color: string) {
         // Draw the ship bounding box
         const shouldPlaceEdge = (x: number, y: number) => {
             if (!this.shape[y]) return true;
@@ -86,15 +131,30 @@ export class AbstractShip {
                 const tx = offset[0] + (this.position[0] + dx) * gridSize;
                 const ty = offset[1] + (this.position[1] + dy) * gridSize;
 
+                ctx.globalAlpha = 0.25;
+                ctx.fillStyle = color;
+                ctx.fillRect(tx, ty, gridSize, gridSize);
+                ctx.globalAlpha = 1;
+
                 if (shouldPlaceEdge(dx, dy - 1)) // Top
-                    drawLine(ctx, [tx, ty], [tx + gridSize, ty], SHIP_OUTLINE_COLOR);
+                    drawLine(ctx, [tx, ty], [tx + gridSize, ty], color);
                 if (shouldPlaceEdge(dx, dy + 1)) // Bottom
-                    drawLine(ctx, [tx, ty + gridSize], [tx + gridSize, ty + gridSize], SHIP_OUTLINE_COLOR);
+                    drawLine(ctx, [tx, ty + gridSize], [tx + gridSize, ty + gridSize], color);
                 if (shouldPlaceEdge(dx - 1, dy)) // Left
-                    drawLine(ctx, [tx, ty], [tx, ty + gridSize], SHIP_OUTLINE_COLOR);
+                    drawLine(ctx, [tx, ty], [tx, ty + gridSize], color);
                 if (shouldPlaceEdge(dx + 1, dy)) // Right
-                    drawLine(ctx, [tx + gridSize, ty], [tx + gridSize, ty + gridSize], SHIP_OUTLINE_COLOR);
+                    drawLine(ctx, [tx + gridSize, ty], [tx + gridSize, ty + gridSize], color);
             }
+    }
+
+    /**
+     * Draw the ship bounding box
+     * @param ctx CTX
+     * @param offset Offset (top left corner) for the grid
+     * @param gridSize Grid cell size
+     */
+    draw(ctx: CanvasRenderingContext2D, offset: [number, number], gridSize: number) {
+        this.drawBoundingBox(ctx, offset, gridSize, SHIP_OUTLINE_COLOR);
     }
 
     onHit() {
@@ -176,7 +236,7 @@ export class AegisShip extends AbstractShip {
 export class CounterIntelShip extends AbstractShip {
     static config = {
         shape: [[1, 1, 1, 1]],
-        aa: 3,
+        stealth: 3,
         abilities: []
     };
 
