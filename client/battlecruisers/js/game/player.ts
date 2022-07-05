@@ -9,8 +9,8 @@ export default class Player {
     ships: Array<AbstractShip>; // Ships to place down
 
     constructor() {
-        this.shipBoard = new ShipBoard([10, 10], 25);
-        this.markerBoard = new MarkerBoard([10, 10], 25);
+        this.shipBoard = new ShipBoard([50, 50], 25);
+        this.markerBoard = new MarkerBoard([50, 50], 25);
         this.reset();
     }
 

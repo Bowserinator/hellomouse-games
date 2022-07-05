@@ -1,12 +1,32 @@
 import { BOARD_SIZE, GRID_LINE_COLOR, GRID_OUTSIDE_COLOR } from '../vars.js';
 import { drawLine } from './draw.js';
 
+const ROW_LABEL = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const COL_LABEL = '12456789ΑαΒβΓγΔδΕεΖζΗηΘθΙιΚκΛλΜμΝνΞξΟοΠπΡρΣσ/ςΤτΥυΦφΧχΨψΩω'.split('');
 
 export default function drawGrid(ctx: CanvasRenderingContext2D, offset: [number, number], gridSize: number) {
     const [tx, ty] = offset;
     const s = BOARD_SIZE * gridSize;
 
+    // Labels
     ctx.globalAlpha = 1;
+    ctx.font = '15px Quantico';
+    ctx.fillStyle = GRID_OUTSIDE_COLOR;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+
+    for (let y = 1; y <= BOARD_SIZE; y++) {
+        const char = COL_LABEL[y - 1];
+        const y2 = offset[1] + (y - 0.5) * gridSize;
+        ctx.fillText(char, offset[0] / 2, y2);
+    }
+    for (let x = 1; x <= BOARD_SIZE; x++) {
+        const char = ROW_LABEL[x - 1];
+        const x2 = offset[0] + (x - 0.5) * gridSize;
+        ctx.fillText(char, x2, offset[1] / 2);
+    }
+
+    // Outline
     drawLine(ctx, [tx, ty], [tx + s, ty], GRID_OUTSIDE_COLOR);
     drawLine(ctx, [tx, ty + s], [tx + s, ty + s], GRID_OUTSIDE_COLOR);
     drawLine(ctx, [tx, ty], [tx, ty + s], GRID_OUTSIDE_COLOR);
