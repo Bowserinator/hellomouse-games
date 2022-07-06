@@ -1,7 +1,7 @@
 import { ROTATION } from '../types.js';
 import { drawLine } from '../util/draw.js';
 import { AA_COLOR, CWIS_COLOR, SHIP_OUTLINE_COLOR, STEALTH_COLOR } from '../vars.js';
-import { AbstractAbility, MISSILE, NUKE, SALVO, SONAR, TORPEDO_BOMBER } from './ability.js';
+import { AbstractAbility, MISSILE, NUKE, SONAR, TORPEDO_BOMBER } from './ability.js';
 
 interface ShipConfig {
     shape: Array<Array<number>>;
@@ -63,7 +63,9 @@ export class AbstractShip {
      * @returns [x, y]
      */
     getCenter(): [number, number] {
-        return [Math.floor(this.position[0] + this.size[0] / 2), Math.floor(this.position[1] + this.size[1] / 2)];
+        let f1 = ROTATION.R0 === this.rotation ? Math.ceil : Math.floor;
+        let f2 = ROTATION.R90 === this.rotation ? Math.ceil : Math.floor;
+        return [f1(this.position[0] + (this.size[0] - 1) / 2), f2(this.position[1] + (this.size[1] - 1) / 2)];
     }
 
     /**
@@ -205,7 +207,7 @@ export class CarrierShip extends AbstractShip {
 export class BattlecruiserShip extends AbstractShip {
     static config = {
         shape: [[1, 1, 1, 1, 1, 1, 1]],
-        abilities: [SALVO]
+        abilities: []
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
@@ -268,7 +270,7 @@ export class CounterIntelShip extends AbstractShip {
 export class DestroyerShip extends AbstractShip {
     static config = {
         shape: [[1, 1, 1, 1]],
-        abilities: [SALVO]
+        abilities: []
     };
 
     constructor(position: [number, number], rotation: ROTATION) {

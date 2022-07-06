@@ -101,7 +101,7 @@ document.onkeydown = e => {
             gameState.placingRotation = (gameState.placingRotation + 1) % 4;
 };
 
-document.onmousedown = e => {
+canvas.onmousedown = e => {
     const mousepos = getMousePos(e);
 
     switch (gameState.state) {
@@ -155,7 +155,7 @@ document.onmousedown = e => {
     }
 };
 
-document.onmousemove = e => {
+canvas.onmousemove = e => {
     const mousepos = getMousePos(e);
 
     switch (gameState.state) {
