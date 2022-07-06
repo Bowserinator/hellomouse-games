@@ -12,6 +12,7 @@ export class ShipBoard {
     offset: [number, number];
     gridSize: number;
 
+    shipGrid: Array<Array<number>>;
     stealth: Array<Array<number>>;
     aa: Array<Array<number>>;
     cwis: Array<Array<number>>;
@@ -40,6 +41,7 @@ export class ShipBoard {
         this.stealth = makeArr();
         this.cwis = makeArr();
         this.aa = makeArr();
+        this.shipGrid = makeArr();
     }
 
     /**
@@ -103,6 +105,12 @@ export class ShipBoard {
             this.fillMap(this.aa, ship.getCenter(), ship.config.aa);
         if (ship.config.stealth && ship.config.stealth >= 0)
             this.fillMap(this.stealth, ship.getCenter(), ship.config.stealth);
+
+        // Fill where occupied by ship
+        for (let dx = 0; dx < ship.size[0]; dx++)
+            for (let dy = 0; dy < ship.size[1]; dy++)
+                if (ship.shape[dy][dx])
+                    this.shipGrid[dy + ship.position[1]][dx + ship.position[0]] = 1;
     }
 
     /**

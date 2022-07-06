@@ -1,4 +1,5 @@
 import { drawLine, drawRectangle, fillCircle, fillRectangle } from '../util/draw.js';
+import { AA_COLOR, CWIS_COLOR } from '../vars.js';
 
 export class AbstractMarker {
     position: [number, number];
@@ -78,7 +79,7 @@ export class MissMarker extends AbstractMarker {
 
 export class MaybeHitMarker extends AbstractMarker {
     constructor(position: [number, number]) {
-        super('red', position, 1);
+        super('red', position, 2);
     }
 
     draw(ctx: CanvasRenderingContext2D, offset: [number, number], gridSize: number) {
@@ -90,7 +91,23 @@ export class MaybeHitMarker extends AbstractMarker {
     }
 }
 
-// Overrides maybe hit since maybe misses are more definite
+// When a stealth field interferes with a scan
+export class MaybeUnknownMarker extends AbstractMarker {
+    constructor(position: [number, number]) {
+        super('#777', position, 0);
+    }
+
+    draw(ctx: CanvasRenderingContext2D, offset: [number, number], gridSize: number) {
+        let [tx, ty] = this.toCanvasPos(offset, gridSize);
+        ctx.globalAlpha = 1;
+        ctx.font = `${Math.round(gridSize * 0.75)}px Quantico`;
+        ctx.fillStyle = this.color;
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        ctx.fillText('?', tx + gridSize / 2, ty + gridSize / 2);
+    }
+}
+
 export class MaybeMissMarker extends AbstractMarker {
     constructor(position: [number, number]) {
         super('white', position, 2);
@@ -105,9 +122,9 @@ export class MaybeMissMarker extends AbstractMarker {
     }
 }
 
-export class ShotDownMarker extends AbstractMarker {
-    constructor(position: [number, number]) {
-        super('#ffd024', position, -99);
+class ShotDownMarker extends AbstractMarker {
+    constructor(color: string, position: [number, number]) {
+        super(color, position, -99);
         this.overwrite = false;
     }
 
@@ -117,5 +134,17 @@ export class ShotDownMarker extends AbstractMarker {
         let o = gridSize / 4;
         drawLine(ctx, [cx - o, cy - o], [cx + o, cy + o], this.color);
         drawLine(ctx, [cx - o, cy + o], [cx + o, cy - o], this.color);
+    }
+}
+
+export class MissileShotDownMarker extends ShotDownMarker {
+    constructor(position: [number, number]) {
+        super(CWIS_COLOR, position);
+    }
+}
+
+export class AirShotDownMarker extends ShotDownMarker {
+    constructor(position: [number, number]) {
+        super(AA_COLOR, position);
     }
 }

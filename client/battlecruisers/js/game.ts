@@ -3,7 +3,7 @@
 // TODO: load stuff
 
 import GameState from './game/gamestate.js';
-import { HitMarker, MaybeHitMarker, MissMarker, ShotDownMarker, MaybeMissMarker } from './game/marker.js';
+import { HitMarker, MaybeHitMarker, MissMarker, AirShotDownMarker, MissileShotDownMarker, MaybeMissMarker, MaybeUnknownMarker } from './game/marker.js';
 import { GAME_STATE } from './types.js';
 import { BOARD_SIZE } from './vars.js';
 
@@ -23,12 +23,15 @@ for (let i = 0; i < BOARD_SIZE; i++)
 for (let i = 0; i < BOARD_SIZE; i++)
     gameState.getPlayer().markerBoard.addMarker(new MissMarker([i, i + 1]));
 for (let i = 0; i < BOARD_SIZE; i++)
-    gameState.getPlayer().markerBoard.addMarker(new ShotDownMarker([i, i + 2]));
+    gameState.getPlayer().markerBoard.addMarker(new MissileShotDownMarker([i, i + 2]));
 for (let i = 0; i < BOARD_SIZE; i++)
     gameState.getPlayer().markerBoard.addMarker(new MaybeHitMarker([i, i + 3]));
 for (let i = 0; i < BOARD_SIZE; i++)
     gameState.getPlayer().markerBoard.addMarker(new MaybeMissMarker([i, i + 4]));
-
+for (let i = 0; i < BOARD_SIZE; i++)
+    gameState.getPlayer().markerBoard.addMarker(new AirShotDownMarker([i, i + 5]));
+for (let i = 0; i < BOARD_SIZE; i++)
+    gameState.getPlayer().markerBoard.addMarker(new MaybeUnknownMarker([i, i + 6]));
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);

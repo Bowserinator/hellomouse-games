@@ -1,6 +1,7 @@
 import { ROTATION } from '../types.js';
 import { drawLine } from '../util/draw.js';
 import { AA_COLOR, CWIS_COLOR, SHIP_OUTLINE_COLOR, STEALTH_COLOR } from '../vars.js';
+import { MISSILE, NUKE, SALVO, SONAR, TORPEDO_BOMBER } from './ability.js';
 
 interface ShipConfig {
     shape: Array<Array<number>>;
@@ -188,7 +189,7 @@ export class CarrierShip extends AbstractShip {
             [1, 1, 1, 1, 1, 1, 0, 0]
         ],
         aa: 5,
-        abilities: []
+        abilities: [TORPEDO_BOMBER]
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
@@ -200,7 +201,7 @@ export class CarrierShip extends AbstractShip {
 export class BattlecruiserShip extends AbstractShip {
     static config = {
         shape: [[1, 1, 1, 1, 1, 1, 1]],
-        abilities: []
+        abilities: [SALVO]
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
@@ -213,7 +214,7 @@ export class CruiserShip extends AbstractShip {
     static config = {
         shape: [[1, 1, 1, 1, 1, 1]],
         aa: 2,
-        abilities: []
+        abilities: [MISSILE]
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
@@ -225,7 +226,7 @@ export class CruiserShip extends AbstractShip {
 export class MissileSubmarineShip extends AbstractShip {
     static config = {
         shape: [[1, 1, 1, 1, 1]],
-        abilities: []
+        abilities: [NUKE]
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
@@ -264,7 +265,7 @@ export class DestroyerShip extends AbstractShip {
     static config = {
         shape: [[1, 1, 1, 1]],
         aa: 1,
-        abilities: []
+        abilities: [SALVO]
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
@@ -276,7 +277,7 @@ export class DestroyerShip extends AbstractShip {
 export class SubmarineShip extends AbstractShip {
     static config = {
         shape: [[1, 1, 1]],
-        abilities: []
+        abilities: [SONAR]
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
