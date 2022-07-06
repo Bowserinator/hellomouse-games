@@ -2,6 +2,7 @@
 
 // TODO: load stuff
 
+import { Board } from './game/board.js';
 import GameState from './game/gamestate.js';
 import { HitMarker, MaybeHitMarker, MissMarker, AirShotDownMarker, MissileShotDownMarker, MaybeMissMarker, MaybeUnknownMarker } from './game/marker.js';
 import { GAME_STATE } from './types.js';
@@ -18,20 +19,19 @@ const gameState = new GameState(true);
 // @ts-ignore
 window.gameState = gameState;
 
-for (let i = 0; i < BOARD_SIZE; i++)
-    gameState.getPlayer().markerBoard.addMarker(new HitMarker([i, i]));
-for (let i = 0; i < BOARD_SIZE; i++)
-    gameState.getPlayer().markerBoard.addMarker(new MissMarker([i, i + 1]));
-for (let i = 0; i < BOARD_SIZE; i++)
-    gameState.getPlayer().markerBoard.addMarker(new MissileShotDownMarker([i, i + 2]));
-for (let i = 0; i < BOARD_SIZE; i++)
-    gameState.getPlayer().markerBoard.addMarker(new MaybeHitMarker([i, i + 3]));
-for (let i = 0; i < BOARD_SIZE; i++)
-    gameState.getPlayer().markerBoard.addMarker(new MaybeMissMarker([i, i + 4]));
-for (let i = 0; i < BOARD_SIZE; i++)
-    gameState.getPlayer().markerBoard.addMarker(new AirShotDownMarker([i, i + 5]));
-for (let i = 0; i < BOARD_SIZE; i++)
-    gameState.getPlayer().markerBoard.addMarker(new MaybeUnknownMarker([i, i + 6]));
+
+// Temp place ships:
+function place(j) {
+    let y = 0;
+    for (let i = 0; i < gameState.players[j].ships.length; i++) {
+        const s = gameState.players[j].ships[i];
+        s.position = [0, y];
+        y += s.size[1];
+        gameState.players[j].shipBoard.place(s);
+    }
+}
+place(0);
+place(1);
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -47,6 +47,14 @@ window.requestAnimationFrame(draw);
  * Controls
  * ---------------------------
  */
+
+function mousePosToGrid(mousepos: [number, number], board: Board, size: [number, number]): [number, number] {
+    const loc = board.getClickLocation(...mousepos);
+    loc[0] = Math.min(BOARD_SIZE - size[0], loc[0]);
+    loc[1] = Math.min(BOARD_SIZE - size[1], loc[1]);
+    return loc;
+}
+
 const shipPlacementButtons = document.getElementById('ship-placement-buttons') as HTMLElement;
 
 function getMousePos(e: MouseEvent): [number, number] {
@@ -75,6 +83,17 @@ function updatePlacementButtons() {
         }));
 }
 
+function updateAbilityButtons() {
+    shipPlacementButtons.replaceChildren(...Object.keys(gameState.abilityMap)
+        .filter(key => gameState.abilityMap[key])
+        .map(key => {
+            const btn = document.createElement('button') as HTMLButtonElement;
+            btn.innerText = `${key} (${gameState.abilityMap[key].length})`;
+            btn.onclick = () => gameState.selectedAbility = gameState.abilityMap[key][0];
+            return btn;
+        }));
+}
+
 
 document.onkeydown = e => {
     if (gameState.state === GAME_STATE.PLACING)
@@ -85,60 +104,81 @@ document.onkeydown = e => {
 document.onmousedown = e => {
     const mousepos = getMousePos(e);
 
-    // Ship placements
-    if (gameState.state === GAME_STATE.PLACING) {
-        const board = gameState.getPlayer().shipBoard;
-        if (!board.isOnBoard(...mousepos)) return;
+    switch (gameState.state) {
+        // Ship placements
+        case GAME_STATE.PLACING: {
+            const board = gameState.getPlayer().shipBoard;
+            if (!board.isOnBoard(...mousepos)) return;
 
-        const ships = gameState.getPlayer().ships;
-        let loc = board.getClickLocation(...mousepos);
+            const ships = gameState.getPlayer().ships;
+            let loc = board.getClickLocation(...mousepos);
 
-        // Did we select an existing ship? Switch to it
-        for (let s of board.ships)
-            if (s.checkSpot(...loc)) {
-                board.removeShip(s);
-                if (e.button !== 2) { // Pick with LEFT, just delete with RIGHT
-                    gameState.placingShip = ships.indexOf(s);
-                    gameState.placingRotation = s.rotation;
+            // Did we select an existing ship? Switch to it
+            for (let s of board.ships)
+                if (s.checkSpot(...loc)) {
+                    board.removeShip(s);
+                    if (e.button !== 2) { // Pick with LEFT, just delete with RIGHT
+                        gameState.placingShip = ships.indexOf(s);
+                        gameState.placingRotation = s.rotation;
+                    }
+                    updatePlacementButtons();
+                    return;
                 }
-                updatePlacementButtons();
+
+            const ship = ships[gameState.placingShip];
+            if (e.button === 2 || !ship || ship.isPlaced) { // Right click = cancel, else nothing to place
+                gameState.placingShip = -1;
                 return;
             }
 
-        const ship = ships[gameState.placingShip];
-        if (e.button === 2 || !ship || ship.isPlaced) { // Right click = cancel, else nothing to place
-            gameState.placingShip = -1;
-            return;
+            loc[0] = Math.min(BOARD_SIZE - ship.size[0], loc[0]);
+            loc[1] = Math.min(BOARD_SIZE - ship.size[1], loc[1]);
+            ship.position = loc;
+
+            if (board.place(ship))
+                // Place a new ship on the board
+                gameState.advancePlacingShip();
+
+            updatePlacementButtons();
+            break;
         }
-
-        loc[0] = Math.min(BOARD_SIZE - ship.size[0], loc[0]);
-        loc[1] = Math.min(BOARD_SIZE - ship.size[1], loc[1]);
-        ship.position = loc;
-
-        if (board.place(ship))
-            // Place a new ship on the board
-            gameState.advancePlacingShip();
-
-        updatePlacementButtons();
+        // Fire
+        case GAME_STATE.FIRING: {
+            const board = gameState.getPlayer().markerBoard;
+            if (!board.isOnBoard(...mousepos)) return;
+            let loc = mousePosToGrid(mousepos, board, [1, 1]);
+            console.log('Firing at', loc);
+            gameState.useCurrentAbility();
+            updateAbilityButtons();
+            break;
+        }
     }
 };
 
 document.onmousemove = e => {
     const mousepos = getMousePos(e);
 
-    if (gameState.state === GAME_STATE.PLACING) {
-        const board = gameState.getPlayer().shipBoard;
-        if (!board.isOnBoard(...mousepos)) return;
+    switch (gameState.state) {
+        // Ship placements
+        case GAME_STATE.PLACING: {
+            const board = gameState.getPlayer().shipBoard;
+            if (!board.isOnBoard(...mousepos)) return;
 
-        const ship = gameState.getPlayer().ships[gameState.placingShip];
-        if (!ship || ship.isPlaced) {
-            gameState.placingShip = -1;
-            return;
+            const ship = gameState.getPlayer().ships[gameState.placingShip];
+            if (!ship || ship.isPlaced) {
+                gameState.placingShip = -1;
+                return;
+            }
+            ship.position = mousePosToGrid(mousepos, board, ship.size);
+            break;
         }
-        const loc = board.getClickLocation(...mousepos);
-        loc[0] = Math.min(BOARD_SIZE - ship.size[0], loc[0]);
-        loc[1] = Math.min(BOARD_SIZE - ship.size[1], loc[1]);
-        ship.position = loc;
+        // Fire
+        case GAME_STATE.FIRING: {
+            const board = gameState.getPlayer().markerBoard;
+            if (!board.isOnBoard(...mousepos)) return;
+            gameState.firePos = mousePosToGrid(mousepos, board, [1, 1]);
+            break;
+        }
     }
 };
 

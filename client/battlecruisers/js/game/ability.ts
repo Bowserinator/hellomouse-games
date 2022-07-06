@@ -1,5 +1,8 @@
+import { drawRectangle } from '../util/draw.js';
+import { BOARD_SIZE } from '../vars.js';
 import GameState from './gamestate.js';
-import { AirShotDownMarker, MissileShotDownMarker } from './marker.js';
+import { AirShotDownMarker, MaybeHitMarker, MaybeMissMarker, MissileShotDownMarker } from './marker.js';
+import { MarkerBoard } from './marker_board.js';
 
 /**
  * An ability singleton
@@ -8,6 +11,7 @@ import { AirShotDownMarker, MissileShotDownMarker } from './marker.js';
 export class AbstractAbility {
     name: string;
     cooldown: number;
+    lastRoundActivated: number;
 
     /**
      * Constructor
@@ -17,6 +21,7 @@ export class AbstractAbility {
     constructor(name: string, cooldown: number) {
         this.name = name;
         this.cooldown = cooldown;
+        this.lastRoundActivated = -1;
     }
 
     /**
@@ -26,11 +31,38 @@ export class AbstractAbility {
      * @param pos Where to use
      */
     do(playerIndex: number, gameState: GameState, pos: [number, number]) {
-        // TODO: what params?
+        // Override
+    }
+
+    /**
+     * Draw fire preview
+     * @param ctx
+     * @param board Board to draw
+     * @param pos Grid coordinate
+     */
+    drawPreview(ctx: CanvasRenderingContext2D, board: MarkerBoard, pos: [number, number]) {
+        // Override
+    }
+
+    /**
+     * Make a clone
+     * @return this
+     */
+    clone() {
+        throw new Error('Must override this');
+    }
+
+    /**
+     * Check if active
+     * @param round Round the powerup is active in
+     * @returns Is the powerup active this round/
+     */
+    isNotActive(round: number) {
+        return this.lastRoundActivated >= 0 && round - this.lastRoundActivated < this.cooldown;
     }
 }
 
-class TorpedoBomberAbility extends AbstractAbility {
+export class TorpedoBomberAbility extends AbstractAbility {
     constructor() {
         super('Torpedo Bomber', 2);
     }
@@ -40,8 +72,8 @@ class TorpedoBomberAbility extends AbstractAbility {
         const [x, y] = pos;
 
         // Planes get shot down by AA
-        if (gameState.players[playerIndex].shipBoard.aa[y][x]) {
-            gameState.players[1 - playerIndex].markerBoard.addMarker(new AirShotDownMarker(pos));
+        if (gameState.players[1 - playerIndex].shipBoard.aa[y][x]) {
+            gameState.players[playerIndex].markerBoard.addMarker(new AirShotDownMarker(pos));
             return;
         }
 
@@ -51,23 +83,74 @@ class TorpedoBomberAbility extends AbstractAbility {
         gameState.attack(1 - playerIndex, [x, y - 1]);
         gameState.attack(1 - playerIndex, [x, y + 1]);
     }
+
+    drawPreview(ctx: CanvasRenderingContext2D, board: MarkerBoard, pos: [number, number]) {
+        const g = board.gridSize;
+        const [tx, ty] = [
+            board.offset[0] + pos[0] * g,
+            board.offset[1] + pos[1] * g];
+        drawRectangle(ctx, [tx, ty], [g, g], 'red');
+        drawRectangle(ctx, [tx - g, ty], [g, g], 'red');
+        drawRectangle(ctx, [tx + g, ty], [g, g], 'red');
+        drawRectangle(ctx, [tx, ty - g], [g, g], 'red');
+        drawRectangle(ctx, [tx, ty + g], [g, g], 'red');
+    }
+
+    clone() {
+        return new TorpedoBomberAbility();
+    }
 }
 
-class SonarAbility extends AbstractAbility {
+export class SonarAbility extends AbstractAbility {
     constructor() {
         super('Sonar Ping', 2);
     }
 
-    // Probe 3x3 square
+    // Probe 3x3 square, Marks all squares as "potential targets"
+    // unless one is in a stealth field
     do(playerIndex: number, gameState: GameState, pos: [number, number]) {
         const [x, y] = pos;
+        let anyPartInStealth = false;
+        let anyPartHit = false;
+
+        let points = [];
         for (let dx = -1; dx <= 1; dx++)
-            for (let dy = -1; dy <= 1; dy++)
-                gameState.probe(1 - playerIndex, [x + dx, y + dy]);
+            for (let dy = -1; dy <= 1; dy++) {
+                let p: [number, number] = [x + dx, y + dy];
+                if (p[0] < 0 || p[1] < 0 || p[0] >= BOARD_SIZE || p[1] >= BOARD_SIZE)
+                    continue;
+                points.push(p);
+            }
+
+        for (let p of points) {
+            // Check if not stealthed
+            let stealthed = gameState.players[1 - playerIndex].shipBoard.stealth[p[1]][p[0]];
+            if (!stealthed && gameState.players[1 - playerIndex].shipBoard.shipGrid[p[1]][p[0]])
+                anyPartHit = true;
+            if (anyPartInStealth)
+                anyPartInStealth = true;
+        }
+        for (let p of points)
+            gameState.players[playerIndex].markerBoard.addMarker(
+                (!anyPartInStealth && anyPartHit)
+                    ? new MaybeHitMarker(p)
+                    : new MaybeMissMarker(p)
+            );
+    }
+
+    drawPreview(ctx: CanvasRenderingContext2D, board: MarkerBoard, pos: [number, number]) {
+        const [tx, ty] = [
+            board.offset[0] + pos[0] * board.gridSize - board.gridSize,
+            board.offset[1] + pos[1] * board.gridSize - board.gridSize];
+        drawRectangle(ctx, [tx, ty], [board.gridSize * 3, board.gridSize * 3], 'white');
+    }
+
+    clone() {
+        return new SonarAbility();
     }
 }
 
-class NuclearTorpedoAbility extends AbstractAbility {
+export class NuclearTorpedoAbility extends AbstractAbility {
     constructor() {
         super('Nuclear Torpedo', 12);
     }
@@ -79,9 +162,20 @@ class NuclearTorpedoAbility extends AbstractAbility {
             for (let dy = -3; dy <= 3; dy++)
                 gameState.attack(1 - playerIndex, [x + dx, y + dy]);
     }
+
+    drawPreview(ctx: CanvasRenderingContext2D, board: MarkerBoard, pos: [number, number]) {
+        const [tx, ty] = [
+            board.offset[0] + pos[0] * board.gridSize - 3 * board.gridSize,
+            board.offset[1] + pos[1] * board.gridSize - 3 * board.gridSize];
+        drawRectangle(ctx, [tx, ty], [board.gridSize * 7, board.gridSize * 7], 'red');
+    }
+
+    clone() {
+        return new NuclearTorpedoAbility();
+    }
 }
 
-class CruiseMissileAbility extends AbstractAbility {
+export class CruiseMissileAbility extends AbstractAbility {
     constructor() {
         super('Cruise Missile', 2);
     }
@@ -91,8 +185,8 @@ class CruiseMissileAbility extends AbstractAbility {
         const [x, y] = pos;
 
         // Missiles get shot down by CWIS
-        if (gameState.players[playerIndex].shipBoard.cwis[y][x]) {
-            gameState.players[1 - playerIndex].markerBoard.addMarker(new MissileShotDownMarker(pos));
+        if (gameState.players[1 - playerIndex].shipBoard.cwis[y][x]) {
+            gameState.players[playerIndex].markerBoard.addMarker(new MissileShotDownMarker(pos));
             return;
         }
 
@@ -102,9 +196,25 @@ class CruiseMissileAbility extends AbstractAbility {
         gameState.attack(1 - playerIndex, [x - 1, y + 1]);
         gameState.attack(1 - playerIndex, [x + 1, y + 1]);
     }
+
+    drawPreview(ctx: CanvasRenderingContext2D, board: MarkerBoard, pos: [number, number]) {
+        const g = board.gridSize;
+        const [tx, ty] = [
+            board.offset[0] + pos[0] * g,
+            board.offset[1] + pos[1] * g];
+        drawRectangle(ctx, [tx, ty], [g, g], 'red');
+        drawRectangle(ctx, [tx - g, ty - g], [g, g], 'red');
+        drawRectangle(ctx, [tx - g, ty + g], [g, g], 'red');
+        drawRectangle(ctx, [tx + g, ty - g], [g, g], 'red');
+        drawRectangle(ctx, [tx + g, ty + g], [g, g], 'red');
+    }
+
+    clone() {
+        return new CruiseMissileAbility();
+    }
 }
 
-class SalvoAbility extends AbstractAbility {
+export class SalvoAbility extends AbstractAbility {
     constructor() {
         super('Salvo', 0);
     }
@@ -113,9 +223,20 @@ class SalvoAbility extends AbstractAbility {
     do(playerIndex: number, gameState: GameState, pos: [number, number]) {
         gameState.attack(1 - playerIndex, pos);
     }
+
+    drawPreview(ctx: CanvasRenderingContext2D, board: MarkerBoard, pos: [number, number]) {
+        const [tx, ty] = [
+            board.offset[0] + pos[0] * board.gridSize,
+            board.offset[1] + pos[1] * board.gridSize];
+        drawRectangle(ctx, [tx, ty], [board.gridSize, board.gridSize], 'red');
+    }
+
+    clone() {
+        return new SalvoAbility();
+    }
 }
 
-class MineAbility extends AbstractAbility {
+export class MineAbility extends AbstractAbility {
     constructor() {
         super('Mine', 0);
     }
@@ -127,6 +248,10 @@ class MineAbility extends AbstractAbility {
         for (let dx = -1; dx <= 1; dx++)
             for (let dy = -1; dy <= 1; dy++)
                 gameState.attack(playerIndex, [x + dx, y + dy]);
+    }
+
+    clone() {
+        return new MineAbility();
     }
 }
 

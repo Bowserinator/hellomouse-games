@@ -1,7 +1,7 @@
 import { ROTATION } from '../types.js';
 import { drawLine } from '../util/draw.js';
 import { AA_COLOR, CWIS_COLOR, SHIP_OUTLINE_COLOR, STEALTH_COLOR } from '../vars.js';
-import { MISSILE, NUKE, SALVO, SONAR, TORPEDO_BOMBER } from './ability.js';
+import { AbstractAbility, MISSILE, NUKE, SALVO, SONAR, TORPEDO_BOMBER } from './ability.js';
 
 interface ShipConfig {
     shape: Array<Array<number>>;
@@ -18,6 +18,7 @@ export class AbstractShip {
     size: [number, number];
     rotation: ROTATION;
     shape: Array<Array<number>>;
+    abilities: Array<AbstractAbility>;
     isPlaced: boolean;
 
     /**
@@ -46,6 +47,9 @@ export class AbstractShip {
             this.config.stealth = -1;
         if (this.config.abilities === undefined)
             this.config.abilities = [];
+
+        // Copy abilities
+        this.abilities = this.config.abilities.map(a => a.clone());
 
         // Compute shape
         this.shape = config.shape.map(row => [...row]);
@@ -189,7 +193,7 @@ export class CarrierShip extends AbstractShip {
             [1, 1, 1, 1, 1, 1, 0, 0]
         ],
         aa: 5,
-        abilities: [TORPEDO_BOMBER]
+        abilities: [TORPEDO_BOMBER, TORPEDO_BOMBER, TORPEDO_BOMBER]
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
@@ -264,7 +268,6 @@ export class CounterIntelShip extends AbstractShip {
 export class DestroyerShip extends AbstractShip {
     static config = {
         shape: [[1, 1, 1, 1]],
-        aa: 1,
         abilities: [SALVO]
     };
 

@@ -1,26 +1,23 @@
 import { drawLine } from '../util/draw.js';
 import drawGrid from '../util/draw_grid.js';
 import { AA_COLOR, BOARD_SIZE, CWIS_COLOR, STEALTH_COLOR } from '../vars.js';
+import { Board } from './board.js';
 import { AbstractShip } from './ship.js';
 
 /**
  * Board that contains ship placements (for your own ships)
  * @author Bowserinator
  */
-export class ShipBoard {
+export class ShipBoard extends Board {
     ships: Array<AbstractShip>;
-    offset: [number, number];
-    gridSize: number;
-
     shipGrid: Array<Array<number>>;
     stealth: Array<Array<number>>;
     aa: Array<Array<number>>;
     cwis: Array<Array<number>>;
 
     constructor(offset: [number, number], gridSize: number) {
+        super(offset, gridSize);
         this.ships = [];
-        this.offset = offset;
-        this.gridSize = gridSize;
     }
 
     /** Reset when game restarts */
@@ -42,18 +39,6 @@ export class ShipBoard {
         this.cwis = makeArr();
         this.aa = makeArr();
         this.shipGrid = makeArr();
-    }
-
-    /**
-     * Check if a click is on the board
-     * @param x
-     * @param y
-     * @returns Is (x,y) on the board
-     */
-    isOnBoard(x: number, y : number) {
-        const size = this.gridSize * BOARD_SIZE;
-        return x >= this.offset[0] && y >= this.offset[1] &&
-            x <= this.offset[0] + size && y <= this.offset[1] + size;
     }
 
     /**
@@ -122,20 +107,6 @@ export class ShipBoard {
         this.ships = this.ships.filter(s => s !== ship);
         this.resetMaps();
         this.ships.forEach(s => this.computeShipMaps(s));
-    }
-
-    /**
-     * Convert a click location to grid location
-     * @param x Mouse x
-     * @param y Mouse y
-     * @returns [x, y] Grid coordinate, if out of bounds rounds to nearest
-     */
-    getClickLocation(x: number, y: number): [number, number] {
-        x = (x - this.offset[0]) / this.gridSize;
-        y = (y - this.offset[1]) / this.gridSize;
-        x = Math.max(0, Math.min(BOARD_SIZE - 1, Math.round(x)));
-        y = Math.max(0, Math.min(BOARD_SIZE - 1, Math.round(y)));
-        return [x, y];
     }
 
     /**

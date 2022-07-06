@@ -1,20 +1,18 @@
 import drawGrid from '../util/draw_grid.js';
 import { BOARD_SIZE } from '../vars.js';
+import { Board } from './board.js';
 import { AbstractMarker } from './marker.js';
 
 /**
  * Board that shows your hits on the enemy
  * @author Bowserinator
  */
-export class MarkerBoard {
+export class MarkerBoard extends Board {
     markers: Array<AbstractMarker>;
-    offset: [number, number];
-    gridSize: number;
 
     constructor(offset: [number, number], gridSize: number) {
+        super(offset, gridSize);
         this.markers = [];
-        this.offset = offset;
-        this.gridSize = gridSize;
     }
 
     /** Reset board for new game */

@@ -1,10 +1,10 @@
 
 export enum TURN {
-    NORTH, SOUTH
+    NORTH = 0, SOUTH
 }
 
 export enum GAME_STATE {
-    LOBBY, PLACING, BATTLE, END
+    LOBBY, PLACING, FIRING, BATTLE, END
 }
 
 export enum ROTATION {
