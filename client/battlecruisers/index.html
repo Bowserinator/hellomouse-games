@@ -28,6 +28,12 @@
     <script src="/shared/js/index.js" defer></script>
     <script src="./js/game.js" type="module" defer></script>
 
+    <nav>
+        <h1>Battlecruisers</h1>
+        <a target="_blank" href="/">More Games</a>
+        <a onclick="javascript:document.getElementById('instr-modal').style.display='block'">Instructions</a>
+    </nav>
+
     <div id="disconnect-banner" style="top: -100px;">
         Disconnected from server (Is server down?)
     </div>
@@ -38,6 +44,71 @@
 
     </div>
 
+    <div class="modal-darken" id="instr-modal" style="display: none">
+        <div class="modal">
+            <button class="modal-close-button"
+                onclick="document.getElementById('instr-modal').style.display = 'none'">X</button>
+            
+            <div class="js-tab-container">
+                <!-- Tab headers -->
+                <div class="js-tabs">
+                    <div>Instructions</div>
+                    <div>Lore</div>
+                </div>
+                <!-- Tab 1 -->
+                <div>
+                    <h2>Instructions</h2>
+                    <p>
+                        The goal is to sink all the enemy ships before they sink yours. Certain ships give special abilities you can use
+                    in a turn, if those ships are sunk you lose the ability. Special abilities have a cooldown for a certain number of
+                    turns.
+                    </p>
+
+                    <p>Players first place down their fleet, then take turns firing at each other.</p>
+
+                    <p>A list of ships + their abilities are as follows:</p>
+
+                    <ol>
+                        <li>
+                            <b>Carrier:</b> Contains three torpedo bombers that bomb in a "plus" shape. If the center of the plus-sign is 
+                            in enemy AA range, then the attack fails.
+                        </li>
+                        <li>
+                            <b>Battlecruiser:</b> A large ship.
+                        </li>
+                        <li>
+                            <b>Cruiser:</b> Can fire cruise missiles that explode in a "X" shape. If the center of the X is
+                            in enemy CWIS range, then the attack fails.
+                        </li>
+                        <li>
+                            <b>Strategic Missile Submarine:</b> Fires a tactical nuclear torpedo that explodes in a 7x7 square. Cannot be intercepted.
+                        </li>
+                        <li>
+                            <b>AEGIS Cruiser:</b> Protects ships in a 9x9 square centered on it from enemy cruise missiles.
+                        </li>
+                        <li>
+                            <b>Counterintelligence Ship:</b> All sonar pings in a 7x7 square centered on it will return a false "probable miss".
+                        </li>
+                        <li>
+                            <b>Destroyer:</b> A small ship.
+                        </li>
+                        <li>
+                            <b>Submarine:</b> Can perform "sonar pings" that show if a 3x3 region is either a "probable hit"
+                            (meaning there is at least 1 ship square in the 3x3 region) or a "probable miss" (there are no ships)
+                            Note if ANY of the squares in the 3x3 regions are in a stealth field this will return a false "probable miss".
+                        </li>
+                        <li>
+                            <b>Mine:</b> When hit will explode in a 3x3 square on the board of the person who fired the salvo.
+                        </li>
+                    </ol>
+                </div>
+                <!-- Tab 2 -->
+                <div>
+                    <h2>Lore</h2>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

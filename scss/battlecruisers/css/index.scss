@@ -1,6 +1,103 @@
 body {
     background-color: black;
     color: white;
+    font-family: 'Quantico';
+}
+
+
+// Navbar
+// ----------------------
+nav {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    font-size: 13pt;
+    user-select: none;
+
+    h1 {
+        margin: 0 20px 0 0;
+        font-weight: normal;
+        font-size: 16pt;
+        color: #abe2ff;
+    }
+
+    a {
+        color: #ccc;
+        background-color: black;
+        margin: 0 10px;
+        padding: 10px;
+        text-decoration: none;
+        border-radius: 2px;
+        transition: color 0.2s, background-color 0.2s;
+    }
+
+    a:hover {
+        background-color: #111;
+        color: white;
+        cursor: pointer;
+    }
+}
+
+// Disconnect banner
+// For when disconnected from the server
+#disconnect-banner {
+    background-color: #ff5f52;
+    z-index: 999;
+    position: fixed;
+    left: 0;
+
+    width: 100%;
+    padding: 7px 14px;
+    text-align: center;
+    font-size: 13pt;
+    transition: top 0.2s;
+}
+
+// Modal
+.modal {
+    width: 700px;
+    max-width: 90%;
+    height: 90%;
+    overflow-y: auto;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+
+    background-color: black;
+    padding: 20px;
+}
+
+.modal-close-button {
+    float: right;
+    width: 30px;
+    height: 30px;
+    color: white;
+    border: none;
+    outline: none;
+    background-color: transparent;
+    transition: background-color 0.2s, color 0.2s;
+    border-radius: 2px;
+
+    &:hover {
+        cursor: pointer;
+        color: white;
+        background-color: #111;
+    }
+}
+
+// Tabs
+.js-tabs {
+    & > div {
+        margin-right: 20px;
+        border-bottom: 3px solid transparent;
+        color: #aaa;
+    }
+
+    & > div.active {
+        border-color: white;
+        color: white;
+    }
 }
 
 
