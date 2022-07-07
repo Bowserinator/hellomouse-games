@@ -189,10 +189,16 @@ canvas.onmousemove = e => {
  * ---------------------------
  */
 window.onresize = () => {
-    canvas.width = window.innerWidth;
-    canvas.style.width = canvas.width + 'px';
-    canvas.height = window.innerHeight;
-    canvas.style.height = canvas.height + 'px';
+    let size = Math.min(window.innerWidth, window.innerHeight);
+    if (window.innerWidth > 992)
+        size -= 100; // Shrink on large screens
+    canvas.width = size;
+    canvas.style.width = size + 'px';
+    canvas.height = size;
+    canvas.style.height = size + 'px';
+
+    let gridSize = size / (BOARD_SIZE + 3);
+    gameState.setBoardSize([gridSize, gridSize], gridSize);
 };
 // @ts-expect-error
 window.onresize();

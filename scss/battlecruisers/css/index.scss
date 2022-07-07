@@ -102,12 +102,11 @@ nav {
 
 
 #ship-placement-buttons {
-    position: fixed;
-    top: 0;
-    right: 0;
-
     button {
-        display: block;
+        display: inline-block;
+        width: 100px;
+        height: 100px;
+        margin: 5px;
     }
 }
 

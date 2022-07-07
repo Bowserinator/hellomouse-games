@@ -53,6 +53,15 @@ export default class GameState {
         this.resetAbilities();
     }
 
+    setBoardSize(offset: [number, number], gridSize: number) {
+        this.players.forEach(p => {
+            p.markerBoard.gridSize = gridSize;
+            p.shipBoard.gridSize = gridSize;
+            p.markerBoard.offset = offset;
+            p.shipBoard.offset = offset;
+        });
+    }
+
     getPlayer() {
         return this.players[this.playerIndex];
     }
