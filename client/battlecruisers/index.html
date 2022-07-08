@@ -41,7 +41,26 @@
     <div class="side-by-side">
         <canvas id="board" oncontextmenu="return false;"></canvas>
 
-        <div id="ship-placement-buttons"></div>
+        <div id="ui">
+            <div id="you-are"><img src="/battlecruisers/img/flag0.png">You are NORTHLANDIA</div>
+            <div id="turn">You are currently placing ships</div>
+            <hr>
+            <div id="ship-placement-buttons"></div>
+
+            <hr>
+            <div id="bottom-placing" style="display: block">
+                <small>
+                    Place down all your ships, then click "Submit" when you're done.
+                </small>
+                <br>
+                <button>SUBMIT</button>
+            </div>
+            <div id="bottom-battle" style="display: none">
+                <small>
+                    You have ? moves remaining
+                </small>
+            </div>
+        </div>
     </div>
 
     <div class="modal-darken" id="instr-modal" style="display: none">

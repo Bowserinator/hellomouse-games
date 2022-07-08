@@ -44,7 +44,7 @@ export default class GameState {
         ];
 
         this.turn = TURN.NORTH;
-        this.state = GAME_STATE.FIRING; // TODO: LOBBY
+        this.state = GAME_STATE.PLACING; // TODO: LOBBY
         this.placingShip = 0;
         this.placingRotation = ROTATION.R0;
         this.firePos = [0, 0];
@@ -71,6 +71,15 @@ export default class GameState {
             return;
 
         const ships = this.getPlayer().ships;
+
+        // First find a ship of the same type
+        for (let i = 0; i < ships.length; i++)
+            if (ships[i].name === ships[this.placingShip].name && !ships[i].isPlaced) {
+                this.placingShip = i;
+                return;
+            }
+
+        // Otherwise advance forward
         this.placingShip++;
         if (!ships[this.placingShip] || ships[this.placingShip].isPlaced) {
             this.placingShip = 0;

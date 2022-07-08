@@ -4,7 +4,6 @@
 
 import { Board } from './game/board.js';
 import GameState from './game/gamestate.js';
-import { HitMarker, MaybeHitMarker, MissMarker, AirShotDownMarker, MissileShotDownMarker, MaybeMissMarker, MaybeUnknownMarker } from './game/marker.js';
 import { GAME_STATE } from './types.js';
 import { BOARD_SIZE } from './vars.js';
 
@@ -56,6 +55,7 @@ function mousePosToGrid(mousepos: [number, number], board: Board, size: [number,
 }
 
 const shipPlacementButtons = document.getElementById('ship-placement-buttons') as HTMLElement;
+let shipPlacementButtonArr: Array<HTMLButtonElement> = [];
 
 function getMousePos(e: MouseEvent): [number, number] {
     const rect = canvas.getBoundingClientRect();
@@ -65,20 +65,37 @@ function getMousePos(e: MouseEvent): [number, number] {
 }
 
 function updatePlacementButtons() {
-    const ships = gameState.getPlayer().ships.filter(ship => !ship.isPlaced);
+    const ships = gameState.getPlayer().ships; // .filter(ship => !ship.isPlaced);
     const shipCount: Record<string, number> = {};
+    const tshipCount: Record<string, number> = {};
     for (let ship of ships) {
-        if (!shipCount[ship.name])
+        if (!tshipCount[ship.name]) {
             shipCount[ship.name] = 0;
-        shipCount[ship.name]++;
+            tshipCount[ship.name] = 0;
+        }
+        if (!ship.isPlaced)
+            shipCount[ship.name]++;
+        tshipCount[ship.name]++;
     }
     const shipNameArr = gameState.getPlayer().ships.map(ship => ship.isPlaced ? '' : ship.name);
+    shipPlacementButtonArr = [];
     shipPlacementButtons.replaceChildren(...Object.keys(shipCount)
-        .filter(key => shipCount[key])
         .map(key => {
             const btn = document.createElement('button') as HTMLButtonElement;
-            btn.innerText = `${key} (${shipCount[key]})`;
-            btn.onclick = () => gameState.placingShip = shipNameArr.indexOf(key);
+            btn.innerText = `${key} (${shipCount[key]} / ${tshipCount[key]})`;
+            btn.onclick = () => {
+                gameState.placingShip = shipNameArr.indexOf(key);
+                shipPlacementButtonArr.forEach(b => b.classList.remove('focused'));
+                btn.classList.add('focused');
+            };
+
+            if (!shipCount[key])
+                btn.disabled = true;
+
+            let ship = gameState.getPlayer().ships[gameState.placingShip];
+            if (ship && ship.name === key)
+                btn.classList.add('focused');
+            shipPlacementButtonArr.push(btn);
             return btn;
         }));
 }
@@ -139,7 +156,11 @@ canvas.onmousedown = e => {
                 // Place a new ship on the board
                 gameState.advancePlacingShip();
 
+            // Update placement button + current ship pos
             updatePlacementButtons();
+            const nship = ships[gameState.placingShip];
+            if (nship && !nship.isPlaced)
+                nship.position = mousePosToGrid(mousepos, board, [1, 1]);
             break;
         }
         // Fire
