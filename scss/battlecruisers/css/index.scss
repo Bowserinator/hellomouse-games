@@ -131,43 +131,42 @@ nav {
     padding: 5px;
 }
 
-#ship-placement-buttons {
-    button {
-        width: 100%;
-        max-width: 500px;
-        margin: 5px;
-        padding: 7px;
-        text-align: left;
-        display: block;
+#ship-placement-buttons button,
+.text-button {
+    width: 100%;
+    max-width: 500px;
+    margin: 5px;
+    padding: 7px;
+    text-align: left;
+    display: block;
 
-        color: #bbb;
-        font-family: 'Quantico';
-        background-color: black;
-        outline: none;
-        border: 1px solid #bbb;
-        transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+    color: #bbb;
+    font-family: 'Quantico';
+    background-color: black;
+    outline: none;
+    border: 1px solid #bbb;
+    transition: color 0.2s, border-color 0.2s, background-color 0.2s;
 
-        &:disabled {
-            opacity: 0.3;
-            cursor: not-allowed !important;
-        }
+    &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed !important;
+    }
 
-        &:hover,
-        &:focus,
-        &.focused {
-            cursor: pointer;
-            background-color: white;
-            border-color: white;
-            color: black;
-        }
+    &:hover,
+    &:focus,
+    &.focused {
+        cursor: pointer;
+        background-color: white;
+        border-color: white;
+        color: black;
+    }
 
-        &.salvo:hover,
-        &.salvo:focus,
-        &.salvo.focused {
-            border-color: #f44336;
-            background-color: #f44336;
-            color: black;
-        }
+    &.salvo:hover,
+    &.salvo:focus,
+    &.salvo.focused {
+        border-color: #f44336;
+        background-color: #f44336;
+        color: black;
     }
 }
 

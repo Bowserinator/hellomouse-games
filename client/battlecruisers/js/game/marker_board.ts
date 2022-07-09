@@ -54,12 +54,9 @@ export class MarkerBoard extends Board {
         return canAdd;
     }
 
-    /**
-     * Draw the board
-     * @param ctx CTX
-     */
-    draw(ctx: CanvasRenderingContext2D) {
-        drawGrid(ctx, this.offset, this.gridSize);
+    draw(ctx: CanvasRenderingContext2D, drawBase = true) {
+        if (drawBase)
+            drawGrid(ctx, this.offset, this.gridSize);
         this.markers.forEach(marker => marker.draw(ctx, this.offset, this.gridSize));
     }
 }

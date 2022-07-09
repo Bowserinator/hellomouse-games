@@ -1,4 +1,4 @@
-import { GAME_STATE, MoveMessage, ROTATION, TURN } from '../types.js';
+import { DRAWN_BOARD, GAME_STATE, MoveMessage, ROTATION, TURN } from '../types.js';
 import { BOARD_SIZE, SHIP_ALLOW_PLACE_COLOR, SHIP_NOT_ALLOW_PLACE_COLOR } from '../vars.js';
 import { AbstractAbility, SALVO } from './ability.js';
 import { HitMarker, MissMarker } from './marker.js';
@@ -16,6 +16,9 @@ export default class GameState {
     players: Array<Player>;
     playerIndex: number;
     round: number;
+
+    // Client side:
+    displayBoard: DRAWN_BOARD;
 
     // Turn specific:
     // PLACING
@@ -51,6 +54,7 @@ export default class GameState {
         this.firePos = [0, 0];
         this.round = 0;
         this.selectedAbility = SALVO;
+        this.displayBoard = DRAWN_BOARD.FIRING;
         this.resetAbilities();
     }
 
@@ -139,6 +143,10 @@ export default class GameState {
             this.players[1 - playerIndex].markerBoard.addMarker(new MissMarker(pos));
     }
 
+    switchBoard() {
+        this.displayBoard = 1 - this.displayBoard;
+    }
+
     drawPlacementState(ctx: CanvasRenderingContext2D) {
         const board = this.getPlayer().shipBoard;
         board.draw(ctx);
@@ -156,18 +164,25 @@ export default class GameState {
 
     /** Draw the game state */
     draw(ctx: CanvasRenderingContext2D) {
+        const boards = [
+            this.getPlayer().markerBoard,
+            this.getPlayer().shipBoard
+        ];
         switch (this.state) {
             case GAME_STATE.PLACING: {
                 this.drawPlacementState(ctx);
                 break;
             }
             case GAME_STATE.FIRING: {
-                this.getPlayer().markerBoard.draw(ctx);
-                this.selectedAbility.drawPreview(ctx, this.getPlayer().markerBoard, this.firePos);
+                boards[this.displayBoard].draw(ctx);
+                if (this.displayBoard === DRAWN_BOARD.FIRING)
+                    this.selectedAbility.drawPreview(ctx, this.getPlayer().markerBoard, this.firePos);
+                else
+                    this.players[1 - this.playerIndex].markerBoard.draw(ctx, false);
                 break;
             }
             case GAME_STATE.BATTLE: {
-                this.getPlayer().markerBoard.draw(ctx);
+                boards[this.displayBoard].draw(ctx);
                 break;
             }
         }

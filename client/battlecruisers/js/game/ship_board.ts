@@ -157,12 +157,9 @@ export class ShipBoard extends Board {
         ctx.globalAlpha = 1;
     }
 
-    /**
-     * Draw the board where ships are placed
-     * @param ctx CTX to render to
-     */
-    draw(ctx: CanvasRenderingContext2D) {
-        drawGrid(ctx, this.offset, this.gridSize);
+    draw(ctx: CanvasRenderingContext2D, drawBase = true) {
+        if (drawBase)
+            drawGrid(ctx, this.offset, this.gridSize);
 
         // Ranges
         this.drawMap(ctx, this.aa, AA_COLOR);

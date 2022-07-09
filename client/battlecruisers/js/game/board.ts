@@ -44,7 +44,12 @@ export class Board {
         return [x, y];
     }
 
-    draw(ctx: CanvasRenderingContext2D) {
+    /**
+     * Draw the grid
+     * @param ctx CTX
+     * @param drawBase Draw the base grid? False if overlaying on existing grid
+     */
+    draw(ctx: CanvasRenderingContext2D, drawBase = true) {
         // Override
     }
 }
