@@ -1,3 +1,4 @@
+import { drawRectangle } from '../util/draw.js';
 import { BOARD_SIZE } from '../vars.js';
 
 /**
@@ -42,6 +43,29 @@ export class Board {
         x = Math.max(0, Math.min(BOARD_SIZE - 1, Math.floor(x)));
         y = Math.max(0, Math.min(BOARD_SIZE - 1, Math.floor(y)));
         return [x, y];
+    }
+
+    /**
+     * Draw rectangular outline on the grid, automatically prevents
+     * rectangle from going out of bounds
+     * @param ctx CTX
+     * @param x Grid x
+     * @param y Grid y
+     * @param w Width (grid cells)
+     * @param h Height (grid cells)
+     * @param color Color
+     */
+    drawOutlinedRectangle(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string) {
+        if (x + w < 0 || x >= BOARD_SIZE || y + h < 0 || y >= BOARD_SIZE)
+            return;
+
+        let x2 = Math.min(Math.max(0, x), BOARD_SIZE - 1);
+        let y2 = Math.min(Math.max(0, y), BOARD_SIZE - 1);
+        w = Math.min(x + w - x2, BOARD_SIZE - x);
+        h = Math.min(y + h - y2, BOARD_SIZE - y);
+        x2 = x2 * this.gridSize + this.offset[0];
+        y2 = y2 * this.gridSize + this.offset[1];
+        drawRectangle(ctx, [x2, y2], [this.gridSize * w, this.gridSize * h], color);
     }
 
     /**

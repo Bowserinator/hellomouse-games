@@ -48,7 +48,7 @@ export default class GameState {
         ];
 
         this.turn = TURN.NORTH;
-        this.state = GAME_STATE.FIRING; // TODO: LOBBY
+        this.state = GAME_STATE.PLACING; // TODO: LOBBY
         this.placingShip = 0;
         this.placingRotation = ROTATION.R0;
         this.firePos = [0, 0];
@@ -159,7 +159,7 @@ export default class GameState {
             ctx, board.offset, board.gridSize, board.canPlace(placingShip)
                 ? SHIP_ALLOW_PLACE_COLOR : SHIP_NOT_ALLOW_PLACE_COLOR
         );
-        placingShip.drawPlacingRanges(ctx, board.offset, board.gridSize);
+        placingShip.drawPlacingRanges(board, ctx);
     }
 
     /** Draw the game state */

@@ -1,4 +1,3 @@
-import { drawRectangle } from '../util/draw.js';
 import { BOARD_SIZE } from '../vars.js';
 import GameState from './gamestate.js';
 import { AirShotDownMarker, MaybeHitMarker, MaybeMissMarker, MissileShotDownMarker } from './marker.js';
@@ -85,15 +84,12 @@ export class TorpedoBomberAbility extends AbstractAbility {
     }
 
     drawPreview(ctx: CanvasRenderingContext2D, board: MarkerBoard, pos: [number, number]) {
-        const g = board.gridSize;
-        const [tx, ty] = [
-            board.offset[0] + pos[0] * g,
-            board.offset[1] + pos[1] * g];
-        drawRectangle(ctx, [tx, ty], [g, g], 'red');
-        drawRectangle(ctx, [tx - g, ty], [g, g], 'red');
-        drawRectangle(ctx, [tx + g, ty], [g, g], 'red');
-        drawRectangle(ctx, [tx, ty - g], [g, g], 'red');
-        drawRectangle(ctx, [tx, ty + g], [g, g], 'red');
+        const [tx, ty] = pos;
+        board.drawOutlinedRectangle(ctx, tx, ty, 1, 1, 'red');
+        board.drawOutlinedRectangle(ctx, tx - 1, ty, 1, 1, 'red');
+        board.drawOutlinedRectangle(ctx, tx + 1, ty, 1, 1, 'red');
+        board.drawOutlinedRectangle(ctx, tx, ty - 1, 1, 1, 'red');
+        board.drawOutlinedRectangle(ctx, tx, ty + 1, 1, 1, 'red');
     }
 
     clone() {
@@ -139,10 +135,8 @@ export class SonarAbility extends AbstractAbility {
     }
 
     drawPreview(ctx: CanvasRenderingContext2D, board: MarkerBoard, pos: [number, number]) {
-        const [tx, ty] = [
-            board.offset[0] + pos[0] * board.gridSize - board.gridSize,
-            board.offset[1] + pos[1] * board.gridSize - board.gridSize];
-        drawRectangle(ctx, [tx, ty], [board.gridSize * 3, board.gridSize * 3], 'white');
+        const [tx, ty] = pos;
+        board.drawOutlinedRectangle(ctx, tx - 1, ty - 1, 3, 3, 'white');
     }
 
     clone() {
@@ -164,10 +158,8 @@ export class NuclearTorpedoAbility extends AbstractAbility {
     }
 
     drawPreview(ctx: CanvasRenderingContext2D, board: MarkerBoard, pos: [number, number]) {
-        const [tx, ty] = [
-            board.offset[0] + pos[0] * board.gridSize - 3 * board.gridSize,
-            board.offset[1] + pos[1] * board.gridSize - 3 * board.gridSize];
-        drawRectangle(ctx, [tx, ty], [board.gridSize * 7, board.gridSize * 7], 'red');
+        const [tx, ty] = pos;
+        board.drawOutlinedRectangle(ctx, tx - 3, ty - 3, 7, 7, 'red');
     }
 
     clone() {
@@ -198,15 +190,12 @@ export class CruiseMissileAbility extends AbstractAbility {
     }
 
     drawPreview(ctx: CanvasRenderingContext2D, board: MarkerBoard, pos: [number, number]) {
-        const g = board.gridSize;
-        const [tx, ty] = [
-            board.offset[0] + pos[0] * g,
-            board.offset[1] + pos[1] * g];
-        drawRectangle(ctx, [tx, ty], [g, g], 'red');
-        drawRectangle(ctx, [tx - g, ty - g], [g, g], 'red');
-        drawRectangle(ctx, [tx - g, ty + g], [g, g], 'red');
-        drawRectangle(ctx, [tx + g, ty - g], [g, g], 'red');
-        drawRectangle(ctx, [tx + g, ty + g], [g, g], 'red');
+        const [tx, ty] = pos;
+        board.drawOutlinedRectangle(ctx, tx, ty, 1, 1, 'red');
+        board.drawOutlinedRectangle(ctx, tx - 1, ty - 1, 1, 1, 'red');
+        board.drawOutlinedRectangle(ctx, tx - 1, ty + 1, 1, 1, 'red');
+        board.drawOutlinedRectangle(ctx, tx + 1, ty - 1, 1, 1, 'red');
+        board.drawOutlinedRectangle(ctx, tx + 1, ty + 1, 1, 1, 'red');
     }
 
     clone() {
@@ -225,10 +214,8 @@ export class SalvoAbility extends AbstractAbility {
     }
 
     drawPreview(ctx: CanvasRenderingContext2D, board: MarkerBoard, pos: [number, number]) {
-        const [tx, ty] = [
-            board.offset[0] + pos[0] * board.gridSize,
-            board.offset[1] + pos[1] * board.gridSize];
-        drawRectangle(ctx, [tx, ty], [board.gridSize, board.gridSize], 'red');
+        const [tx, ty] = pos;
+        board.drawOutlinedRectangle(ctx, tx, ty, 1, 1, 'red');
     }
 
     clone() {

@@ -2,6 +2,7 @@ import { ROTATION } from '../types.js';
 import { drawLine } from '../util/draw.js';
 import { AA_COLOR, CWIS_COLOR, SHIP_OUTLINE_COLOR, STEALTH_COLOR } from '../vars.js';
 import { AbstractAbility, MISSILE, NUKE, SONAR, TORPEDO_BOMBER } from './ability.js';
+import { ShipBoard } from './ship_board.js';
 
 interface ShipConfig {
     shape: Array<Array<number>>;
@@ -96,23 +97,16 @@ export class AbstractShip {
 
     /**
      * Draw a single placement range preview
+     * @param board Board this is being placed on
      * @param ctx CTX
      * @param color Color to draw range
      * @param offset Grid offset
      * @param gridSize Grid size
      * @param range Range (from center, square, total length = 2 * range + 1)
      */
-    drawPlacingRange(ctx: CanvasRenderingContext2D, color: string, offset: [number, number],
-        gridSize: number, range: number) {
+    drawPlacingRange(board: ShipBoard, ctx: CanvasRenderingContext2D, color: string, range: number) {
         const center = this.getCenter();
-        ctx.strokeStyle = color;
-        ctx.beginPath();
-        ctx.rect(
-            center[0] * gridSize - gridSize * range + offset[0],
-            center[1] * gridSize - gridSize * range + offset[1],
-            gridSize * (range * 2 + 1),
-            gridSize * (range * 2 + 1));
-        ctx.stroke();
+        board.drawOutlinedRectangle(ctx, center[0] - range, center[1] - range, 2 * range + 1, 2 * range + 1, color);
     }
 
     /**
@@ -121,13 +115,13 @@ export class AbstractShip {
      * @param offset Grid offset
      * @param gridSize Grid size
      */
-    drawPlacingRanges(ctx: CanvasRenderingContext2D, offset: [number, number], gridSize: number) {
+    drawPlacingRanges(board: ShipBoard, ctx: CanvasRenderingContext2D) {
         if (this.config.cwis && this.config.cwis >= 0)
-            this.drawPlacingRange(ctx, CWIS_COLOR, offset, gridSize, this.config.cwis);
+            this.drawPlacingRange(board, ctx, CWIS_COLOR, this.config.cwis);
         if (this.config.aa && this.config.aa >= 0)
-            this.drawPlacingRange(ctx, AA_COLOR, offset, gridSize, this.config.aa);
+            this.drawPlacingRange(board, ctx, AA_COLOR, this.config.aa);
         if (this.config.stealth && this.config.stealth >= 0)
-            this.drawPlacingRange(ctx, STEALTH_COLOR, offset, gridSize, this.config.stealth);
+            this.drawPlacingRange(board, ctx, STEALTH_COLOR, this.config.stealth);
     }
 
     /**
