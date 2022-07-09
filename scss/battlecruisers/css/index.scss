@@ -160,6 +160,14 @@ nav {
             border-color: white;
             color: black;
         }
+
+        &.salvo:hover,
+        &.salvo:focus,
+        &.salvo.focused {
+            border-color: #f44336;
+            background-color: #f44336;
+            color: black;
+        }
     }
 }
 

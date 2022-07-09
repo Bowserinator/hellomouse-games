@@ -2,6 +2,7 @@
 
 // TODO: load stuff
 
+import { SALVO } from './game/ability.js';
 import { Board } from './game/board.js';
 import GameState from './game/gamestate.js';
 import { GAME_STATE } from './types.js';
@@ -100,15 +101,47 @@ function updatePlacementButtons() {
         }));
 }
 
+let fireBtns: Array<HTMLElement> = [];
+
 function updateAbilityButtons() {
-    shipPlacementButtons.replaceChildren(...Object.keys(gameState.abilityMap)
-        .filter(key => gameState.abilityMap[key])
+    fireBtns = Object.keys(gameState.allAbilityMap)
+        .filter(key => gameState.allAbilityMap[key])
         .map(key => {
             const btn = document.createElement('button') as HTMLButtonElement;
-            btn.innerText = `${key} (${gameState.abilityMap[key].length})`;
-            btn.onclick = () => gameState.selectedAbility = gameState.abilityMap[key][0];
+            const label = gameState.allAbilityMap[key].map(a => {
+                if (a.isNotActive(gameState.round))
+                    return a.cooldown - (gameState.round - a.lastRoundActivated);
+                return 'R';
+            }).join(', ');
+
+            btn.innerText = `${key} (${label})`;
+            btn.onclick = () => {
+                fireBtns.forEach(e => e.classList.remove('focused'));
+                gameState.selectedAbility = gameState.abilityMap[key][0] || SALVO;
+                btn.classList.add('focused');
+            };
+            if (key === gameState.selectedAbility.name)
+                btn.classList.add('focused');
+            if (!gameState.abilityMap[key])
+                btn.disabled = true;
             return btn;
-        }));
+        });
+
+    // Special salvo button
+    const sbtn = document.createElement('button') as HTMLButtonElement;
+    sbtn.innerText = 'Salvo';
+    sbtn.onclick = () => {
+        fireBtns.forEach(e => e.classList.remove('focused'));
+        gameState.selectedAbility = SALVO;
+        sbtn.classList.add('focused');
+    };
+    sbtn.classList.add('salvo');
+    if (SALVO.name === gameState.selectedAbility.name)
+        sbtn.classList.add('focused');
+
+    fireBtns.unshift(document.createElement('hr'));
+    fireBtns.unshift(sbtn);
+    shipPlacementButtons.replaceChildren(...fireBtns);
 }
 
 

@@ -24,6 +24,7 @@ export default class GameState {
 
     // FIRING
     abilityMap: Record<string, Array<AbstractAbility>>;
+    allAbilityMap: Record<string, Array<AbstractAbility>>;
     selectedAbility: AbstractAbility;
     firePos: [number, number]; // Grid coordinate
 
@@ -44,7 +45,7 @@ export default class GameState {
         ];
 
         this.turn = TURN.NORTH;
-        this.state = GAME_STATE.PLACING; // TODO: LOBBY
+        this.state = GAME_STATE.FIRING; // TODO: LOBBY
         this.placingShip = 0;
         this.placingRotation = ROTATION.R0;
         this.firePos = [0, 0];
@@ -94,13 +95,17 @@ export default class GameState {
     /** Reset abilities for the turn */
     resetAbilities() {
         this.abilityMap = {};
+        this.allAbilityMap = {};
         for (let ship of this.getPlayer().ships)
             for (let a of ship.abilities) {
-                if (a.isNotActive(this.round))
-                    continue;
-                if (!this.abilityMap[a.name])
-                    this.abilityMap[a.name] = [];
-                this.abilityMap[a.name].push(a);
+                if (!this.allAbilityMap[a.name])
+                    this.allAbilityMap[a.name] = [];
+                this.allAbilityMap[a.name].push(a);
+                if (!a.isNotActive(this.round)) {
+                    if (!this.abilityMap[a.name])
+                        this.abilityMap[a.name] = [];
+                    this.abilityMap[a.name].push(a);
+                }
             }
     }
 
