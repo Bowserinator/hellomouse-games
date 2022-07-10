@@ -179,7 +179,7 @@ export default class GameState {
             }
             case GAME_STATE.FIRING: {
                 boards[this.displayBoard].draw(ctx);
-                if (this.displayBoard === DRAWN_BOARD.FIRING)
+                if (this.displayBoard === DRAWN_BOARD.FIRING && this.turn === this.playerIndex)
                     this.selectedAbility.drawPreview(ctx, this.getPlayer().markerBoard, this.firePos);
                 else
                     this.players[1 - this.playerIndex].markerBoard.draw(ctx, false);
@@ -197,6 +197,7 @@ export default class GameState {
             state: this.state,
             round: this.round,
             turn: this.turn,
+            salvosLeft: this.salvosLeft,
             yourShips: this.players[playerIndex].ships.map(s => s.sync()),
             markerBoard: this.players[playerIndex].markerBoard.sync(),
             enemyMarkerBoard: this.players[1 - playerIndex].markerBoard.sync()
@@ -211,6 +212,7 @@ export default class GameState {
         this.state = data.state;
         this.turn = data.turn;
         this.round = data.round;
+        this.salvosLeft = data.salvosLeft;
 
         // Update ships only if not placing (otherwise board gets cleared)
         if (this.state !== GAME_STATE.PLACING) {

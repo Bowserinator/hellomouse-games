@@ -5,8 +5,8 @@
 import { SALVO } from './game/ability.js';
 import { Board } from './game/board.js';
 import GameState from './game/gamestate.js';
-import { GAME_STATE, MOVE_TYPE } from './types.js';
-import { BOARD_SIZE } from './vars.js';
+import { DRAWN_BOARD, GAME_STATE, MOVE_TYPE } from './types.js';
+import { BOARD_SIZE, SALVOS_PER_TURN } from './vars.js';
 
 const canvas: HTMLCanvasElement = document.getElementById('board') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
@@ -63,6 +63,17 @@ const jsState = [...document.getElementsByClassName('js-state')];
 const placingBlock = document.getElementById('bottom-placing') as HTMLDivElement;
 const battleBlock = document.getElementById('bottom-battle') as HTMLDivElement;
 
+const flagImg = document.getElementById('you-are-img') as HTMLImageElement;
+const youAreLabel = document.getElementById('you-are') as HTMLSpanElement;
+const stateLabel = document.getElementById('turn') as HTMLSpanElement;
+
+// @ts-expect-error
+const stateLabelMap: Record<GAME_STATE, string> = {};
+stateLabelMap[GAME_STATE.PLACING] = 'You are currently placing ships';
+stateLabelMap[GAME_STATE.FIRING] = '<will be overwritten>';
+stateLabelMap[GAME_STATE.END] = '<will be overwritten>';
+stateLabelMap[GAME_STATE.LOBBY] = '';
+
 connection.onmessage = (message: any) => {
     message = JSON.parse(message.data);
     console.log(message);
@@ -89,7 +100,15 @@ connection.onmessage = (message: any) => {
             gameState.playerIndex = message.playerIndex;
             gameState.fromSync(message.state);
 
+            // Update header stuff
+            flagImg.src = '/battlecruisers/img/flag' + gameState.playerIndex + '.png';
+            youAreLabel.innerText = `You are ${['NORTHLANDIA', 'SOUTHANIA'][gameState.playerIndex]}`;
+
             if (previousState !== gameState.state) {
+                let turn = gameState.turn === gameState.playerIndex ? 'your' : 'the enemy\'s';
+                stateLabelMap[GAME_STATE.FIRING] = `It is ${turn} turn (Round ${gameState.round + 1})`;
+                stateLabel.innerText = stateLabelMap[gameState.state];
+
                 jsState.forEach(d => d.style.display = 'none');
                 if (gameState.state === GAME_STATE.PLACING) {
                     updatePlacementButtons();
@@ -177,8 +196,13 @@ function updatePlacementButtons() {
 }
 
 let fireBtns: Array<HTMLElement> = [];
+const movesRemainingLabel = document.getElementById('moves-remaining') as HTMLLabelElement;
 
 function updateAbilityButtons() {
+    // Moves remaining
+    movesRemainingLabel.innerText = `You have ${gameState.salvosLeft[gameState.playerIndex]} / ${SALVOS_PER_TURN} moves remaining`;
+
+    // Ability buttons
     fireBtns = Object.keys(gameState.allAbilityMap)
         .filter(key => gameState.allAbilityMap[key])
         .map(key => {
@@ -195,10 +219,10 @@ function updateAbilityButtons() {
                 gameState.selectedAbility = gameState.abilityMap[key][0] || SALVO;
                 btn.classList.add('focused');
             };
-            if (key === gameState.selectedAbility.name)
-                btn.classList.add('focused');
-            if (!gameState.abilityMap[key])
+            if (!gameState.abilityMap[key] || gameState.playerIndex !== gameState.turn)
                 btn.disabled = true;
+            if (!btn.disabled && key === gameState.selectedAbility.name)
+                btn.classList.add('focused');
             return btn;
         });
 
@@ -211,7 +235,9 @@ function updateAbilityButtons() {
         sbtn.classList.add('focused');
     };
     sbtn.classList.add('salvo');
-    if (SALVO.name === gameState.selectedAbility.name)
+    if (gameState.playerIndex !== gameState.turn)
+        sbtn.disabled = true;
+    else if (SALVO.name === gameState.selectedAbility.name)
         sbtn.classList.add('focused');
 
     fireBtns.unshift(document.createElement('hr'));
@@ -276,11 +302,16 @@ canvas.onmousedown = e => {
             // Not your turn
             if (gameState.turn !== gameState.playerIndex)
                 return;
+            // Not showing right board
+            if (gameState.displayBoard !== DRAWN_BOARD.FIRING)
+                return;
+            // Not left click
+            if (e.button !== 0)
+                return;
 
             const board = gameState.getPlayer().markerBoard;
             if (!board.isOnBoard(...mousepos)) return;
             let loc = mousePosToGrid(mousepos, board, [1, 1]);
-            console.log('Firing at', loc);
 
             connection.send(JSON.stringify({
                 type: 'MOVE',

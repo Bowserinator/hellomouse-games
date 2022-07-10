@@ -42,7 +42,10 @@
         <canvas id="board" oncontextmenu="return false;"></canvas>
 
         <div id="ui">
-            <div id="you-are"><img src="/battlecruisers/img/flag0.png">You are NORTHLANDIA</div>
+            <div id="you-are-container">
+                <img id="you-are-img" src="/battlecruisers/img/flag0.png">
+                <span id="you-are">You are NORTHLANDIA</span>
+            </div>
             <div id="turn">You are currently placing ships</div>
             <hr>
             <div id="ship-placement-buttons"></div>
@@ -56,8 +59,8 @@
                 <button class="text-button" onclick="submitShips()">SUBMIT</button>
             </div>
             <div class="js-state" id="bottom-battle" style="display: none">
-                <small>
-                    You have ? moves remaining
+                <small id="moves-remaining">
+                    You have ? / ? moves remaining
                 </small>
                 <br>
                 <button class="text-button" onclick="gameState.switchBoard()">Switch Boards</button>
