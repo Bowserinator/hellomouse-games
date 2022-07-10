@@ -4,7 +4,7 @@ export enum TURN {
 }
 
 export enum GAME_STATE {
-    LOBBY, PLACING, FIRING, BATTLE, END
+    LOBBY, PLACING, FIRING, END
 }
 
 export enum ROTATION {
@@ -15,6 +15,19 @@ export enum DRAWN_BOARD {
     FIRING = 0, SELF = 1
 }
 
+export enum MOVE_TYPE {
+    PLACE, FIRE
+}
+
+export enum MarkerType {
+    HIT_MARKER, MISS_MARKER, MAYBE_HIT_MARKER, MAYBE_MISS_MARKER, UNKNOWN,
+    MISSILE_SHOTDOWN, AA_SHOTDOWN
+}
+
 export interface MoveMessage {
-    
+    type: string;
+    action: MOVE_TYPE;
+    placements: Array<[number, number, number]>; // Ship placements, [x, y, rot]
+    abilityName: string;                         // Identifier for what is fired
+    firePos: [number, number];
 }

@@ -24,6 +24,22 @@ export class AbstractAbility {
     }
 
     /**
+     * Object for server -> client sync
+     * @returns Obj
+     */
+    sync() {
+        return this.lastRoundActivated;
+    }
+
+    /**
+     * Sync client from server
+     * @param data Server data
+     */
+    fromSync(data: any) {
+        this.lastRoundActivated = data;
+    }
+
+    /**
      * Do the ability
      * @param playerIndex The index of the player perfomring the action (target = 1 - playerIndex)
      * @param gameState

@@ -1,5 +1,6 @@
 // Game
 export const BOARD_SIZE = 35;
+export const SALVOS_PER_TURN = 5;
 
 // Colors
 export const GRID_OUTSIDE_COLOR = 'white';

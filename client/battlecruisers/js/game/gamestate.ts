@@ -1,5 +1,5 @@
-import { DRAWN_BOARD, GAME_STATE, MoveMessage, ROTATION, TURN } from '../types.js';
-import { BOARD_SIZE, SHIP_ALLOW_PLACE_COLOR, SHIP_NOT_ALLOW_PLACE_COLOR } from '../vars.js';
+import { DRAWN_BOARD, GAME_STATE, MoveMessage, MOVE_TYPE, ROTATION, TURN } from '../types.js';
+import { BOARD_SIZE, SALVOS_PER_TURN, SHIP_ALLOW_PLACE_COLOR, SHIP_NOT_ALLOW_PLACE_COLOR } from '../vars.js';
 import { AbstractAbility, SALVO } from './ability.js';
 import { HitMarker, MissMarker } from './marker.js';
 import Player from './player.js';
@@ -17,6 +17,9 @@ export default class GameState {
     playerIndex: number;
     round: number;
 
+    // Server side
+    salvosLeft: [number, number];
+
     // Client side:
     displayBoard: DRAWN_BOARD;
 
@@ -26,10 +29,10 @@ export default class GameState {
     placingRotation: ROTATION; // Client side
 
     // FIRING
-    abilityMap: Record<string, Array<AbstractAbility>>;
-    allAbilityMap: Record<string, Array<AbstractAbility>>;
-    selectedAbility: AbstractAbility;
-    firePos: [number, number]; // Grid coordinate
+    abilityMap: Record<string, Array<AbstractAbility>>; // Client side
+    allAbilityMap: Record<string, Array<AbstractAbility>>; // Client side
+    selectedAbility: AbstractAbility; // Client side
+    firePos: [number, number]; // Client side, Grid coordinate
 
     /**
      * Construct a new GameState
@@ -55,6 +58,7 @@ export default class GameState {
         this.round = 0;
         this.selectedAbility = SALVO;
         this.displayBoard = DRAWN_BOARD.FIRING;
+        this.salvosLeft = [SALVOS_PER_TURN, SALVOS_PER_TURN];
         this.resetAbilities();
     }
 
@@ -181,15 +185,124 @@ export default class GameState {
                     this.players[1 - this.playerIndex].markerBoard.draw(ctx, false);
                 break;
             }
-            case GAME_STATE.BATTLE: {
-                boards[this.displayBoard].draw(ctx);
-                break;
-            }
         }
     }
 
-    // TODO
-    onMove(playerIndex: number, message: MoveMessage) {
+    /**
+     * Returns an object to be synced after each move
+     * @returns object
+     */
+    sync(playerIndex: number) {
+        return {
+            state: this.state,
+            round: this.round,
+            turn: this.turn,
+            yourShips: this.players[playerIndex].ships.map(s => s.sync()),
+            markerBoard: this.players[playerIndex].markerBoard.sync(),
+            enemyMarkerBoard: this.players[1 - playerIndex].markerBoard.sync()
+        };
+    }
 
+    /**
+     * Update client with data from server
+     * @param data Data from server
+     */
+    fromSync(data: any) {
+        this.state = data.state;
+        this.turn = data.turn;
+        this.round = data.round;
+
+        // Update ships only if not placing (otherwise board gets cleared)
+        if (this.state !== GAME_STATE.PLACING) {
+            for (let i = 0; i < data.yourShips.length; i++)
+                this.getPlayer().ships[i].fromSync(data.yourShips[i]);
+            this.getPlayer().shipBoard.ships = [];
+            this.getPlayer().shipBoard.resetMaps();
+            for (let ship of this.getPlayer().ships.filter(s => s.isPlaced))
+                this.getPlayer().shipBoard.place(ship);
+        }
+
+        this.getPlayer().markerBoard.fromSync(data.markerBoard);
+        this.players[1 - this.playerIndex].markerBoard.fromSync(data.enemyMarkerBoard);
+    }
+
+    /**
+     * Called on server when client -> server
+     * @param playerIndex Player who's turn it is
+     * @param message Message recieved
+     */
+    onMove(playerIndex: number, message: MoveMessage) {
+        const player = this.players[playerIndex];
+
+        switch (message.action) {
+            // Player places all their ships down
+            case MOVE_TYPE.PLACE: {
+                // Not placing turn
+                if (this.state !== GAME_STATE.PLACING)
+                    return;
+                // Player already submitted
+                if (player.ships.every(s => s.isPlaced))
+                    return;
+                // Bad message
+                if (!message.placements || message.placements.length !== player.ships.length)
+                    return;
+
+                player.shipBoard.reset();
+                for (let i = 0; i < message.placements.length; i++) {
+                    const p = message.placements[i];
+
+                    // Validate that placement is an array of 4 numbers in range
+                    if (p.length !== 3 || !p.every(x => Number.isInteger(x)) || p[2] >= 4)
+                        return;
+
+                    player.ships[i].isPlaced = false;
+                    player.ships[i].position = [p[0], p[1]];
+                    player.ships[i].setRotation(p[2]);
+                    player.shipBoard.place(player.ships[i]);
+                }
+
+                // All players have placed their ships
+                // eslint-disable-next-line @typescript-eslint/no-shadow
+                if (this.players.every(player => player.ships.every(s => s.isPlaced)))
+                    this.state = GAME_STATE.FIRING;
+                break;
+            }
+            // Player fires
+            case MOVE_TYPE.FIRE: {
+                // Not firing turn
+                if (this.state !== GAME_STATE.FIRING)
+                    return;
+                // Check if it's the player's turn
+                if (this.turn !== playerIndex)
+                    return;
+                // Invalid
+                if (!message.abilityName || !message.firePos || message.firePos.length !== 2 ||
+                    message.firePos[0] < 0 || message.firePos[1] < 0 ||
+                    message.firePos[0] >= BOARD_SIZE || message.firePos[1] >= BOARD_SIZE)
+                    return;
+                message.firePos = message.firePos.map(x => Math.floor(+x || 0)) as [number, number];
+
+                let abilities = [];
+                if (message.abilityName === SALVO.name)
+                    abilities = [SALVO];
+                else
+                    for (let ship of player.ships)
+                        for (let a of ship.abilities)
+                            if (!a.isNotActive(this.round) && a.name === message.abilityName)
+                                abilities.push(a);
+                if (!abilities[0]) return; // Ability not ready
+                abilities[0].do(this.turn, this, message.firePos);
+                abilities[0].lastRoundActivated = this.round;
+
+                // Switch turns when salvos left changes
+                this.salvosLeft[this.turn]--;
+                if (this.salvosLeft[this.turn] === 0) {
+                    this.salvosLeft = [SALVOS_PER_TURN, SALVOS_PER_TURN];
+                    this.turn = 1 - this.turn;
+                    this.round++;
+                }
+                break;
+            }
+        }
     }
 }

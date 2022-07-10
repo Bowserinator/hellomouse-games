@@ -20,6 +20,22 @@ export class Board {
     }
 
     /**
+     * Return an object for syncing server -> client
+     * @returns obj
+     */
+    sync() {
+        // Override
+    }
+
+    /**
+     * Server -> client, client side processing
+     * @param data Data from server
+     */
+    fromSync(data: any) {
+        // Override
+    }
+
+    /**
      * Check if a click is on the board
      * @param x
      * @param y

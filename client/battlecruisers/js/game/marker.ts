@@ -1,7 +1,9 @@
+import { MarkerType } from '../types.js';
 import { drawLine, drawRectangle, fillCircle, fillRectangle } from '../util/draw.js';
 import { AA_COLOR, CWIS_COLOR } from '../vars.js';
 
 export class AbstractMarker {
+    type: MarkerType;
     position: [number, number];
     priority: number;
     color: string;
@@ -9,18 +11,28 @@ export class AbstractMarker {
 
     /**
      * Construct a marker
+     * @param type Type of marker
      * @param color Color to draw marker with
      * @param position Position (grid pos, [0,0] = top left)
      * @param priority Priority. Lower priority markers are replaced by higher ones in same spot
      */
-    constructor(color: string, position: [number, number], priority: number) {
+    constructor(type: MarkerType, color: string, position: [number, number], priority: number) {
         if (this.constructor === AbstractMarker)
             throw new Error('Can\'t instantiate abstract class!');
 
+        this.type = type;
         this.color = color;
         this.position = position;
         this.priority = priority;
         this.overwrite = true;
+    }
+
+    /**
+     * Return an obj to sync server -> client
+     * @returns obj
+     */
+    sync() {
+        return [this.type, this.position];
     }
 
     /**
@@ -45,11 +57,37 @@ export class AbstractMarker {
             this.position[1] * gridSize + offset[1]
         ];
     }
+
+    /**
+     * Create marker from type + pos
+     * @param type Type of marker
+     * @param position Pos of marker (grid)
+     * @returns Marker
+     */
+    static markerFromType(type: MarkerType, position: [number, number]) {
+        switch (type) {
+            case MarkerType.HIT_MARKER:
+                return new HitMarker(position);
+            case MarkerType.MISS_MARKER:
+                return new MissMarker(position);
+            case MarkerType.MAYBE_HIT_MARKER:
+                return new MaybeHitMarker(position);
+            case MarkerType.MAYBE_MISS_MARKER:
+                return new MaybeMissMarker(position);
+            case MarkerType.UNKNOWN:
+                return new MaybeUnknownMarker(position);
+            case MarkerType.AA_SHOTDOWN:
+                return new AirShotDownMarker(position);
+            case MarkerType.MISSILE_SHOTDOWN:
+                return new MissileShotDownMarker(position);
+        }
+        throw new Error(`Unknown marker type ${type}`);
+    }
 }
 
 export class HitMarker extends AbstractMarker {
     constructor(position: [number, number]) {
-        super('red', position, 4);
+        super(MarkerType.HIT_MARKER, 'red', position, 4);
     }
 
     draw(ctx: CanvasRenderingContext2D, offset: [number, number], gridSize: number) {
@@ -64,7 +102,7 @@ export class HitMarker extends AbstractMarker {
 
 export class MissMarker extends AbstractMarker {
     constructor(position: [number, number]) {
-        super('white', position, 3);
+        super(MarkerType.MISS_MARKER, 'white', position, 3);
     }
 
     draw(ctx: CanvasRenderingContext2D, offset: [number, number], gridSize: number) {
@@ -79,7 +117,7 @@ export class MissMarker extends AbstractMarker {
 
 export class MaybeHitMarker extends AbstractMarker {
     constructor(position: [number, number]) {
-        super('red', position, 2);
+        super(MarkerType.MAYBE_HIT_MARKER, 'red', position, 2);
     }
 
     draw(ctx: CanvasRenderingContext2D, offset: [number, number], gridSize: number) {
@@ -94,7 +132,7 @@ export class MaybeHitMarker extends AbstractMarker {
 // When a stealth field interferes with a scan
 export class MaybeUnknownMarker extends AbstractMarker {
     constructor(position: [number, number]) {
-        super('#777', position, 0);
+        super(MarkerType.UNKNOWN, '#777', position, 0);
     }
 
     draw(ctx: CanvasRenderingContext2D, offset: [number, number], gridSize: number) {
@@ -110,7 +148,7 @@ export class MaybeUnknownMarker extends AbstractMarker {
 
 export class MaybeMissMarker extends AbstractMarker {
     constructor(position: [number, number]) {
-        super('white', position, 2);
+        super(MarkerType.MAYBE_MISS_MARKER, 'white', position, 2);
     }
 
     draw(ctx: CanvasRenderingContext2D, offset: [number, number], gridSize: number) {
@@ -123,8 +161,8 @@ export class MaybeMissMarker extends AbstractMarker {
 }
 
 class ShotDownMarker extends AbstractMarker {
-    constructor(color: string, position: [number, number]) {
-        super(color, position, -99);
+    constructor(type: MarkerType, color: string, position: [number, number]) {
+        super(type, color, position, -99);
         this.overwrite = false;
     }
 
@@ -139,12 +177,12 @@ class ShotDownMarker extends AbstractMarker {
 
 export class MissileShotDownMarker extends ShotDownMarker {
     constructor(position: [number, number]) {
-        super(CWIS_COLOR, position);
+        super(MarkerType.MISSILE_SHOTDOWN, CWIS_COLOR, position);
     }
 }
 
 export class AirShotDownMarker extends ShotDownMarker {
     constructor(position: [number, number]) {
-        super(AA_COLOR, position);
+        super(MarkerType.AA_SHOTDOWN, AA_COLOR, position);
     }
 }

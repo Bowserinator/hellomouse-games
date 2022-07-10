@@ -5,7 +5,7 @@
 import { SALVO } from './game/ability.js';
 import { Board } from './game/board.js';
 import GameState from './game/gamestate.js';
-import { GAME_STATE } from './types.js';
+import { GAME_STATE, MOVE_TYPE } from './types.js';
 import { BOARD_SIZE } from './vars.js';
 
 const canvas: HTMLCanvasElement = document.getElementById('board') as HTMLCanvasElement;
@@ -21,7 +21,7 @@ window.gameState = gameState;
 
 
 // Temp place ships:
-function place(j) {
+function place(j: number) {
     let y = 0;
     for (let i = 0; i < gameState.players[j].ships.length; i++) {
         const s = gameState.players[j].ships[i];
@@ -40,6 +40,81 @@ function draw() {
 }
 
 window.requestAnimationFrame(draw);
+
+
+/**
+ * ---------------------------
+ * Connection handling
+ * ---------------------------
+ */
+// @ts-expect-error
+const connection = createConnection();
+connection.onopen = () => {
+    if (uuid.length === 0) // Create a new game
+        connection.send(JSON.stringify({ type: 'CREATE', gameType: 'battlecruisers' }));
+    else // Join existing game
+        connection.send((JSON.stringify({ type: 'JOIN', gameID: uuid })));
+};
+
+connection.onerror = (error: any) => console.error(error);
+
+// @ts-expect-error
+const jsState = [...document.getElementsByClassName('js-state')];
+const placingBlock = document.getElementById('bottom-placing') as HTMLDivElement;
+const battleBlock = document.getElementById('bottom-battle') as HTMLDivElement;
+
+connection.onmessage = (message: any) => {
+    message = JSON.parse(message.data);
+    console.log(message);
+
+    switch (message.type) {
+        case 'ERROR': {
+            if (message.code === 'NO_GAME')
+                window.location.href = window.location.href.split('?')[0];
+            alert(message.error);
+            break;
+        }
+        case 'UUID': {
+            // Game UUID recieved
+            let url = window.location.href.split('?')[0] + '?' + message.uuid;
+            history.pushState({}, '', url);
+            // TODO
+            // document.getElementById('link').innerText = url;
+            break;
+        }
+        case 'SYNC': {
+            // TODO sync ready players
+            let previousState = gameState.state;
+            previousState = -1; // Temp
+            gameState.playerIndex = message.playerIndex;
+            gameState.fromSync(message.state);
+
+            if (previousState !== gameState.state) {
+                jsState.forEach(d => d.style.display = 'none');
+                if (gameState.state === GAME_STATE.PLACING) {
+                    updatePlacementButtons();
+                    placingBlock.style.display = 'block';
+                } else if (gameState.state === GAME_STATE.FIRING)
+                    battleBlock.style.display = 'block';
+            }
+            if (gameState.state === GAME_STATE.FIRING) {
+                gameState.resetAbilities();
+                updateAbilityButtons();
+            }
+            break;
+        }
+    }
+};
+
+
+// @ts-expect-error
+window.submitShips = () => {
+    connection.send(JSON.stringify({
+        type: 'MOVE',
+        action: MOVE_TYPE.PLACE,
+        placements: gameState.getPlayer().ships.filter(s => s.isPlaced).map(s => [...s.position, s.rotation])
+    }));
+};
 
 
 /**
@@ -198,12 +273,22 @@ canvas.onmousedown = e => {
         }
         // Fire
         case GAME_STATE.FIRING: {
+            // Not your turn
+            if (gameState.turn !== gameState.playerIndex)
+                return;
+
             const board = gameState.getPlayer().markerBoard;
             if (!board.isOnBoard(...mousepos)) return;
             let loc = mousePosToGrid(mousepos, board, [1, 1]);
             console.log('Firing at', loc);
-            gameState.useCurrentAbility();
-            updateAbilityButtons();
+
+            connection.send(JSON.stringify({
+                type: 'MOVE',
+                action: MOVE_TYPE.FIRE,
+                abilityName: gameState.selectedAbility.name,
+                firePos: loc
+            }));
+            // gameState.useCurrentAbility();
             break;
         }
     }

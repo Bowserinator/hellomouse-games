@@ -43,5 +43,8 @@ export default class Player {
             sub(), sub(), sub(), sub(), sub(),     // 5x sub
             mine(), mine(), mine(), mine(), mine() // 5x mines
         ];
+
+        for (let i = 0; i < this.ships.length; i++)
+            this.ships[i].index = i;
     }
 }

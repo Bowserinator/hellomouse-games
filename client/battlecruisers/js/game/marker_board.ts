@@ -15,6 +15,14 @@ export class MarkerBoard extends Board {
         this.markers = [];
     }
 
+    sync() {
+        return this.markers.map(m => m.sync());
+    }
+
+    fromSync(data: any) {
+        this.markers = data.map((m: [number, [number, number]]) => AbstractMarker.markerFromType(...m));
+    }
+
     /** Reset board for new game */
     reset() {
         this.markers = [];

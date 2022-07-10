@@ -16,16 +16,21 @@ class BattlecruiserGame extends Game {
         // Do nothing
     }
 
+    onJoin(client: Client): boolean {
+        if (this.players.length >= 2)
+            return false;
+        return super.onJoin(client);
+    }
+
     globalStateSync(player: Client) {
         return {
             type: 'SYNC',
             players: this.players.slice(0, 2).map(x => {
                 if (!x) return null;
-                return {
-                    username: x.username,
-                    ready: x.ready
-                };
-            })
+                return x.ready;
+            }),
+            playerIndex: this.players.indexOf(player),
+            state: this.state.sync(this.players.indexOf(player))
         };
     }
 

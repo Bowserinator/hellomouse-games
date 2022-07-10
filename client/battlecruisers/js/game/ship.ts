@@ -21,6 +21,7 @@ export class AbstractShip {
     shape: Array<Array<number>>;
     abilities: Array<AbstractAbility>;
     isPlaced: boolean;
+    index: number;
 
     /**
      * Construct a ship (abstract)
@@ -51,12 +52,37 @@ export class AbstractShip {
 
         // Copy abilities
         this.abilities = this.config.abilities.map(a => a.clone());
+        this.index = -1; // Set in player
 
         // Compute shape
         this.shape = config.shape.map(row => [...row]);
         for (let i = 0; i < rotation; i++)
             this.shape = this.shape[0].map((val, index) => this.shape.map(row => row[index]).reverse());
         this.size = [this.shape[0].length, this.shape.length];
+    }
+
+    /**
+     * Get a sync object
+     * @returns obj
+     */
+    sync() {
+        return [this.index, this.isPlaced, this.position, this.rotation, this.abilities.map(a => a.sync())];
+    }
+
+    /**
+     * Update from server
+     * @param data Server data
+     */
+    fromSync(data: any) {
+        if (data[0] !== this.index) {
+            console.error(`Warning: Ship index doesn't match, I'm ${this.index}, got ${data[0]}`);
+            return;
+        }
+        this.isPlaced = data[1];
+        this.position = data[2];
+        this.rotation = data[3];
+        for (let i = 0; i < data[4].length; i++)
+            this.abilities[i].fromSync(data[4][i]);
     }
 
     /**
