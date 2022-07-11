@@ -185,6 +185,11 @@ function updatePlacementButtons() {
         .map(key => {
             const btn = document.createElement('button') as HTMLButtonElement;
             btn.innerText = `${key} (${shipCount[key]} / ${tshipCount[key]})`;
+
+            const img = document.createElement('img') as HTMLImageElement;
+            img.src = ships.filter(ship => ship.name === key)[0].imageUrl;
+            btn.prepend(img);
+
             btn.onclick = () => {
                 gameState.placingShip = shipNameArr.indexOf(key);
                 shipPlacementButtonArr.forEach(b => b.classList.remove('focused'));
@@ -221,6 +226,13 @@ function updateAbilityButtons() {
             }).join(', ');
 
             btn.innerText = `${key} (${label})`;
+
+            if (gameState.allAbilityMap[key][0].imageUrl) {
+                const img = document.createElement('img') as HTMLImageElement;
+                img.src = gameState.allAbilityMap[key][0].imageUrl;
+                btn.prepend(img);
+            }
+
             btn.onclick = () => {
                 fireBtns.forEach(e => e.classList.remove('focused'));
                 gameState.selectedAbility = gameState.abilityMap[key][0] || SALVO;

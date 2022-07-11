@@ -11,14 +11,16 @@ export class AbstractAbility {
     name: string;
     cooldown: number;
     lastRoundActivated: number;
+    imageUrl: string;
 
     /**
      * Constructor
      * @param name Name of the ability
      * @param cooldown Cooldown in # of rounds
      */
-    constructor(name: string, cooldown: number) {
+    constructor(img: string, name: string, cooldown: number) {
         this.name = name;
+        this.imageUrl = img ? ('/battlecruisers/img/powerup/' + img) : '';
         this.cooldown = cooldown;
         this.lastRoundActivated = -1;
     }
@@ -79,7 +81,7 @@ export class AbstractAbility {
 
 export class TorpedoBomberAbility extends AbstractAbility {
     constructor() {
-        super('Torpedo Bomber', 2);
+        super('torp.png', 'Torpedo Bomber', 2);
     }
 
     // Attack in a cross pattern
@@ -115,7 +117,7 @@ export class TorpedoBomberAbility extends AbstractAbility {
 
 export class SonarAbility extends AbstractAbility {
     constructor() {
-        super('Sonar Ping', 2);
+        super('sonar.png', 'Sonar Ping', 2);
     }
 
     // Probe 3x3 square, Marks all squares as "potential targets"
@@ -162,7 +164,7 @@ export class SonarAbility extends AbstractAbility {
 
 export class NuclearTorpedoAbility extends AbstractAbility {
     constructor() {
-        super('Nuclear Torpedo', 12);
+        super('nuke.png', 'Nuclear Torpedo', 12);
     }
 
     // Attack in a 7x7 square
@@ -185,7 +187,7 @@ export class NuclearTorpedoAbility extends AbstractAbility {
 
 export class CruiseMissileAbility extends AbstractAbility {
     constructor() {
-        super('Cruise Missile', 2);
+        super('missile.png', 'Cruise Missile', 2);
     }
 
     // Attack in a X pattern
@@ -221,7 +223,7 @@ export class CruiseMissileAbility extends AbstractAbility {
 
 export class SalvoAbility extends AbstractAbility {
     constructor() {
-        super('Salvo', 0);
+        super('', 'Salvo', 0);
     }
 
     // Attack the position
@@ -241,7 +243,7 @@ export class SalvoAbility extends AbstractAbility {
 
 export class MineAbility extends AbstractAbility {
     constructor() {
-        super('Mine', 0);
+        super('', 'Mine', 0);
     }
 
     // Attack the position

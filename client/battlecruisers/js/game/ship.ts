@@ -22,18 +22,21 @@ export class AbstractShip {
     abilities: Array<AbstractAbility>;
     isPlaced: boolean;
     index: number;
+    imageUrl: string;
 
     /**
      * Construct a ship (abstract)
+     * @param img Image url of ship, not including prefix of /battlecruisers/img/ships/
      * @param name Name of the ship
      * @param position Position (grid coord, [0, 0] = top left)
      * @param rotation Rotation of placement
      * @param config Config of ship
      */
-    constructor(name: string, position: [number, number], rotation: ROTATION, config: ShipConfig) {
+    constructor(img: string, name: string, position: [number, number], rotation: ROTATION, config: ShipConfig) {
         if (this.constructor === AbstractShip)
             throw new Error('Can\'t instantiate abstract class!');
 
+        this.imageUrl = '/battlecruisers/img/ships/' + img;
         this.name = name;
         this.position = position;
         this.rotation = rotation;
@@ -219,7 +222,7 @@ export class CarrierShip extends AbstractShip {
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
-        super('Carrier', position, rotation, CarrierShip.config);
+        super('carrier.png', 'Carrier', position, rotation, CarrierShip.config);
     }
 }
 
@@ -231,7 +234,7 @@ export class BattlecruiserShip extends AbstractShip {
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
-        super('Battlecruiser', position, rotation, BattlecruiserShip.config);
+        super('battlecruiser.png', 'Battlecruiser', position, rotation, BattlecruiserShip.config);
     }
 }
 
@@ -244,7 +247,7 @@ export class CruiserShip extends AbstractShip {
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
-        super('Cruiser', position, rotation, CruiserShip.config);
+        super('cruiser.png', 'Cruiser', position, rotation, CruiserShip.config);
     }
 }
 
@@ -256,7 +259,7 @@ export class MissileSubmarineShip extends AbstractShip {
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
-        super('Strategic Missile Submarine', position, rotation, MissileSubmarineShip.config);
+        super('strat_sub.png', 'Strategic Missile Submarine', position, rotation, MissileSubmarineShip.config);
     }
 }
 
@@ -269,7 +272,7 @@ export class AegisShip extends AbstractShip {
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
-        super('AEGIS Cruiser', position, rotation, AegisShip.config);
+        super('aegis.png', 'AEGIS Cruiser', position, rotation, AegisShip.config);
     }
 }
 
@@ -282,7 +285,7 @@ export class CounterIntelShip extends AbstractShip {
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
-        super('Counterintelligence Ship', position, rotation, CounterIntelShip.config);
+        super('stealth.png', 'Counterintelligence Ship', position, rotation, CounterIntelShip.config);
     }
 }
 
@@ -294,7 +297,7 @@ export class DestroyerShip extends AbstractShip {
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
-        super('Destroyer', position, rotation, DestroyerShip.config);
+        super('destroyer.png', 'Destroyer', position, rotation, DestroyerShip.config);
     }
 }
 
@@ -306,7 +309,7 @@ export class SubmarineShip extends AbstractShip {
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
-        super('Submarine', position, rotation, SubmarineShip.config);
+        super('sub.png', 'Submarine', position, rotation, SubmarineShip.config);
     }
 }
 
@@ -320,6 +323,6 @@ export class MineShip extends AbstractShip {
     };
 
     constructor(position: [number, number], rotation: ROTATION) {
-        super('Mine', position, rotation, MineShip.config);
+        super('mine.png', 'Mine', position, rotation, MineShip.config);
     }
 }
