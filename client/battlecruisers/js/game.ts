@@ -97,6 +97,7 @@ connection.onmessage = (message: any) => {
             // TODO sync ready players
             let previousState = gameState.state;
             previousState = -1; // Temp
+            let previousTurn = gameState.turn;
             gameState.playerIndex = message.playerIndex;
             gameState.fromSync(message.state);
 
@@ -104,9 +105,15 @@ connection.onmessage = (message: any) => {
             flagImg.src = '/battlecruisers/img/flag' + gameState.playerIndex + '.png';
             youAreLabel.innerText = `You are ${['NORTHLANDIA', 'SOUTHANIA'][gameState.playerIndex]}`;
 
+            // Switch players
+            if (previousTurn !== gameState.turn)
+                gameState.displayBoard = gameState.turn === gameState.playerIndex
+                    ? DRAWN_BOARD.FIRING : DRAWN_BOARD.SELF;
+
+            // Change state
             if (previousState !== gameState.state) {
                 let turn = gameState.turn === gameState.playerIndex ? 'your' : 'the enemy\'s';
-                stateLabelMap[GAME_STATE.FIRING] = `It is ${turn} turn (Round ${gameState.round + 1})`;
+                stateLabelMap[GAME_STATE.FIRING] = `It is ${turn} turn (Move ${gameState.round + 1})`;
                 stateLabel.innerText = stateLabelMap[gameState.state];
 
                 jsState.forEach(d => d.style.display = 'none');

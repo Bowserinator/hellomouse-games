@@ -179,9 +179,10 @@ export default class GameState {
             }
             case GAME_STATE.FIRING: {
                 boards[this.displayBoard].draw(ctx);
-                if (this.displayBoard === DRAWN_BOARD.FIRING && this.turn === this.playerIndex)
-                    this.selectedAbility.drawPreview(ctx, this.getPlayer().markerBoard, this.firePos);
-                else
+                if (this.displayBoard === DRAWN_BOARD.FIRING) {
+                    if (this.turn === this.playerIndex)
+                        this.selectedAbility.drawPreview(ctx, this.getPlayer().markerBoard, this.firePos);
+                } else
                     this.players[1 - this.playerIndex].markerBoard.draw(ctx, false);
                 break;
             }
