@@ -188,6 +188,28 @@ nav {
     }
 }
 
+// Win modal
+#win-modal {
+    text-align: center;
+
+    .modal { height: auto; }
+
+    img {
+        width: 30%;
+        margin-left: 30px;
+    }
+
+    h1 {
+        margin: 14px 0 3px 0;
+    }
+
+    h3 {
+        font-weight: normal;
+        color: #ccc;
+        margin: 0;
+    }
+}
+
 // Thinner scrollbar
 ::-webkit-scrollbar {
     width: 4px;

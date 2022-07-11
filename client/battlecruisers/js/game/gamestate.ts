@@ -1,4 +1,4 @@
-import { DRAWN_BOARD, GAME_STATE, MoveMessage, MOVE_TYPE, ROTATION, TURN } from '../types.js';
+import { DRAWN_BOARD, GAME_STATE, MoveMessage, MOVE_TYPE, ROTATION, TURN, WINNER } from '../types.js';
 import { BOARD_SIZE, SALVOS_PER_TURN, SHIP_ALLOW_PLACE_COLOR, SHIP_NOT_ALLOW_PLACE_COLOR } from '../vars.js';
 import { AbstractAbility, SALVO } from './ability.js';
 import { HitMarker, MissMarker } from './marker.js';
@@ -16,6 +16,7 @@ export default class GameState {
     players: Array<Player>;
     playerIndex: number;
     round: number;
+    winner: WINNER;
 
     // Server side
     salvosLeft: [number, number];
@@ -41,6 +42,7 @@ export default class GameState {
     constructor(isClientSide = false) {
         this.isClientSide = isClientSide;
         this.playerIndex = 0;
+        this.winner = WINNER.UNKNOWN;
         this.reset();
     }
 
@@ -201,7 +203,8 @@ export default class GameState {
             salvosLeft: this.salvosLeft,
             yourShips: this.players[playerIndex].ships.map(s => s.sync()),
             markerBoard: this.players[playerIndex].markerBoard.sync(),
-            enemyMarkerBoard: this.players[1 - playerIndex].markerBoard.sync()
+            enemyMarkerBoard: this.players[1 - playerIndex].markerBoard.sync(),
+            winner: this.winner
         };
     }
 
@@ -214,6 +217,7 @@ export default class GameState {
         this.turn = data.turn;
         this.round = data.round;
         this.salvosLeft = data.salvosLeft;
+        this.winner = data.winner;
 
         // Update ships only if not placing (otherwise board gets cleared)
         if (this.state !== GAME_STATE.PLACING) {
@@ -305,6 +309,17 @@ export default class GameState {
 
                 // Switch turns when salvos left changes
                 this.salvosLeft[this.turn]--;
+
+                if (this.players[1 - playerIndex].allSunk()) {
+                    // Someone won!
+                    this.state = GAME_STATE.LOBBY;
+
+                    let p1AllDead = this.players[0].allSunk() ? 2 : 0;
+                    let p2AllDead = this.players[1].allSunk() ? 1 : 0;
+                    this.winner = [WINNER.UNKNOWN, WINNER.P1, WINNER.P2, WINNER.TIE][p1AllDead + p2AllDead];
+                    return;
+                }
+
                 if (this.salvosLeft[this.turn] === 0) {
                     this.salvosLeft = [SALVOS_PER_TURN, SALVOS_PER_TURN];
                     this.turn = 1 - this.turn;

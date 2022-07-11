@@ -22,6 +22,13 @@ export default class Player {
         this.createStartingShips();
     }
 
+    /**
+     * @returns Have all this player's ships been sunk
+     */
+    allSunk() {
+        return this.ships.every(ship => ship instanceof MineShip || ship.lives <= 0);
+    }
+
     /** Set this.ships to all starting ships */
     createStartingShips() {
         const carrier = () => new CarrierShip([0, 0], ROTATION.R0);

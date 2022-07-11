@@ -217,6 +217,7 @@ export class AbstractShip {
 
         if (this.lives <= 0) {
             // Recompute maps since dead ships dont have AA/CWIS/etc..
+            this.lives = 0;
             shipBoard.resetMaps();
             shipBoard.ships.forEach(s => shipBoard.computeShipMaps(s));
             this.abilities.forEach(a => a.disabled = true); // Sunk ships don't have abilities

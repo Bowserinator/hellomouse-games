@@ -4,7 +4,7 @@ export enum TURN {
 }
 
 export enum GAME_STATE {
-    LOBBY, PLACING, FIRING, END
+    LOBBY, PLACING, FIRING
 }
 
 export enum ROTATION {
@@ -17,6 +17,10 @@ export enum DRAWN_BOARD {
 
 export enum MOVE_TYPE {
     PLACE, FIRE
+}
+
+export enum WINNER {
+    UNKNOWN = 0, P1, P2, TIE
 }
 
 export enum MarkerType {

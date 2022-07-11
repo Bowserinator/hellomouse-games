@@ -5,7 +5,7 @@
 import { SALVO } from './game/ability.js';
 import { Board } from './game/board.js';
 import GameState from './game/gamestate.js';
-import { DRAWN_BOARD, GAME_STATE, MOVE_TYPE } from './types.js';
+import { DRAWN_BOARD, GAME_STATE, MOVE_TYPE, WINNER } from './types.js';
 import { BOARD_SIZE, SALVOS_PER_TURN } from './vars.js';
 
 const canvas: HTMLCanvasElement = document.getElementById('board') as HTMLCanvasElement;
@@ -41,6 +41,25 @@ function draw() {
 
 window.requestAnimationFrame(draw);
 
+/**
+ * Display the winner modal
+ */
+function showWinModal() {
+    // @ts-expect-error
+    document.getElementById('win-modal').style.display = 'block';
+    // @ts-expect-error
+    document.getElementById('win-img').src = '/battlecruisers/img/flag' + (gameState.winner - 1) + '.png';
+    // @ts-expect-error
+    document.getElementById('win-h1').innerText =
+        gameState.winner === WINNER.TIE ? 'Tied!' : (
+            gameState.winner - 1 === gameState.playerIndex
+                ? 'You Win!' : 'You Lose!');
+    // @ts-expect-error
+    document.getElementById('win-h3').innerText =
+        gameState.winner - 1 === gameState.playerIndex
+            ? 'All the enemy ships have been sunk!' : 'All your ships have been sunk!';
+}
+
 
 /**
  * ---------------------------
@@ -71,7 +90,6 @@ const stateLabel = document.getElementById('turn') as HTMLSpanElement;
 const stateLabelMap: Record<GAME_STATE, string> = {};
 stateLabelMap[GAME_STATE.PLACING] = 'You are currently placing ships';
 stateLabelMap[GAME_STATE.FIRING] = '<will be overwritten>';
-stateLabelMap[GAME_STATE.END] = '<will be overwritten>';
 stateLabelMap[GAME_STATE.LOBBY] = '';
 
 connection.onmessage = (message: any) => {
@@ -122,6 +140,8 @@ connection.onmessage = (message: any) => {
                     placingBlock.style.display = 'block';
                 } else if (gameState.state === GAME_STATE.FIRING)
                     battleBlock.style.display = 'block';
+                else if (gameState.state === GAME_STATE.LOBBY && gameState.winner !== WINNER.UNKNOWN)
+                    showWinModal();
             }
             if (gameState.state === GAME_STATE.FIRING) {
                 gameState.regenAbilityMaps();
