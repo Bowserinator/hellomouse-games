@@ -2,6 +2,7 @@ import { ROTATION } from '../types.js';
 import { drawLine } from '../util/draw.js';
 import { AA_COLOR, CWIS_COLOR, SHIP_OUTLINE_COLOR, STEALTH_COLOR } from '../vars.js';
 import { AbstractAbility, MISSILE, NUKE, SONAR, TORPEDO_BOMBER } from './ability.js';
+import { MarkerBoard } from './marker_board.js';
 import { ShipBoard } from './ship_board.js';
 
 interface ShipConfig {
@@ -23,6 +24,7 @@ export class AbstractShip {
     isPlaced: boolean;
     index: number;
     imageUrl: string;
+    lives: number;
 
     /**
      * Construct a ship (abstract)
@@ -62,6 +64,7 @@ export class AbstractShip {
         for (let i = 0; i < rotation; i++)
             this.shape = this.shape[0].map((val, index) => this.shape.map(row => row[index]).reverse());
         this.size = [this.shape[0].length, this.shape.length];
+        this.lives = this.shape.flat().filter(x => x > 0).length;
     }
 
     /**
@@ -69,7 +72,7 @@ export class AbstractShip {
      * @returns obj
      */
     sync() {
-        return [this.index, this.isPlaced, this.position, this.rotation, this.abilities.map(a => a.sync())];
+        return [this.index, this.isPlaced, this.position, this.rotation, this.abilities.map(a => a.sync()), this.lives];
     }
 
     /**
@@ -84,6 +87,7 @@ export class AbstractShip {
         this.isPlaced = data[1];
         this.position = data[2];
         this.rotation = data[3];
+        this.lives = data[5];
         for (let i = 0; i < data[4].length; i++)
             this.abilities[i].fromSync(data[4][i]);
     }
@@ -201,8 +205,22 @@ export class AbstractShip {
         this.drawBoundingBox(ctx, offset, gridSize, SHIP_OUTLINE_COLOR);
     }
 
-    onHit() {
+    /**
+     * Check hits, and act if sunk
+     * @param markerBoard Marker board of the enemy
+     */
+    checkHits(shipBoard: ShipBoard, markerBoard: MarkerBoard) {
+        this.lives = this.shape.flat().filter(x => x > 0).length;
+        for (let marker of markerBoard.hitMarkers)
+            if (this.checkSpot(...marker.position))
+                this.lives--;
 
+        if (this.lives <= 0) {
+            // Recompute maps since dead ships dont have AA/CWIS/etc..
+            shipBoard.resetMaps();
+            shipBoard.ships.forEach(s => shipBoard.computeShipMaps(s));
+            this.abilities.forEach(a => a.disabled = true); // Sunk ships don't have abilities
+        }
     }
 }
 

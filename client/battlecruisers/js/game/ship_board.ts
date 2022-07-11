@@ -84,11 +84,11 @@ export class ShipBoard extends Board {
      * @param ship
      */
     computeShipMaps(ship: AbstractShip) {
-        if (ship.config.cwis && ship.config.cwis >= 0)
+        if (ship.config.cwis && ship.config.cwis >= 0 && ship.lives > 0)
             this.fillMap(this.cwis, ship.getCenter(), ship.config.cwis);
-        if (ship.config.aa && ship.config.aa >= 0)
+        if (ship.config.aa && ship.config.aa >= 0 && ship.lives > 0)
             this.fillMap(this.aa, ship.getCenter(), ship.config.aa);
-        if (ship.config.stealth && ship.config.stealth >= 0)
+        if (ship.config.stealth && ship.config.stealth >= 0 && ship.lives > 0)
             this.fillMap(this.stealth, ship.getCenter(), ship.config.stealth);
 
         // Fill where occupied by ship

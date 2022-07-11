@@ -12,6 +12,7 @@ export class AbstractAbility {
     cooldown: number;
     lastRoundActivated: number;
     imageUrl: string;
+    disabled: boolean;
 
     /**
      * Constructor
@@ -23,6 +24,7 @@ export class AbstractAbility {
         this.imageUrl = img ? ('/battlecruisers/img/powerup/' + img) : '';
         this.cooldown = cooldown;
         this.lastRoundActivated = -1;
+        this.disabled = false;
     }
 
     /**
@@ -30,7 +32,7 @@ export class AbstractAbility {
      * @returns Obj
      */
     sync() {
-        return this.lastRoundActivated;
+        return [this.lastRoundActivated, this.disabled ? 1 : 0];
     }
 
     /**
@@ -38,7 +40,8 @@ export class AbstractAbility {
      * @param data Server data
      */
     fromSync(data: any) {
-        this.lastRoundActivated = data;
+        this.lastRoundActivated = data[0];
+        this.disabled = data[1] === 1;
     }
 
     /**
@@ -75,6 +78,7 @@ export class AbstractAbility {
      * @returns Is the powerup active this round/
      */
     isNotActive(round: number) {
+        if (this.disabled) return true;
         return this.lastRoundActivated >= 0 && round - this.lastRoundActivated < this.cooldown;
     }
 }

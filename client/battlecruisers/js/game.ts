@@ -124,7 +124,7 @@ connection.onmessage = (message: any) => {
                     battleBlock.style.display = 'block';
             }
             if (gameState.state === GAME_STATE.FIRING) {
-                gameState.resetAbilities();
+                gameState.regenAbilityMaps();
                 updateAbilityButtons();
             }
             break;
@@ -220,6 +220,8 @@ function updateAbilityButtons() {
         .map(key => {
             const btn = document.createElement('button') as HTMLButtonElement;
             const label = gameState.allAbilityMap[key].map(a => {
+                if (a.disabled)
+                    return 'X';
                 if (a.isNotActive(gameState.round))
                     return a.cooldown - (gameState.round - a.lastRoundActivated);
                 return 'R';

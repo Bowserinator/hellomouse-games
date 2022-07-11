@@ -59,7 +59,7 @@ export default class GameState {
         this.selectedAbility = SALVO;
         this.displayBoard = DRAWN_BOARD.FIRING;
         this.salvosLeft = [SALVOS_PER_TURN, SALVOS_PER_TURN];
-        this.resetAbilities();
+        this.regenAbilityMaps();
     }
 
     setBoardSize(offset: [number, number], gridSize: number) {
@@ -101,7 +101,7 @@ export default class GameState {
     }
 
     /** Reset abilities for the turn */
-    resetAbilities() {
+    regenAbilityMaps() {
         this.abilityMap = {};
         this.allAbilityMap = {};
         for (let ship of this.getPlayer().ships)
@@ -120,7 +120,7 @@ export default class GameState {
     useCurrentAbility() {
         this.selectedAbility.do(this.turn, this, this.firePos);
         this.selectedAbility.lastRoundActivated = this.round;
-        this.resetAbilities();
+        this.regenAbilityMaps();
 
         // Reset selectedAbility if needed
         if (!this.abilityMap[this.selectedAbility.name])
@@ -223,6 +223,9 @@ export default class GameState {
             this.getPlayer().shipBoard.resetMaps();
             for (let ship of this.getPlayer().ships.filter(s => s.isPlaced))
                 this.getPlayer().shipBoard.place(ship);
+
+            this.getPlayer().shipBoard.resetMaps();
+            this.getPlayer().shipBoard.ships.forEach(s => this.getPlayer().shipBoard.computeShipMaps(s));
         }
 
         this.getPlayer().markerBoard.fromSync(data.markerBoard);
@@ -296,6 +299,9 @@ export default class GameState {
                 if (!abilities[0]) return; // Ability not ready
                 abilities[0].do(this.turn, this, message.firePos);
                 abilities[0].lastRoundActivated = this.round;
+
+                const shipBoard = this.players[1 - playerIndex].shipBoard;
+                this.players[1 - playerIndex].ships.forEach(ship => ship.checkHits(shipBoard, player.markerBoard));
 
                 // Switch turns when salvos left changes
                 this.salvosLeft[this.turn]--;

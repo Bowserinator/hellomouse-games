@@ -1,7 +1,7 @@
 import drawGrid from '../util/draw_grid.js';
 import { BOARD_SIZE } from '../vars.js';
 import { Board } from './board.js';
-import { AbstractMarker } from './marker.js';
+import { AbstractMarker, HitMarker } from './marker.js';
 
 /**
  * Board that shows your hits on the enemy
@@ -9,10 +9,12 @@ import { AbstractMarker } from './marker.js';
  */
 export class MarkerBoard extends Board {
     markers: Array<AbstractMarker>;
+    hitMarkers: Array<HitMarker>;
 
     constructor(offset: [number, number], gridSize: number) {
         super(offset, gridSize);
         this.markers = [];
+        this.hitMarkers = [];
     }
 
     sync() {
@@ -21,11 +23,13 @@ export class MarkerBoard extends Board {
 
     fromSync(data: any) {
         this.markers = data.map((m: [number, [number, number]]) => AbstractMarker.markerFromType(...m));
+        this.hitMarkers = this.markers.filter(m => m instanceof HitMarker);
     }
 
     /** Reset board for new game */
     reset() {
         this.markers = [];
+        this.hitMarkers = [];
     }
 
     /**
@@ -57,8 +61,11 @@ export class MarkerBoard extends Board {
                 }
             this.markers = newMarkers;
         }
-        if (canAdd)
+        if (canAdd) {
             this.markers.push(marker);
+            if (marker instanceof HitMarker)
+                this.hitMarkers.push(marker);
+        }
         return canAdd;
     }
 
