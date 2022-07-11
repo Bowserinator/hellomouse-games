@@ -103,6 +103,14 @@ nav {
     }
 }
 
+.js-tab-container {
+	& > div:not(:first-child) {
+        color: #ccc;
+		h1, h2, h3, h4, h5, b {
+            color: white;
+        }
+	}
+}
 
 // UI container
 #ui {
