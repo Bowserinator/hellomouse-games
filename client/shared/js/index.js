@@ -160,3 +160,16 @@ class RateLimited {
         this.lastCalled = Date.now();
     }
 }
+
+
+/**
+ * Get an HTML object from a chat message
+ * Auto-adds emojiis, formatting, etc...
+ * @param {string} chatMessage
+ * @returns {HTMLElement}
+ */
+function chatToHTML(chatMessage) {
+    let div = document.createElement('div');
+    div.innerHTML = `${chatMessage}`;
+    return div;
+}

@@ -34,6 +34,17 @@
         <a onclick="javascript:document.getElementById('instr-modal').style.display='block'">Instructions</a>
     </nav>
 
+    <div id="chat">
+        <button
+            onclick="let c = document.getElementById('chat'); c.style.bottom = c.style.bottom === '10px' ? '-350px' : '10px'">
+            Toggle Chat
+        </button>
+        <label for="chat-input" class="chat-container">
+            <div id="messages"></div>
+            <input type="text" autocomplete="off" id="chat-input" maxlength="1000">
+        </label>
+    </div>
+
     <div id="lobby" style="display: block">
         <div class="container">
             <h2>PLAYERS</h2>
@@ -87,7 +98,8 @@
             <hr>
             <div class="js-state" id="bottom-placing" style="display: block">
                 <small>
-                    Place down all your ships, then click "Submit" when you're done. <b>Press 'R' while selecting a ship to rotate</b>,
+                    Place down all your ships, then click "Submit" when you're done.<br>
+                    <b>Press 'R' while selecting a ship to rotate</b>,
                     right click to remove and click to move.
                 </small>
                 <br><br>

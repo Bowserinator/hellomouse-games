@@ -154,7 +154,9 @@ wsServer.on('request', (request: any) => {
                 stripedMessage = stripedMessage.slice(0, 998) + '..';
             game.broadcast({
                 type: 'CHAT',
-                message: stripedMessage
+                message: stripedMessage,
+                username: client.username,
+                i: game.players.indexOf(client)
             });
         } else if (message.type === 'USERNAME') { // Username change
             // Missing or invalid username

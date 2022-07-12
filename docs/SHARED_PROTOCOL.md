@@ -96,7 +96,9 @@ Otherwise will strip the text message of HTML entities and truncate to 1000 char
 ```json
 {
 	type: "CHAT",
-	message: "<stripped message>"
+	message: "<stripped message>",
+	username: "<client username>",
+	i: <client player index>
 }
 ```
 

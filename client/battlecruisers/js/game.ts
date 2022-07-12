@@ -49,6 +49,22 @@ function showWinModal() {
 
 
 /**
+ * Chat sending
+ */
+const chatInput = document.getElementById('chat-input') as HTMLInputElement;
+chatInput.onkeydown = e => {
+    if (e.key === 'Enter') {
+        if (!chatInput.value) return;
+        connection.send(JSON.stringify({
+            type: 'CHAT',
+            message: chatInput.value
+        }));
+        chatInput.value = '';
+    }
+};
+
+
+/**
  * ---------------------------
  * Connection handling
  * ---------------------------
@@ -96,6 +112,8 @@ const lobby = document.getElementById('lobby') as HTMLDivElement;
 const inviteLink = document.getElementById('link') as HTMLParagraphElement;
 const gameLink = document.getElementById('game-link') as HTMLParagraphElement;
 
+const chatMessages = document.getElementById('messages') as HTMLDivElement;
+
 /**
  * Used in the copy link to clipboard
  * @param {string} text Text to copy
@@ -124,6 +142,18 @@ connection.onmessage = (message: any) => {
             if (message.code === 'NO_GAME')
                 window.location.href = window.location.href.split('?')[0];
             alert(message.error);
+            break;
+        }
+        case 'CHAT': {
+            // @ts-expect-error
+            let msg = chatToHTML(message.message);
+
+            if (message.i === gameState.playerIndex)
+                msg.style.backgroundColor = '#333';
+            if (message.i > -1)
+                msg.innerHTML = `<img src="/battlecruisers/img/flag${message.i}.png">` + msg.innerHTML;
+            chatMessages.appendChild(msg);
+
             break;
         }
         case 'UUID': {

@@ -119,6 +119,67 @@ nav {
 
 
 // ------------------
+// Chat
+// ------------------
+
+#chat {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 250px;
+    z-index: 9999;
+    transition: bottom 0.2s;
+
+    button {
+        background-color: #333;
+        color: white;
+        font-family: 'Quantico';
+
+        border: none;
+        outline: none;
+
+        &:hover {
+            cursor: pointer;
+        }
+    }
+
+    .chat-container {
+        height: 350px;
+        background-color: #111;
+        border: 1px solid #777;
+        display: block;
+
+        #messages {
+            height: 320px;
+            overflow-y: scroll;
+            padding: 4px;
+            font-size: 10pt;
+            word-break: break-all;
+            box-sizing: border-box;
+
+            img {
+                max-height: 12px;
+                display: inline-block;
+                margin: 0 4px;
+            }
+        }
+
+        input {
+            width: 100%;
+            height: 30px;
+            box-sizing: border-box;
+            background-color: #111;
+            outline: none;
+            border: 1px solid #777;
+
+            color: white;
+            font-family: 'Quantico';
+            box-sizing: border-box;
+        }
+    }
+}
+
+// ------------------
 // Invite link
 // ------------------
 .game-link {
