@@ -1,4 +1,5 @@
 import { DRAWN_BOARD, GAME_STATE, MoveMessage, MOVE_TYPE, ROTATION, TURN, WINNER } from '../types.js';
+import diff from '../util/diff.js';
 import { BOARD_SIZE, SALVOS_PER_TURN, SHIP_ALLOW_PLACE_COLOR, SHIP_NOT_ALLOW_PLACE_COLOR } from '../vars.js';
 import { AbstractAbility, SALVO } from './ability.js';
 import { HitMarker, MissMarker } from './marker.js';
@@ -20,6 +21,7 @@ export default class GameState {
 
     // Server side
     salvosLeft: [number, number];
+    previousSync: [any, any];
 
     // Client side:
     displayBoard: DRAWN_BOARD;
@@ -43,6 +45,7 @@ export default class GameState {
         this.isClientSide = isClientSide;
         this.playerIndex = 0;
         this.winner = WINNER.UNKNOWN;
+        this.previousSync = [{}, {}];
         this.reset();
     }
 
@@ -193,10 +196,12 @@ export default class GameState {
 
     /**
      * Returns an object to be synced after each move
+     * @param playerIndex player
+     * @param diff Perform diffing to save bandwidth (false if resending on join)
      * @returns object
      */
-    sync(playerIndex: number) {
-        return {
+    sync(playerIndex: number, dif = true) {
+        let nobj = {
             state: this.state,
             round: this.round,
             turn: this.turn,
@@ -206,6 +211,9 @@ export default class GameState {
             enemyMarkerBoard: this.players[1 - playerIndex].markerBoard.sync(),
             winner: this.winner
         };
+        let d = diff(this.previousSync[playerIndex], nobj, dif);
+        this.previousSync[playerIndex] = d[0];
+        return d[1];
     }
 
     /**
@@ -213,14 +221,15 @@ export default class GameState {
      * @param data Data from server
      */
     fromSync(data: any) {
-        this.state = data.state;
-        this.turn = data.turn;
-        this.round = data.round;
-        this.salvosLeft = data.salvosLeft;
-        this.winner = data.winner;
+        const aud = (a: any, b: any) => a === undefined ? b : a;
+        this.state = aud(data.state, this.state);
+        this.turn = aud(data.turn, this.turn);
+        this.round = aud(data.round, this.round);
+        this.salvosLeft = aud(data.salvosLeft, this.salvosLeft);
+        this.winner = aud(data.winner, this.winner);
 
         // Update ships only if not placing (otherwise board gets cleared)
-        if (this.state !== GAME_STATE.PLACING) {
+        if (data.yourShips !== undefined && this.state !== GAME_STATE.PLACING) {
             for (let i = 0; i < data.yourShips.length; i++)
                 this.getPlayer().ships[i].fromSync(data.yourShips[i]);
             this.getPlayer().shipBoard.ships = [];
@@ -232,8 +241,10 @@ export default class GameState {
             this.getPlayer().shipBoard.ships.forEach(s => this.getPlayer().shipBoard.computeShipMaps(s));
         }
 
-        this.getPlayer().markerBoard.fromSync(data.markerBoard);
-        this.players[1 - this.playerIndex].markerBoard.fromSync(data.enemyMarkerBoard);
+        if (data.markerBoard !== undefined)
+            this.getPlayer().markerBoard.fromSync(data.markerBoard);
+        if (data.enemyMarkerBoard !== undefined)
+            this.players[1 - this.playerIndex].markerBoard.fromSync(data.enemyMarkerBoard);
     }
 
     /**

@@ -19,7 +19,14 @@ class BattlecruiserGame extends Game {
     onJoin(client: Client): boolean {
         if (this.players.filter(p => p !== null).length >= 2)
             return false;
-        return super.onJoin(client);
+        let canJoin = super.onJoin(client);
+        if (!canJoin) return false;
+
+        // Resync everything on rejoin
+        let toSend = this.globalStateSync(client);
+        toSend.state = this.state.sync(this.players.indexOf(client), false);
+        client.connection.send(JSON.stringify(toSend))
+        return true;
     }
 
     globalStateSync(player: Client) {
