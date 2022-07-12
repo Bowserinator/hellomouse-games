@@ -17,7 +17,7 @@ class BattlecruiserGame extends Game {
     }
 
     onJoin(client: Client): boolean {
-        if (this.players.length >= 2)
+        if (this.players.filter(p => p !== null).length >= 2)
             return false;
         return super.onJoin(client);
     }
