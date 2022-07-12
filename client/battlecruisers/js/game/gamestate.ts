@@ -53,7 +53,7 @@ export default class GameState {
         ];
 
         this.turn = TURN.NORTH;
-        this.state = GAME_STATE.PLACING; // TODO: LOBBY
+        this.state = GAME_STATE.FIRING; // TODO: LOBBY
         this.placingShip = 0;
         this.placingRotation = ROTATION.R0;
         this.firePos = [0, 0];

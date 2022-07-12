@@ -33,9 +33,14 @@ function place(j: number) {
 place(0);
 place(1);
 
+let lastDraw = 0;
+
 function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    gameState.draw(ctx);
+    if (performance.now() - lastDraw > 1000 / 20) { // Darw at 20 fps
+        lastDraw = performance.now();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        gameState.draw(ctx);
+    }
     window.requestAnimationFrame(draw);
 }
 
@@ -77,6 +82,24 @@ connection.onopen = () => {
 
 connection.onerror = (error: any) => console.error(error);
 
+
+/*
+ * ----------------------------------
+ * Disconnect banner
+ * - Appears when no longer connected to server
+ * - Poll every 500ms for disconnect
+ * ----------------------------------
+ */
+const DISCONNECT_BANNER = document.getElementById('disconnect-banner');
+setInterval(() => {
+    if (!DISCONNECT_BANNER) return;
+    if (connection.readyState !== WebSocket.CLOSED)
+        DISCONNECT_BANNER.style.top = '-100px';
+    else
+        DISCONNECT_BANNER.style.top = '0';
+}, 500);
+
+
 // @ts-expect-error
 const jsState = [...document.getElementsByClassName('js-state')];
 const placingBlock = document.getElementById('bottom-placing') as HTMLDivElement;
@@ -85,6 +108,7 @@ const battleBlock = document.getElementById('bottom-battle') as HTMLDivElement;
 const flagImg = document.getElementById('you-are-img') as HTMLImageElement;
 const youAreLabel = document.getElementById('you-are') as HTMLSpanElement;
 const stateLabel = document.getElementById('turn') as HTMLSpanElement;
+const disconnectBanner = document.getElementById('missing-player-banner') as HTMLDivElement;
 
 // @ts-expect-error
 const stateLabelMap: Record<GAME_STATE, string> = {};
@@ -119,6 +143,16 @@ connection.onmessage = (message: any) => {
             gameState.playerIndex = message.playerIndex;
             gameState.fromSync(message.state);
 
+            // Update if enemy disconnected
+            if (gameState.state !== GAME_STATE.LOBBY && message.players.filter((p: any) => p !== null).length !== 2)
+                disconnectBanner.style.top = '0px';
+            else
+                disconnectBanner.style.top = '-100px';
+
+            // Enemy player made a turn
+            if (gameState.turn !== gameState.playerIndex)
+                updateShipHP();
+
             // Update header stuff
             flagImg.src = '/battlecruisers/img/flag' + gameState.playerIndex + '.png';
             youAreLabel.innerText = `You are ${['NORTHLANDIA', 'SOUTHANIA'][gameState.playerIndex]}`;
@@ -138,9 +172,10 @@ connection.onmessage = (message: any) => {
                 if (gameState.state === GAME_STATE.PLACING) {
                     updatePlacementButtons();
                     placingBlock.style.display = 'block';
-                } else if (gameState.state === GAME_STATE.FIRING)
+                } else if (gameState.state === GAME_STATE.FIRING) {
+                    updateShipHP();
                     battleBlock.style.display = 'block';
-                else if (gameState.state === GAME_STATE.LOBBY && gameState.winner !== WINNER.UNKNOWN)
+                } else if (gameState.state === GAME_STATE.LOBBY && gameState.winner !== WINNER.UNKNOWN)
                     showWinModal();
             }
             if (gameState.state === GAME_STATE.FIRING) {
@@ -229,6 +264,23 @@ function updatePlacementButtons() {
 
 let fireBtns: Array<HTMLElement> = [];
 const movesRemainingLabel = document.getElementById('moves-remaining') as HTMLLabelElement;
+const shipHP = document.getElementById('ship-healths') as HTMLDivElement;
+
+function updateShipHP() {
+    shipHP.replaceChildren(...gameState.getPlayer().ships.map(ship => {
+        let div = document.createElement('div') as HTMLDivElement;
+        let img = document.createElement('img') as HTMLImageElement;
+        div.innerText = `${ship.lives} / ${ship.totalLives}`;
+
+        if (ship.lives <= ship.totalLives / 2)
+            div.style.color = 'red';
+        if (ship.lives === 0)
+            div.style.opacity = '0.3';
+        img.src = ship.imageUrl;
+        div.prepend(img);
+        return div;
+    }));
+}
 
 function updateAbilityButtons() {
     // Moves remaining
@@ -291,6 +343,9 @@ document.onkeydown = e => {
     if (gameState.state === GAME_STATE.PLACING)
         if (e.key === 'r')
             gameState.placingRotation = (gameState.placingRotation + 1) % 4;
+        else if (e.key === 'Escape')
+            // @ts-expect-error
+            [...document.getElementsByClassName('modal-darken')].forEach(element => element.style.display = 'none');
 };
 
 canvas.onmousedown = e => {
@@ -353,6 +408,11 @@ canvas.onmousedown = e => {
             const board = gameState.getPlayer().markerBoard;
             if (!board.isOnBoard(...mousepos)) return;
             let loc = mousePosToGrid(mousepos, board, [1, 1]);
+
+            // Targetted location was already hit + using salvo
+            if (gameState.selectedAbility === SALVO &&
+                board.markers.some(m => m.position[0] === loc[0] && m.position[1] === loc[1]))
+                return;
 
             connection.send(JSON.stringify({
                 type: 'MOVE',

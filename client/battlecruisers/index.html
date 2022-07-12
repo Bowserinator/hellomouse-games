@@ -34,8 +34,12 @@
         <a onclick="javascript:document.getElementById('instr-modal').style.display='block'">Instructions</a>
     </nav>
 
-    <div id="disconnect-banner" style="top: -100px;">
+    <div class="banner" id="disconnect-banner" style="top: -100px;">
         Disconnected from server (Is server down?)
+    </div>
+
+    <div class="banner" id="missing-player-banner" style="top: -100px;">
+        Your opponent left the game
     </div>
 
     <div class="side-by-side">
@@ -64,6 +68,8 @@
                 </small>
                 <br>
                 <button class="text-button" onclick="gameState.switchBoard()">Switch Boards</button>
+                <hr>
+                <div id="ship-healths"></div>
             </div>
         </div>
     </div>

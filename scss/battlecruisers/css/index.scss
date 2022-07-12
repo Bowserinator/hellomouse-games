@@ -41,9 +41,9 @@ nav {
     }
 }
 
-// Disconnect banner
-// For when disconnected from the server
-#disconnect-banner {
+// Disconnect banner + opponent left banner
+// For when disconnected from the server / opponent left
+.banner {
     background-color: #ff5f52;
     z-index: 999;
     position: fixed;
@@ -207,6 +207,24 @@ nav {
         font-weight: normal;
         color: #ccc;
         margin: 0;
+    }
+}
+
+// Ship health indicators
+#ship-healths {
+    max-width: 500px;
+
+    & > div {
+        text-align: center;
+        color: white;
+        display: inline-block;
+        margin: 5px;
+        font-size: 12px;
+
+        img {
+            width: 40px;
+            display: block;
+        }
     }
 }
 

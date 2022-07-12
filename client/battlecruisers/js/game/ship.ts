@@ -25,6 +25,7 @@ export class AbstractShip {
     index: number;
     imageUrl: string;
     lives: number;
+    totalLives: number;
 
     /**
      * Construct a ship (abstract)
@@ -65,6 +66,7 @@ export class AbstractShip {
             this.shape = this.shape[0].map((val, index) => this.shape.map(row => row[index]).reverse());
         this.size = [this.shape[0].length, this.shape.length];
         this.lives = this.shape.flat().filter(x => x > 0).length;
+        this.totalLives = this.lives;
     }
 
     /**
@@ -210,7 +212,7 @@ export class AbstractShip {
      * @param markerBoard Marker board of the enemy
      */
     checkHits(shipBoard: ShipBoard, markerBoard: MarkerBoard) {
-        this.lives = this.shape.flat().filter(x => x > 0).length;
+        this.lives = this.totalLives;
         for (let marker of markerBoard.hitMarkers)
             if (this.checkSpot(...marker.position))
                 this.lives--;
