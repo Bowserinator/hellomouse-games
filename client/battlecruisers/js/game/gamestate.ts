@@ -329,11 +329,10 @@ export default class GameState {
 
                 if (this.players[1 - playerIndex].allSunk()) {
                     // Someone won!
-                    this.state = GAME_STATE.LOBBY;
-
                     let p1AllDead = this.players[0].allSunk() ? 2 : 0;
                     let p2AllDead = this.players[1].allSunk() ? 1 : 0;
                     this.winner = [WINNER.UNKNOWN, WINNER.P1, WINNER.P2, WINNER.TIE][p1AllDead + p2AllDead];
+                    this.reset();
                     return;
                 }
 
