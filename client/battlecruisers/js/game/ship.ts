@@ -1,7 +1,8 @@
 import { ROTATION } from '../types.js';
 import { drawLine } from '../util/draw.js';
 import { AA_COLOR, CWIS_COLOR, SHIP_OUTLINE_COLOR, STEALTH_COLOR } from '../vars.js';
-import { AbstractAbility, MISSILE, NUKE, SONAR, TORPEDO_BOMBER } from './ability.js';
+import { AbstractAbility, MINE, MISSILE, NUKE, SONAR, TORPEDO_BOMBER } from './ability.js';
+import GameState from './gamestate.js';
 import { MarkerBoard } from './marker_board.js';
 import { ShipBoard } from './ship_board.js';
 
@@ -209,9 +210,12 @@ export class AbstractShip {
 
     /**
      * Check hits, and act if sunk
+     * @param playerIndex Index of enemy player
+     * @param gameState
+     * @param shipBoard shipBoard this ship belongs to
      * @param markerBoard Marker board of the enemy
      */
-    checkHits(shipBoard: ShipBoard, markerBoard: MarkerBoard) {
+    checkHits(playerIndex: number, gameState: GameState, shipBoard: ShipBoard, markerBoard: MarkerBoard) {
         this.lives = this.totalLives;
         for (let marker of markerBoard.hitMarkers)
             if (this.checkSpot(...marker.position))
@@ -345,5 +349,11 @@ export class MineShip extends AbstractShip {
 
     constructor(position: [number, number], rotation: ROTATION) {
         super('mine.png', 'Mine', position, rotation, MineShip.config);
+    }
+
+    checkHits(playerIndex: number, gameState: GameState, shipBoard: ShipBoard, markerBoard: MarkerBoard) {
+        super.checkHits(playerIndex, gameState, shipBoard, markerBoard);
+        if (this.lives === 0)
+            MINE.do(playerIndex, gameState, this.position);
     }
 }

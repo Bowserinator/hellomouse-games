@@ -53,7 +53,7 @@ export default class GameState {
         ];
 
         this.turn = TURN.NORTH;
-        this.state = GAME_STATE.FIRING; // TODO: LOBBY
+        this.state = GAME_STATE.PLACING; // TODO: LOBBY
         this.placingShip = 0;
         this.placingRotation = ROTATION.R0;
         this.firePos = [0, 0];
@@ -305,7 +305,11 @@ export default class GameState {
                 abilities[0].lastRoundActivated = this.round;
 
                 const shipBoard = this.players[1 - playerIndex].shipBoard;
-                this.players[1 - playerIndex].ships.forEach(ship => ship.checkHits(shipBoard, player.markerBoard));
+                this.players[1 - playerIndex].ships.forEach(ship =>
+                    ship.checkHits(playerIndex, this, shipBoard, player.markerBoard));
+                // Check hits for this player because mines
+                this.players[playerIndex].ships.forEach(ship =>
+                    ship.checkHits(playerIndex, this, shipBoard, player.markerBoard));
 
                 // Switch turns when salvos left changes
                 this.salvosLeft[this.turn]--;
