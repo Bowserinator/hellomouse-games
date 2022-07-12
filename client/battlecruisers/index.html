@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="Battlecruisers - Hellomouse Games">
+    <meta name="author" content="Bowserinator">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Social meta -->
+    <meta property="og:title" content="Battlecruisers - Hellomouse Games">
+    <meta property="og:description" content="A fancier Battleship clone.">
+    <meta property="og:image" content="/battlecruisers/img/thumbnail.jpg">
+
+    <title>Battlecruisers</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quantico:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/shared/css/index.css">
+    <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body>
+    <script src="/shared/js/index.js" defer></script>
+    <script src="./js/game.js" type="module" defer></script>
+
+    <nav>
+        <h1>Battlecruisers</h1>
+        <a target="_blank" href="/">More Games</a>
+        <a onclick="javascript:document.getElementById('instr-modal').style.display='block'">Instructions</a>
+    </nav>
+
+    <div id="chat" style="bottom: 10px">
+        <button
+            onclick="let c = document.getElementById('chat'); c.style.bottom = c.style.bottom === '10px' ? '-350px' : '10px'">
+            Toggle Chat
+        </button>
+        <label for="chat-input" class="chat-container">
+            <div id="messages"></div>
+            <input type="text" autocomplete="off" id="chat-input" maxlength="1000">
+        </label>
+    </div>
+
+    <div id="lobby" style="display: block">
+        <div class="container">
+            <h2>PLAYERS</h2>
+            <div id="lobby-player-list">
+                <div id="player0" class="active">
+                    <img src="/battlecruisers/img/flag0.png">
+                    NORTHLANDIA
+                    <button id="ready0" onclick="ready(0)"></button>
+                </div>
+                <div id="player1">
+                    <img src="/battlecruisers/img/flag1.png">
+                    SOUTHANIA
+                    <button id="ready1" onclick="ready(1)"></button>
+                </div>
+            </div>
+
+            <br><hr>
+
+            <p>Ready up (checkbox on the right), game will start when all players are ready.</p>
+            
+            <p>Click the box below to copy an invite link.
+                Players can only join when the game is in a lobby.</p>
+
+            <p class="game-link" id="game-link">
+                <small>Click to copy invite link</small><br>
+                <span id="link">Loading...</span>
+            </p>
+        </div>
+    </div>
+
+    <div class="banner" id="disconnect-banner" style="top: -100px;">
+        Disconnected from server (Is server down?)
+    </div>
+
+    <div class="banner" id="missing-player-banner" style="top: -100px;">
+        Your opponent left the game
+    </div>
+
+    <div class="side-by-side">
+        <canvas id="board" oncontextmenu="return false;"></canvas>
+
+        <div id="ui">
+            <div id="you-are-container">
+                <img id="you-are-img" src="/battlecruisers/img/flag0.png">
+                <span id="you-are">You are NORTHLANDIA</span>
+            </div>
+            <div id="turn">You are currently placing ships</div>
+            <hr>
+            <div id="ship-placement-buttons"></div>
+
+            <hr>
+            <div class="js-state" id="bottom-placing" style="display: block">
+                <small>
+                    Place down all your ships, then click "Submit" when you're done.<br>
+                    <b>Press 'R' while selecting a ship to rotate</b>,
+                    right click to remove and click to move.
+                </small>
+                <br><br>
+                <button class="text-button" onclick="submitShips()">SUBMIT</button>
+            </div>
+            <div class="js-state" id="bottom-battle" style="display: none">
+                <small id="moves-remaining">
+                    You have ? / ? moves remaining
+                </small>
+                <br>
+                <button class="text-button" onclick="gameState.switchBoard()">Switch Boards</button>
+                <hr>
+                <div id="ship-healths"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-darken" id="win-modal" style="display: none">
+        <div class="modal">
+            <button class="modal-close-button"
+                onclick="document.getElementById('win-modal').style.display = 'none'">X</button><br>
+            <img id="win-img" src="/battlecruisers/img/flag0.png">
+            <h1 id="win-h1">You Win!</h1>
+            <h3 id="win-h3">All the enemy ships have been sunk!</h3>
+        </div>
+    </div>
+
+    <div class="modal-darken" id="instr-modal" style="display: none">
+        <div class="modal">
+            <button class="modal-close-button"
+                onclick="document.getElementById('instr-modal').style.display = 'none'">X</button>
+            
+            <div class="js-tab-container">
+                <!-- Tab headers -->
+                <div class="js-tabs">
+                    <div>Instructions</div>
+                    <div>Lore</div>
+                </div>
+                <!-- Tab 1 -->
+                <div>
+                    <h2>Instructions</h2>
+                    <p>
+                        The goal is to sink all the enemy ships before they sink yours (Mines don't count as ships). Certain ships give special abilities you can use
+                    in a turn, if those ships are sunk you lose the ability. Special abilities have a cooldown for a certain number of
+                    turns.
+                    </p>
+
+                    <p>Players first place down their fleet, then take turns firing at each other.</p>
+
+                    <p>A list of ships + their abilities are as follows:</p>
+
+                    <ol class="instructions-list">
+                        <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/carrier.png">
+                            <b>Carrier:</b> Contains three torpedo bombers that bomb in a "plus" shape. If the center of the plus-sign is 
+                            in enemy AA range, then the attack fails.
+
+                            <br><span class="aa">AA: 5</span><span class="ability">Torps: 5 (Cooldown: 4)</span>
+                        </li>
+                        <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/battlecruiser.png">
+                            <b>Battlecruiser:</b> A large ship.
+                        </li>
+                        <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/cruiser.png">
+                            <b>Cruiser:</b> Can fire cruise missiles that explode in a "X" shape. If the center of the X is
+                            in enemy CWIS range, then the attack fails.
+
+                            <br><span class="aa">AA: 2</span><span class="ability">Missiles: 1 (Cooldown: 4)</span>
+                        </li>
+                        <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/strat_sub.png">
+                            <b>Strategic Missile Submarine:</b> Fires a tactical nuclear torpedo that explodes in a 7x7 square. Cannot be intercepted.
+                        
+                            <br><span class="ability">Nukes: 1 (Cooldown: 15)</span>
+                        </li>
+                        <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/aegis.png">
+                            <b>AEGIS Cruiser:</b> Protects ships in a 9x9 square centered on it from enemy cruise missiles.
+
+                            <br><span class="cwis">CWIS: 4</span>
+                        </li>
+                        <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/stealth.png">
+                            <b>Counterintelligence Ship:</b> All sonar pings in a 7x7 square centered on it will return a false "probable miss".
+                            
+                            <br><span class="stealth">Stealth: 3</span>
+                        </li>
+                        <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/destroyer.png">
+                            <b>Destroyer:</b> A small ship.
+                        </li>
+                        <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/sub.png">
+                            <b>Submarine:</b> Can perform "sonar pings" that show if a 3x3 region is either a "probable hit"
+                            (meaning there is at least 1 ship square in the 3x3 region) or a "probable miss" (there are no ships)
+                            Note if ANY of the squares in the 3x3 regions are in a stealth field this will return a false "probable miss".
+
+                            <br><span class="ability">Sonar: 1 (Cooldown: 4)</span>
+                        </li>
+                        <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/mine.png">
+                            <b>Mine:</b> When hit will explode in a 3x3 square on the board of the person who fired the salvo.
+                        </li>
+                    </ol>
+                </div>
+                <!-- Tab 2 -->
+                <div>
+                    <h2>Lore</h2>
+                    <i>Note: you don't need to read this at all</i>
+                    
+                    <p>
+                        <b>Northlandia:</b> A technologically advanced nation to the north, known for its verdant mountain ranges and vast
+                        lakes.
+                    </p>
+                    <p>
+                        <b>Southania:</b> A rival technological superpower, known for its many islands of golden beaches and tropical
+                        shores.
+                    </p>
+                    
+                    <p>
+                        The battleship has been retired in the modern age, but as missile interception systems and anti-submarine technology
+                        advanced, the need for heavy support platforms returned. The solution was a revival of the battlecruiser: a smaller,
+                        semi-autonomous “fast-battleship” that could fire multiple precision guided railgun shells.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

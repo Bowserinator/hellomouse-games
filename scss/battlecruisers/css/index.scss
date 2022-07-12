@@ -1,0 +1,474 @@
+body {
+    background-color: black;
+    color: white;
+    font-family: 'Quantico';
+    padding-top: 70px;
+    cursor: crosshair;
+}
+
+hr {
+    border-bottom: 1px solid rgba(255, 255, 255, .14);
+}
+
+// Navbar
+// ----------------------
+nav {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    font-size: 13pt;
+    user-select: none;
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: black;
+
+    h1 {
+        margin: 0 20px 0 0;
+        font-weight: normal;
+        font-size: 16pt;
+        color: #abe2ff;
+    }
+
+    a {
+        color: #ccc;
+        background-color: black;
+        margin: 0 10px;
+        padding: 10px;
+        text-decoration: none;
+        border-radius: 2px;
+        transition: color 0.2s, background-color 0.2s;
+    }
+
+    a:hover {
+        background-color: #111;
+        color: white;
+        cursor: pointer;
+    }
+}
+
+// Lobby
+#lobby {
+    position: fixed;
+    top: 70.8px;
+    height: 100%;
+    width: 100%;
+    background-color: black;
+    z-index: 300;
+
+    .container {
+        max-width: 90%;
+        width: 500px;
+        position: relative;
+        top: 10%;
+        left: 50%;
+        transform: translate(-50%, 0%);
+    }
+
+    p {
+        color: #bbb;
+    }
+
+    #lobby-player-list {
+        & > div {
+            padding: 5px;
+            margin: 2px 0;
+            opacity: 0.4;
+            font-size: 14pt;
+        }
+
+        & > div.active {
+            background-color: #111;
+            opacity: 1;
+
+            button:hover {
+                background-color: #ccc;
+                color: #333;
+                cursor: pointer;
+            }
+        }
+
+        img {
+            height: 24px;
+            vertical-align: top;
+            margin-right: 10px;
+        }
+
+        button {
+            float: right;
+            outline: none;
+            border: none;
+            background-color: #555;
+            color: #bbb;
+            font-family: 'Quantico';
+            padding: 3px;
+            border-radius: 2px;
+
+            width: 24px;
+            height: 24px;
+            margin-top: 3px;
+
+            &.active {
+                background-color: red !important;
+                color: black !important;
+            }
+        }
+    }
+}
+
+
+// ------------------
+// Chat
+// ------------------
+
+#chat {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 250px;
+    z-index: 9999;
+    transition: bottom 0.2s;
+
+    button {
+        background-color: #333;
+        color: white;
+        font-family: 'Quantico';
+
+        border: none;
+        outline: none;
+
+        &:hover {
+            cursor: pointer;
+        }
+    }
+
+    .chat-container {
+        height: 350px;
+        background-color: #111;
+        border: 1px solid #777;
+        display: block;
+
+        #messages {
+            height: 320px;
+            overflow-y: scroll;
+            padding: 4px;
+            font-size: 10pt;
+            word-break: break-all;
+            box-sizing: border-box;
+
+            img {
+                max-height: 12px;
+                display: inline-block;
+                margin: 0 4px;
+            }
+        }
+
+        input {
+            width: 100%;
+            height: 30px;
+            box-sizing: border-box;
+            background-color: #111;
+            outline: none;
+            border: 1px solid #777;
+
+            color: white;
+            font-family: 'Quantico';
+            box-sizing: border-box;
+        }
+    }
+}
+
+// ------------------
+// Invite link
+// ------------------
+.game-link {
+    font-size: 12pt;
+    margin-bottom: 0;
+
+    border-bottom: 1px solid #777;
+    white-space: nowrap;
+    color: #ddd;
+    background-color: rgba(0, 0, 0, 0.02);
+    padding: 12px;
+    overflow-x: auto;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    user-select: none;
+
+    & > small {
+        color: #bbb;
+    }
+}
+
+@keyframes flash {
+    from {
+        background-color: rgba(255, 255, 255, 0.15);
+    }
+
+    to {
+        background-color: rgba(255, 255, 255, 0.02);
+    }
+}
+
+.game-link.flash {
+    animation: flash 0.3s ease-in-out 0s;
+}
+
+
+// Disconnect banner + opponent left banner
+// For when disconnected from the server / opponent left
+.banner {
+    background-color: #ff5f52;
+    z-index: 999;
+    position: fixed;
+    left: 0;
+
+    width: 100%;
+    padding: 7px 14px;
+    text-align: center;
+    font-size: 13pt;
+    transition: top 0.2s;
+}
+
+// Modal
+.modal {
+    width: 700px;
+    max-width: 90%;
+    height: 90%;
+    overflow-y: auto;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+
+    background-color: black;
+    padding: 20px;
+}
+
+.modal-close-button {
+    float: right;
+    width: 30px;
+    height: 30px;
+    color: white;
+    border: none;
+    outline: none;
+    background-color: transparent;
+    transition: background-color 0.2s, color 0.2s;
+    border-radius: 2px;
+
+    &:hover {
+        cursor: pointer;
+        color: white;
+        background-color: #111;
+    }
+}
+
+// Tabs
+.js-tabs {
+    & > div {
+        margin-right: 20px;
+        border-bottom: 3px solid transparent;
+        color: #aaa;
+    }
+
+    & > div.active {
+        border-color: white;
+        color: white;
+    }
+}
+
+.js-tab-container {
+	& > div:not(:first-child) {
+        color: #ccc;
+		h1, h2, h3, h4, h5, b {
+            color: white;
+        }
+	}
+}
+
+// UI container
+#ui {
+    flex-grow: 0.9;
+    user-select: none;
+}
+
+#you-are-container {
+    font-size: 18px;
+    line-height: 40px;
+    vertical-align: top;
+
+    background-color: #222;
+    color:white;
+
+    img {
+        height: 40px;
+        vertical-align: top;
+        margin-right: 15px;
+    }
+}
+
+#turn {
+    margin: 10px 0;
+    background-color: #111;
+    padding: 5px;
+}
+
+#ship-placement-buttons button,
+.text-button {
+    width: 100%;
+    max-width: 500px;
+    margin: 5px;
+    padding: 7px;
+    text-align: left;
+    display: block;
+
+    color: #bbb;
+    font-family: 'Quantico';
+    background-color: black;
+    outline: none;
+    border: 1px solid #bbb;
+    transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+
+    &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed !important;
+    }
+
+    &:hover,
+    &:focus,
+    &.focused {
+        cursor: pointer;
+        background-color: white;
+        border-color: white;
+        color: black;
+
+        & > img {
+            filter: invert(1);
+        }
+    }
+
+    &.salvo:hover,
+    &.salvo:focus,
+    &.salvo.focused {
+        border-color: #f44336;
+        background-color: #f44336;
+        color: black;
+    }
+
+    & > img {
+        max-height: 17px;
+        vertical-align: middle;
+        margin-right: 10px;
+    }
+}
+
+// Win modal
+#win-modal {
+    text-align: center;
+
+    .modal { height: auto; }
+
+    img {
+        width: 30%;
+        margin-left: 30px;
+    }
+
+    h1 {
+        margin: 14px 0 3px 0;
+    }
+
+    h3 {
+        font-weight: normal;
+        color: #ccc;
+        margin: 0;
+    }
+}
+
+// Ship health indicators
+#ship-healths {
+    max-width: 500px;
+
+    & > div {
+        text-align: center;
+        color: white;
+        display: inline-block;
+        margin: 5px;
+        font-size: 12px;
+
+        img {
+            width: 40px;
+            display: block;
+        }
+    }
+}
+
+// Instructions
+.instructions-list {
+    list-style: none;
+
+    li {
+        margin: 15px 0;
+        border-bottom: 1px solid #222;
+        padding-bottom: 15px;
+    }
+
+    .ship-img {
+        height: 16px;
+        margin-right: 10px;
+    }
+
+    .ability, .aa, .stealth, .cwis {
+        margin: 5px 15px 0 0;
+        display: inline-block;
+    }
+
+    .ability { color: greenyellow; }
+    .aa { color: #7ad7ff; }
+    .stealth { color: #ff5959; }
+    .cwis { color: #ffc77d; }
+}
+
+// Thinner scrollbar
+::-webkit-scrollbar {
+    width: 4px;
+    height: 2px;
+}
+
+::-webkit-scrollbar-button {
+    width: 0px;
+    height: 0px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #e1e1e1;
+    border: 0px none #ffffff;
+    border-radius: 50px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #ffffff;
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: #000000;
+}
+
+::-webkit-scrollbar-track {
+    background: #666666;
+    border: 0px none #ffffff;
+    border-radius: 50px;
+}
+
+::-webkit-scrollbar-track:hover {
+    background: #666666;
+}
+
+::-webkit-scrollbar-track:active {
+    background: #333333;
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
