@@ -404,6 +404,32 @@ nav {
     }
 }
 
+// Instructions
+.instructions-list {
+    list-style: none;
+
+    li {
+        margin: 15px 0;
+        border-bottom: 1px solid #222;
+        padding-bottom: 15px;
+    }
+
+    .ship-img {
+        height: 16px;
+        margin-right: 10px;
+    }
+
+    .ability, .aa, .stealth, .cwis {
+        margin: 5px 15px 0 0;
+        display: inline-block;
+    }
+
+    .ability { color: greenyellow; }
+    .aa { color: #7ad7ff; }
+    .stealth { color: #ff5959; }
+    .cwis { color: #ffc77d; }
+}
+
 // Thinner scrollbar
 ::-webkit-scrollbar {
     width: 4px;

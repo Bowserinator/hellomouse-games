@@ -34,7 +34,7 @@
         <a onclick="javascript:document.getElementById('instr-modal').style.display='block'">Instructions</a>
     </nav>
 
-    <div id="chat">
+    <div id="chat" style="bottom: 10px">
         <button
             onclick="let c = document.getElementById('chat'); c.style.bottom = c.style.bottom === '10px' ? '-350px' : '10px'">
             Toggle Chat
@@ -142,7 +142,7 @@
                 <div>
                     <h2>Instructions</h2>
                     <p>
-                        The goal is to sink all the enemy ships before they sink yours. Certain ships give special abilities you can use
+                        The goal is to sink all the enemy ships before they sink yours (Mines don't count as ships). Certain ships give special abilities you can use
                     in a turn, if those ships are sunk you lose the ability. Special abilities have a cooldown for a certain number of
                     turns.
                     </p>
@@ -151,36 +151,57 @@
 
                     <p>A list of ships + their abilities are as follows:</p>
 
-                    <ol>
+                    <ol class="instructions-list">
                         <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/carrier.png">
                             <b>Carrier:</b> Contains three torpedo bombers that bomb in a "plus" shape. If the center of the plus-sign is 
                             in enemy AA range, then the attack fails.
+
+                            <br><span class="aa">AA: 5</span><span class="ability">Torps: 5 (Cooldown: 4)</span>
                         </li>
                         <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/battlecruiser.png">
                             <b>Battlecruiser:</b> A large ship.
                         </li>
                         <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/cruiser.png">
                             <b>Cruiser:</b> Can fire cruise missiles that explode in a "X" shape. If the center of the X is
                             in enemy CWIS range, then the attack fails.
+
+                            <br><span class="aa">AA: 2</span><span class="ability">Missiles: 1 (Cooldown: 4)</span>
                         </li>
                         <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/strat_sub.png">
                             <b>Strategic Missile Submarine:</b> Fires a tactical nuclear torpedo that explodes in a 7x7 square. Cannot be intercepted.
+                        
+                            <br><span class="ability">Nukes: 1 (Cooldown: 15)</span>
                         </li>
                         <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/aegis.png">
                             <b>AEGIS Cruiser:</b> Protects ships in a 9x9 square centered on it from enemy cruise missiles.
+
+                            <br><span class="cwis">CWIS: 4</span>
                         </li>
                         <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/stealth.png">
                             <b>Counterintelligence Ship:</b> All sonar pings in a 7x7 square centered on it will return a false "probable miss".
+                            
+                            <br><span class="stealth">Stealth: 3</span>
                         </li>
                         <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/destroyer.png">
                             <b>Destroyer:</b> A small ship.
                         </li>
                         <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/sub.png">
                             <b>Submarine:</b> Can perform "sonar pings" that show if a 3x3 region is either a "probable hit"
                             (meaning there is at least 1 ship square in the 3x3 region) or a "probable miss" (there are no ships)
                             Note if ANY of the squares in the 3x3 regions are in a stealth field this will return a false "probable miss".
+
+                            <br><span class="ability">Sonar: 1 (Cooldown: 4)</span>
                         </li>
                         <li>
+                            <img class="ship-img" src="/battlecruisers/img/ships/mine.png">
                             <b>Mine:</b> When hit will explode in a 3x3 square on the board of the person who fired the salvo.
                         </li>
                     </ol>
