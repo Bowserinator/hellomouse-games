@@ -49,6 +49,7 @@ export default class GameState {
         this.reset();
     }
 
+    /** Call this after the game is over */
     reset() {
         this.players = [
             new Player(),
@@ -67,6 +68,11 @@ export default class GameState {
         this.regenAbilityMaps();
     }
 
+    /**
+     * Update all board sizes
+     * @param offset Offset from topleft corner
+     * @param gridSize Grid cell size (px)
+     */
     setBoardSize(offset: [number, number], gridSize: number) {
         this.players.forEach(p => {
             p.markerBoard.gridSize = gridSize;
@@ -76,10 +82,18 @@ export default class GameState {
         });
     }
 
+    /**
+     * Get the player obj corresponding to this player (client side)
+     * @returns Player
+     */
     getPlayer() {
         return this.players[this.playerIndex];
     }
 
+    /**
+     * Pick a new ship of the same type, or the next ship
+     * in the list if none (client side, placing state only)
+     */
     advancePlacingShip() {
         if (this.state !== GAME_STATE.PLACING)
             return;
@@ -122,18 +136,6 @@ export default class GameState {
             }
     }
 
-    useCurrentAbility() {
-        this.selectedAbility.do(this.turn, this, this.firePos);
-        this.selectedAbility.lastRoundActivated = this.round;
-        this.regenAbilityMaps();
-
-        // Reset selectedAbility if needed
-        if (!this.abilityMap[this.selectedAbility.name])
-            this.selectedAbility = SALVO;
-        else if (this.selectedAbility.isNotActive(this.round))
-            this.selectedAbility = this.abilityMap[this.selectedAbility.name][0];
-    }
-
     /**
      * Attack the target and update both player's boards
      * @param playerIndex Player to attack
@@ -152,10 +154,15 @@ export default class GameState {
             this.players[1 - playerIndex].markerBoard.addMarker(new MissMarker(pos));
     }
 
+    /** Change currently displayed board (client side only) */
     switchBoard() {
         this.displayBoard = 1 - this.displayBoard;
     }
 
+    /**
+     * Draw ship placing grid + preview
+     * @param ctx CTX
+     */
     drawPlacementState(ctx: CanvasRenderingContext2D) {
         const board = this.getPlayer().shipBoard;
         board.draw(ctx);

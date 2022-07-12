@@ -135,7 +135,6 @@ stateLabelMap[GAME_STATE.LOBBY] = '';
 
 connection.onmessage = (message: any) => {
     message = JSON.parse(message.data);
-    console.log(message);
 
     switch (message.type) {
         case 'ERROR': {
@@ -481,7 +480,6 @@ canvas.onmousedown = e => {
                 abilityName: gameState.selectedAbility.name,
                 firePos: loc
             }));
-            // gameState.useCurrentAbility();
             break;
         }
     }
