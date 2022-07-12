@@ -23,7 +23,7 @@ export class AbstractAbility {
         this.name = name;
         this.imageUrl = img ? ('/battlecruisers/img/powerup/' + img) : '';
         this.cooldown = cooldown;
-        this.lastRoundActivated = -1;
+        this.lastRoundActivated = 0;
         this.disabled = false;
     }
 
@@ -85,7 +85,7 @@ export class AbstractAbility {
 
 export class TorpedoBomberAbility extends AbstractAbility {
     constructor() {
-        super('torp.png', 'Torpedo Bomber', 2);
+        super('torp.png', 'Torpedo Bomber', 4);
     }
 
     // Attack in a cross pattern
@@ -121,7 +121,7 @@ export class TorpedoBomberAbility extends AbstractAbility {
 
 export class SonarAbility extends AbstractAbility {
     constructor() {
-        super('sonar.png', 'Sonar Ping', 2);
+        super('sonar.png', 'Sonar Ping', 4);
     }
 
     // Probe 3x3 square, Marks all squares as "potential targets"
@@ -168,7 +168,7 @@ export class SonarAbility extends AbstractAbility {
 
 export class NuclearTorpedoAbility extends AbstractAbility {
     constructor() {
-        super('nuke.png', 'Nuclear Torpedo', -1); // 12
+        super('nuke.png', 'Nuclear Torpedo', 15);
     }
 
     // Attack in a 7x7 square
@@ -191,7 +191,7 @@ export class NuclearTorpedoAbility extends AbstractAbility {
 
 export class CruiseMissileAbility extends AbstractAbility {
     constructor() {
-        super('missile.png', 'Cruise Missile', 2);
+        super('missile.png', 'Cruise Missile', 4);
     }
 
     // Attack in a X pattern
