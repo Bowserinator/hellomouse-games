@@ -56,7 +56,7 @@ export default class GameState {
         ];
 
         this.turn = TURN.NORTH;
-        this.state = GAME_STATE.PLACING; // TODO: LOBBY
+        this.state = GAME_STATE.LOBBY;
         this.placingShip = 0;
         this.placingRotation = ROTATION.R0;
         this.firePos = [0, 0];
@@ -221,6 +221,8 @@ export default class GameState {
      * @param data Data from server
      */
     fromSync(data: any) {
+        if (!data) return;
+
         const aud = (a: any, b: any) => a === undefined ? b : a;
         this.state = aud(data.state, this.state);
         this.turn = aud(data.turn, this.turn);

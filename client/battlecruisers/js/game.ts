@@ -1,10 +1,7 @@
-
-
-// TODO: load stuff
-
 import { SALVO } from './game/ability.js';
 import { Board } from './game/board.js';
 import GameState from './game/gamestate.js';
+import { HitMarker, MissMarker } from './game/marker.js';
 import { DRAWN_BOARD, GAME_STATE, MOVE_TYPE, WINNER } from './types.js';
 import { BOARD_SIZE, SALVOS_PER_TURN } from './vars.js';
 
@@ -14,29 +11,14 @@ const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 // url?<GAME UUID>=
 const uuid = window.location.search.substr(1).split('=')[0];
 
-
 const gameState = new GameState(true);
 // @ts-ignore
 window.gameState = gameState;
 
-
-// Temp place ships:
-function place(j: number) {
-    let y = 0;
-    for (let i = 0; i < gameState.players[j].ships.length; i++) {
-        const s = gameState.players[j].ships[i];
-        s.position = [0, y];
-        y += s.size[1];
-        gameState.players[j].shipBoard.place(s);
-    }
-}
-place(0);
-place(1);
-
+// Render loop
 let lastDraw = 0;
-
 function draw() {
-    if (performance.now() - lastDraw > 1000 / 20) { // Darw at 20 fps
+    if (performance.now() - lastDraw > 1000 / 20) { // Draw at 20 fps
         lastDraw = performance.now();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         gameState.draw(ctx);
@@ -110,6 +92,23 @@ const youAreLabel = document.getElementById('you-are') as HTMLSpanElement;
 const stateLabel = document.getElementById('turn') as HTMLSpanElement;
 const disconnectBanner = document.getElementById('missing-player-banner') as HTMLDivElement;
 
+const lobby = document.getElementById('lobby') as HTMLDivElement;
+const inviteLink = document.getElementById('link') as HTMLParagraphElement;
+const gameLink = document.getElementById('game-link') as HTMLParagraphElement;
+
+/**
+ * Used in the copy link to clipboard
+ * @param {string} text Text to copy
+ */
+function copyLinkToClipboard(text: string) {
+    gameLink.classList.add('flash');
+    setTimeout(() => gameLink.classList.remove('flash'), 500);
+    // @ts-expect-error
+    copyToClipboard(text);
+}
+
+gameLink.onclick = () => copyLinkToClipboard(inviteLink.innerText);
+
 // @ts-expect-error
 const stateLabelMap: Record<GAME_STATE, string> = {};
 stateLabelMap[GAME_STATE.PLACING] = 'You are currently placing ships';
@@ -131,14 +130,24 @@ connection.onmessage = (message: any) => {
             // Game UUID recieved
             let url = window.location.href.split('?')[0] + '?' + message.uuid;
             history.pushState({}, '', url);
-            // TODO
-            // document.getElementById('link').innerText = url;
+            inviteLink.innerText = url;
             break;
         }
         case 'SYNC': {
-            // TODO sync ready players
+            // Update ready states
+            for (let i = 0; i < 2; i++) {
+                let btn = document.getElementById(`ready${i}`) as HTMLButtonElement;
+                if (message.players[i]) {
+                    btn.classList.add('active');
+                    btn.innerText = '✓';
+                } else {
+                    btn.classList.remove('active');
+                    btn.innerText = '';
+                }
+            }
+
+            // Sync gamestate
             let previousState = gameState.state;
-            previousState = -1; // Temp
             let previousTurn = gameState.turn;
             gameState.playerIndex = message.playerIndex;
             gameState.fromSync(message.state);
@@ -150,8 +159,7 @@ connection.onmessage = (message: any) => {
                 disconnectBanner.style.top = '-100px';
 
             // Enemy player made a turn
-            if (gameState.turn !== gameState.playerIndex)
-                updateShipHP();
+            updateShipHP();
 
             // Update header stuff
             flagImg.src = '/battlecruisers/img/flag' + gameState.playerIndex + '.png';
@@ -167,6 +175,7 @@ connection.onmessage = (message: any) => {
                 let turn = gameState.turn === gameState.playerIndex ? 'your' : 'the enemy\'s';
                 stateLabelMap[GAME_STATE.FIRING] = `It is ${turn} turn (Move ${gameState.round + 1})`;
                 stateLabel.innerText = stateLabelMap[gameState.state];
+                lobby.style.display = 'none';
 
                 jsState.forEach(d => d.style.display = 'none');
                 if (gameState.state === GAME_STATE.PLACING) {
@@ -177,10 +186,23 @@ connection.onmessage = (message: any) => {
                     battleBlock.style.display = 'block';
                 } else if (gameState.state === GAME_STATE.LOBBY && gameState.winner !== WINNER.UNKNOWN)
                     showWinModal();
+
+                if (gameState.state === GAME_STATE.LOBBY)
+                    lobby.style.display = 'block';
             }
             if (gameState.state === GAME_STATE.FIRING) {
                 gameState.regenAbilityMaps();
                 updateAbilityButtons();
+            } else if (gameState.state === GAME_STATE.LOBBY) {
+                let playerDivs = [
+                    document.getElementById('player0') as HTMLDivElement,
+                    document.getElementById('player1') as HTMLDivElement
+                ];
+                for (let i = 0; i < 2; i++)
+                    if (message.players[i] !== null && message.players[i] !== undefined)
+                        playerDivs[i].classList.add('active');
+                    else
+                        playerDivs[i].classList.remove('active');
             }
             break;
         }
@@ -203,6 +225,14 @@ window.submitShips = () => {
  * Controls
  * ---------------------------
  */
+
+// @ts-expect-error
+window.ready = (index: number) => {
+    if (index !== gameState.playerIndex) return;
+    connection.send(JSON.stringify({
+        type: 'READY'
+    }));
+};
 
 function mousePosToGrid(mousepos: [number, number], board: Board, size: [number, number]): [number, number] {
     const loc = board.getClickLocation(...mousepos);
@@ -411,7 +441,8 @@ canvas.onmousedown = e => {
 
             // Targetted location was already hit + using salvo
             if (gameState.selectedAbility === SALVO &&
-                board.markers.some(m => m.position[0] === loc[0] && m.position[1] === loc[1]))
+                board.markers.some(m => (m instanceof HitMarker || m instanceof MissMarker) &&
+                    m.position[0] === loc[0] && m.position[1] === loc[1]))
                 return;
 
             connection.send(JSON.stringify({

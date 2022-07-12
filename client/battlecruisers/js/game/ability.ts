@@ -168,7 +168,7 @@ export class SonarAbility extends AbstractAbility {
 
 export class NuclearTorpedoAbility extends AbstractAbility {
     constructor() {
-        super('nuke.png', 'Nuclear Torpedo', 12);
+        super('nuke.png', 'Nuclear Torpedo', -1); // 12
     }
 
     // Attack in a 7x7 square

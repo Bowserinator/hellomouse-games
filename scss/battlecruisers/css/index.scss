@@ -2,6 +2,7 @@ body {
     background-color: black;
     color: white;
     font-family: 'Quantico';
+    padding-top: 70px;
 }
 
 hr {
@@ -16,6 +17,12 @@ nav {
     padding: 10px 20px;
     font-size: 13pt;
     user-select: none;
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: black;
 
     h1 {
         margin: 0 20px 0 0;
@@ -40,6 +47,113 @@ nav {
         cursor: pointer;
     }
 }
+
+// Lobby
+#lobby {
+    position: fixed;
+    top: 70.8px;
+    height: 100%;
+    width: 100%;
+    background-color: black;
+    z-index: 300;
+
+    .container {
+        max-width: 90%;
+        width: 500px;
+        position: relative;
+        top: 10%;
+        left: 50%;
+        transform: translate(-50%, 0%);
+    }
+
+    p {
+        color: #bbb;
+    }
+
+    #lobby-player-list {
+        & > div {
+            padding: 5px;
+            margin: 2px 0;
+            opacity: 0.4;
+            font-size: 14pt;
+        }
+
+        & > div.active {
+            background-color: #111;
+            opacity: 1;
+
+            button:hover {
+                background-color: #ccc;
+                color: #333;
+                cursor: pointer;
+            }
+        }
+
+        img {
+            height: 24px;
+            vertical-align: top;
+            margin-right: 10px;
+        }
+
+        button {
+            float: right;
+            outline: none;
+            border: none;
+            background-color: #555;
+            color: #bbb;
+            font-family: 'Quantico';
+            padding: 3px;
+            border-radius: 2px;
+
+            width: 24px;
+            height: 24px;
+            margin-top: 3px;
+
+            &.active {
+                background-color: red !important;
+                color: black !important;
+            }
+        }
+    }
+}
+
+
+// ------------------
+// Invite link
+// ------------------
+.game-link {
+    font-size: 12pt;
+    margin-bottom: 0;
+
+    border-bottom: 1px solid #777;
+    white-space: nowrap;
+    color: #ddd;
+    background-color: rgba(0, 0, 0, 0.02);
+    padding: 12px;
+    overflow-x: auto;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    user-select: none;
+
+    & > small {
+        color: #bbb;
+    }
+}
+
+@keyframes flash {
+    from {
+        background-color: rgba(255, 255, 255, 0.15);
+    }
+
+    to {
+        background-color: rgba(255, 255, 255, 0.02);
+    }
+}
+
+.game-link.flash {
+    animation: flash 0.3s ease-in-out 0s;
+}
+
 
 // Disconnect banner + opponent left banner
 // For when disconnected from the server / opponent left
