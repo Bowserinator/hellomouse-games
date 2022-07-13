@@ -97,7 +97,7 @@
 
             <hr>
             <div class="js-state" id="bottom-placing" style="display: block">
-                <small>
+                <small style="color: gold">
                     Place down all your ships, then click "Submit" when you're done.<br>
                     <b>Press 'R' while selecting a ship to rotate</b>,
                     right click to remove and click to move.
@@ -110,7 +110,7 @@
                     You have ? / ? moves remaining
                 </small>
                 <br>
-                <button class="text-button" onclick="gameState.switchBoard()">Switch Boards</button>
+                <button class="text-button" onclick="gameState.switchBoard(); updateShipHP();">Switch Boards</button>
                 <hr>
                 <div id="ship-healths"></div>
             </div>
@@ -174,7 +174,7 @@
                             <img class="ship-img" src="/battlecruisers/img/ships/strat_sub.png">
                             <b>Strategic Missile Submarine:</b> Fires a tactical nuclear torpedo that explodes in a 7x7 square. Cannot be intercepted.
                         
-                            <br><span class="ability">Nukes: 1 (Cooldown: 15)</span>
+                            <br><span class="ability">Nukes: 1 (Cooldown: 12)</span>
                         </li>
                         <li>
                             <img class="ship-img" src="/battlecruisers/img/ships/aegis.png">

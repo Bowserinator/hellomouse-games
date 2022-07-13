@@ -214,6 +214,15 @@ export default class GameState {
             turn: this.turn,
             salvosLeft: this.salvosLeft,
             yourShips: this.players[playerIndex].ships.map(s => s.sync()),
+            enemyShips: this.players[1 - playerIndex].ships.map(s => s.sync()).map(s => {
+                // Redact position, rotation + ability cooldowns
+                s[2] = -1;
+                s[3] = -1;
+                s[4] = -1;
+                // Only send life if dead
+                s[5] = s[5] <= 0 ? 0 : 100;
+                return s;
+            }),
             markerBoard: this.players[playerIndex].markerBoard.sync(),
             enemyMarkerBoard: this.players[1 - playerIndex].markerBoard.sync(),
             winner: this.winner
@@ -237,18 +246,34 @@ export default class GameState {
         this.salvosLeft = aud(data.salvosLeft, this.salvosLeft);
         this.winner = aud(data.winner, this.winner);
 
-        // Update ships only if not placing (otherwise board gets cleared)
-        if (data.yourShips !== undefined && this.state !== GAME_STATE.PLACING) {
-            for (let i = 0; i < data.yourShips.length; i++)
-                this.getPlayer().ships[i].fromSync(data.yourShips[i]);
-            this.getPlayer().shipBoard.ships = [];
-            this.getPlayer().shipBoard.resetMaps();
-            for (let ship of this.getPlayer().ships.filter(s => s.isPlaced))
-                this.getPlayer().shipBoard.place(ship);
+        /**
+         * Perform client side ship sync
+         * @param ships Array of ship sync data from server
+         * @param playerIndex Index to sync ships
+         * @param syncPos Sync ship positions? Only true for self
+         */
+        const updateShips = (ships: any, playerIndex: number, syncPos = true) => {
+            // Update ships only if not placing (otherwise board gets cleared)
+            const player = this.players[playerIndex];
 
-            this.getPlayer().shipBoard.resetMaps();
-            this.getPlayer().shipBoard.ships.forEach(s => this.getPlayer().shipBoard.computeShipMaps(s));
-        }
+            if (ships !== undefined && this.state !== GAME_STATE.PLACING) {
+                for (let i = 0; i < ships.length; i++)
+                    player.ships[i].fromSync(ships[i]);
+
+                if (syncPos) {
+                    player.shipBoard.ships = [];
+                    player.shipBoard.resetMaps();
+                    for (let ship of player.ships.filter(s => s.isPlaced))
+                        player.shipBoard.place(ship);
+
+                    player.shipBoard.resetMaps();
+                    player.shipBoard.ships.forEach(s => player.shipBoard.computeShipMaps(s));
+                }
+            }
+        };
+
+        updateShips(data.yourShips, this.playerIndex);
+        updateShips(data.enemyShips, 1 - this.playerIndex, false);
 
         if (data.markerBoard !== undefined)
             this.getPlayer().markerBoard.fromSync(data.markerBoard);
@@ -329,7 +354,7 @@ export default class GameState {
                     ship.checkHits(playerIndex, this, shipBoard, player.markerBoard));
                 // Check hits for this player because mines
                 this.players[playerIndex].ships.forEach(ship =>
-                    ship.checkHits(playerIndex, this, shipBoard, player.markerBoard));
+                    ship.checkHits(playerIndex, this, shipBoard, this.players[1 - playerIndex].markerBoard));
 
                 // Switch turns when salvos left changes
                 this.salvosLeft[this.turn]--;

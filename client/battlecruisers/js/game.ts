@@ -146,6 +146,8 @@ connection.onmessage = (message: any) => {
         case 'CHAT': {
             // @ts-expect-error
             let msg = chatToHTML(message.message);
+            let isAtBottom =
+                Math.abs(chatMessages.scrollTop - chatMessages.scrollHeight + chatMessages.offsetHeight) < 10;
 
             if (message.i === gameState.playerIndex)
                 msg.style.backgroundColor = '#333';
@@ -153,6 +155,8 @@ connection.onmessage = (message: any) => {
                 msg.innerHTML = `<img src="/battlecruisers/img/flag${message.i}.png">` + msg.innerHTML;
             chatMessages.appendChild(msg);
 
+            if (isAtBottom) // Auto scroll down
+                chatMessages.scrollTop = chatMessages.scrollHeight;
             break;
         }
         case 'UUID': {
@@ -195,17 +199,15 @@ connection.onmessage = (message: any) => {
             youAreLabel.innerText = `You are ${['NORTHLANDIA', 'SOUTHANIA'][gameState.playerIndex]}`;
 
             // Switch players
-            if (previousTurn !== gameState.turn)
+            if (previousTurn !== gameState.turn) {
                 gameState.displayBoard = gameState.turn === gameState.playerIndex
                     ? DRAWN_BOARD.FIRING : DRAWN_BOARD.SELF;
+                updateShipHP();
+            }
 
             // Change state
             if (previousState !== gameState.state) {
-                let turn = gameState.turn === gameState.playerIndex ? 'your' : 'the enemy\'s';
-                stateLabelMap[GAME_STATE.FIRING] = `It is ${turn} turn (Move ${gameState.round + 1})`;
-                stateLabel.innerText = stateLabelMap[gameState.state];
                 lobby.style.display = 'none';
-
                 jsState.forEach(d => d.style.display = 'none');
                 if (gameState.state === GAME_STATE.PLACING) {
                     updatePlacementButtons();
@@ -222,6 +224,10 @@ connection.onmessage = (message: any) => {
             if (gameState.state === GAME_STATE.FIRING) {
                 gameState.regenAbilityMaps();
                 updateAbilityButtons();
+
+                let turn = gameState.turn === gameState.playerIndex ? 'your' : 'the enemy\'s';
+                stateLabelMap[GAME_STATE.FIRING] = `It is ${turn} turn (Move ${gameState.round + 1})`;
+                stateLabel.innerText = stateLabelMap[gameState.state];
             } else if (gameState.state === GAME_STATE.LOBBY) {
                 let playerDivs = [
                     document.getElementById('player0') as HTMLDivElement,
@@ -325,8 +331,13 @@ let fireBtns: Array<HTMLElement> = [];
 const movesRemainingLabel = document.getElementById('moves-remaining') as HTMLLabelElement;
 const shipHP = document.getElementById('ship-healths') as HTMLDivElement;
 
+// @ts-expect-error
+window.updateShipHP = updateShipHP;
+
 function updateShipHP() {
-    shipHP.replaceChildren(...gameState.getPlayer().ships.map(ship => {
+    const player = gameState.displayBoard === DRAWN_BOARD.SELF
+        ? gameState.getPlayer() : gameState.players[1 - gameState.playerIndex];
+    shipHP.replaceChildren(...player.ships.map(ship => {
         let div = document.createElement('div') as HTMLDivElement;
         let img = document.createElement('img') as HTMLImageElement;
         div.innerText = `${ship.lives} / ${ship.totalLives}`;

@@ -88,11 +88,14 @@ export class AbstractShip {
             return;
         }
         this.isPlaced = data[1];
-        this.position = data[2];
-        this.rotation = data[3];
-        this.lives = data[5];
-        for (let i = 0; i < data[4].length; i++)
-            this.abilities[i].fromSync(data[4][i]);
+        if (data[2] !== -1)
+            this.position = data[2];
+        if (data[3] !== -1)
+            this.rotation = data[3];
+        this.lives = Math.min(data[5], this.totalLives);
+        if (data[4] !== -1)
+            for (let i = 0; i < data[4].length; i++)
+                this.abilities[i].fromSync(data[4][i]);
     }
 
     /**
