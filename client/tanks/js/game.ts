@@ -96,7 +96,15 @@ function getSpectateTank() {
 }
 
 
+// Render loop
+let lastDraw = 0;
 function drawBoard() {
+    if (performance.now() - lastDraw < 1000 / 60) { // Limit to 60 fps
+        window.requestAnimationFrame(drawBoard);
+        return;
+    }
+
+    lastDraw = performance.now();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (!gameState.camera)
