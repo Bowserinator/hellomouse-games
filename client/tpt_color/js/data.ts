@@ -33,6 +33,9 @@ export const OTHER_NAMES = {
     'VENT': 'WHOL',
     'WWLD': 'WIRE'
 };
+export const OTHER_NAMES_INV = Object.fromEntries(Object
+    .entries(OTHER_NAMES)
+    .map(([key, value]) => [value, key]));
 
 export const COLORS_MAP = {
     '#0099CC': ['ACEL'],
@@ -397,4 +400,4 @@ export const ELEMENT_TO_COLOR_MAP = {
     WTRV: '#A0A0FF',
     YEST: '#EEE0C0'
 };
-export const ELEMENT_NAMES = Object.keys(ELEMENT_TO_COLOR_MAP).concat(Object.keys(OTHER_NAMES));
+export const ELEMENT_NAMES = Object.keys(ELEMENT_TO_COLOR_MAP).map(x => OTHER_NAMES_INV[x] || x);

@@ -105,7 +105,8 @@ nav {
 #lobby, #game {
     position: fixed;
     top: 70.8px;
-    height: 100%;
+    height: calc(100vh - 100px);
+    overflow-y: auto;
     width: 100%;
     background-color: black;
     z-index: 1;
@@ -284,6 +285,10 @@ $ele-width: 400px;
     }
 }
 
+#submitted-guess {
+    margin-left: 15px;
+}
+
 #element-color {
     background-color: red;
     $height: 150px;
@@ -320,6 +325,15 @@ $ele-width: 400px;
             color: white;
             margin-left: 15px;
         }
+    }
+}
+
+.instructions-list {
+    line-height: 0.8;
+    color: #aaa;
+
+    b {
+        color: white;
     }
 }
 

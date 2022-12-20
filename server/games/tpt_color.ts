@@ -9,7 +9,8 @@ import {
     COLORS,
     COLORS_MAP,
     TOTAL_ROUNDS,
-    OTHER_NAMES
+    OTHER_NAMES,
+    OTHER_NAMES_INV
 } from '../../client/tpt_color/js/data.js';
 
 // States:
@@ -36,6 +37,7 @@ class TPTColorGame extends Game {
     scores: any; // player id: number (score)
     guesses: any; // player id: string
     gotit: any; // player id: boolean
+    picked: Array<string>;
 
     constructor() {
         super();
@@ -51,6 +53,7 @@ class TPTColorGame extends Game {
         this.scores = {};
         this.guesses = {};
         this.gotit = {};
+        this.picked = [];
     }
 
     globalStateSync(player: Client) {
@@ -75,10 +78,11 @@ class TPTColorGame extends Game {
         let guess = message.answer;
         // @ts-expect-error
         guess = OTHER_NAMES[guess] || guess;
+        guess = guess.trim().toUpperCase();
 
         if (this.scores[client.id] === undefined)
             this.scores[client.id] = 0;
-        this.guesses[client.id] = guess.toUpperCase() || '???';
+        this.guesses[client.id] = guess || '???';
 
         // @ts-expect-error
         if (COLORS_MAP[this.color].includes(guess)) {
@@ -142,6 +146,10 @@ class TPTColorGame extends Game {
         }
 
         this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        while (this.picked.includes(this.color)) // No duplicate colors in a round
+            this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        this.picked.push(this.color);
+
         this.broadcast({
             type: 'TURN_QUESTION',
             color: this.color,
@@ -162,6 +170,7 @@ class TPTColorGame extends Game {
         // @ts-ignore-error
         let answer = COLORS_MAP[this.color];
         answer = answer[Math.floor(Math.random() * answer.length)];
+        answer = OTHER_NAMES_INV[answer] || answer;
 
         this.revealStartTime = Date.now();
         this.state = TPTState.REVEAL;

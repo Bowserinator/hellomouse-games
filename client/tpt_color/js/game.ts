@@ -25,14 +25,6 @@ function connectionOpen() {
 }
 
 /**
- * Display the winner modal
- */
-function showWinModal() {
-    // @ts-expect-error
-    document.getElementById('win-modal').style.display = 'block';
-}
-
-/**
  * Chat sending
  */
 const chatInput = document.getElementById('chat-input') as HTMLInputElement;
@@ -148,7 +140,6 @@ function renderPlayerList(message: any) {
 
 connection.onmessage = (message: any) => {
     message = JSON.parse(message.data);
-    console.log(message);
 
     switch (message.type) {
         case 'ERROR': {
@@ -248,7 +239,9 @@ connection.onmessage = (message: any) => {
 
             solutionLabel.style.color = 'white';
             solutionLabel.innerText = message.answer;
+            elementGuessInput.value = submittedGuess.innerText;
             elementGuessInput.disabled = true;
+            submittedGuess.innerText = '';
 
             if ((red * 0.299 + green * 0.587 + blue * 0.114) > 150)
                 solutionLabel.style.color = 'black';
@@ -274,6 +267,7 @@ setInterval(() => {
 
 // Element dropdown preview
 const dropdown = document.getElementById('filtered-results') as HTMLDivElement;
+const submittedGuess = document.getElementById('submitted-guess') as HTMLSpanElement;
 
 // Dropdown state
 let dropdownI = -1;
@@ -292,6 +286,7 @@ window.submitGuess = (guess: string) => {
         type: 'MOVE',
         answer: guess
     }));
+    submittedGuess.innerText = guess.toUpperCase().trim();
 };
 
 // @ts-expect-error
@@ -338,6 +333,9 @@ window.onkeydown = e => {
             dropdownI--;
             dropdownI = Math.max(0, dropdownI);
             redrawOptions();
+            break;
+        case '`':
+            setTimeout(() => chatInput.focus(), 100);
             break;
         case 'Enter': {
             let option = options[dropdownI];

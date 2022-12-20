@@ -69,6 +69,18 @@
             <input type="text" id="username" autocomplete="off" maxlength="16" />
 
             <button id="ready">Ready</button>
+
+            <br><br><br><br><br><br>
+            <h2>Instructions</h2>
+            <ol class="instructions-list">
+                <li>A color will be displayed. Pick <i>any</i> element from <a href="https://powdertoy.co.uk">The Powder Toy</a> with <b>exactly</b> the same color.</li>
+                <li>Any element of exactly the same color is accepted, ie "SALT" and "WHOL" both work for #FFFFFF</li>
+                <li>Element identifiers such as PLEX are accepted as well (but not recommended to be used)</li>
+                <li>Use the <b>UP</b> and <b>DOWN</b> arrows to navigate through the dropdown, and <b>ENTER</b> to select</li>
+                <li>Colors are taken from the color property and ignore graphics functions</li>
+                <li><b>This means powered elements are usually the unpowered color</b></li>
+                <li>Press ` to quick focus the chat input</li>
+            </ol>
         </div>
     </div>
 
@@ -85,6 +97,7 @@
 
             <label for="element-guess" style="margin-right: 20px">Guess</label>
             <input type="text" id="element-guess" autocomplete="off" maxlength="6" />
+            <span id="submitted-guess"></span>
 
             <div class="filtered-results" id="filtered-results"></div>
 
