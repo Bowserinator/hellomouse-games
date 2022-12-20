@@ -11,7 +11,7 @@ export const TOTAL_ROUNDS = 12;
 // Color data
 export const OTHER_NAMES = {
     'EQVE': 'E116',
-    'BRAN': 'E146',
+    // 'BRAN': 'E146',
     'GUN': 'GUNP',
     'HYGN': 'H2',
     'ICE': 'ICEI',
@@ -35,7 +35,8 @@ export const OTHER_NAMES = {
     'TNT': 'BANG',
     'BUBW': 'CBNW',
     'BREC': 'BREL',
-    'C-5': 'C5'
+    'C-5': 'C5',
+    'GOL': 'LIFE'
 };
 export const OTHER_NAMES_INV = Object.fromEntries(Object
     .entries(OTHER_NAMES)
@@ -88,7 +89,7 @@ export const COLORS_MAP = {
     '#FD9D18': ['DTEC'],
     '#FFE0A0': ['DUST', 'E116', 'FIGH', 'STKM'],
     '#BBB0A0': ['DYST'],
-    '#CCCC00': ['E146'],
+    // '#CCCC00': ['E146'],
     '#DFEFFF': ['ELEC'],
     '#66AAFF': ['EMP'],
     '#404040': ['ETRD', 'GLAS'],
@@ -259,7 +260,7 @@ export const ELEMENT_TO_COLOR_MAP = {
     DUST: '#FFE0A0',
     DYST: '#BBB0A0',
     E116: '#FFE0A0',
-    E146: '#CCCC00',
+    // E146: '#CCCC00',
     ELEC: '#DFEFFF',
     EMBR: '#FFF288',
     EMP: '#66AAFF',
