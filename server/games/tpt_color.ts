@@ -37,6 +37,7 @@ class TPTColorGame extends Game {
     scores: any; // player id: number (score)
     guesses: any; // player id: string
     gotit: any; // player id: boolean
+    answers: any; // player id: string
     picked: Array<string>;
 
     constructor() {
@@ -53,6 +54,7 @@ class TPTColorGame extends Game {
         this.scores = {};
         this.guesses = {};
         this.gotit = {};
+        this.answers = {};
         this.picked = [];
     }
 
@@ -76,20 +78,14 @@ class TPTColorGame extends Game {
 
         // Check if correct
         let guess = message.answer;
+        guess = guess.trim().toUpperCase();
         // @ts-expect-error
         guess = OTHER_NAMES[guess] || guess;
-        guess = guess.trim().toUpperCase();
 
         if (this.scores[client.id] === undefined)
             this.scores[client.id] = 0;
-        this.guesses[client.id] = guess || '???';
-
-        // @ts-expect-error
-        if (COLORS_MAP[this.color].includes(guess)) {
-            this.gotit[client.id] = true;
-            this.scores[client.id]++;
-        } else
-            this.gotit[client.id] = false;
+        this.guesses[client.id] = OTHER_NAMES_INV[guess] || guess || '???';
+        this.answers[client.id] = guess;
     }
 
     forceResync(client: Client) {
@@ -136,6 +132,7 @@ class TPTColorGame extends Game {
     toGuessState() {
         this.guesses = {};
         this.gotit = {};
+        this.answers = {};
 
         this.round++;
         if (this.round > TOTAL_ROUNDS) {
@@ -169,6 +166,20 @@ class TPTColorGame extends Game {
     toRevealState() {
         // @ts-ignore-error
         let answer = COLORS_MAP[this.color];
+
+        // Evaluate correctness of answers
+        for (let client of this.players) {
+            if (!client) continue;
+            let guess = this.answers[client.id];
+            if (!guess) continue;
+
+            if (answer.includes(guess)) {
+                this.gotit[client.id] = true;
+                this.scores[client.id]++;
+            } else
+                this.gotit[client.id] = false;
+        }
+
         answer = answer[Math.floor(Math.random() * answer.length)];
         answer = OTHER_NAMES_INV[answer] || answer;
 

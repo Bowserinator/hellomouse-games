@@ -95,11 +95,12 @@ gameLink.onclick = () => copyLinkToClipboard(inviteLink.innerText);
 /** Attempt to submit a username change */
 const usernameInput = document.getElementById('username') as HTMLInputElement;
 usernameInput.onkeydown = e => {
-    if (e.key === 'Enter' || e.keyCode === 13) {
+    if (e.key === 'Enter' || e.keyCode === 13)
         submitUsername();
-        usernameInput.value = '';
-    }
 };
+
+// @ts-expect-error
+document.getElementById('set-username').onclick = submitUsername;
 
 function submitUsername() {
     if (!connectionOpen()) return;
@@ -109,6 +110,7 @@ function submitUsername() {
         type: 'USERNAME',
         username: usernameInput.value
     }));
+    usernameInput.value = '';
 }
 
 /* Ready state update */

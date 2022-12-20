@@ -31,7 +31,9 @@ export const OTHER_NAMES = {
     'SPWN2': 'SPAWN2',
     'STK2': 'STKM2',
     'VENT': 'WHOL',
-    'WWLD': 'WIRE'
+    'WWLD': 'WIRE',
+    'TNT': 'BANG',
+    'BUBW': 'CBNW'
 };
 export const OTHER_NAMES_INV = Object.fromEntries(Object
     .entries(OTHER_NAMES)
