@@ -46,13 +46,13 @@ document.getElementById('color-count').innerText = colors.length + ' unique colo
 const JUMP_RANGE = 0.5;
 let satStart = 0;
 
-while (satStart < 1) {
+while (satStart <= 1) {
     let group = '';
 
     // @ts-expect-error
     const FILTERED = colors.filter(c => hslMap[c][1] >= satStart && hslMap[c][1] < satStart + JUMP_RANGE);
     let lightStart = 0;
-    while (lightStart < 1) {
+    while (lightStart <= 1) {
         let row = '';
         // @ts-expect-error
         for (let color of FILTERED.filter(c => hslMap[c][2] >= lightStart && hslMap[c][2] < lightStart + JUMP_RANGE)
