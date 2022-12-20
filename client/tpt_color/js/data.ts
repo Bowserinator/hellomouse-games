@@ -34,7 +34,8 @@ export const OTHER_NAMES = {
     'WWLD': 'WIRE',
     'TNT': 'BANG',
     'BUBW': 'CBNW',
-    'BREC': 'BREL'
+    'BREC': 'BREL',
+    'C-5': 'C5'
 };
 export const OTHER_NAMES_INV = Object.fromEntries(Object
     .entries(OTHER_NAMES)
