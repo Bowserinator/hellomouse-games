@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="TPT Colors Palette - Hellomouse Games">
+    <meta name="author" content="Bowserinator">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Social meta -->
+    <meta property="og:title" content="TPT Color Palette - Hellomouse Games">
+    <meta property="og:description" content="A Powder Toy element guessing game.">
+    <meta property="og:image" content="/tpt_color/img/thumbnail.jpg">
+
+    <title>TPT Color</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared/css/index.css">
+    <link rel="stylesheet" href="css/index.css">
+
+    <style>
+        #palette {
+            width: 900px;
+        }
+
+        .palette {
+            width: 30px;
+            height: 30px;
+            box-sizing: border-box;
+            padding: 5px;
+            color: black;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="/shared/js/index.js" defer></script>
+    <script src="./js/client.js" type="module" defer></script>
+    <script src="./js/palette.js" type="module" defer></script>
+
+    <nav>
+        <h1 id="main-title-1">TPT</h1>
+        <h1 id="main-title-2">COLR</h1>
+        <h1 id="main-title-3">QUIZ</h1>
+        <a target="_blank" href="/">More Games</a>
+    </nav>
+
+    <div id="lobby" style="display: block">
+        <div class="container">
+            <h2>Palette</h2>
+            <p id="color-count"></p>
+            
+            <div id="palette"></div>
+        </div>
+    </div>
+
+</body>
+
+</html>

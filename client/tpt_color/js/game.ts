@@ -180,8 +180,7 @@ connection.onmessage = (message: any) => {
             (document.getElementById('lobby-player-list') as HTMLDivElement).innerHTML = playerList;
 
             if (isHost)
-                startGameButton.disabled = message.players.length < 2 ||
-                    message.players.filter((p: any) => p !== null).some((p: any) => !p.ready);
+                startGameButton.disabled = message.players.filter((p: any) => p !== null).some((p: any) => !p.ready);
             break;
         }
         case 'YOUARE': {
