@@ -60,6 +60,7 @@ export default class Game {
             this.players.push(client);
             this.playerCount++;
         }
+        this.broadcastWhoYouAre();
         return true;
     }
 
@@ -129,6 +130,20 @@ export default class Game {
         for (let client of this.players)
             if (client !== null)
                 client.connection.sendUTF(msg);
+    }
+
+    /** Tell every client who they are */
+    broadcastWhoYouAre() {
+        for (let i = 0; i < this.players.length; i++) {
+            let client = this.players[i];
+            if (client !== null)
+                client.connection.sendUTF(JSON.stringify({
+                    type: 'YOUARE',
+                    ready: client.ready ? 1 : 0,
+                    username: client.username,
+                    index: i
+                }));
+        }
     }
 
     /**

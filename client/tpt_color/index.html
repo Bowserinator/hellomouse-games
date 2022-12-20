@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="TPT Colors - Hellomouse Games">
+    <meta name="author" content="Bowserinator">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Social meta -->
+    <meta property="og:title" content="TPT Color - Hellomouse Games">
+    <meta property="og:description" content="A Powder Toy element guessing game.">
+    <meta property="og:image" content="/tpt_color/img/thumbnail.jpg">
+
+    <title>TPT Color</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared/css/index.css">
+    <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body>
+    <script src="/shared/js/index.js" defer></script>
+    <script src="./js/client.js" type="module" defer></script>
+    <script src="./js/game.js" type="module" defer></script>
+
+    <nav>
+        <h1 id="main-title-1">TPT</h1>
+        <h1 id="main-title-2">COLR</h1>
+        <h1 id="main-title-3">QUIZ</h1>
+        <a target="_blank" href="/">More Games</a>
+    </nav>
+
+    <div id="chat" style="bottom: 0px">
+        <button
+            onclick="let c = document.getElementById('chat'); c.style.bottom = c.style.bottom === '0px' ? 'calc(-100vh + 30px)' : '0px'">
+            Toggle Chat
+        </button>
+        <label for="chat-input" class="chat-container">
+            <div id="messages"></div>
+            <input type="text" autocomplete="off" id="chat-input" maxlength="1000">
+        </label>
+    </div>
+
+    <div id="lobby" style="display: block">
+        <div class="container">
+            <h2>Players</h2>
+            <div id="lobby-player-list">
+
+            </div>
+
+            <br>
+
+            <p>Ready up (button at the bottom), game will start when all players are ready and host starts the start game.</p>
+            
+            <p>Click the box below to copy an invite link.
+                Players can only join when the game is in a lobby.</p>
+
+            <p class="game-link" id="game-link">
+                <small>Click to copy invite link</small><br>
+                <span id="link">Loading...</span>
+            </p>
+            <br><br>
+            <label for="username" style="margin-right: 20px">Username</label>
+            <input type="text" id="username" autocomplete="off" maxlength="16" />
+
+            <button id="ready">Ready</button>
+        </div>
+    </div>
+
+    <div id="game" style="display: none">
+        <div class="container">
+            <h2>What element has this color? &nbsp; <span id="game-round">-- / --</span></h2>
+
+            <div class="guess-header">
+                <h3 id="time-left">0</h3>
+            </div>
+            <div id="element-color">
+                <h2 id="solution">Solution</h2>
+            </div>
+
+            <label for="element-guess" style="margin-right: 20px">Guess</label>
+            <input type="text" id="element-guess" autocomplete="off" maxlength="6" />
+
+            <div class="filtered-results" id="filtered-results"></div>
+
+            <div class="game-player-scores" id="game-player-scores"></div>
+        </div>
+    </div>
+
+    <div id="disconnect-banner" class="banner" style="top: -100px;">
+        Disconnected from server (Is server down?)
+    </div>
+
+    <div class="modal-darken" id="win-modal" style="display: none">
+        <div class="modal">
+            <button class="modal-close-button"
+                onclick="document.getElementById('win-modal').style.display = 'none'">X</button><br>
+            <h1 id="win-h1">Results</h1>
+            <ol id="winner-list"></ol>
+        </div>
+    </div>
+</body>
+
+</html>

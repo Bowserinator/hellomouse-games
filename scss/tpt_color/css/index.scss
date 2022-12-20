@@ -1,0 +1,391 @@
+@font-face {
+    font-family: TPTFont;
+    src: url(tpt-font.ttf);
+  }
+
+body {
+    background-color: black;
+    color: white;
+    font-family: TPTFont;
+    font-size: 20pt;
+}
+
+h2 {
+    font-weight: normal;
+}
+
+// UI
+// ----------------------
+input[type="text"] {
+    padding: 7px 10px;
+    font-family: TPTFont;
+    font-size: 20pt;
+    border: 1px solid #aaa;
+    outline: none;
+    color: white;
+    background-color: black;
+
+    &:focus {
+        border: 1px solid white;
+    }    
+}
+
+button {
+    outline: none;
+    padding: 7px 10px;
+    font-family: TPTFont;
+    font-size: 20pt;
+    border: 1px solid #aaa;
+    outline: none;
+    color: white;
+    background-color: black;
+    cursor: pointer;
+
+    &:disabled {
+        color: #777;
+        border: 1px solid #777;
+        cursor: not-allowed;
+    }
+    &:not(:disabled):not(.active):hover {
+        background-color: #333;
+    }
+    &.active {
+        background-color: white;
+        color: black;
+    }
+    &:not(:disabled):hover, &:focus {
+        border: 1px solid white;
+    }
+}
+
+
+// Navbar
+// ----------------------
+nav {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    font-size: 20pt;
+    user-select: none;
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: black;
+
+    h1 {
+        margin: 0 10px 0 0;
+        font-weight: normal;
+        font-size: 26pt;
+        color: black;
+        padding: 5px;
+        width: 60px;
+        text-align: center;
+        background-color: red;
+    }
+
+    a {
+        color: #ccc;
+        background-color: black;
+        margin: 0 10px;
+        padding: 10px;
+        text-decoration: none;
+        border-radius: 2px;
+        transition: color 0.2s, background-color 0.2s;
+    }
+
+    a:hover {
+        color: white;
+        cursor: pointer;
+    }
+}
+
+// Lobby
+#lobby, #game {
+    position: fixed;
+    top: 70.8px;
+    height: 100%;
+    width: 100%;
+    background-color: black;
+    z-index: 1;
+
+    .container {
+        max-width: 90%;
+        width: 900px;
+        position: relative;
+        top: 25px;
+        left: 50%;
+        transform: translate(-50%, 0%);
+
+        h2 {
+            margin: 10px 0;
+        }
+
+        p {
+            max-width: 600px;
+        }
+    }
+
+    p {
+        color: #bbb;
+    }
+
+    #lobby-player-list {
+        max-height: 200px;
+        overflow-y: auto;
+
+        & > ol {
+            padding-left: 20px;
+
+            li {
+                margin: 5px 0;
+                padding-left: 10px;
+            }
+
+            li:not(.active) {
+                opacity: 0.4;
+            }
+        }
+    }
+}
+
+
+// ------------------
+// Chat
+// ------------------
+
+#chat {
+    position: fixed;
+    right: 0;
+    bottom: 0px; // Must be 0px, not 0
+    width: 250px;
+    height: 100%;
+    z-index: 2;
+
+    display: flex;
+    flex-direction: column;
+
+    .chat-container {
+        background-color: #111;
+        border: 1px solid #777;
+        display: block;
+        height: calc(100vh - 33px);
+
+        #messages {
+            height: calc(100% - 30px);
+            overflow-y: scroll;
+            padding: 4px;
+            font-size: 20pt;
+            word-break: break-all;
+            box-sizing: border-box;
+            line-height: 0.8;
+        }
+
+        input {
+            width: 100%;
+            height: 30px;
+            box-sizing: border-box;
+        }
+    }
+}
+
+// ------------------
+// Invite link
+// ------------------
+.game-link {
+    margin-bottom: 0;
+    white-space: nowrap;
+    color: #ddd;
+    background-color: rgba(0, 0, 0, 0.02);
+    padding: 12px;
+    overflow-x: auto;
+    cursor: pointer;
+    user-select: none;
+    max-width: 500px;
+    border: 1px solid white;
+
+    & > small {
+        color: #bbb;
+        display: block;
+        margin-bottom: -10px;
+    }
+}
+
+@keyframes flash {
+    from {
+        background-color: rgba(255, 255, 255, 0.15);
+    }
+
+    to {
+        background-color: rgba(255, 255, 255, 0.02);
+    }
+}
+
+.game-link.flash {
+    animation: flash 0.3s ease-in-out 0s;
+}
+
+
+// Disconnect banner + opponent left banner
+// For when disconnected from the server / opponent left
+.banner {
+    background-color: #ff5f52;
+    z-index: 999;
+    position: fixed;
+    left: 0;
+
+    width: 100%;
+    padding: 7px 14px;
+    text-align: center;
+    transition: top 0.2s;
+}
+
+
+// Guessing: element
+$ele-width: 400px;
+
+.guess-header {
+    width: $ele-width;
+    padding: 8px 15px;
+    border: 1px solid white;
+    box-sizing: border-box;
+    margin-top: 20px;
+    text-align: center;
+
+    h3 {
+        margin: 0;
+        font-weight: normal;
+    }
+}
+
+// Dropdown
+.filtered-results {
+    position: absolute;
+    left: 67px;
+    z-index: 3;
+    width: 194px;
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    & > div {
+        padding: 5px 10px;
+        border: 1px solid #777;
+        background-color: black;
+        width: 194px;
+        box-sizing: border-box;
+
+        &:hover, &.active {
+            background-color: #111;
+            border: 1px solid white;
+            cursor: pointer;
+        }
+    }
+}
+
+#element-color {
+    background-color: red;
+    $height: 150px;
+    width: $ele-width;
+    height: $height;
+    line-height: $height;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.game-player-scores {
+    margin-top: 50px;
+    max-width :$ele-width;
+
+    .player {
+        display: inline-block;
+        padding: 5px;
+        border: 1px solid #777;
+        color: #aaa;
+        margin: 3px;
+
+        &.got-it {
+            border: 1px solid lightgreen;
+            color: white;
+        }
+
+        .score {
+            display: inline-block;
+            margin-right: 10px;
+            color: lightgreen;
+        }
+
+        .guess {
+            color: white;
+            margin-left: 15px;
+        }
+    }
+}
+
+// Win modal
+.modal {
+    width: 400px;
+    max-width: 90%;
+    height: 70%;
+    overflow-y: auto;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+
+    background-color: black;
+    padding: 20px;
+}
+
+.modal-close-button {
+    float: right;
+    width: 30px;
+    height: 30px;
+    color: white;
+    border: none;
+    outline: none;
+    background-color: transparent;
+    transition: background-color 0.2s, color 0.2s;
+    border-radius: 2px;
+
+    &:hover {
+        cursor: pointer;
+        color: white;
+        background-color: #111;
+    }
+}
+
+#win-h1 {
+    margin: 0;
+    font-weight: normal;
+}
+
+#winner-list {
+    max-width: 300px;
+    line-height: 0.8;
+}
+
+
+
+/* ===== Scrollbar CSS ===== */
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #ffffff #616161;
+}
+
+/* Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+    width: 9px;
+}
+
+*::-webkit-scrollbar-track {
+    background: #616161;
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: #ffffff;
+    border-radius: 0px;
+    border: 0px solid transparent;
+}
