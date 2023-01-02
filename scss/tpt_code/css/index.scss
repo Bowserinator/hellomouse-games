@@ -1,7 +1,7 @@
 @font-face {
     font-family: TPTFont;
     src: url(tpt-font.ttf);
-  }
+}
 
 body {
     background-color: black;
@@ -27,7 +27,7 @@ input[type="text"] {
 
     &:focus {
         border: 1px solid white;
-    }    
+    }
 }
 
 button {
@@ -46,14 +46,18 @@ button {
         border: 1px solid #777;
         cursor: not-allowed;
     }
+
     &:not(:disabled):not(.active):hover {
         background-color: #333;
     }
+
     &.active {
         background-color: white;
         color: black;
     }
-    &:not(:disabled):hover, &:focus {
+
+    &:not(:disabled):hover,
+    &:focus {
         border: 1px solid white;
     }
 }
@@ -102,7 +106,8 @@ nav {
 }
 
 // Lobby
-#lobby, #game {
+#lobby,
+#game {
     position: fixed;
     top: 70.8px;
     height: calc(100vh - 100px);
@@ -137,7 +142,7 @@ nav {
         max-height: 200px;
         overflow-y: auto;
 
-        & > ol {
+        &>ol {
             padding-left: 20px;
 
             li {
@@ -207,7 +212,7 @@ nav {
     max-width: 500px;
     border: 1px solid white;
 
-    & > small {
+    &>small {
         color: #bbb;
         display: block;
         margin-bottom: -10px;
@@ -271,14 +276,15 @@ $ele-width: 400px;
     overflow-y: auto;
     overflow-x: hidden;
 
-    & > div {
+    &>div {
         padding: 5px 10px;
         border: 1px solid #777;
         background-color: black;
         width: 194px;
         box-sizing: border-box;
 
-        &:hover, &.active {
+        &:hover,
+        &.active {
             background-color: #111;
             border: 1px solid white;
             cursor: pointer;
@@ -290,19 +296,28 @@ $ele-width: 400px;
     margin-left: 15px;
 }
 
-#element-color {
-    background-color: red;
-    $height: 150px;
-    width: $ele-width;
-    height: $height;
-    line-height: $height;
-    text-align: center;
-    margin-bottom: 20px;
+pre {
+    font-size: 10pt;
+    max-width: 700px;
+    height: 300px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    display: block;
+}
+
+#solution {
+    position: relative;
+    display: block;
+    box-sizing: border-box;
+    background-color: rgba(0, 20, 0, 0.9);
+    z-index: 999;
+    max-width: 700px;
+    padding: 5px 15px;
 }
 
 .game-player-scores {
     margin-top: 50px;
-    max-width :$ele-width;
+    max-width: $ele-width;
 
     .player {
         display: inline-block;
