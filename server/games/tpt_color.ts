@@ -43,6 +43,7 @@ class TPTColorGame extends Game {
     constructor() {
         super();
         this.round = 0;
+        this.state = TPTState.LOBBY;
         this.interval = null;
     }
 
@@ -56,6 +57,15 @@ class TPTColorGame extends Game {
         this.gotit = {};
         this.answers = {};
         this.picked = [];
+
+        // Unready all but host
+        this.players.forEach(p => {
+            if (p) p.ready = false;
+        });
+        if (this.players[0]) {
+            this.players[0].ready = true;
+            this.forceResync(this.players[0]);
+        }
     }
 
     globalStateSync(player: Client) {
@@ -125,6 +135,17 @@ class TPTColorGame extends Game {
     onDisconnect(client: Client) {
         super.onDisconnect(client);
         this.forceResync(client);
+
+        // Don't reserve spots in lobby
+        if (this.state === TPTState.LOBBY) {
+            this.players = this.players.filter(p => p);
+            this.playerCount = this.players.length;
+
+            if (this.players[0]) {
+                this.players[0].ready = true;
+                this.forceResync(this.players[0]);
+            }
+        }
     }
 
     // Switch current round to pick a guess
