@@ -161,6 +161,10 @@ button:disabled {
     opacity: 0.4;
 }
 
+#submit {
+    border-radius: 0;
+}
+
 
 // Player text container
 .players {
@@ -209,10 +213,11 @@ button:disabled {
 }
 
 
-// Split the white and black players horizontally on large screens
+// Split the white and black players horizontally when there's room
 .players-split {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
 }
 
 @media only screen and (min-width: 992px) {
@@ -230,10 +235,6 @@ button:disabled {
 
     .players {
         padding-left: 30pt;
-    }
-
-    .players-split {
-        flex-direction: row;
     }
 }
 
