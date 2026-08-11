@@ -50,6 +50,7 @@ export default class Tank extends Renderable {
     ready: boolean; // Lobby only
     stealthed: boolean;
     firedBullets: Array<Bullet>; // Only used for tracking ammo count, may not match bullets on screen
+    firedBulletCount: number; // Client only, synced count of live bullets of current type
     turretImageUrl: string;
 
     syncDataDiff: Array<any>;
@@ -77,6 +78,7 @@ export default class Tank extends Renderable {
         this.powerups = [];
         this.id = id;
         this.firedBullets = [];
+        this.firedBulletCount = 0;
 
         // For physics
         this.rotation = rotation;
@@ -122,6 +124,7 @@ export default class Tank extends Renderable {
         this.invincible = false;
         this.stealthed = false;
         this.firedBullets = [];
+        this.firedBulletCount = 0;
         this.movement = [Direction.NONE, Direction.NONE];
         this.isFiring = false;
         this.isDead = false;
@@ -187,7 +190,8 @@ export default class Tank extends Renderable {
             this.score,               // 4
             this.tint.join('|'),      // 5
             this.username,            // 6
-            Date.now()                // 7
+            Date.now(),               // 7
+            this.firedBullets.filter(b => !b.isDead && b.type === this.bulletType).length // 8
         ];
         const diffResult = performStateDiff(data, diff, this.syncDataDiff);
         this.syncDataDiff = diffResult[1];
@@ -211,6 +215,8 @@ export default class Tank extends Renderable {
             this.setTint(arr[5].split('|').map((x: string) => parseInt(x)));
         if (arr[6] !== '')
             this.username = arr[6];
+        if (arr[8] !== '')
+            this.firedBulletCount = parseInt(arr[8]);
 
         if (arr[0] !== '') {
             const newPos = new Vector(...(arr[0].split('|').map((x: string) => +x)) as [number, number]);
@@ -222,7 +228,7 @@ export default class Tank extends Renderable {
                 dis > Math.max(this.speed * timestep / 1000, SYNC_DISTANCE_THRESHOLD) ||
                 this.movement.every(d => d === Direction.NONE))
                 this.targetLocation = newPos;
-            if (dis > MAX_LERP_DISTANCE_THRESHOLD)
+            if (dis > MAX_LERP_DISTANCE_THRESHOLD || gameState.shouldInhibitMovement())
                 this.position = newPos;
         }
 

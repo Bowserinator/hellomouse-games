@@ -2,12 +2,13 @@ import Vector from './tanks/vector2d.js';
 import GameState from './tanks/gamestate.js';
 import { Direction, Action } from './types.js';
 import Camera from './renderer/camera.js';
-import { CAMERA_EDGE_MARGIN, CONTROL_KEYS, ROTATE_FAST, ROTATE_SLOW, SPECTATE_DELAY, UPDATE_EVERY_N_MS } from './vars.js';
+import { CAMERA_EDGE_MARGIN, CONTROL_KEYS, ROTATE_FAST, ROTATE_SLOW, SPECTATE_DELAY, TANK_COLORS, UPDATE_EVERY_N_MS } from './vars.js';
 
 import { setGlobalVolume } from './sound/sound.js';
 import { startScoreKeeping } from './score.js';
 import { handleLobbyMessage } from './lobby.js';
 import Tank from './tanks/tank.js';
+import { NormalBullet } from './tanks/bullets/bullets.js';
 
 // createConnection() is in a shared JS file
 // @ts-expect-error
@@ -26,6 +27,10 @@ const gameState = new GameState(true);
 window.gameState = gameState;
 // @ts-expect-error
 window.connection = connection;
+
+// Preload tinted variants of the normal bullet for each player color
+const bulletTintPreloader = new NormalBullet(new Vector(0, 0), new Vector(1, 0));
+TANK_COLORS.forEach(color => bulletTintPreloader.loadTintVariants(color));
 
 
 /**
@@ -132,7 +137,7 @@ function drawBoard() {
         ctx.font = '14pt Rajdhani';
 
         const spectatingMessage = `You are spectating ${tankToCenterOn.username}`;
-        const helpString = 'Press LEFT or RIGHT to switch user';
+        const helpString = 'Press LEFT/RIGHT or A/D to switch user';
         const x = canvas.width / 2;
         const y = canvas.height - 100;
 
@@ -156,9 +161,39 @@ window.requestAnimationFrame(drawBoard);
 
 
 // Update rate should be the same as server
+const AMMO_COUNTER = document.getElementById('ammo') as HTMLDivElement;
+let ammoCounterLast = '';
+function updateAmmoCounter() {
+    const tank = gameState.tanks[gameState.tankIndex];
+    if (!tank) {
+        AMMO_COUNTER.style.display = 'none';
+        return;
+    }
+
+    const maxAmmo = tank.fakeBullet.config.maxAmmo || 1;
+    if (maxAmmo > 10) { // Rocket / teleport, no real ammo limit
+        AMMO_COUNTER.style.display = 'none';
+        return;
+    }
+    AMMO_COUNTER.style.display = 'flex';
+
+    const used = Math.min(Math.max(tank.firedBulletCount, 0), maxAmmo);
+    let html = '';
+    for (let i = 0; i < used; i++)
+        html += '<div class="ammo-slot fired"></div>';
+    for (let i = used; i < maxAmmo; i++)
+        html += '<div class="ammo-slot"></div>';
+
+    if (html !== ammoCounterLast) {
+        ammoCounterLast = html;
+        AMMO_COUNTER.innerHTML = html;
+    }
+}
+
 setInterval(() => {
     gameState.update();
     gameState.clearDeltas();
+    updateAmmoCounter();
 
     if (!gameState.shouldInhibitMovement() && isConnected()) {
         const tank = gameState.tanks[gameState.tankIndex];
@@ -288,9 +323,10 @@ window.onkeydown = e => {
     }
 
     // Spectator change tank
-    if (e.key.toLowerCase() === 'arrowleft')
+    const specKey = e.key.toLowerCase();
+    if (specKey === 'arrowleft' || specKey === CONTROL_KEYS[1])
         spectateIndex++;
-    else if (e.key.toLowerCase() === 'arrowright')
+    else if (specKey === 'arrowright' || specKey === CONTROL_KEYS[3])
         spectateIndex--;
 
     if (keys[' '])

@@ -34,6 +34,10 @@ interface SyncMessage {
     positions: Array<[number, number]>;
     rotations: Array<number>;
     indices: Array<number>;
+    createdTime?: number;
+    createdTimes?: Array<number>;
+    firedBy?: number;
+    firedBys?: Array<number>;
 
     damageRadii: Array<number>;
     graphicsRadii: Array<number>;
@@ -475,6 +479,10 @@ export default class GameState {
                     new Vector(...message.position), new Vector(...message.velocity));
                 if (message.extra)
                     bullet.syncExtra(message.extra);
+                if (message.createdTime !== undefined)
+                    bullet.createdTime = message.createdTime;
+                if (message.firedBy !== undefined)
+                    bullet.firedBy = message.firedBy;
                 this.addBullet(bullet);
                 break;
             }
@@ -492,6 +500,10 @@ export default class GameState {
                     ));
                     if (message.extras[i])
                         this.bullets[this.bullets.length - 1].syncExtra(message.extras[i]);
+                    if (message.createdTimes && message.createdTimes[i] !== undefined)
+                        this.bullets[this.bullets.length - 1].createdTime = message.createdTimes[i];
+                    if (message.firedBys && message.firedBys[i] !== undefined)
+                        this.bullets[this.bullets.length - 1].firedBy = message.firedBys[i];
                 }
                 break;
             }

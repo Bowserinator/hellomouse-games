@@ -455,6 +455,8 @@ class TankGame extends Game {
             positions: this.state.bullets.map(b => b.collider.position.l()),
             velocities: this.state.bullets.map(b => b.velocity.l()),
             bulletTypes: this.state.bullets.map(b => b.type),
+            createdTimes: this.state.bullets.map(b => b.createdTime),
+            firedBys: this.state.bullets.map(b => b.firedBy),
             extras
         });
         this.dontSyncBullets = this.state.bullets.length === 0;

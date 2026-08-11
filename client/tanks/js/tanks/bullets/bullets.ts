@@ -33,6 +33,8 @@ interface BulletConfig {
 
 
 export class Bullet extends Renderable {
+    static BLINK_RATE = 100; // ms per blink phase before despawn (client side only)
+
     velocity: Vector;
     collider: Collider;
     type: BulletType;
@@ -95,7 +97,9 @@ export class Bullet extends Renderable {
             position: this.collider.position.l(),
             velocity: this.velocity.l(),
             extra: this.getExtra(),
-            bulletType: this.type
+            bulletType: this.type,
+            createdTime: this.createdTime,
+            firedBy: this.firedBy
         };
     }
 
@@ -189,17 +193,30 @@ export class Bullet extends Renderable {
     }
 
     draw(camera: Camera, gameState: GameState) {
-        if (!this.isLoaded()) return;
+        // Color code regular bullets by the player who fired them
+        let prefix = '';
+        if (this.type === BulletType.NORMAL && this.firedBy > -1) {
+            const owner = gameState.tanks[this.firedBy];
+            if (owner) prefix = owner.tintPrefix;
+        }
+
+        if (!this.isLoaded(prefix)) return;
         if (!gameState.isVisible(this.collider, 20)) return;
+
+        // Blink before despawning (client side only)
+        const timeLeft = this.config.despawnTime - (Date.now() - this.createdTime);
+        const blinkTime = Math.min(this.config.despawnTime / 2, 500);
+        if (timeLeft < blinkTime && Math.floor(timeLeft / Bullet.BLINK_RATE) % 2 === 0)
+            return;
 
         const bulletCenter = this.getCenter();
         const imageUrl = this.imageUrl;
         const size = this.config.imageSize || this.collider.size;
 
         if (this.config.rotate)
-            camera.drawImageRotated(this.images[imageUrl], bulletCenter.x, bulletCenter.y, this.rotation);
+            camera.drawImageRotated(this.images[prefix + imageUrl], bulletCenter.x, bulletCenter.y, this.rotation);
         else
-            camera.drawImage(this.images[imageUrl],
+            camera.drawImage(this.images[prefix + imageUrl],
                 bulletCenter.x - size.x / 2,
                 bulletCenter.y - size.y / 2);
     }
