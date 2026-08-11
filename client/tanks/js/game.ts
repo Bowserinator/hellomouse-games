@@ -313,6 +313,12 @@ window.onkeyup = e => {
     }
 };
 
+// Tabbing out never delivers keyup: fake one for every held key
+window.addEventListener('blur', () => {
+    for (let k in keys)
+        if (keys[k]) (window.onkeyup as any)({ key: k });
+});
+
 setInterval(() => {
     if (!gameState.tanks[gameState.tankIndex])
         return;
