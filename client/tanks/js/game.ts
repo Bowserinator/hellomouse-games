@@ -159,6 +159,19 @@ window.requestAnimationFrame(drawBoard);
 setInterval(() => {
     gameState.update();
     gameState.clearDeltas();
+
+    if (!gameState.shouldInhibitMovement() && isConnected()) {
+        const tank = gameState.tanks[gameState.tankIndex];
+        if (!tank || tank.isDead) return;
+
+        const position = tank.position.l();;
+        if (position)
+            connection.send(JSON.stringify({
+                type: 'MOVE',
+                action: Action.UPDATE_POSITION,
+                position
+            }));
+    }
 }, UPDATE_EVERY_N_MS);
 
 

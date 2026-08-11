@@ -6,13 +6,15 @@ import { Direction, Action, TankSync } from '../../client/tanks/js/types.js';
 import Tank from '../../client/tanks/js/tanks/tank.js';
 import Vector from '../../client/tanks/js/tanks/vector2d.js';
 import { generateMaze } from '../../client/tanks/js/tanks/map-gen.js';
-import { MAX_PLAYERS, ROUND_ARRAY, SYNC_BULLETS_EVERY_N_TIMES, TANK_COLORS, UPDATE_EVERY_N_MS } from '../../client/tanks/js/vars.js';
+import { MAX_PLAYERS, MAX_LERP_DISTANCE_THRESHOLD, ROUND_ARRAY, SYNC_BULLETS_EVERY_N_TIMES, TANK_COLORS, UPDATE_EVERY_N_MS } from '../../client/tanks/js/vars.js';
+import Vector2D from '../../client/tanks/js/tanks/vector2d.js';
 
 interface IntentMessage {
     action: Action;
     dir: Direction;
     direction: [number, number];
     rotation: number;
+    position: [number, number];
     time?: number;
 }
 
@@ -380,6 +382,16 @@ class TankGame extends Game {
                 if (message.rotation < -5 || message.rotation > 5)
                     return;
                 this.state.tanks[clientID].rotation = message.rotation;
+                break;
+            }
+            case Action.UPDATE_POSITION: {
+                if (this.state.shouldInhibitMovement())
+                    return;
+                const tank = this.state.tanks[clientID];
+                const newPos = new Vector2D(...message.position);
+                if (newPos.distance(tank.position) > MAX_LERP_DISTANCE_THRESHOLD)
+                    return;
+                tank.setPosition(newPos);
                 break;
             }
         }

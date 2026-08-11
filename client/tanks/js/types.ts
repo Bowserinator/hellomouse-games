@@ -7,7 +7,8 @@ export enum Action {
     MOVE_END,
     FIRE,
     STOP_FIRE,
-    UPDATE_ROTATION
+    UPDATE_ROTATION,
+    UPDATE_POSITION
 }
 
 export enum Powerup {

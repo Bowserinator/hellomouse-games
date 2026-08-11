@@ -477,8 +477,8 @@ export default class Tank extends Renderable {
             return;
         }
 
-        // If client ease to target location
-        if (gameState.isClientSide) {
+        // If client ease to target location, but only for other tanks
+        if (gameState.isClientSide && gameState.tankIndex !== this.id) {
             this.position.x = interpol(this.position.x, this.targetLocation.x, POS_SMOOTHING_RATE);
             this.position.y = interpol(this.position.y, this.targetLocation.y, POS_SMOOTHING_RATE);
         }
