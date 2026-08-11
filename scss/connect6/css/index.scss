@@ -16,6 +16,9 @@ h2 {
 canvas {
     border: 1px solid black;
     margin: 10px 0;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    user-select: none;
 }
 
 @media only screen and (min-width: 992px) {

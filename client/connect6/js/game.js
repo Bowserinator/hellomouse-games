@@ -224,7 +224,7 @@ window.onmousemove = e => {
 };
 
 // Attempt ghost placement
-window.onmousedown = e => {
+window.onpointerdown = e => {
     if (!gameState.placing) return;
     let [gx, gy] = mouseToBoardCoordinate(e);
 
