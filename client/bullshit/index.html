@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="Bullshit - Hellomouse Games">
+    <meta name="author" content="Bowserinator">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Social meta -->
+    <meta property="og:title" content="Bullshit - Hellomouse Games">
+    <meta property="og:description" content="The card game where you can lie about what you play.">
+    <meta property="og:image" content="/bullshit/img/thumbnail.png">
+
+    <title>Bullshit</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geo:ital@0;1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared/css/index.css">
+    <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body>
+    <script src="/shared/js/index.js" defer></script>
+    <script src="./js/game.js" type="module" defer></script>
+
+    <nav>
+        <h1>Bullshit</h1>
+        <a target="_blank" href="/">More Games</a>
+    </nav>
+
+    <div id="chat">
+        <label for="chat-input" class="chat-container">
+            <div id="messages"></div>
+            <input type="text" autocomplete="off" id="chat-input" maxlength="1000"
+                placeholder="Chat with other players...">
+        </label>
+    </div>
+
+    <div id="lobby" style="display: block">
+        <div id="title-banner">
+            <div class="title-card" id="title-card">
+                <h1>BULLSHIT</h1>
+                <h5>a card game of lies</h5>
+            </div>
+        </div>
+
+        <div class="container">
+            <div id="lobby-player-list"></div>
+
+            <br>
+
+            <p>Click the box below to copy an invite link.
+                Players can only join when the game is in a lobby.</p>
+
+            <p class="game-link" id="game-link">
+                <small>Click to copy invite link</small>
+                <span id="link">Loading...</span>
+            </p>
+            <label for="username" style="margin-right: 20px">Username</label>
+            <input type="text" id="username" autocomplete="off" maxlength="16" />
+
+            <button id="set-username">Set Username</button>
+            <button id="ready">Ready</button>
+            <button id="start-game" style="display: none" disabled>Start Game</button>
+            <p id="start-game-hint"></p>
+
+            <br><br>
+            <h3>Rules</h3>
+            <ul>
+                <li>The goal of this game is to rid yourself of all your cards.</li>
+                <li>The first player must place down an ace (however many they want, not
+                    necessarily all of the aces they have), the second a 2, and so on
+                    until you reach J (11), Q (12), K (13) and cycle back to A (1).</li>
+                <li>However, you don't <i>have to</i> place down the card listed.</li>
+                <li>For example, if you had to place down a 7, you could still place down a 6.</li>
+            </ul>
+            <ul>
+                <li>If you think someone is bullshitting you (Not placing down the correct card) hit the
+                    <b>Call BS</b> button.</li>
+                <li>If you're right they get <i>all</i> the face down cards added to their deck.</li>
+                <li>However, if you're wrong you get all the face down cards added.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="game" style="display: none">
+        <div class="container">
+            <div id="game-arena">
+                <div id="avatars"></div>
+
+                <div id="game-center">
+                    <div id="turn-info">
+                        <div id="turn-line">
+                            <span id="turn-label">Waiting...</span>
+                            Place: <span class="value-to-place" id="value-to-place">A</span>
+                        </div>
+                    </div>
+
+                    <div id="table">
+                        <div id="pile-area">
+                            <div id="pile-stack"></div>
+                            <div id="pile-count"></div>
+                        </div>
+                    </div>
+
+                    <div id="game-buttons">
+                        <button id="submit-cards" disabled>Submit cards</button>
+                        <button id="call-bs">Call BS</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="hand-container"></div>
+        </div>
+    </div>
+
+    <div id="fx-layer"></div>
+
+    <div id="turn-timer">
+        <svg viewBox="0 0 40 40" aria-hidden="true">
+            <circle class="timer-face" cx="20" cy="20" r="18"></circle>
+            <circle class="timer-ring-track" cx="20" cy="20" r="16"></circle>
+            <circle class="timer-ring" cx="20" cy="20" r="16" pathLength="1"></circle>
+            <!-- <line class="timer-tick" x1="20" y1="5.5" x2="20" y2="9.2"></line>
+            <line class="timer-tick" x1="20" y1="30.8" x2="20" y2="34.5"></line>
+            <line class="timer-tick" x1="5.5" y1="20" x2="9.2" y2="20"></line>
+            <line class="timer-tick" x1="30.8" y1="20" x2="34.5" y2="20"></line> -->
+            <g class="timer-hand-wrap">
+                <line class="timer-hand" x1="20" y1="20" x2="20" y2="8.5"></line>
+                <circle class="timer-hub" cx="20" cy="20" r="1.7"></circle>
+            </g>
+        </svg>
+    </div>
+
+    <div id="disconnect-banner" class="banner" style="top: -100px;">
+        Disconnected from server (Is server down?)
+    </div>
+
+    <div class="modal-darken" id="win-modal" style="display: none">
+        <div class="modal">
+            <button class="modal-close-button"
+                onclick="document.getElementById('win-modal').style.display = 'none'">X</button><br>
+            <h1 id="win-h1">Round Over</h1>
+            <p id="win-text"></p>
+            <p>Ready up again for a rematch!</p>
+        </div>
+    </div>
+</body>
+
+</html>

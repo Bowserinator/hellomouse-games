@@ -98,7 +98,6 @@ setInterval(() => {
 }, 500);
 
 
-// @ts-expect-error
 const jsState = [...document.getElementsByClassName('js-state')];
 const placingBlock = document.getElementById('bottom-placing') as HTMLDivElement;
 const battleBlock = document.getElementById('bottom-battle') as HTMLDivElement;
@@ -208,7 +207,7 @@ connection.onmessage = (message: any) => {
             // Change state
             if (previousState !== gameState.state) {
                 lobby.style.display = 'none';
-                jsState.forEach(d => d.style.display = 'none');
+                jsState.forEach(d => (d as HTMLElement).style.display = 'none');
                 if (gameState.state === GAME_STATE.PLACING) {
                     updatePlacementButtons();
                     placingBlock.style.display = 'block';

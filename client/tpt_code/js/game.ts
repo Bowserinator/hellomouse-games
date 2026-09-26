@@ -310,7 +310,6 @@ elementGuessInput.onfocus = e => {
 
 // Dropdown keyboard controls
 window.onkeydown = e => {
-    // @ts-expect-error
     let options = [...dropdown.getElementsByTagName('div')];
 
     function redrawOptions() {

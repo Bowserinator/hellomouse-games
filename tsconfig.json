@@ -17,6 +17,7 @@
         "sourceMap": true,
         "lib": [
             "esnext",
+            "dom.iterable",
             "dom"
         ],
         "outDir": "build"
