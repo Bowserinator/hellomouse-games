@@ -51,4 +51,5 @@ export const PROFILE_PICTURES = [
     '/bullshit/img/pfps/8.png',
     '/bullshit/img/pfps/9.png',
     '/bullshit/img/pfps/10.png',
+    '/bullshit/img/pfps/11.png'
 ];

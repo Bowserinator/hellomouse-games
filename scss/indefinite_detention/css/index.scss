@@ -5,7 +5,6 @@ body{
     width: 500px;
     margin: 0 auto;
     padding-top: 50px;
-    font-weight: bold;
 }
 
 button{
@@ -150,22 +149,18 @@ h1, h2, h3{
 @keyframes glitch-anim{
     0% {
         box-shadow: 2px 2px 0px 0px rgba(255,8,8,0.5), -2px -2px 0px 0px rgba(10,43,255,0.5);
-        transform: skew(0.2deg);
         filter: brightness(0.8);
     }
     25% {
         box-shadow: 4px 4px 0px 0px rgba(255,8,8,0.35), -3px -4px 0px 0px rgba(10,43,255,0.45);
-        transform: skew(-0.2deg);
         filter: brightness(1.2);
     }
     50% {
         box-shadow: 5px 2px 0px 0px rgba(255,8,8,0.45), -2px -4px 0px 0px rgba(10,43,255,0.15);
-        transform: skew(0.5deg);
         filter: brightness(0.9);
     }
     75% {
         box-shadow: 4px 4px 0px 0px rgba(255,8,8,0.15), -5px -3px 0px 0px rgba(10,43,255,0.35);
-        transform: skew(-0.5deg);
         filter: brightness(1.1);
     }
 }
