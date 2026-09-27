@@ -1,33 +1,10 @@
 import { GET_SYMBOL, RED_SUITS, SUIT_SYMBOL_MAP, SUIT_POSITIONS } from './game/card-data.js';
-
-interface CardLike {
-    value: number;
-    suit: string;
-}
-
-interface PlayerSync {
-    username: string;
-    ready: boolean;
-    numCards: number;
-    disconnected: boolean;
-    graceSecondsRemaining: number;
-}
-
-interface LastPlay {
-    player: number;
-    count: number;
-}
-
-interface LastEvent {
-    seq: number;
-    type: 'SUBMIT' | 'BS' | 'REVEAL';
-    player?: number;
-    count?: number;
-    loser?: number;
-    correct?: boolean;
-    /** REVEAL only: pile contents, bottom of pile first */
-    cards?: Array<CardLike>;
-}
+import { addSoundsToPreload, playSound } from './sound/sound.js';
+import { CardLike, LastEvent, LastPlay, PlayerSync } from './types.js';
+import {
+    BS_FLIP_MS, DECK_SIZE, EMOJI_IMAGES, EMOTE_RATE_MAX, EMOTE_RATE_WINDOW_MS,
+    MIN_PLAYERS, PROFILE_PICTURES, REVEAL_DELAY_MS, TURN_TIME_SECONDS
+} from './vars.js';
 
 interface SyncMessage {
     type: 'SYNC';
@@ -40,13 +17,31 @@ interface SyncMessage {
     centerDeckSize: number;
     winner: number;
     bsCalled: boolean;
+    /** Staged play the next BS challenge judges (null before the first move) */
     lastPlay: LastPlay | null;
     lastEvent: LastEvent | null;
     players: Array<PlayerSync | null>;
     selfDeck: Array<CardLike>;
 }
 
-const MIN_PLAYERS = 2;
+const MAX_STAGGER_TOTAL_MS = 2500;
+
+const SUBMIT_UNLOCK_DELAY_MS = 2000;
+
+const BURST_SIZE_PX = 110;
+const BURST_OFFSET_X_PX = -15;
+const BURST_OFFSET_Y_PX = 15;
+const BURST_DURATION_MS = 1400;
+
+const BULLSHIT_SOUND = '/bullshit/sound/bullshit.mp3';
+const ALARM_SOUND = '/bullshit/sound/alarm.mp3';
+const SHUFFLE_SOUNDS = [1, 2, 3, 4].map(n => `/bullshit/sound/shuffle${n}.mp3`);
+
+addSoundsToPreload([BULLSHIT_SOUND, ALARM_SOUND, ...SHUFFLE_SOUNDS]);
+
+function computeCardStagger(count: number, baseStaggerMs: number): number {
+    return count > 1 ? Math.min(baseStaggerMs, MAX_STAGGER_TOTAL_MS / (count - 1)) : baseStaggerMs;
+}
 
 // url?<GAME UUID>=
 const uuid = window.location.search.substr(1).split('=')[0];
@@ -80,6 +75,17 @@ chatInput.onkeydown = e => {
     }
 };
 const chatMessages = document.getElementById('messages') as HTMLDivElement;
+
+function usernameHue(username: string): number {
+    let hash = 0;
+    for (let i = 0; i < username.length; i++)
+        hash = (hash * 31 + username.charCodeAt(i)) >>> 0;
+    return hash % 360;
+}
+
+function usernameColor(username: string): string {
+    return `hsl(${usernameHue(username)}, 65%, 72%)`;
+}
 
 /**
  * ---------------------------
@@ -153,6 +159,39 @@ startGameButton.onclick = () => {
     connection.send(JSON.stringify({ type: 'MOVE', action: 'START_GAME' }));
 };
 
+const pfpButtonsDiv = document.getElementById('pfp-buttons') as HTMLDivElement;
+const pfpButtons: Array<HTMLButtonElement> = [];
+
+for (let i = 0; i < PROFILE_PICTURES.length; i++) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'pfp-button selectable-button';
+    button.style.backgroundImage = `url("${PROFILE_PICTURES[i]}")`;
+    button.onclick = () => {
+        if (!connectionOpen()) return;
+        connection.send(JSON.stringify({ type: 'PFP', index: i }));
+    };
+    pfpButtonsDiv.appendChild(button);
+    pfpButtons.push(button);
+}
+
+function updatePfpButtons(message: SyncMessage) {
+    const self = message.players[message.youAre];
+    const own = self ? PROFILE_PICTURES.indexOf(self.profilePicture) : -1;
+    const taken = new Set<number>();
+
+    message.players.forEach((player, index) => {
+        if (!player || index === message.youAre) return;
+        const pfp = PROFILE_PICTURES.indexOf(player.profilePicture);
+        if (pfp !== -1) taken.add(pfp);
+    });
+
+    pfpButtons.forEach((button, index) => {
+        button.classList.toggle('selected', index === own);
+        button.disabled = taken.has(index);
+    });
+}
+
 /**
  * ---------------------------
  * Card rendering (own hand)
@@ -220,8 +259,8 @@ function createCardElement(value: number, suit: string): HTMLDivElement {
  */
 const TOP_OFFSET = 0;
 const WIDTH_MULTI = 50;
-const HEIGHT_MULTI = 50;
-const GRID_WIDTH = 10; // Cards per grid row
+const HEIGHT_MULTI = 40;
+const GRID_WIDTH = 14; // Cards per grid row
 const CARD_WIDTH = 250;   // .card width in css
 const CARD_SCALE = 0.5;   // .card transform: scale() in css
 
@@ -244,7 +283,7 @@ function readHandTune() {
     const s = getComputedStyle(handContainer);
     return {
         fanDeg: parseFloat(s.getPropertyValue('--hand-fan-deg')) || 18,
-        rowStagger: parseFloat(s.getPropertyValue('--hand-row-stagger')) || 36,
+        rowStagger: parseFloat(s.getPropertyValue('--hand-row-stagger')) || 32,
         fanArc: parseFloat(s.getPropertyValue('--hand-fan-arc')) || 10,
         fadeMs: parseFloat(s.getPropertyValue('--hand-card-fade-ms')) || 250
     };
@@ -328,15 +367,55 @@ function renderHand() {
     });
 }
 
+let myTurnStartedAt = 0;
+let wasMyTurn = false;
+let submitUnlockTimer: ReturnType<typeof setTimeout> | null = null;
+
+function trackMyTurnDelay(isMyTurn: boolean) {
+    if (isMyTurn && !wasMyTurn) myTurnStartedAt = Date.now();
+    wasMyTurn = isMyTurn;
+
+    if (submitUnlockTimer !== null) clearTimeout(submitUnlockTimer);
+    submitUnlockTimer = null;
+
+    const remaining = SUBMIT_UNLOCK_DELAY_MS - (Date.now() - myTurnStartedAt);
+    if (isMyTurn && remaining > 0)
+        submitUnlockTimer = setTimeout(() => updateButtonStates(), remaining);
+}
+
 function updateButtonStates() {
     let isMyTurn = !!latestSync && latestSync.started && latestSync.turn === latestSync.youAre;
-    submitButton.disabled = !isMyTurn || selectedCards.length === 0 || bsPhase !== null;
+    trackMyTurnDelay(isMyTurn);
+    submitButton.disabled = !isMyTurn || selectedCards.length === 0 || bsPhase !== null ||
+        Date.now() - myTurnStartedAt < SUBMIT_UNLOCK_DELAY_MS;
 
-    // Can't call BS on the player who just moved if that player is yourself
-    let numPlayers = latestSync ? latestSync.players.filter(p => p !== null).length : 0;
-    let previousPlayerIndex = latestSync ? ((latestSync.turn - 1) % numPlayers + numPlayers) % numPlayers : -1;
+    // Can't challenge your own play; the server judges the staged play
+    // (see BullshitGame.handleCallBs)
     callBsButton.disabled = !latestSync || !latestSync.started || latestSync.bsCalled ||
-        previousPlayerIndex === latestSync.youAre || latestSync.centerDeckSize === 0;
+        latestSync.centerDeckSize === 0 ||
+        judgedPlayerIndex(latestSync) === latestSync.youAre;
+}
+
+/**
+ * Index of the player a BS challenge would judge: the staged play's player,
+ * or - when no play is staged - whoever moved last. Must mirror
+ * BullshitGame.handleCallBs exactly. `turn` indexes the full players array
+ * (null seats after a disconnect included), so never reduce it modulo the
+ * number of seated players.
+ * @param {SyncMessage} sync
+ * @return {number} Seat index, or -1 if no player can be judged
+ */
+function judgedPlayerIndex(sync: SyncMessage): number {
+    const staged = sync.lastPlay;
+    if (staged && sync.players[staged.player]) return staged.player;
+
+    const total = sync.players.length;
+    let index = sync.turn;
+    for (let i = 0; i < total; i++) {
+        index = (index - 1 + total) % total;
+        if (sync.players[index] !== null) return index;
+    }
+    return -1;
 }
 
 submitButton.onclick = () => {
@@ -357,50 +436,130 @@ callBsButton.onclick = () => {
 /**
  * ---------------------------
  * Avatars
- * Deliberately minimal + isolated so the look can be swapped out later:
- * only getAvatarBackground() and the .avatar/.avatar-default CSS need
- * to change to give players a real profile picture / custom icon.
  * ---------------------------
  */
-
-/**
- * @param {string} username
- * @return {string | null} CSS background-image value, or null for the default circle
- */
-function getAvatarBackground(username: string): string | null {
-    return null; // No custom avatars yet - falls back to the default circle + initial
-}
 
 function avatarSlotId(index: number) {
     return `avatar-slot-${index}`;
 }
 
+const AVATAR_TABLE_EDGE_GAP_PX = 150;
+
+function computeAvatarColumnX(): { leftX: number, rightX: number } {
+    const arena = document.getElementById('game-arena');
+    const table = document.getElementById('table');
+    const arenaRect = arena ? arena.getBoundingClientRect() : null;
+    const tableRect = table ? table.getBoundingClientRect() : null;
+    if (!arenaRect || !tableRect || arenaRect.width === 0) return { leftX: 15, rightX: 85 };
+
+    return {
+        leftX: ((tableRect.left - arenaRect.left - AVATAR_TABLE_EDGE_GAP_PX) / arenaRect.width) * 100,
+        rightX: ((tableRect.right - arenaRect.left + AVATAR_TABLE_EDGE_GAP_PX) / arenaRect.width) * 100
+    };
+}
+
 /**
- * Distribute n seats along an arc across the top of the arena (from 0 to
- * 100 on both axes), leaving the bottom edge clear since that's where the
- * table + local player's hand live
- * @param {number} n Number of seats to place
+ * Distribute n seats into columns to the left and right of the table
  * @return {Array<{left: number, top: number}>} Percent positions, in seat order
  */
 function computeAvatarPositions(n: number): Array<{ left: number, top: number }> {
     if (n <= 0) return [];
 
-    const MARGIN = 12;
     const CENTER_X = 50;
-    const CENTER_Y = 50;
-    const RADIUS_X = 50 - MARGIN;
-    const RADIUS_Y = 50 - MARGIN;
+    const { leftX: LEFT_X, rightX: RIGHT_X } = computeAvatarColumnX();
+    const COL_TOP = 20;
+    const COL_BOTTOM = 85;
+    const MAX_SPACING = 40;
 
-    const positions: Array<{ left: number, top: number }> = [];
-    for (let i = 0; i < n; i++) {
-        let angle = (180 - (i + 0.5) / n * 180) * Math.PI / 180;
-        positions.push({
-            left: CENTER_X + RADIUS_X * Math.cos(angle),
-            top: CENTER_Y - RADIUS_Y * Math.sin(angle)
-        });
-    }
+    const hasCenter = n % 2 === 1;
+    const sideSeats = hasCenter ? n - 1 : n;
+    const leftCount = sideSeats / 2;
+    const rightCount = sideSeats / 2;
+
+    const columnPositions = (x: number, count: number) => {
+        if (count <= 0) return [];
+        const centerY = (COL_TOP + COL_BOTTOM) / 2;
+        const spacing = count > 1 ? Math.min(MAX_SPACING, (COL_BOTTOM - COL_TOP) / (count - 1)) : 0;
+        const col: Array<{ left: number, top: number }> = [];
+        for (let i = 0; i < count; i++)
+            col.push({ left: x, top: centerY + (i - (count - 1) / 2) * spacing });
+        return col;
+    };
+
+    const positions = columnPositions(LEFT_X, leftCount).reverse();
+    if (hasCenter) positions.push({ left: CENTER_X, top: COL_TOP });
+    positions.push(...columnPositions(RIGHT_X, rightCount));
     return positions;
 }
+
+const FAN_RADIUS = 28;
+const FAN_MAX_CARDS = DECK_SIZE;
+const FAN_FADE_MS = 350;
+const FAN_STAGGER_MS = 40;
+
+const avatarCardFans = new Map<number, HTMLDivElement>();
+const avatarPrevCounts = new Map<number, number>();
+
+function fanAngle(index: number, count: number): number {
+    const t = count <= 1 ? 0.5 : index / (count - 1);
+    return (t - 0.5) * 100;
+}
+
+function randomFanRotation(playerIndex: number): number {
+    const slot = document.getElementById(avatarSlotId(playerIndex));
+    const count = slot ? slot.querySelectorAll('.card-fan-card').length : 0;
+    if (count <= 0) return 0;
+    return fanAngle(Math.floor(Math.random() * count), count);
+}
+
+function renderAvatarCardFan(playerIndex: number, count: number) {
+    if (bsPhase !== null && playerIndex === bsLoser) return;
+
+    const clamped = Math.min(count, FAN_MAX_CARDS);
+    const prev = avatarPrevCounts.get(playerIndex) ?? 0;
+    avatarPrevCounts.set(playerIndex, count);
+
+    let fan = avatarCardFans.get(playerIndex);
+    if (!fan) {
+        fan = document.createElement('div');
+        fan.className = 'card-fan';
+        avatarCardFans.set(playerIndex, fan);
+    }
+
+    if (prev === clamped && fan.isConnected && fan.childElementCount === clamped)
+        return;
+
+    fan.replaceChildren();
+
+    const animIncrease = clamped > prev;
+    const fadeMs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-fan-fade-ms')) || FAN_FADE_MS;
+    const fanStagger = computeCardStagger(animIncrease ? clamped - prev : 0, FAN_STAGGER_MS);
+
+    for (let i = 0; i < clamped; i++) {
+        const angle = fanAngle(i, clamped);
+
+        const card = document.createElement('div');
+        card.className = 'card-fan-card' + (animIncrease && i >= prev ? ' card-fan-enter' : '');
+        card.style.setProperty('--fan-card-transform', `rotate(${angle}deg) translateY(-${FAN_RADIUS}px)`);
+        fan.appendChild(card);
+
+        if (animIncrease && i >= prev) {
+            const delay = (i - prev) * fanStagger;
+            card.style.animationDelay = delay + 'ms';
+            setTimeout(() => {
+                card.classList.remove('card-fan-enter');
+                card.style.animationDelay = '';
+            }, fadeMs + delay + 50);
+        }
+    }
+}
+
+function resetAvatarCardFans() {
+    avatarCardFans.clear();
+    avatarPrevCounts.clear();
+}
+
+const avatarSlotEls = new Map<number, HTMLDivElement>();
 
 function renderAvatars(message: SyncMessage) {
     const avatars = document.getElementById('avatars') as HTMLDivElement;
@@ -410,44 +569,141 @@ function renderAvatars(message: SyncMessage) {
         .filter((p): p is { player: PlayerSync, index: number } => p.player !== null);
 
     const positions = computeAvatarPositions(seated.length);
+    const selfSeat = seated.findIndex(s => s.index === message.youAre);
+    const seatedIndices = new Set(seated.map(s => s.index));
 
-    avatars.replaceChildren(...seated.map(({ player, index }, seat) => {
-        let slot = document.createElement('div');
+    for (const [index, slot] of avatarSlotEls)
+        if (!seatedIndices.has(index)) {
+            slot.remove();
+            avatarSlotEls.delete(index);
+        }
+
+    seated.forEach(({ player, index }, seat) => {
+        let slot = avatarSlotEls.get(index);
+        let avatar: HTMLDivElement;
+        let letter: HTMLSpanElement;
+        let name: HTMLDivElement;
+        let score: HTMLDivElement;
+
+        if (!slot) {
+            slot = document.createElement('div');
+            slot.id = avatarSlotId(index);
+
+            renderAvatarCardFan(index, player.numCards);
+            const fan = avatarCardFans.get(index);
+            if (fan) slot.appendChild(fan);
+
+            avatar = document.createElement('div');
+            avatar.className = 'avatar';
+            letter = document.createElement('span');
+            letter.className = 'avatar-letter';
+            avatar.appendChild(letter);
+            slot.appendChild(avatar);
+
+            name = document.createElement('div');
+            name.className = 'avatar-name';
+            slot.appendChild(name);
+
+            score = document.createElement('div');
+            score.className = 'avatar-score';
+            slot.appendChild(score);
+
+            avatarSlotEls.set(index, slot);
+            avatars.appendChild(slot);
+        } else {
+            renderAvatarCardFan(index, player.numCards);
+            const fan = avatarCardFans.get(index);
+            if (fan && fan.parentElement !== slot) slot.prepend(fan);
+            avatar = slot.querySelector('.avatar') as HTMLDivElement;
+            letter = avatar.querySelector('.avatar-letter') as HTMLSpanElement;
+            name = slot.querySelector('.avatar-name') as HTMLDivElement;
+            score = slot.querySelector('.avatar-score') as HTMLDivElement;
+        }
+
         slot.className = 'avatar-slot' +
             (index === message.turn ? ' current-turn' : '') +
             (player.disconnected ? ' disconnected' : '');
-        slot.id = avatarSlotId(index);
-        slot.style.left = positions[seat].left + '%';
-        slot.style.top = positions[seat].top + '%';
+        const rel = selfSeat === -1 ? seat :
+            (seat - selfSeat + seated.length) % seated.length;
+        slot.style.left = positions[rel].left + '%';
+        slot.style.top = positions[rel].top + '%';
 
-        let avatar = document.createElement('div');
-        avatar.className = 'avatar';
-        let bg = getAvatarBackground(player.username);
-        if (bg) avatar.style.setProperty('--avatar-img', bg);
-        else avatar.innerText = player.username.charAt(0).toUpperCase();
-
-        if (player.disconnected) {
-            let icon = document.createElement('div');
-            icon.className = 'avatar-disconnected-icon';
-            icon.title = 'Disconnected';
-            icon.innerText = '\u26A0';
-            avatar.appendChild(icon);
+        let bg = player.profilePicture ? `url("${player.profilePicture}")` : null;
+        if (bg) {
+            avatar.style.setProperty('--avatar-img', bg);
+            letter.innerText = '';
+        } else {
+            avatar.style.removeProperty('--avatar-img');
+            letter.innerText = player.username.charAt(0).toUpperCase();
         }
 
-        let name = document.createElement('div');
-        name.className = 'avatar-name';
-        name.innerText = player.username + (index === message.youAre ? ' (You)' : '');
+        let icon = avatar.querySelector('.avatar-disconnected-icon') as HTMLDivElement | null;
+        if (player.disconnected) {
+            if (!icon) {
+                icon = document.createElement('div');
+                icon.className = 'avatar-disconnected-icon';
+                icon.title = 'Disconnected';
+                icon.innerText = '\u26A0';
+                avatar.appendChild(icon);
+            }
+        } else if (icon) icon.remove();
 
-        let score = document.createElement('div');
-        score.className = 'avatar-score';
+        name.innerText = player.username + (index === message.youAre ? ' (You)' : '');
         score.innerText = player.disconnected ?
             `Reconnecting... ${player.graceSecondsRemaining}s` : `${player.numCards} cards`;
+    });
+}
 
-        slot.appendChild(avatar);
-        slot.appendChild(name);
-        slot.appendChild(score);
-        return slot;
-    }));
+function spawnBsBurst(playerIndex: number) {
+    const slot = avatarSlotEls.get(playerIndex);
+    if (!slot) return;
+
+    const burst = document.createElement('div');
+    burst.className = 'bullshit-burst';
+    burst.style.setProperty('--burst-size', BURST_SIZE_PX + 'px');
+    burst.style.setProperty('--burst-x', BURST_OFFSET_X_PX + 'px');
+    burst.style.setProperty('--burst-y', BURST_OFFSET_Y_PX + 'px');
+    burst.style.setProperty('--burst-duration', BURST_DURATION_MS + 'ms');
+    burst.addEventListener('animationend', () => burst.remove());
+    slot.appendChild(burst);
+}
+
+const emoteBar = document.getElementById('emote-bar') as HTMLDivElement;
+const emoteSendTimes: Array<number> = [];
+
+function canSendEmote(now: number): boolean {
+    while (emoteSendTimes.length > 0 && now - emoteSendTimes[0] >= EMOTE_RATE_WINDOW_MS)
+        emoteSendTimes.shift();
+    if (emoteSendTimes.length >= EMOTE_RATE_MAX) return false;
+    emoteSendTimes.push(now);
+    return true;
+}
+
+EMOJI_IMAGES.forEach((src, index) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'emote-button';
+    button.style.backgroundImage = `url("${src}")`;
+    button.title = (src.split('/').pop() || '').replace(/\.png$/, '');
+    button.onclick = () => {
+        if (!connectionOpen() || !canSendEmote(Date.now())) return;
+        connection.send(JSON.stringify({ type: 'EMOTE', index }));
+    };
+    emoteBar.appendChild(button);
+});
+
+function spawnEmote(playerIndex: number, index: number) {
+    if (typeof playerIndex !== 'number' || playerIndex < 0) return;
+    if (typeof index !== 'number' || !EMOJI_IMAGES[index]) return;
+
+    const slot = avatarSlotEls.get(playerIndex);
+    if (!slot) return;
+
+    const emote = document.createElement('div');
+    emote.className = 'emote-float';
+    emote.style.backgroundImage = `url("${EMOJI_IMAGES[index]}")`;
+    emote.addEventListener('animationend', () => emote.remove());
+    slot.appendChild(emote);
 }
 
 /**
@@ -482,9 +738,6 @@ let animatingPileUntil = 0;
 
 const BS_SPREAD_STAGGER_MAX_MS = 25;
 const BS_SPREAD_STAGGER_TOTAL_MS = 300;
-const BS_FLIP_MS = 500;
-/** Pause between the flip and cards flying to the loser */
-const REVEAL_DELAY_MS = 1200;
 
 type BsPhase = 'spread' | 'flip' | 'payout';
 let bsPhase: BsPhase | null = null;
@@ -492,7 +745,8 @@ let bsLoser = -1;
 let fanPositions: Array<{ left: number, top: number }> = [];
 let payoutTimer: ReturnType<typeof setTimeout> | null = null;
 let bsEndTimer: ReturnType<typeof setTimeout> | null = null;
-let pendingEvent: LastEvent | null = null;
+/** Events that arrived while a BS sequence was animating, replayed in order */
+let pendingEvents: Array<LastEvent> = [];
 let hasSyncedOnce = false;
 
 /**
@@ -597,16 +851,17 @@ function resetPile() {
     bsPhase = null;
     bsLoser = -1;
     fanPositions = [];
-    pendingEvent = null;
+    pendingEvents = [];
     for (const card of pileBySlot.values()) releaseCard(card.el);
     pileBySlot.clear();
     logicalPileCount = 0;
     animatingPileUntil = 0;
     updatePileLabel();
-}
-
-function renderPile(message: SyncMessage) {
-    setPileCount(message.centerDeckSize);
+    for (const slot of avatarSlotEls.values()) slot.remove();
+    avatarSlotEls.clear();
+    const avatarsEl = document.getElementById('avatars');
+    if (avatarsEl) avatarsEl.replaceChildren();
+    resetAvatarCardFans();
 }
 
 gameDiv.addEventListener('scroll', layoutPile);
@@ -619,10 +874,11 @@ window.addEventListener('resize', layoutPile);
  */
 const fxLayer = document.getElementById('fx-layer') as HTMLDivElement;
 
-const CARD_FLY_TRAVEL_MS = 550;
+const CARD_FLY_TRAVEL_MS = 550; // must equal the card fly transition in css
 const CARD_FLY_STAGGER_MS = 220;       // delay between cards, player -> pile
 const CARD_FLY_STAGGER_BACK_MS = 100;  // delay between cards, pile -> player (return trip is snappier)
-const POOL_SIZE = 52; // Full deck: the pile + in-flight cards never exceed this
+const CARD_FAN_SCALE = 60 / 112.5;
+const POOL_SIZE = DECK_SIZE; // Full deck: the pile + in-flight cards never exceed this
 
 /** Pooled cards, hidden and parked off screen until acquired */
 const cardPool: Array<HTMLDivElement> = [];
@@ -634,6 +890,7 @@ function parkCard(card: HTMLDivElement) {
     card.style.left = '-9999px';
     card.style.top = '-9999px';
     card.style.opacity = '0';
+    card.style.transform = '';
     card.style.zIndex = '';
 
     const flip = card.querySelector('.fx-card-flip') as HTMLElement | null;
@@ -690,8 +947,8 @@ function centeredOn(rect: DOMRect, card: HTMLDivElement) {
 }
 
 /**
- * Viewport position for a card centered on a player's avatar slot. Avatars
- * are rebuilt on every sync (renderAvatars -> replaceChildren), so each card
+ * Viewport position for a card centered on a player's avatar slot. Avatar
+ * slots can be removed (player leaves) or added between syncs, so each card
  * must look the element up fresh at the moment it actually moves - holding
  * a reference from event time gives a detached node with an empty rect.
  * @return {{left: number, top: number} | null} null if the avatar is gone
@@ -720,15 +977,17 @@ function transitionCard(card: HTMLDivElement, applyStart: () => void, applyEnd: 
 /** Spawn `card` at `from` with `startOpacity`, then fly it to `to` + `endOpacity` */
 function animateCard(card: HTMLDivElement, from: { left: number, top: number },
         to: { left: number, top: number }, startOpacity: number, endOpacity: number,
-        onLand?: () => void) {
+        onLand?: () => void, startAngle: number = 0, startScale: number = 1) {
     transitionCard(card, () => {
         card.style.left = from.left + 'px';
         card.style.top = from.top + 'px';
         card.style.opacity = String(startOpacity);
+        card.style.transform = `rotate(${startAngle}deg) scale(${startScale})`;
     }, () => {
         card.style.left = to.left + 'px';
         card.style.top = to.top + 'px';
         card.style.opacity = String(endOpacity);
+        card.style.transform = 'rotate(0deg) scale(1)';
     });
     if (onLand) setTimeout(onLand, CARD_FLY_TRAVEL_MS);
 }
@@ -739,10 +998,12 @@ function animateCard(card: HTMLDivElement, from: { left: number, top: number },
  * current position/opacity instead of jumping.
  */
 function flyCardTo(card: HTMLDivElement, to: { left: number, top: number },
-        endOpacity: number, onLand?: () => void) {
+        endOpacity: number, onLand?: () => void,
+        endAngle: number = 0, endScale: number = 1) {
     card.style.left = to.left + 'px';
     card.style.top = to.top + 'px';
     card.style.opacity = String(endOpacity);
+    card.style.transform = `rotate(${endAngle}deg) scale(${endScale})`;
     if (onLand) setTimeout(onLand, CARD_FLY_TRAVEL_MS);
 }
 
@@ -752,6 +1013,7 @@ function placeCard(card: HTMLDivElement, pos: { left: number, top: number }, opa
         card.style.left = pos.left + 'px';
         card.style.top = pos.top + 'px';
         card.style.opacity = String(opacity);
+        card.style.transform = 'rotate(0deg) scale(1)';
     }, () => { /* placed, nothing to transition to */ });
 }
 
@@ -776,9 +1038,10 @@ function runCardAnimation(options: CardAnimOptions) {
     const { count, playerIndex, startOpacity, endOpacity } = options;
     if (count <= 0) return;
 
+    const stagger = computeCardStagger(count, CARD_FLY_STAGGER_MS);
     const epoch = pileEpoch;
     animatingPileUntil = Math.max(animatingPileUntil,
-        Date.now() + flyCardsDuration(count, CARD_FLY_STAGGER_MS));
+        Date.now() + flyCardsDuration(count, stagger));
 
     const base = logicalPileCount;
     logicalPileCount += count;
@@ -813,8 +1076,8 @@ function runCardAnimation(options: CardAnimOptions) {
                 entry.state = 'resting';
                 layoutPile();
                 updatePileLabel();
-            });
-        }, i * CARD_FLY_STAGGER_MS);
+            }, randomFanRotation(playerIndex), CARD_FAN_SCALE);
+        }, i * stagger);
     }
 }
 
@@ -829,7 +1092,7 @@ function computeFanPositions(count: number): Array<{ left: number, top: number }
     const rect = pileStack.getBoundingClientRect();
     const cardW = rect.width || 112.5;
     const MARGIN = 16;
-    const chatWidth = window.innerWidth > 700 ? 250 : 0;
+    const chatWidth = chatColumnWidth();
     const usableWidth = window.innerWidth - chatWidth;
     const spacing = count > 1 ?
         Math.max(4, Math.min(cardW * 0.5, (usableWidth - 2 * MARGIN - cardW) / (count - 1))) : 0;
@@ -934,6 +1197,9 @@ function runBsPayout() {
     bsPhase = 'payout';
     const epoch = pileEpoch;
     const loser = bsLoser;
+    const stagger = computeCardStagger(entries.length, CARD_FLY_STAGGER_BACK_MS);
+
+    playSound(SHUFFLE_SOUNDS[Math.floor(Math.random() * SHUFFLE_SOUNDS.length)], 0.6);
 
     entries.forEach((entry, i) => setTimeout(() => {
         if (epoch !== pileEpoch) return;
@@ -948,13 +1214,13 @@ function runBsPayout() {
         flyCardTo(entry.el, to, 0, () => {
             if (epoch !== pileEpoch) return;
             releaseCard(entry.el);
-        });
-    }, i * CARD_FLY_STAGGER_BACK_MS));
+        }, randomFanRotation(loser), CARD_FAN_SCALE);
+    }, i * stagger));
 
     bsEndTimer = setTimeout(() => {
         if (epoch !== pileEpoch) return;
         endBsSequence();
-    }, flyCardsDuration(entries.length, CARD_FLY_STAGGER_BACK_MS) + 50);
+    }, flyCardsDuration(entries.length, stagger) + 50);
 }
 
 function endBsSequence() {
@@ -968,10 +1234,13 @@ function endBsSequence() {
     logicalPileCount = 0;
     updatePileLabel();
     updateButtonStates();
+    if (latestSync && latestSync.started) renderAvatars(latestSync);
 
-    if (pendingEvent) {
-        const event = pendingEvent;
-        pendingEvent = null;
+    // Replay everything that arrived mid-animation in arrival order - a
+    // single slot dropped every event but the last (eg. a submit followed
+    // by the next challenge), leaving the pile to reconcile on a later sync
+    while (pendingEvents.length) {
+        const event = pendingEvents.shift() as LastEvent;
         handleEvent(event);
     }
 }
@@ -979,13 +1248,15 @@ function endBsSequence() {
 
 /** Handle a (new, not-yet-seen) event from the server for animation purposes */
 function handleEvent(event: LastEvent) {
-    if (event.type === 'SUBMIT' && event.player !== undefined && event.count !== undefined)
+    if (event.type === 'SUBMIT' && event.player !== undefined && event.count !== undefined) {
+        playSound(SHUFFLE_SOUNDS[Math.floor(Math.random() * SHUFFLE_SOUNDS.length)], 0.6);
         runCardAnimation({
             count: event.count,
             playerIndex: event.player,
             startOpacity: 0,   // fades in as it leaves the avatar
             endOpacity: 1
         });
+    }
     else if (event.type === 'BS' && event.loser !== undefined)
         runBsSpread(event.loser);
     else if (event.type === 'REVEAL' && event.cards !== undefined)
@@ -1001,12 +1272,17 @@ function renderLobby(message: SyncMessage) {
     let playerList = '<ol>';
     for (let player of message.players) {
         if (!player) continue;
+        const pfp = player.profilePicture;
+        const thumb = PROFILE_PICTURES.includes(pfp) ?
+            `<span class="lobby-pfp" style="background-image: url('${pfp}')"></span>` : '';
         playerList += `<li class="${player.ready ? 'active' : ''}">
-            <span style="font-size: 12pt; color: ${player.ready ? '#66ff52' : 'gray'}">█ &nbsp;</span>${player.username}
+            <span style="font-size: 12pt; color: ${player.ready ? '#66ff52' : 'gray'}">█ &nbsp;</span>${thumb}${player.username}
         </li>`;
     }
     playerList += '</ol>';
     (document.getElementById('lobby-player-list') as HTMLDivElement).innerHTML = playerList;
+
+    updatePfpButtons(message);
 
     let self = message.players[message.youAre];
     readyButton.innerText = self && self.ready ? 'Unready' : 'Ready';
@@ -1021,7 +1297,7 @@ function renderLobby(message: SyncMessage) {
     startGameButton.disabled = !canStart;
 
     if (message.isHost)
-        startGameHint.innerText = canStart ? 'Everyone is ready - start when you\'re ready!' :
+        startGameHint.innerText = canStart ? 'Everyone is ready - click start!' :
             (count < MIN_PLAYERS ? `Need at least ${MIN_PLAYERS} players` : 'Waiting for everyone to ready up...');
     else
         startGameHint.innerText = everyoneReady ? 'Waiting for the host to start the game...' : '';
@@ -1037,12 +1313,16 @@ function renderTurnInfo(message: SyncMessage) {
     valueToPlace.innerText = GET_SYMBOL(message.valueToPlace);
 }
 
-const TURN_TIME_SECONDS = 30;
 const TIMER_SIZE = 52;
 const TIMER_GAP = 14;
 const TIMER_MOVE_MS = 750;
-const CHAT_WIDTH = 250;
+const CHAT_WIDTH = 325;
 const NAVBAR_HEIGHT = 35.4;
+
+/** The chat column only exists on wide layouts; nothing may assume 250px */
+function chatColumnWidth(): number {
+    return window.innerWidth > 700 ? CHAT_WIDTH : 0;
+}
 
 const turnTimer = document.getElementById('turn-timer') as HTMLDivElement;
 const turnTimerRing = turnTimer.querySelector('.timer-ring') as SVGCircleElement;
@@ -1067,10 +1347,7 @@ let timerSeconds = TURN_TIME_SECONDS;
 let timerSecondsAt = 0;
 let timerTotal = TURN_TIME_SECONDS;
 let timerRaf = 0;
-
-function easeInOutCubic(t: number) {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-}
+let alarmPlayed = false;
 
 function quadBez(from: TimerPos, ctrl: TimerPos, to: TimerPos, t: number): TimerPos {
     const u = 1 - t;
@@ -1111,7 +1388,7 @@ function timerBeside(rect: TimerRect, preferLeft: boolean): TimerPos {
     const leftX = rect.left - TIMER_GAP - TIMER_SIZE / 2;
     const rightX = rect.right + TIMER_GAP + TIMER_SIZE / 2;
     const minX = TIMER_SIZE / 2 + 10;
-    const maxX = window.innerWidth - CHAT_WIDTH - TIMER_SIZE / 2 - 10;
+    const maxX = window.innerWidth - chatColumnWidth() - TIMER_SIZE / 2 - 10;
     let x = preferLeft ? leftX : rightX;
     if (x < minX) x = Math.min(maxX, rightX);
     if (x > maxX) x = Math.max(minX, leftX);
@@ -1178,25 +1455,37 @@ function hideTurnTimer() {
     timerPos = null;
     timerMove = null;
     lastTimerTurn = -1;
+    alarmPlayed = false;
 }
 
 function syncTimerSeconds(message: SyncMessage) {
-    if (message.turn !== lastTimerTurn || message.secondsRemaining > timerSeconds) {
-        timerSeconds = message.secondsRemaining;
-        timerSecondsAt = performance.now();
+    // Re-anchor to the server's value on *every* sync, not just when it
+    // changes: syncs also arrive mid-second for events, and after a reveal
+    // the server restarts the timer at TURN_TIME_SECONDS - waiting for a
+    // change left the local RAF counting against a stale anchor
+    if (message.turn !== lastTimerTurn || message.secondsRemaining > timerSeconds)
         timerTotal = Math.max(message.secondsRemaining, 1);
-    } else if (message.secondsRemaining < timerSeconds) {
-        timerSeconds = message.secondsRemaining;
-        timerSecondsAt = performance.now();
-    }
+    timerSeconds = message.secondsRemaining;
+    timerSecondsAt = performance.now();
 }
 
 function tickTurnTimer(now: number) {
-    const remaining = Math.max(0, timerSeconds - (now - timerSecondsAt) / 1000);
-    const frac = remaining / timerTotal;
-    turnTimerRing.style.strokeDashoffset = String(1 - frac);
-    turnTimerHand.style.transform = `rotate(${(frac) * 360}deg)`;
-    turnTimer.classList.toggle('urgent', remaining < 5);
+    // The server freezes the turn timer while a reveal resolves: don't count
+    // down or run the urgent alarm during that window (the syncs arriving
+    // with an unchanged secondsRemaining gave the RAF nothing to re-sync to)
+    if (bsPhase === null) {
+        const remaining = Math.max(0, timerSeconds - (now - timerSecondsAt) / 1000);
+        const frac = remaining / timerTotal;
+        turnTimerRing.style.strokeDashoffset = String(1 - frac);
+        turnTimerHand.style.transform = `rotate(${(frac) * 360}deg)`;
+        const urgent = remaining < 5;
+        turnTimer.classList.toggle('urgent', urgent);
+        if (!urgent) alarmPlayed = false;
+        else if (!alarmPlayed) {
+            alarmPlayed = true;
+            playSound(ALARM_SOUND, 0.7);
+        }
+    }
 
     const sync = latestSync;
     const target = sync && sync.started ? computeTimerTarget(sync) : null;
@@ -1204,7 +1493,8 @@ function tickTurnTimer(now: number) {
     if (timerMove) {
         if (target) timerMove.to = target;
         const t = Math.min(1, (now - timerMove.start) / TIMER_MOVE_MS);
-        timerPos = quadBez(timerMove.from, timerMove.ctrl, timerMove.to, easeInOutCubic(t));
+        timerPos = quadBez(timerMove.from, timerMove.ctrl, timerMove.to,
+            t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
         if (t >= 1) timerMove = null;
     } else if (target) {
         if (!timerPos) timerPos = target;
@@ -1275,6 +1565,7 @@ function showWinModal(message: SyncMessage) {
  */
 let wasStarted = false;
 let handledEventSeq = 0;
+let lastBeepTurn: number | null = null;
 
 connection.onmessage = (message: any) => {
     message = JSON.parse(message.data);
@@ -1287,14 +1578,19 @@ connection.onmessage = (message: any) => {
             break;
         }
         case 'CHAT': {
+            const color = usernameColor(message.username);
             // @ts-expect-error
-            let msg = chatToHTML(`[${message.username}] ${message.message}`);
+            let msg = chatToHTML(`<span style="color:${color}">[${message.username}] ${message.message}</span>`);
             let isAtBottom =
                 Math.abs(chatMessages.scrollTop - chatMessages.scrollHeight + chatMessages.offsetHeight) < 10;
             chatMessages.appendChild(msg);
 
             if (isAtBottom) // Auto scroll down
                 chatMessages.scrollTop = chatMessages.scrollHeight;
+            break;
+        }
+        case 'EMOTE': {
+            spawnEmote(message.i, message.index);
             break;
         }
         case 'UUID': {
@@ -1316,11 +1612,13 @@ connection.onmessage = (message: any) => {
 
             lobby.style.display = sync.started ? 'none' : 'block';
             gameDiv.style.display = sync.started ? 'block' : 'none';
+            emoteBar.style.display = sync.started ? 'flex' : 'none';
 
             if (!sync.started) {
                 renderLobby(sync);
                 resetPile(); // Cancels any pile animation still running from the last round
                 hideTurnTimer();
+                lastBeepTurn = null;
             }
             else {
                 let newEvent = sync.lastEvent && sync.lastEvent.seq > handledEventSeq ? sync.lastEvent : null;
@@ -1329,25 +1627,40 @@ connection.onmessage = (message: any) => {
                 renderAvatars(sync);
                 renderTurnInfo(sync);
 
+                if (lastBeepTurn !== null && sync.turn !== lastBeepTurn) {
+                    // @ts-expect-error
+                    beep(sync.turn === sync.youAre ? 2 : undefined);
+                }
+                lastBeepTurn = sync.turn;
+
+                if (newEvent && newEvent.type === 'BS' && newEvent.caller !== undefined) {
+                    spawnBsBurst(newEvent.caller);
+                    playSound(BULLSHIT_SOUND, 0.8);
+                }
+
                 if (newEvent) {
                     if (newEvent.type === 'REVEAL' && bsPhase === 'spread')
                         handleEvent(newEvent);
-                    else if (bsPhase !== null) pendingEvent = newEvent;
+                    else if (bsPhase !== null) pendingEvents.push(newEvent);
                     else handleEvent(newEvent);
                 } else if (bsPhase === null && Date.now() >= animatingPileUntil)
-                    renderPile(sync);
+                    setPileCount(sync.centerDeckSize);
             }
 
             selfDeck = sync.selfDeck;
             // Drop any selected cards that are no longer in hand (eg. after a move)
             selectedCards = selectedCards.filter(c => selfDeck.some(d => cardKey(d) === cardKey(c)));
             if (sync.started) renderHand();
+
+            // Adopt the sync before deriving button state from it - it used
+            // to run against the previous SYNC, lagging a full tick (~1 s)
+            // behind the actual turn change
+            latestSync = sync;
             updateButtonStates();
 
             if (wasStarted && !sync.started)
                 showWinModal(sync);
             wasStarted = sync.started;
-            latestSync = sync;
 
             if (sync.started) updateTurnTimer(sync);
 

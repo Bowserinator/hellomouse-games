@@ -28,6 +28,10 @@
     <script src="/shared/js/index.js" defer></script>
     <script src="./js/game.js" type="module" defer></script>
 
+    <div class="bg"></div>
+    <div class="bg bg2"></div>
+    <div class="bg bg3"></div>
+
     <nav>
         <h1>Bullshit</h1>
         <a target="_blank" href="/">More Games</a>
@@ -69,7 +73,11 @@
             <button id="start-game" style="display: none" disabled>Start Game</button>
             <p id="start-game-hint"></p>
 
-            <br><br>
+            <br>
+            <label>Profile picture (Art by tensofu)</label>
+            <div id="pfp-buttons"></div>
+
+            <br>
             <h3>Rules</h3>
             <ul>
                 <li>The goal of this game is to rid yourself of all your cards.</li>
@@ -89,6 +97,8 @@
     </div>
 
     <div id="game" style="display: none">
+        <div class="player-hand-bg"></div>
+
         <div class="container">
             <div id="game-arena">
                 <div id="avatars"></div>
@@ -136,6 +146,8 @@
             </g>
         </svg>
     </div>
+
+    <div id="emote-bar" style="display: none"></div>
 
     <div id="disconnect-banner" class="banner" style="top: -100px;">
         Disconnected from server (Is server down?)

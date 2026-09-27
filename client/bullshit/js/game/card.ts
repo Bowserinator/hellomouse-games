@@ -13,8 +13,4 @@ export default class Card {
         this.value = val;
         this.suit = suit;
     }
-
-    toString() {
-        return `${this.value} of ${this.suit}`;
-    }
 }

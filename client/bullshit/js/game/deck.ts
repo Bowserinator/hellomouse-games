@@ -28,30 +28,6 @@ export default class Deck {
     }
 
     /**
-     * Add a card
-     * @param {Card} card
-     */
-    addCard(card: Card) {
-        this.cards.push(card);
-    }
-
-    /**
-     * Pop top card off of deck
-     * @return {Card}
-     */
-    removeCard(): Card | undefined {
-        return this.cards.pop();
-    }
-
-    /**
-     * Merge this deck with another deck
-     * @param {Deck} otherDeck
-     */
-    mergeDeck(otherDeck: Deck) {
-        this.cards = otherDeck.cards.concat(this.cards);
-    }
-
-    /**
      * Remove an array of cards
      * @param {Array<Card>} cards
      */
@@ -69,14 +45,7 @@ export default class Deck {
      */
     addCards(cards: Array<Card>) {
         for (let card of cards)
-            this.addCard(card);
-    }
-
-    /**
-     * Clears the deck
-     */
-    clear() {
-        this.cards = [];
+            this.cards.push(card);
     }
 
     /**
@@ -87,7 +56,7 @@ export default class Deck {
         let returned = new Deck();
         for (let i = 1; i <= 13; i++)
             for (let j = 0; j < Card.SUITS.length; j++)
-                returned.addCard(new Card(i, Card.SUITS[j]));
+                returned.cards.push(new Card(i, Card.SUITS[j]));
         return returned;
     }
 }
