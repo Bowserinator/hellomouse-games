@@ -1,0 +1,221 @@
+<!DOCTYPE HTML>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <meta name="description" content="Indefinite Detention - Hellomouse Games">
+        <meta name="author" content="Bowserinator">
+        <meta name="keywords" content="interrogation,game">
+
+        <meta property="og:title" content="Indefinite Detention - Hellomouse Games">
+        <meta property="og:description" content="A multiplayer memory game">
+        <meta property="og:image" content="/indefinite_detention/img/thumbnail.jpg">
+
+        <title>Indefinite Detention</title>
+
+        <meta name="msapplication-TileColor" content="#da532c">
+        <meta name="theme-color" content="#ffffff">
+
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:300" rel="stylesheet">
+        <link rel="stylesheet" href="/shared/css/index.css">
+        <link rel="stylesheet" href="css/index.css">
+    </head>
+
+    <body>
+        <div id="disconnect_banner" style="display: block; position: fixed; top: -100px; left: 0; width: 100%; z-index: 9999; text-align: center; background: #b00020; color: #fff; padding: 10px 0; font-family: inherit; transition: top 300ms ease-in-out;">
+            Connection to the facility was lost. Reconnecting...
+        </div>
+
+        <noscript>
+            <div class="fixed_overlay">
+                <h1 style='color: black; position: relative; top: 100px'>PLEASE ENABLE JAVASCRIPT</h1>
+                <h1 style='color: black; position: relative; top: 100px'>FOR GAME TO FUNCTION</h1>
+                <h3 style='color: black; position: relative; top: 100px'>(Refresh page after you enable)</h3>
+            </div>
+        </noscript>
+
+        <div id="title_screen">
+            <h1 id="game_title">Indefinite Detention</h1>
+            <h3 id="game_desc">Ready for questioning?</h3>
+
+            <div class="button_container">
+                <button onclick="game.resetGame(); game.startGame()" class="glitch">
+                    Yes. Let's start.<br>
+                    <small>(Start game)</small>
+                </button>
+
+                <button onclick="promptScreen('multiplayer_setup_screen')" class="glitch">
+                    Where are my friends?<br>
+                    <small>(Multiplayer)</small>
+                </button>
+
+                <br>
+
+                <button onclick="promptScreen('help_screen')" class="glitch">
+                    Where am I?<br>
+                    <small>(Help)</br>
+                </button>
+
+                <button onclick="promptScreen('credits_screen')" class="glitch">
+                    Who are you?<br>
+                    <small>(Credits)</small>
+                </button>
+            </div>
+
+            <div class="misc-links">
+                <a href="/">Other Games</a>
+            </div>
+        </div>
+
+        <div id="game_question" style="display: none">
+            <h2 id="question_num">3</h2>
+            <h3 id="question">What is your name?</h3>
+
+            <div class="button_container">
+                <button id="game_btn_1"></button>
+                <button id="game_btn_2"></button>
+
+                <br>
+
+                <button id="game_btn_3"></button>
+                <button id="game_btn_4"></button>
+
+                <br>
+
+                <div class="progress_bar" id="progress_bar_wrapper">
+                    <div id="progress_bar" style='width: 100%; height: 100%; background-color: white'></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="game_over_screen" style="display: none">
+            <table class="game_over_table" style='font-size: 16px'>
+                <tr>
+                    <th>Score</th>
+                    <th>Best</th>
+                </tr>
+                <tr>
+                    <td id="score">0</td>
+                    <td id="best_score">0</td>
+                </tr>
+            </table>
+            <br>
+
+            <div id="game_over_story"></div>
+
+            <button id="game_over_main_menu" onclick="promptScreen('title_screen'); game.resetGame()" class="glitch"
+                style='height: 50px; position: fixed; width: 275px; top: 475px'>Main Menu</button>
+            <button id="game_over_view_score" onclick="promptScreen('game_score_screen'); game.drawPlayerScores(); game.animateMultiplayerGameOverText()" class="glitch"
+                style='height: 50px; position: fixed; width: 275px; top: 475px; display: none'>View Score</button>
+        </div>
+
+        <div id="game_score_screen" style="display: none">
+            <h1>Score</h1><br>
+
+            <table id="team_score" style='max-height: 200px; overflow-y: auto'>
+                <tr>
+                    <th>Person</th>
+                    <th>1</th>
+                </tr>
+            </table>
+
+            <br><br>
+
+            <div style='margin-left: 70px; height: 270px; overflow: auto' id='multiplayer_game_story'>
+            </div>
+
+            <br><br>
+            <button id="play_again_btn" onclick="playAgain()" class="glitch"
+                style='height: 50px; width: 200px; float: left; margin-left: 70px'>Play Again</button>
+        </div>
+
+        <div id="multiplayer_setup_screen" style="display: none">
+            <h1 class="no_margin">Secure Access</h1>
+            <p class="no_margin" style='text-align: center'>(Multiplayer portal)</p>
+
+            <br><br>
+            <p style='text-align: center'>Enter your secure username</p>
+            <input type="text"  maxlength="20" style='position: relative; left: 115px' required="required" id="username" placeholder="YOUR-NAME"
+                autocomplete="off"></input>
+            <br>
+            <button onclick="setupUsername()" class="glitch" id="submit_username"
+                style='height: 50px; position: relative; width: 275px; left: 105px'>Submit</button>
+        </div>
+
+        <div id="multiplayer_setup_screen_2" style="display: none">
+            <h1 style='text-align: left'>Multiplayer</h1>
+
+            <p class="no_margin"><b>Subject Name: </b> <span id="subject_name"></span></p>
+            <br>
+
+            <a class="url_box game-link" id="url" onclick="copyGameLink()">Generating a game url...<br></a>
+            <br><br>
+            <p class="no_margin">List of acquired subjects:</p>
+
+            <ul id="users_joined">
+            </ul>
+
+            <br><br><br>
+            <span style='font-size: 6px; color: #1F1F1F'>
+                <p class="no_margin" style='width: 450px'>
+                    79 6F 75 20 68 61 76 65 20 77 61 79 20 74 6F 6F 20 6d 75 63 68 20 74 69 6D 65 20 6F 6E 20 79 6F 75 72 20 68 61 6E 64 73<br>
+                    6C 69 6B 65 20 73 65 72 69 6F 75 73 6C 79 20 67 65 74 20 61 20 68 6F 62 62 79 20 6F 72 20 73 6F 6D 65 74 68 69 6E 67
+                </p>
+            </span>
+
+            <br><br>
+            <button onclick="startGame()" class="glitch" style='height: 50px; width: 275px; margin: 0' id='start_interrogate'>Start Interrogation</button>
+        </div>
+
+        <div id="countdown_screen" style="display: none">
+            <br><br><br>
+            <h3>Interrogation will begin in</h3>
+            <p id="counter" style='font-size: 70px; text-align: center'>3</p>
+        </div>
+
+        <div id="help_screen" style="display: none">
+            <h1>Help</h1>
+            <h3>(A.K.A What You'll Be Needing)</h3>
+            <p>
+                The Incident was a global catastrophe in which all world leaders were killed simultaneously.
+                You are a person of interest brought to us for questioning.
+            </p>
+
+            You are expected to:
+            <ol>
+                <li>Answer questions quickly.</li>
+                <li>Give identical responses to identical questions.</li>
+                <li>Accept your fate when it is over.</li>
+            </ol>
+
+            <br>
+            <button onclick="promptScreen('title_screen')" class="glitch" style='height: 50px; position: relative; left: 150px'>Main Menu</button>
+        </div>
+
+        <div id="credits_screen" style="display: none">
+            <h1>Credits</h1>
+            <h3>(A.K.A Who To Blame)</h3>
+            <br>
+
+            <p style='text-align: center'>Clone by Bowserinator</p>
+            <p style='text-align: center'>The original game (Indefinite Interrogation) was by Brandon Li. Credits for gameplay, game design,
+            game content, etc... all go to him.</p>
+
+            <br>
+            <button onclick="promptScreen('title_screen')" class="glitch" style='height: 50px; position: relative; left: 150px'>Main Menu</button>
+        </div>
+
+        <script src="/shared/js/index.js"></script>
+
+        <script src="js/random_util.js"></script>
+        <script src="js/data.js"></script>
+        <script src="js/timer.js"></script>
+        <script src="js/report.js"></script>
+        <script src="js/question.js"></script>
+
+        <script src="js/html.js"></script>
+        <script src="js/main.js"></script>
+        <script src="js/multiplayer.js"></script>
+    </body>
+</html>
