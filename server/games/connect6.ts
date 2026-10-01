@@ -2,6 +2,8 @@ import Game from '../game.js';
 import Client from '../client.js';
 
 const BOARD_SIZE = 19;
+const BLITZ_TIMES = [60, 180, 300, 600];
+const CLOCK_INTERVAL = 250;
 
 enum Turn {
     BLACK, WHITE
@@ -11,8 +13,12 @@ enum Winner {
 }
 
 interface Connect6Message {
+    type?: string;
     restart?: boolean;
     moves?: Array<Array<number>>;
+    mode?: string;
+    highlight?: boolean;
+    blitzTime?: number;
 }
 
 class Connect6Game extends Game {
@@ -22,6 +28,12 @@ class Connect6Game extends Game {
     winningLine: Array<Array<number>>;
     board: Array<Array<number>>;
     lastMoves: Array<Array<number>>;
+    mode: string;
+    highlight: boolean;
+    blitzTime: number;
+    clocks: Array<number>;
+    interval: ReturnType<typeof setInterval> | null;
+    lastClockTick: number;
 
     constructor() {
         super();
@@ -31,6 +43,12 @@ class Connect6Game extends Game {
         this.winningLine = [];     // [[x, y], [x, y]]
         this.lastMoves = [];       // [[x, y], ...]
         this.board = [];           // 2D array of 0, 1 or 2 (empty, black or white)
+        this.mode = 'normal';
+        this.highlight = false;
+        this.blitzTime = 300;
+        this.clocks = [300000, 300000];
+        this.interval = null;
+        this.lastClockTick = Date.now();
     }
 
     /**
@@ -84,6 +102,7 @@ class Connect6Game extends Game {
         this.round = 0;
         this.winningLine = [];
         this.lastMoves = [];
+        this.clocks = [this.blitzTime * 1000, this.blitzTime * 1000];
 
         this.board = [];
         for (let row = 0; row < BOARD_SIZE; row++) {
@@ -91,6 +110,8 @@ class Connect6Game extends Game {
             for (let col = 0; col < BOARD_SIZE; col++)
                 this.board[row].push(0);
         }
+
+        this.updateClockTimer();
     }
 
     globalStateSync(player: Client) {
@@ -109,8 +130,89 @@ class Connect6Game extends Game {
             youAre: this.players.indexOf(player),
             winner: this.winner,
             winningLine: this.winningLine,
-            lastMoves: this.lastMoves
+            lastMoves: this.lastMoves,
+            mode: this.mode,
+            highlight: this.highlight,
+            blitzTime: this.blitzTime,
+            clocks: this.clocks
         };
+    }
+
+    syncAll() {
+        for (let player of this.players) {
+            if (!player) continue;
+            let msg = this.globalStateSync(player);
+            msg.type = 'SYNC';
+            player.connection.sendUTF(JSON.stringify(msg));
+        }
+    }
+
+    broadcastClock() {
+        this.broadcast({
+            type: 'CLOCK',
+            clocks: this.clocks,
+            turn: this.turn
+        });
+    }
+
+    updateClockTimer() {
+        let shouldRun = this.mode === 'blitz' && !this.winner;
+
+        if (shouldRun && this.interval === null) {
+            this.lastClockTick = Date.now();
+            this.interval = setInterval(() => this.clockTick(), CLOCK_INTERVAL);
+        } else if (!shouldRun && this.interval !== null) {
+            clearInterval(this.interval);
+            this.interval = null;
+        }
+    }
+
+    clockTick() {
+        let now = Date.now();
+        let dt = now - this.lastClockTick;
+        this.lastClockTick = now;
+
+        if (this.mode !== 'blitz' || this.winner || this.round === 0 ||
+            !this.players[0] || !this.players[1]) return;
+
+        this.clocks[this.turn] -= dt;
+        if (this.clocks[this.turn] <= 0) {
+            this.clocks[this.turn] = 0;
+            this.winner = this.turn === 0 ? Winner.WHITE : Winner.BLACK;
+            this.broadcastClock();
+            this.syncAll();
+            this.updateClockTimer();
+            return;
+        }
+
+        this.broadcastClock();
+    }
+
+    onMessage(client: Client, message: Connect6Message) {
+        if (message.type !== 'SETTINGS') return;
+        if (client !== this.players[0] || this.round !== 0) return;
+
+        this.mode = message.mode === 'blitz' ? 'blitz' : 'normal';
+        this.highlight = !!message.highlight;
+        if (message.blitzTime !== undefined && BLITZ_TIMES.includes(message.blitzTime))
+            this.blitzTime = message.blitzTime;
+        this.clocks = [this.blitzTime * 1000, this.blitzTime * 1000];
+        this.updateClockTimer();
+
+        this.broadcast({
+            type: 'SETTINGS',
+            mode: this.mode,
+            highlight: this.highlight,
+            blitzTime: this.blitzTime
+        });
+        this.broadcastClock();
+    }
+
+    onRemove() {
+        if (this.interval !== null) {
+            clearInterval(this.interval);
+            this.interval = null;
+        }
     }
 
     onMove(client: Client, message: Connect6Message) {
@@ -152,12 +254,14 @@ class Connect6Game extends Game {
         for (let move of message.moves)
             if (this.checkForWin(move)) {
                 this.winner = this.turn + 1;
+                this.updateClockTimer();
                 return;
             }
         // Draw, if entire board is filled and previous win check
         // hasn't passed
         if (!this.board.some(x => x.some(y => y))) {
             this.winner = Winner.DRAW;
+            this.updateClockTimer();
             return;
         }
 

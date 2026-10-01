@@ -25,6 +25,8 @@ canvas {
     // Only apply when screen is large
     canvas {  margin: 10px 40px;  }
 
+    .title-row { margin-right: 40px; }
+
     .right-container { margin: 0 48px 0 0; }
 
     .right-container > div:not(:first-child) {
@@ -81,6 +83,12 @@ canvas {
 }
 
 // Title of the page
+.title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
 .connect6-title {
     font-size: 16pt;
     font-family: 'Raleway', Sans-Serif;
@@ -260,6 +268,80 @@ button:disabled {
     font-size: 13pt;
     margin-bottom: 6px;
     color: #F44336;
+}
+
+#lobby-settings {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 32px;
+}
+
+.lobby-setting {
+    display: flex;
+    flex-direction: column;
+
+    label {
+        font-family: 'Raleway', Sans-Serif;
+        font-size: 10pt;
+        color: #777;
+        margin-bottom: 5px;
+    }
+
+    select {
+        outline: none;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        background-color: white;
+        color: #333;
+        font-family: 'Open Sans', Sans-Serif;
+        font-size: 11pt;
+        min-width: 130px;
+        cursor: pointer;
+        transition: border-color 0.1s;
+
+        &:hover {
+            border-color: #999;
+        }
+
+        &:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+    }
+}
+
+#timers {
+    display: none;
+    vertical-align: middle;
+    margin-left: auto;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.blitz-timer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 18px;
+    color: #999;
+    font-family: 'Raleway', Sans-Serif;
+    transition: color 0.1s;
+
+    &.running {
+        color: black;
+    }
+}
+
+.blitz-timer-label {
+    font-size: 9pt;
+    letter-spacing: 1px;
+    opacity: 0.6;
+}
+
+.blitz-timer-time {
+    font-size: 15pt;
+    font-variant-numeric: tabular-nums;
 }
 
 // Scrollbar

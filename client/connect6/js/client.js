@@ -86,6 +86,97 @@ function updateHTML() {
         turn.innerText = `IT'S ${idToName(gameState.currentTurn).toUpperCase()}'S TURN`;
 }
 
+const BLITZ_TIME_OPTIONS = [60, 180, 300, 600];
+
+let clockSync = { clocks: [300000, 300000], turn: 0, at: 0 };
+
+function updateLobbySettings() {
+    let isHost = gameState.youAre === 0;
+    let canChange = isHost && gameState.currentRound === 0;
+    let show = gameState.youAre >= 0;
+
+    document.getElementById('lobby-settings').style.display = show ? 'flex' : 'none';
+    document.getElementById('blitz-time-setting').style.display =
+        (show && gameState.mode === 'blitz') ? 'flex' : 'none';
+
+    document.getElementById('setting-mode').disabled = !canChange;
+    document.getElementById('setting-highlight').disabled = !canChange;
+    document.getElementById('setting-blitz-time').disabled = !canChange;
+}
+
+function setTimersVisibility() {
+    document.getElementById('timers').style.display =
+        gameState.mode === 'blitz' ? 'inline-flex' : 'none';
+}
+
+function applySettings(message) {
+    gameState.mode = message.mode === 'blitz' ? 'blitz' : 'normal';
+    gameState.highlight = !!message.highlight;
+    if (BLITZ_TIME_OPTIONS.includes(message.blitzTime))
+        gameState.blitzTime = message.blitzTime;
+
+    document.getElementById('setting-mode').value = gameState.mode;
+    document.getElementById('setting-highlight').value = gameState.highlight ? '1' : '0';
+    document.getElementById('setting-blitz-time').value = String(gameState.blitzTime);
+
+    setTimersVisibility();
+    updateLobbySettings();
+    drawBoard();
+}
+
+function onSettingChange() {
+    let mode = document.getElementById('setting-mode').value;
+    let highlight = document.getElementById('setting-highlight').value === '1';
+    let blitzTime = parseInt(document.getElementById('setting-blitz-time').value, 10);
+
+    applySettings({ mode: mode, highlight: highlight, blitzTime: blitzTime });
+    connection.send(JSON.stringify({
+        type: 'SETTINGS',
+        mode: mode,
+        highlight: highlight,
+        blitzTime: blitzTime
+    }));
+}
+
+function clockText(ms) {
+    if (ms < 0) ms = 0;
+    let seconds = Math.floor(ms / 1000);
+    let m = Math.floor(seconds / 60);
+    let s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+function renderClocks() {
+    let seats = gameState.players;
+    let running = gameState.mode === 'blitz' && gameState.started &&
+        gameState.currentRound > 0 && !gameState.winner && seats[0] && seats[1];
+    let now = performance.now();
+
+    for (let i = 0; i < 2; i++) {
+        let ms = clockSync.clocks[i];
+        if (running && clockSync.turn === i) ms -= now - clockSync.at;
+
+        document.getElementById(`timer${i}-time`).innerText = clockText(ms);
+        document.getElementById(`timer${i}`)
+            .classList.toggle('running', running && clockSync.turn === i);
+    }
+}
+
+function syncClock(clocks, turn) {
+    clockSync = {
+        clocks: clocks && clocks.length === 2 ? clocks.slice() : clockSync.clocks,
+        turn: turn,
+        at: performance.now()
+    };
+    renderClocks();
+}
+
+function clockLoop() {
+    if (gameState.mode === 'blitz') renderClocks();
+    requestAnimationFrame(clockLoop);
+}
+clockLoop();
+
 /** Finalize moves to server */
 function submitMoves() {
     if (gameState.moves.length !== gameState.maxMoves) return;
@@ -124,6 +215,7 @@ connection.onmessage = message => {
     } else if (message.type === 'SYNC') {
         // Game state sync
         gameState.started = message.players[0] && message.players[1];
+        gameState.players = message.players;
         gameState.board = message.board;
         gameState.turn = message.youAre;
         gameState.currentTurn = message.turn;
@@ -135,6 +227,10 @@ connection.onmessage = message => {
         gameState.lastMoves = message.lastMoves;
         gameState.winner = message.winner;
         gameState.winningLine = message.winningLine;
+        gameState.youAre = message.youAre;
+
+        applySettings(message);
+        syncClock(message.clocks, message.turn);
 
         // Highlight active players
         let player0 = document.getElementById('player0');
@@ -163,6 +259,10 @@ connection.onmessage = message => {
         beep();
         drawBoard();
         updateHTML();
+    } else if (message.type === 'SETTINGS') {
+        applySettings(message);
+    } else if (message.type === 'CLOCK') {
+        syncClock(message.clocks, message.turn);
     }
 };
 

@@ -19,6 +19,8 @@ const WHITE_TENTATIVE_COLOR = 'rgba(255, 255, 255, 0.5)'; // For "ghost" placeme
 const PIECE_BORDER = 'black';
 const PIECE_PLACE_BORDER = '#00ff5d'; // When placing, not finalized
 const PIECE_TENTATIVE_THICKNESS = 3;
+const BLACK_HIGHLIGHT_COLOR = '#8B0000';
+const WHITE_HIGHLIGHT_COLOR = '#FF6666';
 
 let cellSize = 2; // Placeholder, will be overwritten on resize
 
@@ -33,7 +35,12 @@ const gameState = {
     lastMoves: [], // Array of [x,y]
 
     currentTurn: 0, // Whose turn is it
-    currentRound: 0 // Round number, increments by 1 each turn
+    currentRound: 0, // Round number, increments by 1 each turn
+    youAre: -1,
+    players: [null, null],
+    mode: 'normal',
+    highlight: false,
+    blitzTime: 300
 };
 
 
@@ -72,6 +79,41 @@ function moveAt(x, y) {
  */
 function lastMoveAt(x, y) {
     return gameState.lastMoves.some(m => m[0] === x && m[1] === y);
+}
+
+function getHighlightedPositions() {
+    let highlighted = new Set();
+    let board = gameState.board;
+
+    if (!gameState.highlight || !board || !board.length) return highlighted;
+
+    const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
+
+    for (let y = 0; y < BOARD_SIZE; y++)
+        for (let x = 0; x < BOARD_SIZE; x++)
+            for (let [dx, dy] of directions) {
+                let xEnd = x + 5 * dx;
+                let yEnd = y + 5 * dy;
+                if (xEnd < 0 || xEnd >= BOARD_SIZE || yEnd < 0 || yEnd >= BOARD_SIZE)
+                    continue;
+
+                let counts = [0, 0, 0];
+                for (let i = 0; i < 6; i++)
+                    counts[board[y + i * dy][x + i * dx]]++;
+
+                for (let state = 1; state <= 2; state++) {
+                    if (counts[state] < 4 || counts[3 - state] > 0) continue;
+
+                    for (let i = 0; i < 6; i++) {
+                        let cx = x + i * dx;
+                        let cy = y + i * dy;
+                        if (board[cy][cx] === state)
+                            highlighted.add(`${cx},${cy}`);
+                    }
+                }
+            }
+
+    return highlighted;
 }
 
 
@@ -174,12 +216,15 @@ function drawBoard() {
     if (!board || !board.length) return;
 
     // Pieces
+    let highlighted = getHighlightedPositions();
     for (let x = 0; x < BOARD_SIZE; x++)
         for (let y = 0; y < BOARD_SIZE; y++) {
             let state = board[y][x];
 
             if (!state) continue; // Empty
             let color = state === 1 ? BLACK_COLOR : WHITE_COLOR;
+            if (highlighted.has(`${x},${y}`))
+                color = state === 1 ? BLACK_HIGHLIGHT_COLOR : WHITE_HIGHLIGHT_COLOR;
             let [cx, cy] = [M + x * cellSize, M + y * cellSize];
 
             drawPiece(cx, cy, color, PIECE_BORDER);

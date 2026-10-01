@@ -24,7 +24,19 @@
 <body>
     <div class="side-by-side">
         <div>
-            <h1 class="connect6-title">六子棋 / CONNECT6</h1><br>
+            <div class="title-row">
+                <h1 class="connect6-title">六子棋 / CONNECT6</h1>
+                <div id="timers">
+                    <div class="blitz-timer" id="timer0">
+                        <span class="blitz-timer-label">BLACK</span>
+                        <span class="blitz-timer-time" id="timer0-time">--:--</span>
+                    </div>
+                    <div class="blitz-timer" id="timer1">
+                        <span class="blitz-timer-label">WHITE</span>
+                        <span class="blitz-timer-time" id="timer1-time">--:--</span>
+                    </div>
+                </div>
+            </div>
             <div class="misc-links">
                 <a href="/">Other Games</a> |
                 <a href="javascript:newGame()">New Game</a>
@@ -84,6 +96,32 @@
                         <small>Click to copy</small><br>
                         <span id="link">Loading...</span>
                     </p>
+
+                    <div id="lobby-settings" style="display: none">
+                        <div class="lobby-setting" id="mode-setting">
+                            <label for="setting-mode">Mode</label>
+                            <select id="setting-mode" onchange="onSettingChange()">
+                                <option value="normal">Normal</option>
+                                <option value="blitz">Blitz</option>
+                            </select>
+                        </div>
+                        <div class="lobby-setting" id="highlight-setting">
+                            <label for="setting-highlight">Highlight 4s</label>
+                            <select id="setting-highlight" onchange="onSettingChange()">
+                                <option value="0">No</option>
+                                <option value="1">Yes (baby mode)</option>
+                            </select>
+                        </div>
+                        <div class="lobby-setting" id="blitz-time-setting" style="display: none">
+                            <label for="setting-blitz-time">Blitz Time</label>
+                            <select id="setting-blitz-time" onchange="onSettingChange()">
+                                <option value="60">1 min</option>
+                                <option value="180">3 min</option>
+                                <option value="300">5 min</option>
+                                <option value="600">10 min</option>
+                            </select>
+                        </div>
+                    </div>
                     <br>
                 </div>
                 <!-- End game tab -->
