@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="Watermelon Chess - Hellomouse Games">
+    <meta name="author" content="Bowserinator">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Social meta -->
+    <meta property="og:title" content="Watermelon Chess - Hellomouse Games">
+    <meta property="og:description" content="A traditional Chinese game of surrounding, for two players.">
+    <meta property="og:image" content="/watermelon_chess/img/thumbnail.jpg">
+
+    <title>Watermelon Chess</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;600&family=ZCOOL+XiaoWei&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/shared/css/index.css">
+    <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body>
+    <div class="side-by-side">
+        <div>
+            <div class="title-row">
+                <h1 class="game-title"><span class="brush">西瓜棋</span> / WATERMELON CHESS</h1>
+            </div>
+            <div class="misc-links">
+                <a href="/">Other Games</a> |
+                <a href="javascript:newGame()">New Game</a>
+            </div>
+            <canvas id="board"></canvas>
+        </div>
+        <!-- Hack to fill remaining space -->
+        <div style="min-width: 0; flex-grow: 1;">
+            <div class="js-tab-container right-container">
+                <div class="js-tabs">
+                    <div>Game</div>
+                    <div>Rules & Controls</div>
+                    <div>About</div>
+                </div>
+                <div>
+                    <div class="players">
+                        <div class="piece red" id="turn-piece"></div>
+                        <div class="player red" id="turn">
+                            IT IS REDS TURN
+                        </div>
+                    </div>
+
+                    <div class="players-split">
+                        <div class="players missing" id="player0">
+                            <div class="piece red"></div>
+                            <span class="player red">RED PLAYER</span>
+                        </div>
+                        <div class="players missing" id="player1">
+                            <div class="piece yellow"></div>
+                            <span class="player yellow">YELLOW PLAYER</span>
+                        </div>
+                    </div>
+
+                    <!-- Cancel .players padding -->
+                    <div class="players" style="padding-left: 0">
+                        YOU ARE
+                        <span class="player red" id="youare">RED PLAYER</span>
+                    </div>
+
+                    <hr><br>
+
+                    <div id="disabled-reason">⚠️ Game has not started</div>
+
+                    <br><br><br>
+
+                    <h2>Invite Link</h2>
+
+                    <p>
+                        Use the invite link below to invite a friend or spectator! Players are
+                        assigned on a first-come first-serve basis.
+                    </p>
+
+                    <p class="game-link" onclick="copyLinkToClipboard(document.getElementById('link').innerText)">
+                        <small>Click to copy</small><br>
+                        <span id="link">Loading...</span>
+                    </p>
+                    <br>
+                </div>
+                <!-- End game tab -->
+                <div>
+                    <h2>Rules</h2>
+                    <ol>
+                        <li>Red moves first.</li>
+                        <li>On your turn, move one of your pieces along a line to a neighbouring empty
+                            point.<sup>[1]</sup>
+                        </li>
+                        <li>A piece is <b>trapped</b> when every neighbouring point is occupied.</li>
+                        <li>A trapped piece is captured only if its owner has <b>no move</b> that can
+                            free it. A move frees the piece only when one of the pieces beside it moves
+                            away to an empty point. Capturing an attacker does not free a piece, because
+                            the attacker can answer by capturing it.
+                        </li>
+                        <li>Only <b>one</b> piece can be captured per turn. If your move traps several
+                            pieces, you pick which one is removed.
+                        </li>
+                        <li>You win by reducing your opponent to <b>two pieces</b>.</li>
+                    </ol>
+
+                    <p>
+                        Games with no progress are drawn. This happens when a position repeats three
+                        times, or when the player to move has no legal move.
+                    </p>
+
+                    <a href="https://en.wikipedia.org/wiki/Xi_Gua_Qi">[1] Board and movement taken
+                        from Wikipedia</a>
+
+                    <br><br>
+                    <h2>Controls</h2>
+                    <ul>
+                        <li>Click one of your pieces, then click a dotted point to move it there. The
+                            move is sent right away.
+                        </li>
+                        <li>If your move traps several pieces, click the ringed piece to choose which
+                            one is removed.
+                        </li>
+                        <li>Press Escape or click the piece again to cancel.</li>
+                        <li>The red square marks where the last move ended.</li>
+                    </ul>
+                </div>
+                <!-- End rules tab -->
+                <div>
+                    <h2>About</h2>
+                    <p>
+                        This web game made by Bowserinator.
+                    </p>
+
+                    <p>
+                        Watermelon chess (西瓜棋, Xi Gua Qi) is a traditional two player game of
+                        surrounding, played for centuries in eastern China. It is played on a round
+                        board that looks like a sliced watermelon, hence the name.
+                    </p>
+
+                    <p>
+                        Each player starts with six pieces, and no new pieces are ever placed. Every
+                        game is won by surrounding what is already on the board.
+                    </p>
+                </div>
+                <!-- End about tab -->
+            </div>
+        </div>
+        <!-- End side by side right part -->
+    </div>
+
+    <div style="display: none" id="modals">
+        <div class="modal-darken"></div>
+        <div class="modal">
+            <h1 id="winner">X WINS!</h1>
+            <button onclick="restart()">Play Again</button>
+        </div>
+    </div>
+
+    <script src="/shared/js/index.js"></script>
+    <script src="./js/game.js"></script>
+    <script src="./js/client.js"></script>
+</body>
+
+</html>

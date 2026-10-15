@@ -1,0 +1,344 @@
+$paper: #f6efdf;
+$panel: #fffaf0;
+$ink: #241c16;
+$seal: #a8322d;
+$gold: #e8b73a;
+$jade: #2f6b5f;
+
+$lattice: repeating-linear-gradient(45deg, rgba(168, 50, 45, 0.05) 0 1px, transparent 1px 14px),
+    repeating-linear-gradient(-45deg, rgba(168, 50, 45, 0.05) 0 1px, transparent 1px 14px);
+$grain: repeating-linear-gradient(0deg, rgba(36, 28, 22, 0.025) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, rgba(36, 28, 22, 0.025) 0 1px, transparent 1px 4px);
+
+body {
+    margin: 0;
+    color: $ink;
+    background-color: $paper;
+    background-image: $grain;
+    font-family: 'Noto Serif SC', Serif;
+}
+
+h2 {
+    margin-top: 20px;
+    color: $ink;
+    font-family: 'ZCOOL XiaoWei', Serif;
+    font-weight: normal;
+    border-bottom: 1px solid rgba(168, 50, 45, 0.25);
+}
+
+a {
+    color: $seal;
+}
+
+canvas {
+    border: 1px solid rgba(36, 28, 22, 0.35);
+    margin: 10px 0;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+}
+
+@media only screen and (min-width: 992px) {
+    // Only apply when screen is large
+    canvas {  margin: 10px 40px;  }
+
+    .title-row { margin-right: 40px; }
+
+    .right-container { margin: 0 48px 0 0; }
+
+    .right-container > div:not(:first-child) {
+        height: 80vh;
+    }
+}
+
+// Other links at the top
+.misc-links {
+    color: rgba(36, 28, 22, 0.35);
+    padding: 6px;
+}
+
+// Tab content, framed like a lattice window
+.js-tab-container {
+    &>div:not(:first-child) {
+        padding: 30px;
+        border: 1px solid rgba(36, 28, 22, 0.25);
+        overflow-y: auto;
+        background-color: rgba(255, 250, 240, 0.7);
+        background-image: $lattice;
+    }
+}
+
+// Tabs themselves
+.js-tabs {
+    display: flex;
+    flex-direction: row;
+    margin-top: 20px;
+    font-family: 'ZCOOL XiaoWei', Serif;
+    font-size: 13pt;
+    letter-spacing: 1px;
+
+    &>div {
+        padding: 6px 20px;
+        background-color: rgba(36, 28, 22, 0.05);
+        border: 1px solid rgba(36, 28, 22, 0.25);
+        border-top: 4px solid transparent;
+        color: rgba(36, 28, 22, 0.55);
+        transition: color 0.05s,
+            border-color 0.05s,
+            background-color 0.05s;
+        user-select: none;
+    }
+
+    &>div.active {
+        // Red to gold rule, drawn inside the transparent top border
+        border-top: 4px solid transparent;
+        border-bottom: none;
+        background-color: rgba(255, 250, 240, 0.7);
+        background-image: linear-gradient(90deg, $seal, $gold);
+        background-size: 100% 4px;
+        background-position: top;
+        background-repeat: no-repeat;
+        box-shadow: 0px 1px 0px 0px rgba(255, 250, 240, 0.7); // Cover the border
+        color: $ink;
+        z-index: 100;
+    }
+}
+
+// Title of the page
+.title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.game-title {
+    font-size: 16pt;
+    font-family: 'ZCOOL XiaoWei', Serif;
+
+    margin: 10px 0 0 0;
+    padding: 12px 24px 12px 70px;
+    display: inline-block;
+
+    background-color: $ink;
+    // Vermilion seal on the left, like a signature stamp
+    background-image: radial-gradient(circle at 35px 50%, $seal 0 17px,
+            rgba(168, 50, 45, 0.4) 17px 19px, transparent 19px);
+    color: $paper;
+
+    .brush {
+        font-family: 'Ma Shan Zheng', cursive;
+        font-size: 18pt;
+    }
+}
+
+// Invite link
+// Small label
+.game-link>small {
+    color: rgba(36, 28, 22, 0.55);
+}
+
+// Main container
+.game-link {
+    font-size: 12pt;
+    margin-bottom: 0;
+
+    border-bottom: 1px solid rgba(168, 50, 45, 0.5);
+    white-space: nowrap;
+    color: $ink;
+    background-color: rgba(36, 28, 22, 0.03);
+    padding: 12px;
+    overflow-x: auto;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+@keyframes flash {
+    from {
+        background-color: rgba(232, 183, 58, 0.35);
+    }
+    to {
+        background-color: rgba(36, 28, 22, 0.03);
+    }
+}
+
+.game-link.flash {
+    animation: flash 0.3s ease-in-out 0s;
+}
+
+
+// Buttons
+button {
+    outline: none;
+    border: 1px solid rgba(232, 183, 58, 0.6);
+    width: 100%;
+    border-radius: 0;
+
+    padding: 20px 40px;
+    background-color: $ink;
+    color: $paper;
+    cursor: pointer;
+
+    font-family: 'ZCOOL XiaoWei', Serif;
+    font-weight: normal;
+    font-size: 14pt;
+    letter-spacing: 1px;
+    user-select: none;
+
+    box-shadow: 0px 0.7px 1.3px rgba(36, 28, 22, 0.057),
+        0px 2.5px 4.2px rgba(36, 28, 22, 0.083),
+        0px 11px 19px rgba(36, 28, 22, 0.14);
+    transition: 0.2s box-shadow, 0.2s background-color;
+}
+
+button:hover {
+    box-shadow: 0px 2px 1.3px rgba(36, 28, 22, 0.057),
+        0px 6.7px 4.2px rgba(36, 28, 22, 0.083),
+        0px 15px 19px rgba(36, 28, 22, 0.14);
+    background-color: $seal;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+
+// Player text container
+.players {
+    line-height: 30pt;
+    vertical-align: middle;
+    position: relative;
+    font-size: 14pt;
+    margin-right: 20px;
+    margin-top: 10px;
+
+    &.missing {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+}
+
+// Circle
+.piece {
+    display: none;
+
+    &.red {
+        background-color: $seal;
+    }
+
+    &.yellow {
+        background-color: $gold;
+    }
+}
+
+// Player text
+.player {
+    padding: 6px 15px;
+    border: 1px solid $ink;
+    font-family: 'ZCOOL XiaoWei', Serif;
+    transition: background-color 0.1s, color 0.1s;
+
+    &.red {
+        background-color: $seal;
+        color: $paper;
+    }
+
+    &.yellow {
+        background-color: $gold;
+        color: $ink;
+    }
+}
+
+
+// Split the two players horizontally when there's room
+.players-split {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+@media only screen and (min-width: 992px) {
+    .piece {
+        width: 20pt;
+        height: 20pt;
+        border-radius: 50%;
+        border: 1px solid $ink;
+        display: inline-block;
+        transform: translateY(-50%);
+        top: 50%;
+        left: 0;
+        position: absolute;
+    }
+
+    .players {
+        padding-left: 30pt;
+    }
+}
+
+// Win modal
+.modal {
+    bottom: 20px;
+    right: 20px;
+    background-color: $panel;
+    background-image: $lattice;
+    border: 1px solid rgba(36, 28, 22, 0.25);
+    max-width: 100%;
+    min-width: 600px;
+    padding: 30px;
+
+    &>h1 {
+        margin: 0 0 10px 0;
+        font-family: 'ZCOOL XiaoWei', Serif;
+    }
+}
+
+// The warning text why you can't move
+#disabled-reason {
+    font-size: 13pt;
+    margin-bottom: 6px;
+    color: $seal;
+}
+
+// Scrollbar
+::-webkit-scrollbar {
+    width: 4px;
+    height: 2px;
+}
+
+::-webkit-scrollbar-button {
+    width: 0px;
+    height: 0px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(168, 50, 45, 0.3);
+    border: 0px none $panel;
+    border-radius: 50px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: $seal;
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: $ink;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(36, 28, 22, 0.15);
+    border: 0px none $panel;
+    border-radius: 50px;
+}
+
+::-webkit-scrollbar-track:hover {
+    background: rgba(36, 28, 22, 0.15);
+}
+
+::-webkit-scrollbar-track:active {
+    background: rgba(36, 28, 22, 0.25);
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
