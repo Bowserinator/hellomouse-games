@@ -4,6 +4,7 @@ import Client from '../client.js';
 const BOARD_SIZE = 19;
 const BLITZ_TIMES = [60, 180, 300, 600];
 const CLOCK_INTERVAL = 250;
+const MOVE_TIME_BONUS = 5000;
 
 enum Turn {
     BLACK, WHITE
@@ -248,6 +249,11 @@ class Connect6Game extends Game {
         }
 
         this.lastMoves = message.moves;
+
+        // Each move adds time back to the clock of the player who made it.
+        // This runs before the turn changes, so this.turn is still the mover
+        if (this.mode === 'blitz')
+            this.clocks[this.turn] += MOVE_TIME_BONUS;
 
         // Check for wins
         // Only need to check areas around the two moves
