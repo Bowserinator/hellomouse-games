@@ -32,6 +32,14 @@
     pointer-events: auto;
 }
 
+body:has(#prompt-body[data-prompt-required='true']) #hud:has(#hand .neigh-ready) {
+    z-index: 1201;
+}
+
+body:has(#prompt-body[data-prompt-required='true']) #hand .hand-card:not(.neigh-ready) {
+    pointer-events: none;
+}
+
 #game,
 #hud,
 #preview-layer,
@@ -73,6 +81,11 @@
     color: $ink;
 }
 
+.hud-row,
+.hand-tools {
+    transform: translateY(-$hand-drop);
+}
+
 .hand-tools {
     position: relative;
     z-index: 4;
@@ -106,8 +119,10 @@
     justify-content: center;
     width: 100%;
     min-width: 0;
+    pointer-events: none;
     height: auto;
     min-height: calc(#{$card-h} + 20px);
+    margin-bottom: -$hand-drop;
     padding-top: 20px;
 
     &::before {
@@ -126,6 +141,11 @@
 }
 
 .hand-card {
+    .card-face {
+        transform: scale(1.15);
+        transform-origin: 50% 100%;
+    }
+
     filter: #{"saturate(var(--hand-saturation)) brightness(var(--hand-brightness)) contrast(var(--hand-contrast))"};
     transform-origin: 50% 100%;
     transform: rotate(var(--fan-deg, 0deg)) translateY(var(--fan-y, 0px));

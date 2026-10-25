@@ -60,10 +60,11 @@ export interface PromptView {
     players: Array<number>;
     min: number;
     max: number;
+    canCancel?: boolean;
 }
 
 export interface ChainView {
-    top: { id: number; card: Iid; by: number; kind: 'play' | 'neigh' } | null;
+    top: { id: number; card: Iid; by: number; kind: 'play' | 'neigh'; publicDefId?: string } | null;
     canNeigh: boolean;
 }
 

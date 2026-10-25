@@ -36,8 +36,8 @@ export function moveCtxOf(ex: ExecCtx): MoveCtx {
     return {
         ...worldOf(ex),
         log: ex.log,
-        runReplacement: (player, source, effect) => {
-            ex.queue({ source, player, effect: effect.id as NodeId });
+        runReplacement: (player, source, effect, event) => {
+            ex.queue({ source, player, effect: effect.id as NodeId, event });
         }
     };
 }
@@ -54,7 +54,14 @@ export function sourceOf(frame: Frame): Iid | null {
 
 export function eventOf(frame: Frame): CardEvent | undefined {
     const type = frame.bindings.frameEvent;
-    return typeof type === 'string' ? { type: type as CardEvent['type'] } : undefined;
+    if (typeof type !== 'string') return undefined;
+    const card = frame.bindings.frameEventCard;
+    const player = frame.bindings.frameEventPlayer;
+    return {
+        type: type as CardEvent['type'],
+        card: typeof card === 'string' ? card : undefined,
+        player: typeof player === 'number' ? player : undefined
+    };
 }
 
 export function getBinding(frame: Frame, key: string): Binding | undefined {

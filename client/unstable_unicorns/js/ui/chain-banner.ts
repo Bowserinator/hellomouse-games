@@ -1,4 +1,5 @@
 import { cardName } from './card.js';
+import { WILDCARD } from '../vars.js';
 import type { ViewModel } from '../engine/view.js';
 
 const PHASE_TEXT: Record<string, string> = {
@@ -38,12 +39,16 @@ export class ChainBanner {
 
         if (view.chain.top) {
             const top = view.chain.top;
-            const defId = view.cards[top.card]?.defId;
+            const defId = top.publicDefId ?? view.cards[top.card]?.defId;
             this.host.dataset.state = 'chain';
-            this.host.append(
-                element('span', 'banner-title', `${name(top.by)} played`),
-                element('span', 'banner-card', defId ? cardName(defId) : 'a card')
-            );
+            const card = element('span', 'banner-card', defId ? cardName(defId) : 'a card');
+            if (defId && defId !== WILDCARD) {
+                card.dataset.iid = top.card;
+                card.dataset.defId = defId;
+                card.tabIndex = 0;
+                card.setAttribute('aria-label', `Preview ${cardName(defId)}`);
+            }
+            this.host.append(element('span', 'banner-title', `${name(top.by)} played`), card);
             if (view.chain.canNeigh) this.host.append(element('span', 'banner-hint', 'Neigh to undo it'));
             if (view.pendingWinner !== null)
                 this.host.append(element('span', 'banner-warn',

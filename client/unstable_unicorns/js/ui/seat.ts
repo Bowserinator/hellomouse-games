@@ -19,6 +19,28 @@ function element(tag: string, className: string, text?: string): HTMLElement {
     return node;
 }
 
+export class StatusTooltip {
+    private node: HTMLElement;
+
+    constructor(host: HTMLElement) {
+        this.node = element('div', 'status-tooltip');
+        this.node.setAttribute('role', 'tooltip');
+        this.node.hidden = true;
+        host.append(this.node);
+    }
+
+    show(text: string, x: number, y: number): void {
+        this.node.textContent = text;
+        this.node.style.left = `${x}px`;
+        this.node.style.top = `${y}px`;
+        this.node.hidden = false;
+    }
+
+    hide(): void {
+        this.node.hidden = true;
+    }
+}
+
 function initials(name: string | null, seat: number): string {
     const trimmed = (name ?? '').trim();
     return trimmed ? trimmed.slice(0, 1).toUpperCase() : String(seat + 1);
@@ -57,8 +79,22 @@ function fan(info: SeatInfo, seat: number): HTMLElement {
         : 1;
     holder.style.setProperty('--hand-step', step.toFixed(3));
     holder.dataset.count = String(count);
-    holder.setAttribute('aria-hidden', 'true');
-    for (let index = 0; index < count; index++) holder.append(element('span', 'card-back'));
+    const hand = info.view.players[seat].hand;
+    if (hand) {
+        holder.setAttribute('aria-label', 'Visible hand');
+        hand.forEach((iid, index) => {
+            const defId = info.view.cards[iid]?.defId;
+            if (!defId) return;
+            const slot = cardSlot(iid, defId);
+            slot.classList.add('seat-hand-card');
+            slot.style.setProperty('--i', String(index));
+            slot.style.setProperty('--step', String(step));
+            holder.append(slot);
+        });
+    } else {
+        holder.setAttribute('aria-hidden', 'true');
+        for (let index = 0; index < count; index++) holder.append(element('span', 'card-back'));
+    }
     return holder;
 }
 

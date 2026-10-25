@@ -239,6 +239,8 @@ export function validateCard(def: CardDef, customs: Set<string>): Array<string> 
     (def.triggers ?? []).forEach((trigger, i) => {
         const path = `${def.id}#trigger${i}`;
         if (!EVENT_TYPES.includes(trigger.on)) bad(path, `unknown event ${String(trigger.on)}`);
+        if (trigger.scope !== undefined && !['source', 'owner'].includes(trigger.scope))
+            bad(path, `unknown trigger scope ${String(trigger.scope)}`);
         if (trigger.when) checkCond(trigger.when, `${path}.when`);
         checkEffect(trigger.effect, path);
     });
@@ -247,6 +249,8 @@ export function validateCard(def: CardDef, customs: Set<string>): Array<string> 
         const path = `${def.id}#replace${i}`;
         if (replacement.r !== 'replace') bad(path, `unknown replacement kind ${String(replacement.r)}`);
         if (!EVENT_TYPES.includes(replacement.when)) bad(path, `unknown event ${String(replacement.when)}`);
+        if (replacement.scope !== undefined && !['source', 'owner'].includes(replacement.scope))
+            bad(path, `unknown replacement scope ${String(replacement.scope)}`);
         if (replacement.filter) checkFilter(replacement.filter, `${path}.filter`);
         if (replacement.unless) checkCond(replacement.unless, `${path}.unless`);
         checkEffect(replacement.effect, path);

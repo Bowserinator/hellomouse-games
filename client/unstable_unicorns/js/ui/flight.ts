@@ -26,18 +26,17 @@ export function flyCard(layer: HTMLElement, defId: string, from: DOMRect, to: DO
     animation.finished.catch(() => undefined).finally(() => ghost.remove());
 }
 
-export function stampNeighed(anchor: DOMRect, label = 'Neighed!'): void {
+export function showNeighWarning(layer: HTMLElement, neigher: string, player: string, card: string,
+    superNeigh = false): void {
+    layer.querySelector('.neigh-warning')?.remove();
     const node = document.createElement('div');
-    node.className = 'stamp';
-    node.textContent = label;
-    node.style.left = `${(anchor.left + anchor.width / 2).toFixed(0)}px`;
-    node.style.top = `${(anchor.top + anchor.height / 2).toFixed(0)}px`;
-    document.body.append(node);
-    node.animate([
-        { transform: 'translate(-50%, -50%) rotate(-12deg) scale(0.6)', opacity: 0 },
-        { transform: 'translate(-50%, -50%) rotate(-12deg) scale(1.08)', opacity: 1, offset: 0.35 },
-        { transform: 'translate(-50%, -50%) rotate(-12deg) scale(1)', opacity: 1, offset: 0.8 },
-        { transform: 'translate(-50%, -50%) rotate(-12deg) scale(1)', opacity: 0 }
-    ], { duration: 900, easing: 'ease-out' }).finished.catch(() => undefined)
-        .finally(() => node.remove());
+    node.className = 'neigh-warning';
+    node.setAttribute('role', 'alert');
+    const title = document.createElement('strong');
+    title.textContent = superNeigh ? 'SUPER NEIGH!' : 'NEIGH!';
+    const detail = document.createElement('span');
+    detail.textContent = `${neigher} NEIGHED ${player}'s ${card}`;
+    node.append(title, detail);
+    layer.append(node);
+    setTimeout(() => node.remove(), 3000);
 }

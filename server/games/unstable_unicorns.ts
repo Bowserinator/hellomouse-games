@@ -55,7 +55,7 @@ interface HeldSeat {
 
 const ENGINE_ACTIONS = [
     'PICK_BABY', 'BEGIN_TURN', 'PLAY_CARD', 'DRAW_ACTION',
-    'END_TURN', 'DISCARD', 'RESPOND', 'NEIGH'
+    'END_TURN', 'DISCARD', 'RESPOND', 'CANCEL_PROMPT', 'NEIGH'
 ];
 
 class UnstableUnicornsGame extends Game {

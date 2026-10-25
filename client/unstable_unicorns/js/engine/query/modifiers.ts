@@ -31,6 +31,10 @@ export function baseUnicornType(def: CardDef | undefined): UnicornType | null {
     return def.kind === 'baby' ? 'baby' : 'basic';
 }
 
+function countsAsUnicorn(type: UnicornType | null): boolean {
+    return type !== null && type !== 'panda';
+}
+
 function modifiersOn(world: World, iid: Iid): Array<Modifier> {
     const def = world.defOf(iid);
     return def && def.modifiers ? def.modifiers : [];
@@ -47,7 +51,10 @@ function plainCtx(world: World, self: number): FilterCtx {
         self,
         active: world.state.turn.player,
         defOf: iid => world.defOf(iid),
-        isUnicorn: iid => baseIsUnicorn(world.defOf(iid)),
+        isUnicorn: (iid, type) => {
+            const current = baseUnicornType(world.defOf(iid));
+            return type === undefined ? countsAsUnicorn(current) : current === type;
+        },
         ownerOf: iid => {
             const card = world.state.cards[iid];
             return card ? card.owner : -1;
@@ -57,8 +64,9 @@ function plainCtx(world: World, self: number): FilterCtx {
 
 export function unicornType(world: World, iid: Iid): UnicornType | null {
     let type = baseUnicornType(world.defOf(iid));
-    const owner = world.state.cards[iid] ? world.state.cards[iid].owner : -1;
-    if (owner < 0) return type;
+    const card = world.state.cards[iid];
+    if (!card || card.zone !== 'stable') return type;
+    const owner = card.owner;
 
     const ctx = plainCtx(world, owner);
     for (const iidSource of stableCards(world, owner))
@@ -71,8 +79,7 @@ export function unicornType(world: World, iid: Iid): UnicornType | null {
 
 export function isUnicorn(world: World, iid: Iid, type?: UnicornType): boolean {
     const current = unicornType(world, iid);
-    if (current === null) return false;
-    return type === undefined || current === type;
+    return type === undefined ? countsAsUnicorn(current) : current !== null && current === type;
 }
 
 export function unicornCount(world: World, player: number): number {
@@ -112,12 +119,23 @@ export function stableLimit(world: World, player: number): number {
     return limit;
 }
 
+export function blocksTriggers(world: World, player: number): boolean {
+    return selfModifiers(world, player).some(mod => mod.m === 'blockTriggers');
+}
+
 export function handVisible(world: World, player: number): boolean {
     return selfModifiers(world, player).some(mod => mod.m === 'handVisible');
 }
 
 export function blocksPlay(world: World, player: number, kind: Kind): boolean {
     return selfModifiers(world, player).some(mod => mod.m === 'blockPlay' && mod.kind === kind);
+}
+
+export function blocksOtherPlay(world: World, target: number, player: number, kind: Kind, iid?: Iid): boolean {
+    const ctx = plainCtx(world, target);
+    return target !== player && selfModifiers(world, target).some(mod =>
+        mod.m === 'blockOtherPlay' && mod.kind === kind &&
+        (!mod.filter || iid === undefined || matches(mod.filter, iid, ctx)));
 }
 
 export function protectedFrom(world: World, iid: Iid, against: Protection): boolean {

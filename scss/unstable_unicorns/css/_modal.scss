@@ -2,7 +2,9 @@
 
 .prompt-modal {
     width: min(760px, 92vw);
-    max-height: 82vh;
+    max-width: 92vw;
+    max-height: 90vh;
+    padding: 12px 32px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -16,6 +18,9 @@
     gap: 10px;
 }
 
+.prompt-header h2 {
+    margin: 5px 0;
+}
 
 .prompt-reason {
     font-family: $ui-font;
@@ -30,16 +35,38 @@
 
 .prompt-body {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    padding: 5px;
+    border-top: 2px solid rgba($ink, 0.35);
+    border-bottom: 2px solid rgba($ink, 0.35);
+}
+
+.prompt-player-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.prompt-player-title {
+    margin: 0;
+    padding: 3px 8px;
+    font-family: $ui-font;
+    font-size: 13pt;
+    color: $ink;
+    background: $paper-shade;
+    border-left: 4px solid $rust;
 }
 
 .prompt-group-title {
+    margin: 0;
     font-family: $ui-font;
-    font-size: 12pt;
+    font-size: 11pt;
     color: rgba($ink, 0.7);
+    text-transform: capitalize;
 }
 
 .prompt-grid {
@@ -51,23 +78,181 @@
 .prompt-footer {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 10px;
 }
 
 .prompt-count {
+    margin-right: auto;
     font-size: 11pt;
     color: rgba($ink, 0.55);
 }
 
 .prompt-players,
-.prompt-order-row {
+.prompt-choice-actions {
     display: flex;
+    justify-content: flex-end;
     gap: 8px;
     align-items: center;
     flex-wrap: wrap;
 }
 
+.prompt-players button,
+.prompt-choice-actions button {
+    min-width: 150px;
+}
+
+.prompt-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.prompt-options button {
+    width: 100%;
+}
+
+.prompt-player-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.prompt-player-choice {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    min-width: 0;
+}
+
+.prompt-player-choice > button {
+    width: 100%;
+    min-height: 48px;
+    font-size: 13pt;
+}
+
+.prompt-cancel {
+    grid-column: 1 / -1;
+    width: 100%;
+}
+
+.prompt-player-picker .prompt-cancel {
+    font-size: 13pt;
+}
+
+.prompt-body-order {
+    overflow-x: visible;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+.prompt-order-list {
+    display: flex;
+    max-width: 100%;
+    padding: 8px;
+    margin: -8px;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.prompt-order-card {
+    position: relative;
+    width: $prompt-card-w;
+    height: $prompt-card-h;
+    cursor: grab;
+    touch-action: none;
+
+    &.dragging {
+        opacity: 0.55;
+        cursor: grabbing;
+    }
+
+    &.drop-before::before,
+    &.drop-after::after {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        content: '';
+        background: $signal;
+        border-radius: 2px;
+        box-shadow: 0 0 0 2px $ink;
+        z-index: 3;
+    }
+
+    &.drop-before::before {
+        left: -8px;
+    }
+
+    &.drop-after::after {
+        right: -8px;
+    }
+}
+
+.prompt-order-drag-preview {
+    position: fixed;
+    z-index: 1300;
+    pointer-events: none;
+    opacity: 0.9;
+    transform: rotate(2deg) scale(1.03);
+    box-shadow: 8px 8px 0 rgba($ink, 0.35);
+}
+
+.prompt-order-badge {
+    position: absolute;
+    z-index: 1;
+    top: -6px;
+    left: -6px;
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    color: $paper;
+    background: $rust;
+    border: 2px solid $ink;
+    border-radius: 50%;
+    font-weight: bold;
+}
+
+.prompt-modal .card-slot,
+.prompt-modal .card-face {
+    user-select: none;
+}
+
+.prompt-modal .card-slot {
+    width: $prompt-card-w;
+    height: $prompt-card-h;
+}
+
+.prompt-modal .card-slot .card-face {
+    transform: scale($prompt-card-scale);
+    transform-origin: top left;
+}
+
+.prompt-body-yesno,
+.prompt-body-options,
+.prompt-body-confirm {
+    border: 0;
+}
+
+.prompt-order-card .card-slot {
+    cursor: inherit;
+}
+
+.prompt-order-card .card-slot:hover {
+    transform: none;
+}
+
+.prompt-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.prompt-confirm-actions button {
+    min-width: 150px;
+}
 
 .modal-header {
     display: flex;
@@ -122,6 +307,9 @@
 }
 
 .modal-darken {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
     background-color: rgba($ink, 0.55);
 }
 
@@ -129,6 +317,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    max-height: 90vh;
     padding: 24px 32px;
     background: $paper;
     border: 3px solid $ink;
@@ -139,13 +328,32 @@
 }
 
 body.in-game .modal {
-    top: calc(50% - #{$hud-height} / 2);
+    top: 50%;
+}
+
+.prompt-modal[data-prompt-kind='cards'],
+.prompt-modal[data-prompt-kind='order'] {
+    width: 80vw;
+}
+
+#target-body {
+    width: 80vw;
 }
 
 body.in-game .prompt-modal,
 body.in-game #baby-overlay .modal,
 body.in-game #rules-modal .modal {
-    max-height: calc(100vh - #{$hud-height} - 40px);
+    max-height: 90vh;
+}
+
+.win-modal h1 {
+    margin: 4px 0;
+}
+
+.win-exit-button {
+    display: block;
+    width: 150px;
+    margin: 12px auto 0;
 }
 
 #rules-modal .modal {
@@ -167,8 +375,9 @@ body.in-game #rules-modal .modal {
 
     ul {
         margin: 6px 0;
+        margin-left: 15px;
         padding-left: 0;
-        list-style-position: inside;
+        list-style-position: outside;
         line-height: 1.45;
     }
 }

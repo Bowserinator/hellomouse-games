@@ -1,13 +1,13 @@
-import type { CardDef, CardEvent } from './dsl/ast.js';
+import type { CardDef, CardEvent, Effect } from './dsl/ast.js';
 import type { LoggedEvent } from './events.js';
 import type { Iid } from './ids.js';
 import type { Pending } from './state.js';
 import { holds } from './dsl/cond.js';
 import { moveCard } from './move.js';
 import { condCtx } from './query/active.js';
-import { isUnicorn, stableLimit, unicornCount } from './query/modifiers.js';
+import { blocksTriggers, isUnicorn, protectedFrom, stableLimit, unicornCount } from './query/modifiers.js';
 import { zoneOf } from './zones.js';
-import { worldOf, type ExecCtx } from './exec/context.js';
+import { moveCtxOf, worldOf, type ExecCtx } from './exec/context.js';
 import { run, startEffect, type RunState } from './exec/interpreter.js';
 
 const MAX_CHAIN_STEPS = 10000;
@@ -16,16 +16,24 @@ export function triggerPendings(ex: ExecCtx, event: CardEvent): Array<Pending> {
     const world = worldOf(ex);
     const pendings: Array<Pending> = [];
 
-    for (const player of ex.state.players)
-        for (const iid of player.stable) {
-            const def: CardDef | undefined = ex.defOf(iid);
-            for (const trigger of def?.triggers ?? []) {
-                if (trigger.on !== event.type) continue;
-                if (!trigger.effect.id) continue;
-                if (!holds(trigger.when, condCtx(world, player.id, iid, event))) continue;
-                pendings.push({ source: iid, player: player.id, effect: trigger.effect.id });
-            }
+    const sources = ex.state.players.flatMap(player => player.stable.map(iid => ({ iid, owner: player.id })));
+    if (event.card && event.player !== undefined && ex.state.cards[event.card]?.zone !== 'stable' &&
+        (event.type === 'destroy' || event.type === 'sacrifice' || event.type === 'leaveStable'))
+        sources.push({ iid: event.card, owner: event.player });
+
+    for (const { iid, owner } of sources) {
+        const def: CardDef | undefined = ex.defOf(iid);
+        const departed = ex.state.cards[iid]?.zone !== 'stable';
+        if (departed ? event.suppressed : isUnicorn(world, iid) && blocksTriggers(world, owner)) continue;
+        for (const trigger of def?.triggers ?? []) {
+            if (trigger.on !== event.type || !trigger.effect.id) continue;
+            if (trigger.scope === 'source' && event.card !== iid) continue;
+            if (trigger.scope === 'owner' && event.player !== owner) continue;
+            if (trigger.unicorn && !event.unicorn) continue;
+            if (!holds(trigger.when, condCtx(world, owner, iid, event))) continue;
+            pendings.push({ source: iid, player: owner, effect: trigger.effect.id, event });
         }
+    }
 
     return pendings;
 }
@@ -42,7 +50,6 @@ export function orderPendings(state: { turn: { player: number }; players: Array<
 export function collectEvents(ex: ExecCtx, targeted: Array<Iid>) {
     for (const event of ex.log.drain() as Array<LoggedEvent>)
         for (const pending of triggerPendings(ex, event)) {
-            if (targeted.includes(pending.source)) continue;
             targeted.push(pending.source);
             ex.state.links.next.push(pending);
         }
@@ -51,24 +58,41 @@ export function collectEvents(ex: ExecCtx, targeted: Array<Iid>) {
 function overflowStable(ex: ExecCtx) {
     const world = worldOf(ex);
     for (const player of ex.state.players) {
-        const limit = stableLimit(world, player.id);
-        let extra = player.stable.filter(iid => !isUnicorn(world, iid)).length - limit;
-        for (let i = player.stable.length - 1; i >= 0 && extra > 0; i--) {
-            const iid = player.stable[i];
-            if (isUnicorn(world, iid)) continue;
-            moveCard({ ...world, log: ex.log, runReplacement: (owner, source, effect) => {
-                if (effect.id) ex.queue({ source, player: owner, effect: effect.id });
-            } }, iid, 'discard', 'discard');
-            extra--;
-        }
+        const extra = unicornCount(world, player.id) - stableLimit(world, player.id);
+        if (extra <= 0) continue;
+        const candidates = player.stable.filter(iid =>
+            isUnicorn(world, iid) && !protectedFrom(world, iid, 'sacrifice'));
+        if (candidates.length === 0) continue;
+
+        const node = `__overflow:${Object.keys(ex.nodes).length}`;
+        const effect: Effect = {
+            e: 'prim',
+            prim: {
+                p: 'sacrifice',
+                sel: {
+                    zone: 'stable',
+                    owner: 'self',
+                    count: Math.min(extra, candidates.length),
+                    filter: { f: 'unicorn' }
+                }
+            }
+        };
+        ex.nodes[node] = effect;
+        ex.state.exec.push({ node, pc: 0, bindings: { frameBy: player.id, frameSource: '' } });
+        return;
     }
 }
 
 function expireLingering(ex: ExecCtx) {
-    ex.state.lingering = ex.state.lingering.filter(entry => {
-        if (entry.until === 'endOfTurn') return true;
-        return zoneOf(ex.state, entry.source) === 'stable';
-    });
+    for (const entry of ex.state.lingering) {
+        if (entry.until !== 'sourceLeavesStable' || zoneOf(ex.state, entry.source) === 'stable') continue;
+        if (entry.returnCard === undefined || entry.returnOwner === undefined) continue;
+        const card = ex.state.cards[entry.returnCard];
+        if (card?.zone === 'stable')
+            moveCard(moveCtxOf(ex), entry.returnCard, { zone: 'stable', owner: entry.returnOwner }, 'return');
+    }
+    ex.state.lingering = ex.state.lingering.filter(entry =>
+        entry.until === 'endOfTurn' || zoneOf(ex.state, entry.source) === 'stable');
 }
 
 function checkWinner(ex: ExecCtx) {
@@ -105,14 +129,23 @@ export function resolveLinks(ex: ExecCtx): RunState {
 
         const pending = links.current.shift();
         if (pending) {
-            startEffect(ex, pending.effect, pending.player, pending.source);
+            startEffect(ex, pending.effect, pending.player, pending.source, pending.event);
             continue;
         }
 
         links.targeted = [];
         endOfLink(ex);
         collectEvents(ex, links.targeted);
-        if (!links.next.length) return 'done';
+        if (ex.state.exec.length) continue;
+        if (!links.next.length) {
+            for (const iid of [...ex.state.limbo]) {
+                const kind = ex.defOf(iid)?.kind;
+                if (kind === 'magic' || kind === 'instant')
+                    moveCard(moveCtxOf(ex), iid, 'discard', 'discard');
+            }
+            collectEvents(ex, links.targeted);
+            if (!links.next.length) return 'done';
+        }
 
         links.current = orderPendings(ex.state, links.next);
         links.next = [];

@@ -34,6 +34,10 @@ export class PlayStack {
         return [...this.entries];
     }
 
+    restore(entries: Array<PendingEntry>): void {
+        this.entries = structuredClone(entries);
+    }
+
     clear() {
         this.entries = [];
     }

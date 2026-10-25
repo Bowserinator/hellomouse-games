@@ -1,5 +1,12 @@
 import { cardName } from './card.js';
+import { playerPicker } from './player-picker.js';
 import type { ViewModel } from '../engine/view.js';
+
+export function targetWarning(kind: string | undefined, ownTarget: boolean): string {
+    if (kind === 'downgrade' && ownTarget) return 'You are applying a downgrade card to yourself. Confirm?';
+    if (kind === 'upgrade' && !ownTarget) return 'You are applying an upgrade card to another player. Confirm?';
+    return '';
+}
 
 function element(tag: string, className: string, text?: string): HTMLElement {
     const node = document.createElement(tag);
@@ -60,20 +67,10 @@ export class TargetModal {
         this.host.append(header);
 
         const body = element('div', 'prompt-body');
-        const row = element('div', 'prompt-players');
-        for (const seat of seats) {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.textContent = this.nameOf(seat);
-            button.dataset.seat = String(seat);
-            row.append(button);
-        }
-        const cancel = document.createElement('button');
-        cancel.type = 'button';
-        cancel.textContent = 'Cancel';
-        cancel.dataset.seat = 'cancel';
-        row.append(cancel);
-        body.append(row);
+        body.append(playerPicker(seats, this.names, {
+            handCounts: () => view.players.map(player => player.handCount),
+            localSeat: view.seat
+        }));
         this.host.append(body);
     }
 

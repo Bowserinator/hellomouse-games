@@ -62,13 +62,14 @@ export function rejectAnswer(state: { prompt: Prompt | null }, answer: import('.
             const players = answer as Array<number>;
             const allowed = new Set(prompt.players);
             if (players.some(id => typeof id !== 'number' || !allowed.has(id))) return 'Player is not a legal choice';
+            if (new Set(players).size !== players.length) return 'Duplicate player';
             if (players.length < prompt.min || players.length > prompt.max) return 'Wrong number of players';
             return null;
         }
         case 'yesno':
             return typeof answer === 'boolean' ? null : 'Expected yes or no';
         case 'option':
-            return typeof answer === 'number' && answer >= prompt.min && answer <= prompt.max
+            return typeof answer === 'number' && Number.isInteger(answer) && answer >= prompt.min && answer <= prompt.max
                 ? null
                 : 'Option out of range';
         case 'order': {

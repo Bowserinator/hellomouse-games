@@ -3,13 +3,14 @@ import type { Frame, Zone } from '../state.js';
 import type { Iid } from '../ids.js';
 import { matches } from '../dsl/filter.js';
 import { bulkMove, moveCard } from '../move.js';
+import { zoneList } from '../zones.js';
 import type { Destination } from '../move.js';
 import { shuffle } from '../rng.js';
 import { filterCtx } from '../query/active.js';
-import { unicornCount } from '../query/modifiers.js';
+import { isUnicorn, protectedFrom, unicornCount } from '../query/modifiers.js';
 import { findReplacements } from '../query/replacements.js';
 import type { ExecCtx } from './context.js';
-import { ImpossibleError, controllerOf, moveCtxOf, sourceOf, worldOf } from './context.js';
+import { ImpossibleError, controllerOf, eventOf, moveCtxOf, sourceOf, worldOf } from './context.js';
 import { ask } from './prompt.js';
 import { canSatisfy, resolveSelection, revealToAll, targetRange } from './selectors.js';
 
@@ -22,7 +23,8 @@ function requiredSelectors(prim: Primitive): Array<Selector> {
 
 function requireCandidates(ex: ExecCtx, frame: Frame, prim: Primitive, controller: number) {
     for (const sel of requiredSelectors(prim))
-        if (!canSatisfy(ex, sel, controller, frame)) throw new ImpossibleError();
+        if (!canSatisfy(ex, sel, controller, frame, prim.p === 'destroy' || prim.p === 'sacrifice' ? prim.p : undefined))
+            throw new ImpossibleError();
 }
 
 function ensureDeck(ex: ExecCtx) {
@@ -31,9 +33,15 @@ function ensureDeck(ex: ExecCtx) {
 }
 
 function ownerFor(ex: ExecCtx, frame: Frame, ref: OwnerRef): number {
-    const controller = controllerOf(ex, frame);
     if (ref === 'active') return ex.state.turn.player;
-    return controller;
+    return controllerOf(ex, frame);
+}
+
+function destinationOwner(ex: ExecCtx, frame: Frame, ref: OwnerRef): number | 'wait' {
+    if (ref === 'self' || ref === 'active') return ownerFor(ex, frame, ref);
+    const targets = choosePlayers(ex, frame, `${frame.node}:destination`, 'Choose a player', 1, ref === 'any');
+    if (targets === 'wait') return 'wait';
+    return targets[0] ?? controllerOf(ex, frame);
 }
 
 function replacementOrder(
@@ -89,13 +97,16 @@ function takeFrom(
         const range = targetRange(spec.count, frame);
         const ctx = filterCtx(worldOf(ex), controller);
         const candidates = ex.state[from].filter(iid => matches(spec.filter, iid, ctx));
-        if (candidates.length === 0) return 'done';
+        if (candidates.length === 0) {
+            if (shuffleAfter) shuffleZone(ex, from, controller);
+            return 'done';
+        }
         revealTo(ex, candidates, controller);
         const wanted = Math.min(range.max, candidates.length);
         const answer = ask(ex, frame, key, {
             player: controller,
             kind: 'cards',
-            reason: spec.as ? `search:${spec.as}` : 'search',
+            reason: wanted === 1 ? 'Choose a card to add to your hand' : 'Choose cards to add to your hand',
             source: sourceOf(frame),
             cards: candidates,
             min: Math.min(range.min, wanted),
@@ -121,16 +132,21 @@ function moveSelected(
     dest: Destination | ((iid: string) => Destination),
     cause: Parameters<typeof moveCard>[3]
 ): PrimResult {
-    const chosen = resolveSelection(ex, frame, `${frame.node}:${index}`, sel, sourceOf(frame));
+    const chosen = resolveSelection(ex, frame, `${frame.node}:${index}`, sel, sourceOf(frame), cause);
     if (chosen === 'wait') return 'wait';
     const order = replacementOrder(ex, frame, chosen, cause);
     if (order === 'wait') return 'wait';
     const ctx = { ...moveCtxOf(ex), order };
+    let success = chosen.length > 0;
     for (const iid of chosen) {
-        if (!ex.state.cards[iid]) continue;
+        if (!ex.state.cards[iid]) {
+            success = false;
+            continue;
+        }
         const target = typeof dest === 'function' ? dest(iid) : dest;
-        moveCard(ctx, iid, target, cause);
+        success = moveCard(ctx, iid, target, cause).moved && success;
     }
+    frame.bindings.__success = success;
     return 'done';
 }
 
@@ -158,7 +174,8 @@ function shuffleZone(ex: ExecCtx, zone: Zone, owner: number) {
     ex.state[zone] = cards;
 }
 
-function choosePlayers(ex: ExecCtx, frame: Frame, key: string, reason: string, count: number): Array<number> | 'wait' {
+function choosePlayers(ex: ExecCtx, frame: Frame, key: string, reason: string, count: number,
+    includeSelf = false, candidates?: Array<number>): Array<number> | 'wait' {
     const stored = frame.bindings[key];
     if (Array.isArray(stored)) return stored as Array<number>;
     const controller = controllerOf(ex, frame);
@@ -167,7 +184,7 @@ function choosePlayers(ex: ExecCtx, frame: Frame, key: string, reason: string, c
         kind: 'player',
         reason,
         source: sourceOf(frame),
-        players: ex.state.players.map(p => p.id).filter(id => id !== controller),
+        players: (candidates ?? ex.state.players.map(p => p.id)).filter(id => includeSelf || id !== controller),
         min: count,
         max: count
     });
@@ -233,22 +250,183 @@ export function runPrimitive(ex: ExecCtx, frame: Frame, prim: Primitive): PrimRe
             return moveSelected(ex, frame, 0, prim.sel, 'discard', 'destroy');
         case 'sacrifice':
             return moveSelected(ex, frame, 0, prim.sel, 'discard', 'sacrifice');
+        case 'sacrificeSource': {
+            const source = sourceOf(frame);
+            const card = source ? ex.state.cards[source] : undefined;
+            if (!source || card?.zone !== 'stable') {
+                frame.bindings.__success = false;
+                return 'done';
+            }
+            frame.bindings.__success = moveCard(moveCtxOf(ex), source, 'discard', 'sacrifice').moved;
+            return 'done';
+        }
         case 'returnToHand':
             return moveSelected(ex, frame, 0, prim.sel, iid => ({ zone: 'hand', owner: ex.state.cards[iid].owner }), 'return');
-        case 'moveCard':
-            return moveSelected(ex, frame, 0, prim.sel, { zone: prim.zone, owner: ownerFor(ex, frame, prim.owner) }, 'play');
-        case 'moveStable':
-            return moveSelected(ex, frame, 0, prim.sel, { zone: 'stable', owner: ownerFor(ex, frame, prim.owner) }, 'play');
+        case 'returnToHandAndDiscard': {
+            const targets = choosePlayers(ex, frame, `${frame.node}:player`, 'Choose a player', 1, true,
+                ex.state.players.filter(player => player.stable.some(iid =>
+                    matches(prim.sel.filter, iid, filterCtx(worldOf(ex), controller)))).map(player => player.id));
+            if (targets === 'wait') return 'wait';
+            const target = targets[0];
+            if (target === undefined) return 'done';
+
+            const key = `${frame.node}:0`;
+            let chosen = frame.bindings[key] as Array<Iid> | undefined;
+            if (!chosen) {
+                const ctx = filterCtx(worldOf(ex), controller);
+                const candidates = ex.state.players[target].stable.filter(iid => matches(prim.sel.filter, iid, ctx));
+                const range = targetRange(prim.sel.count, frame);
+                if (candidates.length < range.min) return 'done';
+                if (candidates.length <= range.max) {
+                    chosen = candidates;
+                    frame.bindings[key] = chosen;
+                } else
+                    return ask(ex, frame, key, {
+                        player: controller,
+                        kind: 'cards',
+                        reason: 'Choose a card to return',
+                        source: sourceOf(frame),
+                        cards: candidates,
+                        min: range.min,
+                        max: range.max
+                    });
+            }
+            const returned = chosen[0];
+            if (!returned) return 'done';
+            const owner = ex.state.cards[returned]?.owner;
+            if (owner === undefined) return 'done';
+            const discardKey = `${frame.node}:discard`;
+            const discarded = frame.bindings[discardKey];
+            if (Array.isArray(discarded)) {
+                for (const iid of discarded)
+                    moveCard(moveCtxOf(ex), iid as Iid, { zone: 'discard' }, 'discard');
+                return 'done';
+            }
+            if (ex.state.cards[returned]?.zone !== 'hand')
+                moveCard(moveCtxOf(ex), returned, { zone: 'hand', owner }, 'return');
+            return ask(ex, frame, discardKey, {
+                player: owner,
+                kind: 'cards',
+                reason: 'Discard a card',
+                source: sourceOf(frame),
+                cards: [...zoneList(ex.state, 'hand', owner)],
+                min: 1,
+                max: 1
+            });
+        }
+        case 'moveCard': {
+            if (prim.owner === 'other') {
+                const chosen = resolveSelection(ex, frame, `${frame.node}:0`, prim.sel, sourceOf(frame));
+                if (chosen === 'wait') return 'wait';
+                const owners = new Set(chosen.map(iid => ex.state.cards[iid]?.owner));
+                const candidates = ex.state.players.map(player => player.id).filter(id => !owners.has(id));
+                if (candidates.length === 0) throw new ImpossibleError();
+                const owner = choosePlayers(ex, frame, `${frame.node}:destination`, 'Choose a player', 1, true, candidates);
+                if (owner === 'wait') return 'wait';
+                return moveSelected(ex, frame, 0, prim.sel, { zone: prim.zone, owner: owner[0] }, 'play');
+            }
+            const owner = destinationOwner(ex, frame, prim.owner);
+            if (owner === 'wait') return 'wait';
+            return moveSelected(ex, frame, 0, prim.sel, { zone: prim.zone, owner }, 'play');
+        }
+        case 'moveStable': {
+            const owner = destinationOwner(ex, frame, prim.owner);
+            if (owner === 'wait') return 'wait';
+            return moveSelected(ex, frame, 0, prim.sel, { zone: 'stable', owner }, 'play');
+        }
         case 'stealRandom':
             return moveSelected(ex, frame, 0, { ...prim.sel, mode: 'random' },
                 { zone: prim.sel.zone === 'hand' ? 'hand' : 'stable', owner: controller }, 'play');
+        case 'pullRandomFromPlayer': {
+            const targets = choosePlayers(ex, frame, `${frame.node}:player`, 'Choose a player', 1, true,
+                ex.state.players.filter(player => player.hand.length > 0).map(player => player.id));
+            if (targets === 'wait') return 'wait';
+            const target = targets[0];
+            if (target === undefined) return 'done';
+            const cards = ex.state.players[target].hand;
+            const iid = cards.length ? shuffle(ex.rng, [...cards])[0] : undefined;
+            if (iid) moveCard(moveCtxOf(ex), iid, { zone: 'hand', owner: controller }, 'play');
+            return 'done';
+        }
+        case 'stealFromPlayer': {
+            const targets = choosePlayers(ex, frame, `${frame.node}:player`, 'Choose a player', 1, false,
+                ex.state.players.filter(player => player.hand.length > 0).map(player => player.id));
+            if (targets === 'wait') return 'wait';
+            const target = targets[0];
+            if (target === undefined) return 'done';
+            const key = `${frame.node}:card`;
+            const picked = frame.bindings[key];
+            if (Array.isArray(picked)) {
+                for (const iid of picked) moveCard(moveCtxOf(ex), iid as Iid, { zone: 'hand', owner: controller }, 'play');
+                return 'done';
+            }
+            const cards = [...ex.state.players[target].hand];
+            revealTo(ex, cards, controller);
+            return ask(ex, frame, key, {
+                player: controller, kind: 'cards', reason: 'Choose a card to steal', source: sourceOf(frame),
+                cards, min: 1, max: 1
+            });
+        }
+        case 'discardFromPlayer': {
+            const targets = choosePlayers(ex, frame, `${frame.node}:player`, 'Choose a player', 1, true,
+                ex.state.players.filter(player => player.hand.length > 0).map(player => player.id));
+            if (targets === 'wait') return 'wait';
+            const target = targets[0];
+            if (target === undefined) return 'done';
+            const key = `${frame.node}:card`;
+            const picked = frame.bindings[key];
+            if (Array.isArray(picked)) {
+                for (const iid of picked) moveCard(moveCtxOf(ex), iid as Iid, 'discard', 'discard');
+                return 'done';
+            }
+            return ask(ex, frame, key, {
+                player: target, kind: 'cards', reason: 'Discard a card', source: sourceOf(frame),
+                cards: [...ex.state.players[target].hand], min: 1, max: 1
+            });
+        }
+        case 'returnFromPlayer': {
+            const targets = choosePlayers(ex, frame, `${frame.node}:player`, 'Choose a player', 1, true,
+                ex.state.players.filter(player => player.stable.length > 0).map(player => player.id));
+            if (targets === 'wait') return 'wait';
+            const target = targets[0];
+            if (target === undefined) return 'done';
+            const key = `${frame.node}:card`;
+            const picked = frame.bindings[key];
+            if (Array.isArray(picked)) {
+                for (const iid of picked) {
+                    const owner = ex.state.cards[iid as Iid]?.owner;
+                    if (owner !== undefined) moveCard(moveCtxOf(ex), iid as Iid, { zone: 'hand', owner }, 'return');
+                }
+                return 'done';
+            }
+            return ask(ex, frame, key, {
+                player: controller, kind: 'cards', reason: 'Return a card to hand', source: sourceOf(frame),
+                cards: [...ex.state.players[target].stable], min: 1, max: 1
+            });
+        }
+        case 'stealUntil': {
+            const chosen = resolveSelection(ex, frame, `${frame.node}:0`, prim.sel, sourceOf(frame));
+            if (chosen === 'wait') return 'wait';
+            const source = sourceOf(frame);
+            for (const iid of chosen) {
+                const owner = ex.state.cards[iid]?.owner;
+                if (owner === undefined) continue;
+                moveCard(moveCtxOf(ex), iid, { zone: 'stable', owner: controller }, 'play');
+                ex.state.lingering.push({
+                    id: ex.state.lingering.length + 1,
+                    source: source ?? '', player: controller, effect: '', until: prim.until,
+                    returnCard: iid, returnOwner: owner
+                });
+            }
+            return 'done';
+        }
         case 'lookAndSteal':
             return lookAndSteal(ex, frame, prim);
         case 'swapHands': {
             const key = `${frame.node}:who`;
             let targets = frame.bindings[key];
             if (!Array.isArray(targets)) {
-                const wanted = choosePlayers(ex, frame, key, 'swapHands', 1);
+                const wanted = choosePlayers(ex, frame, key, 'Choose a player to swap hands with', 1);
                 if (wanted === 'wait') return 'wait';
                 targets = frame.bindings[key];
             }
@@ -291,19 +469,69 @@ export function runPrimitive(ex: ExecCtx, frame: Frame, prim: Primitive): PrimRe
             shuffleZone(ex, prim.zone, owner);
             return 'done';
         }
+        case 'shuffleZonesIntoDeck': {
+            const owner = prim.owner ? ownerFor(ex, frame, prim.owner) : controller;
+            for (const zone of prim.zones) {
+                const cards = (zone === 'hand' || zone === 'stable')
+                    ? [...zoneList(ex.state, zone, owner)]
+                    : [...ex.state[zone]];
+                bulkMove(ex.state, cards, 'deck');
+            }
+            shuffleZone(ex, 'deck', owner);
+            return 'done';
+        }
         case 'replaceUnicornsWithBabies': {
-            const sel = prim.sel ?? { zone: 'stable' as Zone, owner: 'self' as OwnerRef, count: 999, filter: { f: 'unicorn' as const } };
-            const chosen = resolveSelection(ex, frame, `${frame.node}:0`, sel, sourceOf(frame));
-            if (chosen === 'wait') return 'wait';
+            let chosen: Array<Iid>;
+            if (prim.sel) {
+                const selected = resolveSelection(ex, frame, `${frame.node}:0`, prim.sel, sourceOf(frame));
+                if (selected === 'wait') return 'wait';
+                chosen = selected;
+            } else {
+                const targets = choosePlayers(ex, frame, `${frame.node}:player`, 'Choose a player', 1, true);
+                if (targets === 'wait') return 'wait';
+                const target = targets[0];
+                const stable = target === undefined ? [] : ex.state.players[target].stable;
+                chosen = stable.filter(iid => isUnicorn(worldOf(ex), iid));
+            }
             const ctx = moveCtxOf(ex);
             for (const iid of chosen) {
                 const owner = ex.state.cards[iid].owner;
-                moveCard(ctx, iid, 'nursery', 'return');
+                bulkMove(ex.state, [iid], 'discard');
                 const index = ex.state.nursery.findIndex(card => ex.defOf(card)?.kind === 'baby');
                 if (index < 0) continue;
                 const baby = ex.state.nursery[index];
                 moveCard(ctx, baby, { zone: 'stable', owner }, 'play');
             }
+            return 'done';
+        }
+        case 'returnSourceToHand': {
+            const source = sourceOf(frame);
+            if (source && ex.state.cards[source]?.zone === 'stable')
+                moveCard(moveCtxOf(ex), source, { zone: 'hand', owner: controller }, 'return');
+            return 'done';
+        }
+        case 'guardUnicorn': {
+            const source = sourceOf(frame);
+            const event = eventOf(frame);
+            const target = event?.card;
+            if (!source || !target || ex.state.cards[target]?.zone !== 'stable') return 'done';
+            const key = `${frame.node}:guard`;
+            const canGuard = ex.state.cards[source]?.zone === 'stable' &&
+                ex.state.cards[source].owner === ex.state.cards[target].owner &&
+                !protectedFrom(worldOf(ex), source, 'sacrifice');
+            if (canGuard && typeof frame.bindings[key] !== 'boolean')
+                return ask(ex, frame, key, {
+                    player: controller, kind: 'yesno', reason: 'Sacrifice this card to prevent destruction?', source
+                });
+            if (canGuard && frame.bindings[key] === true)
+                moveCard(moveCtxOf(ex), source, 'discard', 'sacrifice');
+            else
+                moveCard({ ...moveCtxOf(ex), ignoredReplacements: [source] }, target, 'discard', 'destroy');
+            return 'done';
+        }
+        case 'returnSourceToNursery': {
+            const source = sourceOf(frame);
+            if (source) moveCard(moveCtxOf(ex), source, 'nursery', 'return');
             return 'done';
         }
         case 'takeExtraTurn':

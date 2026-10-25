@@ -14,7 +14,7 @@ export function bindEffectToast(node: HTMLElement): void {
 
 export function effectToast(event: LoggedEvent, view: ViewModel, names: Array<string | null>): void {
     if (event.type !== 'play' || event.card === undefined) return;
-    const defId = view.cards[event.card]?.defId;
+    const defId = event.publicDefId ?? view.cards[event.card]?.defId;
     const entry = defId === undefined ? undefined : cardEntry(defId);
     if (!entry || !EFFECT_KINDS.includes(entry.kind)) return;
     const who = event.player === undefined

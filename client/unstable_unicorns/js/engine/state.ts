@@ -1,4 +1,5 @@
 import type { Iid } from './ids.js';
+import type { CardEvent } from './dsl/ast.js';
 
 export type Zone = 'hand' | 'stable' | 'deck' | 'discard' | 'nursery' | 'limbo';
 
@@ -25,6 +26,7 @@ export interface Pending {
     source: Iid;
     player: number;
     effect: string;
+    event?: CardEvent;
 }
 
 export type LingeringUntil = 'endOfTurn' | 'sourceLeavesStable';
@@ -35,6 +37,8 @@ export interface Lingering {
     player: number;
     effect: string;
     until: LingeringUntil;
+    returnCard?: Iid;
+    returnOwner?: number;
 }
 
 export type PromptKind = 'cards' | 'player' | 'yesno' | 'order' | 'option';
@@ -69,6 +73,7 @@ export interface TurnState {
     player: number;
     actionsUsed: number;
     drawsUsed: number;
+    bonusPlays: number;
     extraTurns: number;
     endNow: boolean;
 }
@@ -113,7 +118,7 @@ export function emptyState(playerCount: number, winTarget: number): GameState {
         discard: [],
         nursery: [],
         limbo: [],
-        turn: { player: 0, actionsUsed: 0, drawsUsed: 0, extraTurns: 0, endNow: false },
+        turn: { player: 0, actionsUsed: 0, drawsUsed: 0, bonusPlays: 0, extraTurns: 0, endNow: false },
         exec: [],
         links: { current: [], next: [], targeted: [] },
         prompt: null,

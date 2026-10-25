@@ -10,19 +10,69 @@
     pointer-events: none;
 }
 
-.stamp {
+.neigh-warning {
     position: fixed;
-    z-index: 1000;
-    pointer-events: none;
-    padding: 6px 16px;
-    font-family: $title-font;
-    font-size: 16pt;
-    text-transform: uppercase;
-    color: $paper;
+    top: 50vh;
+    left: 0;
+    width: 100vw;
+    z-index: 1300;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 24px 16px;
+    text-align: center;
+    color: $ink;
     background: $signal;
-    border: 3px solid $ink;
-    box-shadow: 4px 4px 0 $ink;
-    transform: translate(-50%, -50%);
+    border-block: 3px solid $ink;
+    box-shadow: 0 6px 0 $ink;
+    pointer-events: none;
+    transform: translateY(-50%);
+    animation: neigh-enter 0.2s ease-out, neigh-exit 0.3s ease-in 2.7s forwards;
+
+    &::before,
+    &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background: repeating-linear-gradient(110deg, $kind-instant 0 12px, $ink 12px 24px);
+        background-size: 48px 100%;
+        animation: neigh-stripes 0.5s linear infinite;
+    }
+
+    &::before { top: 0; }
+    &::after {
+        bottom: 0;
+        animation-direction: reverse;
+    }
+
+    strong {
+        font-family: $title-font;
+        font-size: 32pt;
+        letter-spacing: 0.08em;
+    }
+
+    span {
+        font-family: $ui-font;
+        font-size: 14pt;
+        overflow-wrap: anywhere;
+    }
+}
+
+@keyframes neigh-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes neigh-exit {
+    to { opacity: 0; }
+}
+
+@keyframes neigh-stripes {
+    from { background-position: 0 0; }
+    to { background-position: 48px 0; }
 }
 
 .preview {
@@ -97,7 +147,10 @@
         transition: none;
     }
 
-    .effect-toast.show {
+    .effect-toast.show,
+    .neigh-warning,
+    .neigh-warning::before,
+    .neigh-warning::after {
         animation: none;
     }
 }

@@ -1,189 +1,80 @@
 import type { CatalogEntry } from '../engine/dsl/ast.js';
 
 export const BASE_CATALOG: Array<CatalogEntry> = [
-    { id: 'foal', name: 'Foal', kind: 'baby', unicornType: 'baby', text: 'A baby unicorn.', copies: 8 },
-
-    { id: 'unicorn', name: 'Unicorn', kind: 'basic', text: 'A plain unicorn.', copies: 12 },
-    { id: 'sparkle', name: 'Sparkle', kind: 'basic', text: 'When this enters your stable, draw a card.', copies: 3 },
-    { id: 'dawn', name: 'Dawn', kind: 'basic', text: 'At the start of your turn, draw a card.', copies: 3 },
-    { id: 'swift', name: 'Swift', kind: 'basic', text: 'You get an extra action each turn.', copies: 2 },
-    { id: 'packrat', name: 'Packrat', kind: 'basic', text: 'Your hand limit is two higher.', copies: 2 },
-    { id: 'triplet', name: 'Triplet', kind: 'basic', text: 'Counts as two unicorns.', copies: 2 },
-    { id: 'panda', name: 'Panda', kind: 'basic', unicornType: 'panda', text: 'A panda unicorn.', copies: 2 },
-    {
-        id: 'guardian',
-        name: 'Guardian',
-        kind: 'basic',
-        text: 'Your unicorns cannot be destroyed.',
-        copies: 2
-    },
-    { id: 'pegasus', name: 'Pegasus', kind: 'basic', text: 'Has wings.', copies: 3 },
-
-    {
-        id: 'snatch',
-        name: 'Snatch',
-        kind: 'magic',
-        text: 'Destroy a unicorn.',
-        copies: 3
-    },
-    { id: 'gift', name: 'Gift', kind: 'magic', text: 'Draw two cards.', copies: 3 },
-    {
-        id: 'muster',
-        name: 'Muster',
-        kind: 'magic',
-        text: 'Search the deck for a unicorn and take it.',
-        copies: 2
-    },
-    {
-        id: 'pillage',
-        name: 'Pillage',
-        kind: 'magic',
-        text: 'Discard a random card from a hand.',
-        copies: 2
-    },
-    { id: 'swap', name: 'Swap', kind: 'magic', text: 'Swap hands with a player.', copies: 2 },
-    {
-        id: 'recycle',
-        name: 'Recycle',
-        kind: 'magic',
-        text: 'Search the discard pile and take a card.',
-        copies: 2
-    },
-    {
-        id: 'babyboom',
-        name: 'Baby Boom',
-        kind: 'magic',
-        text: 'Replace your unicorns with babies.',
-        copies: 2
-    },
-    { id: 'extra', name: 'Extra', kind: 'magic', text: 'Take another turn.', copies: 2 },
-    {
-        id: 'push',
-        name: 'Push',
-        kind: 'magic',
-        text: 'Destroy an upgrade or downgrade.',
-        copies: 2
-    },
-    {
-        id: 'fade',
-        name: 'Fade',
-        kind: 'magic',
-        text: 'Draw a card at the end of the turn.',
-        copies: 2
-    },
-    {
-        id: 'pyre',
-        name: 'Pyre',
-        kind: 'magic',
-        text: 'Sacrifice a unicorn, then draw two cards.',
-        copies: 2
-    },
-    {
-        id: 'bounce',
-        name: 'Bounce',
-        kind: 'magic',
-        text: 'Return a unicorn to its owner\'s hand.',
-        copies: 2
-    },
-    {
-        id: 'kidnap',
-        name: 'Kidnap',
-        kind: 'magic',
-        text: 'Move another player\'s unicorn into your stable.',
-        copies: 2
-    },
-    {
-        id: 'foretell',
-        name: 'Foretell',
-        kind: 'magic',
-        text: 'Draw two cards, then put a card from your hand on top of the deck.',
-        copies: 2
-    },
-    {
-        id: 'raid',
-        name: 'Raid',
-        kind: 'magic',
-        text: 'Steal a random card from another player\'s hand.',
-        copies: 2
-    },
-    {
-        id: 'peek',
-        name: 'Peek',
-        kind: 'magic',
-        text: 'Look at the top three cards of the deck and steal one.',
-        copies: 2
-    },
-    {
-        id: 'barter',
-        name: 'Barter',
-        kind: 'magic',
-        text: 'Trade one of your unicorns for another player\'s unicorn.',
-        copies: 2
-    },
-    {
-        id: 'bury',
-        name: 'Bury',
-        kind: 'magic',
-        text: 'Shuffle a card from your hand into the deck.',
-        copies: 2
-    },
-    { id: 'yawn', name: 'Yawn', kind: 'magic', text: 'End your turn now.', copies: 2 },
-    {
-        id: 'settle',
-        name: 'Settle',
-        kind: 'magic',
-        text: 'Move a card from your hand into your stable.',
-        copies: 2
-    },
-    { id: 'nope', name: 'Nope', kind: 'instant', text: 'Neigh a play.', copies: 6 },
-    {
-        id: 'supernope',
-        name: 'Super Nope',
-        kind: 'instant',
-        text: 'Neigh a play and cannot be neighed.',
-        copies: 1
-    },
-
-    {
-        id: 'armor',
-        name: 'Armor',
-        kind: 'upgrade',
-        text: 'Your unicorns cannot be destroyed.',
-        copies: 3
-    },
-    {
-        id: 'pandamaker',
-        name: 'Panda Maker',
-        kind: 'upgrade',
-        text: 'Your winged cards are special unicorns.',
-        copies: 2
-    },
-    {
-        id: 'rock',
-        name: 'Cursed Rock',
-        kind: 'downgrade',
-        text: 'You get one action fewer each turn.',
-        copies: 3
-    },
-    {
-        id: 'freeloader',
-        name: 'Freeloader',
-        kind: 'downgrade',
-        text: 'When this would be destroyed, discard a card instead.',
-        copies: 3
-    },
-    {
-        id: 'lockdown',
-        name: 'Lockdown',
-        kind: 'upgrade',
-        text: 'Magic cards cannot be played.',
-        copies: 2
-    },
-    {
-        id: 'mirror',
-        name: 'Mirror',
-        kind: 'upgrade',
-        text: 'Your hand is visible.',
-        copies: 2
-    }
+    { id: 'alluring-narwhal', name: 'Alluring Narwhal', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, you may STEAL an Upgrade card.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/alluring.png' },
+    { id: 'americorn', name: 'Americorn', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, choose any player. Pull a card from that player\'s hand.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/americorn.png' },
+    { id: 'annoying-flying-unicorn', name: 'Annoying Flying Unicorn', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, you may choose any player. That player must DISCARD a card. If this card would be sacrificed or destroyed, return it to your hand instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/annoying.png' },
+    { id: 'baby-narwhal', name: 'Baby Narwhal', kind: 'baby', text: 'If this card would be sacrificed, destroyed, or returned to your hand, return it to the Nursery instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/babynarwhal.jpg' },
+    { id: 'baby-unicorn-black', name: 'Baby Unicorn', kind: 'baby', text: 'If this card would be sacrificed, destroyed, or returned to your hand, return it to the Nursery instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/babyblack.jpg' },
+    { id: 'baby-unicorn-blue', name: 'Baby Unicorn', kind: 'baby', text: 'If this card would be sacrificed, destroyed, or returned to your hand, return it to the Nursery instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/babyblue.jpg' },
+    { id: 'baby-unicorn-brown', name: 'Baby Unicorn', kind: 'baby', text: 'If this card would be sacrificed, destroyed, or returned to your hand, return it to the Nursery instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/babybrown.jpg' },
+    { id: 'baby-unicorn-death', name: 'Baby Unicorn (Death)', kind: 'baby', text: 'If this card would be sacrificed, destroyed, or returned to your hand, return it to the Nursery instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/babydeath.jpg' },
+    { id: 'baby-unicorn-green', name: 'Baby Unicorn', kind: 'baby', text: 'If this card would be sacrificed, destroyed, or returned to your hand, return it to the Nursery instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/babygreen.jpg' },
+    { id: 'baby-unicorn-orange', name: 'Baby Unicorn', kind: 'baby', text: 'If this card would be sacrificed, destroyed, or returned to your hand, return it to the Nursery instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/babyorange.jpg' },
+    { id: 'baby-unicorn-pink', name: 'Baby Unicorn', kind: 'baby', text: 'If this card would be sacrificed, destroyed, or returned to your hand, return it to the Nursery instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/babypink.jpg' },
+    { id: 'baby-unicorn-purple', name: 'Baby Unicorn', kind: 'baby', text: 'If this card would be sacrificed, destroyed, or returned to your hand, return it to the Nursery instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/babypurple.jpg' },
+    { id: 'baby-unicorn-rainbow', name: 'Baby Unicorn', kind: 'baby', text: 'If this card would be sacrificed, destroyed, or returned to your hand, return it to the Nursery instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/babyrainbow.jpg' },
+    { id: 'baby-unicorn-white', name: 'Baby Unicorn', kind: 'baby', text: 'If this card would be sacrificed, destroyed, or returned to your hand, return it to the Nursery instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/babywhite.jpg' },
+    { id: 'baby-unicorn-yellow', name: 'Baby Unicorn', kind: 'baby', text: 'If this card would be sacrificed, destroyed, or returned to your hand, return it to the Nursery instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/babyyellow.jpg' },
+    { id: 'back-kick', name: 'Back Kick', kind: 'magic', text: 'Choose any player. Return a card in that player\'s Stable to their hand. That player must DISCARD a card.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/backkick.jpg' },
+    { id: 'barbed-wire', name: 'Barbed Wire', kind: 'downgrade', text: 'Each time a Unicorn card enters or leaves your stable, DISCARD a card.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/barbedwire.jpg' },
+    { id: 'basic-unicorn-blue', name: 'Basic Unicorn', kind: 'basic', text: 'Popped collars are for date nights only.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/basicblue.jpg' },
+    { id: 'basic-unicorn-green', name: 'Basic Unicorn', kind: 'basic', text: 'Vinyl records and mixtapes only.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/basicgreen.jpg' },
+    { id: 'basic-unicorn-indigo', name: 'Basic Unicorn', kind: 'basic', text: '💖🙌💅🙌💖💁💁😂😂😂', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/basicindigo.jpg' },
+    { id: 'narwhal', name: 'Basic Unicorn (Narwhal)', kind: 'basic', text: 'This card has no special powers, but it sure is cute!', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/basicnarwhal.jpg' },
+    { id: 'basic-unicorn-orange', name: 'Basic Unicorn', kind: 'basic', text: 'Pumpkin spice is the pumpkin spice of life.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/basicorange.jpg' },
+    { id: 'basic-unicorn-purple', name: 'Basic Unicorn', kind: 'basic', text: '#nomakeup #nofilter #sunnies #shameless #selfie #basic #TGIF #unicornhairdontcare', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/basicpurple.jpg' },
+    { id: 'basic-unicorn-red', name: 'Basic Unicorn', kind: 'basic', text: 'Beards are like, so hot.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/basicred.jpg' },
+    { id: 'basic-unicorn-yellow', name: 'Basic Unicorn', kind: 'basic', text: 'Dance like nobody\'s watching.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/basicyellow.jpg' },
+    { id: 'black-knight-unicorn', name: 'Black Knight Unicorn', kind: 'basic', unicornType: 'special', text: 'If 1 of your Unicorn cards would be destroyed, you may SACRIFICE this card instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/blackknight.jpg' },
+    { id: 'blatant-thievery', name: 'Blatant Thievery', kind: 'magic', text: 'Choose any player and look at that player\'s hand. Choose a card from that player\'s hand and add it to your hand.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/blatantthievery.jpg' },
+    { id: 'blinding-light', name: 'Blinding Light', kind: 'downgrade', text: 'Triggered effects of your Unicorn cards do not activate.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/blindinglight.jpg' },
+    { id: 'broken-stable', name: 'Broken Stable', kind: 'downgrade', text: 'You cannot play Upgrade cards.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/brokenstable.jpg' },
+    { id: 'chainsaw-unicorn', name: 'Chainsaw Unicorn', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, you may SACRIFICE or DESTROY an Upgrade or Downgrade card.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/chainsaw.jpg' },
+    { id: 'change-of-luck', name: 'Change Of Luck', kind: 'magic', text: 'DRAW 2 cards and DISCARD 3 cards, then take another turn.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/changeofluck.jpg' },
+    { id: 'classy-narwhal', name: 'Classy Narwhal', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, you may search the deck for an Upgrade card and add it to your hand. Shuffle the deck.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/classynarwhal.jpg' },
+    { id: 'double-dutch', name: 'Double Dutch', kind: 'upgrade', text: 'If this card is in your Stable at the beginning of your turn, you may play 2 cards during your Action phase.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/doubledutch.jpg' },
+    { id: 'extra-tail', name: 'Extra Tail', kind: 'basic', unicornType: 'special', text: 'This card can only enter a Stable if there is a Basic Unicorn card in that Stable. If this card is in your Stable at the beginning of your turn, you may DRAW an extra card.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/extratail.jpg' },
+    { id: 'ginormous-unicorn', name: 'Ginormous Unicorn', kind: 'basic', unicornType: 'special', text: 'This card counts for 2 Unicorns. You cannot play any Instant cards.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/ginormous.jpg' },
+    { id: 'glitter-bomb', name: 'Glitter Bomb', kind: 'upgrade', text: 'If this card is in your Stable at the beginning of your turn, you may SACRIFICE a card. If you do, DESTROY a card.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/glitterbomb.jpg' },
+    { id: 'glitter-tornado', name: 'Glitter Tornado', kind: 'magic', text: 'Return a card in each player\'s Stable to that player\'s hand.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/glittertornado.jpg' },
+    { id: 'good-deal', name: 'Good Deal', kind: 'magic', text: 'DRAW 3 cards and DISCARD a card.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/gooddeal.jpg' },
+    { id: 'greedy-flying-unicorn', name: 'Greedy Flying Unicorn', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, DRAW a card. If this card would be sacrificed or destroyed, return it to your hand instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/greedyflying.jpg' },
+    { id: 'magical-flying-unicorn', name: 'Magical Flying Unicorn', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, you may choose a Magic card from the discard pile and add it to your hand. If this card would be sacrificed or destroyed, return it to your hand instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/magicalflying.jpg' },
+    { id: 'majestic-flying-unicorn', name: 'Majestic Flying Unicorn', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, you may choose a Unicorn card from the discard pile and add it to your hand. If this card would be sacrificed or destroyed, return it to your hand instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/majesticflying.jpg' },
+    { id: 'mermaid-unicorn', name: 'Mermaid Unicorn', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, you may choose any player. Return a card in that player\'s Stable to their hand.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/mermaid.jpg' },
+    { id: 'mystical-vortex', name: 'Mystical Vortex', kind: 'magic', text: 'Each player must DISCARD a card. Shuffle the discard pile into the deck.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/mysticalvortex.jpg' },
+    { id: 'nanny-cam', name: 'Nanny Cam', kind: 'downgrade', text: 'Your hand must be visible to all players at all times.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/nannycam.jpg' },
+    { id: 'narwhal-torpedo', name: 'Narwhal Torpedo', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, SACRIFICE all Downgrade cards.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/narwhaltorpedo.jpg' },
+    { id: 'neigh', name: 'Neigh', kind: 'instant', text: 'Play this card when any other player tries to play a card. Stop that player\'s card from being played and send it to the discard pile.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/neigh.jpg' },
+    { id: 'pandamonium', name: 'Pandamonium', kind: 'downgrade', text: 'All of your Unicorns are considered Pandas. Cards that affect Unicorn cards do not affect your Pandas.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/pandamonium.jpg' },
+    { id: 'puppicorn', name: 'Puppicorn', kind: 'basic', unicornType: 'special', text: 'Each time any player begins their turn, move this card to that player\'s Stable. This card cannot be sacrificed or destroyed.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/puppicorn.jpg' },
+    { id: 'queen-bee-unicorn', name: 'Queen Bee Unicorn', kind: 'basic', unicornType: 'special', text: 'Basic Unicorn cards cannot enter any other player\'s Stable.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/queenbee.jpg' },
+    { id: 'rainbow-aura', name: 'Rainbow Aura', kind: 'upgrade', text: 'Your Unicorn cards cannot be destroyed.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/rainbowaura.jpg' },
+    { id: 'rainbow-mane', name: 'Rainbow Mane', kind: 'basic', unicornType: 'special', text: 'This card can only enter a Stable if there is a Basic Unicorn card in that Stable. If this card is in your Stable at the beginning of your turn, you may bring a Basic Unicorn card from your hand directly into your Stable.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/rainbowmane.jpg' },
+    { id: 'rainbow-unicorn', name: 'Rainbow Unicorn', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, you may bring a Basic Unicorn card from your hand directly into your Stable.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/rainbow.jpg' },
+    { id: 're-target', name: 'Re-target', kind: 'magic', text: 'Move an Upgrade or Downgrade card from any player\'s Stable to any other player\'s Stable.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/retarget.jpg' },
+    { id: 'reset-button', name: 'Reset Button', kind: 'magic', text: 'Each player must SACRIFICE all Upgrade and Downgrade cards. Shuffle the discard pile into the deck.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/resetbutton.jpg' },
+    { id: 'rhinocorn', name: 'Rhinocorn', kind: 'basic', unicornType: 'special', text: 'If this card is in your Stable at the beginning of your turn, you may DESTROY a Unicorn card. If you do, immediately skip to your End of Turn phase.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/rhinocorn.jpg' },
+    { id: 'sadistic-ritual', name: 'Sadistic Ritual', kind: 'upgrade', text: 'If this card is in your Stable at the beginning of your turn, SACRIFICE a Unicorn card, then DRAW a card.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/sadisticritual.jpg' },
+    { id: 'seductive-unicorn', name: 'Seductive Unicorn', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, STEAL a Unicorn card. If this card leaves your Stable, return that Unicorn card to the Stable from which you stole it.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/seductive.jpg' },
+    { id: 'shabby-the-narwhal', name: 'Shabby The Narwhal', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, you may search the deck for a Downgrade card and add it to your hand. Shuffle the deck.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/shabby.jpg' },
+    { id: 'shake-up', name: 'Shake Up', kind: 'magic', text: 'Shuffle this card, your hand, and the discard pile into the deck. DRAW 5 cards.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/shakeup.jpg' },
+    { id: 'shark-with-a-horn', name: 'Shark With A Horn', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, you may SACRIFICE this card. If you do, DESTROY a Unicorn card.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/sharkwithahorn.jpg' },
+    { id: 'slowdown', name: 'Slowdown', kind: 'downgrade', text: 'You cannot play Instant cards.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/slowdown.jpg' },
+    { id: 'stabby-the-unicorn', name: 'Stabby The Unicorn', kind: 'basic', unicornType: 'special', text: 'If this card is sacrificed or destroyed, you may DESTROY a Unicorn card.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/stabby.jpg' },
+    { id: 'summoning-ritual', name: 'Summoning Ritual', kind: 'upgrade', text: 'If this card is in your Stable at the beginning of your turn, you may DISCARD 2 Unicorn cards. If you do, bring a Unicorn card directly from the discard pile into your Stable.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/summoningritual.jpg' },
+    { id: 'super-neigh', name: 'Super Neigh', kind: 'instant', text: 'Play this card when any other player tries to play a card. Stop that player\'s card from being played and send it to the discard pile. This card cannot be Neigh\'d.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/UU-ChCo-001.png' },
+    { id: 'swift-flying-unicorn', name: 'Swift Flying Unicorn', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, you may choose an Instant card from the discard pile and add it to your hand. If this card would be sacrificed or destroyed, return it to your hand instead.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/swiftflying.jpg' },
+    { id: 'targeted-destruction', name: 'Targeted Destruction', kind: 'magic', text: 'SACRIFICE or DESTROY an Upgrade or Downgrade card.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/targeteddestruction.jpg' },
+    { id: 'the-great-narwhal', name: 'The Great Narwhal', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, you may search the deck for a card with "Narwhal" in its name and add it to your hand. Shuffle the deck.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/thegreatnarwhal.jpg' },
+    { id: 'tiny-stable', name: 'Tiny Stable', kind: 'downgrade', text: 'If at any time you have more than 5 Unicorns in your Stable, SACRIFICE a Unicorn card.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/tinystable.jpg' },
+    { id: 'two-for-one', name: 'Two-for-one', kind: 'magic', text: 'SACRIFICE a card, then DESTROY 2 cards.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/twoforone.jpg' },
+    { id: 'unfair-bargain', name: 'Unfair Bargain', kind: 'magic', text: 'Trade hands with any other player.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/unfairbargain.jpg' },
+    { id: 'unicorn-lasso', name: 'Unicorn Lasso', kind: 'upgrade', text: 'If this card is in your Stable at the beginning of your turn, you may STEAL a Unicorn card. At the end of your turn, return that Unicorn card to the Stable from which you stole it.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/unicornlasso.jpg' },
+    { id: 'unicorn-on-the-cob', name: 'Unicorn On The Cob', kind: 'basic', unicornType: 'special', text: 'When this card enters your Stable, DRAW 2 cards and DISCARD a card.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/unicornonthecob.jpg' },
+    { id: 'unicorn-poison', name: 'Unicorn Poison', kind: 'magic', text: 'DESTROY a Unicorn card.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/unicornpoison.jpg' },
+    { id: 'unicorn-shrinkray', name: 'Unicorn Shrinkray', kind: 'magic', text: 'Choose any player. Move all of that player\'s Unicorn cards to the discard pile without triggering any of their effects, then bring the same number of Baby Unicorn cards from the Nursery directly into that player\'s Stable.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/unicornshrinkray.jpg' },
+    { id: 'unicorn-swap', name: 'Unicorn Swap', kind: 'magic', text: 'Move a Unicorn card in your Stable to any other player\'s Stable, then STEAL a Unicorn card from that player\'s Stable.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/unicornswap.jpg' },
+    { id: 'yay', name: 'Yay', kind: 'upgrade', text: 'Cards you play cannot be Neigh\'d.', copies: 1, image: '/unstable_unicorns/images/cards/{{theme}}/base/yay.jpg' }
 ];

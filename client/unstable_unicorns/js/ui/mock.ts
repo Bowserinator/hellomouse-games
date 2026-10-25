@@ -1,9 +1,13 @@
 import { DEFAULT_PACK, PACKS } from '../catalog/index.js';
+import { BASE_DEFS } from '../engine/cards/index.js';
+import { unicornCount } from '../engine/query/modifiers.js';
+import { createCard, emptyState } from '../engine/state.js';
 import { winTarget } from '../vars.js';
 import type { CardView, ViewModel } from '../engine/view.js';
 import type { Zone } from '../engine/state.js';
 
-const PACK = PACKS[DEFAULT_PACK];
+const PACK = PACKS[DEFAULT_PACK].cards;
+const DEFS = new Map(BASE_DEFS.map(def => [def.id, def] as const));
 
 function defIdFor(kind: string, index: number): string {
     const matches = PACK.filter(entry => entry.kind === kind);
@@ -11,20 +15,22 @@ function defIdFor(kind: string, index: number): string {
 }
 
 export function mockHandDefaults(): Array<string> {
-    return [defIdFor('magic', 1), 'nope', defIdFor('basic', 3), 'nope'];
+    return [defIdFor('magic', 1), defIdFor('instant', 0), defIdFor('basic', 3), defIdFor('instant', 1)];
 }
 
 export function mockView(playerCount: number, seat = 0, handDefIds?: Array<string>): ViewModel {
     const cards: Record<string, CardView> = {};
+    const seats = Math.min(Math.max(playerCount, 3), 8);
+    const state = emptyState(seats, winTarget(seats));
+    const world = { state, defOf: (iid: string) => DEFS.get(state.cards[iid]?.defId ?? '') };
     let counter = 0;
 
     const add = (defId: string, owner: number, zone: Zone): string => {
         const iid = `mock${counter++}`;
-        cards[iid] = { defId, owner, zone, revealed: true, neighable: defId === 'nope' || defId === 'supernope' };
+        cards[iid] = { defId, owner, zone, revealed: true, neighable: PACK.find(entry => entry.id === defId)?.kind === 'instant' };
+        createCard(state, iid, defId, owner, zone);
         return iid;
     };
-
-    const seats = Math.min(Math.max(playerCount, 3), 8);
     const players = [];
     for (let index = 0; index < seats; index++) {
         const stable = [
@@ -34,16 +40,17 @@ export function mockView(playerCount: number, seat = 0, handDefIds?: Array<strin
             add(defIdFor('upgrade', index), index, 'stable'),
             add(defIdFor('downgrade', index), index, 'stable')
         ];
+        const hasNannyCam = stable.some(iid => cards[iid]?.defId === 'nanny-cam');
         const hand = index === seat
             ? (handDefIds ?? mockHandDefaults()).map(defId => add(defId, index, 'hand'))
             : Array.from({ length: 5 }, (_, offset) => add(defIdFor('basic', offset), index, 'hand'));
         players.push({
             id: index,
             handCount: hand.length,
-            hand: index === seat ? [...hand] : null,
+            hand: index === seat || hasNannyCam ? [...hand] : null,
             stable,
             babyChosen: true,
-            unicorns: 2 + (index % 3)
+            unicorns: unicornCount(world, index)
         });
     }
 
@@ -55,7 +62,7 @@ export function mockView(playerCount: number, seat = 0, handDefIds?: Array<strin
         seat,
         phase: 'ACTION',
         turn: { player: seat, actionsUsed: 0, actionsLeft: 1, drawsUsed: 0, drawsLeft: 1 },
-        winTarget: winTarget(seats),
+        winTarget: state.winTarget,
         winner: null,
         winReason: null,
         over: false,

@@ -48,7 +48,7 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 1px;
-    margin: 0;
+    margin: 16px 0;
     padding: 0 0 0 3px;
     list-style: none;
     font-family: $ui-font;
@@ -57,34 +57,10 @@
     white-space: nowrap;
 
     li {
-        position: relative;
-        cursor: help;
-    }
-
-    li[data-tip]::after {
-        content: attr(data-tip);
-        position: absolute;
-        bottom: calc(100% + 6px);
-        left: 50%;
-        translate: -50% 0;
-        width: max-content;
-        max-width: 220px;
-        padding: 4px 10px;
-        font-size: 10pt;
-        font-weight: normal;
-        white-space: normal;
-        text-align: left;
-        color: $ink;
+        padding: 0 3px;
         background: $paper;
-        border: 2px solid $ink;
-        box-shadow: 3px 3px 0 $ink;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.12s ease;
-    }
-
-    li[data-tip]:hover::after {
-        opacity: 1;
+        box-shadow: 1px 1px 0 rgba($ink, 0.3);
+        cursor: help;
     }
 
     li.upgrade {
@@ -94,6 +70,27 @@
     li.downgrade {
         color: $kind-downgrade;
     }
+}
+
+.status-tooltip {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 999;
+    width: max-content;
+    max-width: 220px;
+    padding: 4px 10px;
+    font-family: $ui-font;
+    font-size: 10pt;
+    font-weight: normal;
+    line-height: 1.05;
+    white-space: normal;
+    text-align: left;
+    color: $ink;
+    background: $paper;
+    border: 2px solid $ink;
+    box-shadow: 3px 3px 0 $ink;
+    pointer-events: none;
 }
 
 .seat-avatar {
@@ -181,6 +178,23 @@
     height: $card-back-h;
     @include card-back-surface(2px);
     box-shadow: 1px 1px 0 rgba($ink, 0.22);
+
+    & + & {
+        margin-left: calc((var(--hand-step, 1) - 1) * #{$card-back-w});
+    }
+}
+
+.seat-hand-card {
+    flex: 0 0 $card-back-w;
+    width: $card-back-w;
+    height: $card-back-h;
+    overflow: hidden;
+    pointer-events: auto;
+
+    .card-face {
+        transform: scale(0.6);
+        transform-origin: top left;
+    }
 
     & + & {
         margin-left: calc((var(--hand-step, 1) - 1) * #{$card-back-w});

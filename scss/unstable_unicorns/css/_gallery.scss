@@ -1,0 +1,27 @@
+@use './tokens' as *;
+
+body.gallery-page {
+    overflow: auto;
+    padding: 24px;
+    background: #fff;
+
+    h1 {
+        margin: 0 0 20px;
+        font-family: $title-font;
+    }
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, $card-w);
+    align-items: start;
+    gap: 16px;
+}
+
+.gallery-pack-title {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-family: $title-font;
+    font-size: 18px;
+    text-transform: capitalize;
+}

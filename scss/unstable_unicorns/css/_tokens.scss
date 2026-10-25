@@ -10,11 +10,15 @@ $disabled-ink: #575757;
 $disabled-bg: #d4d4d4;
 $disabled-border: #8c8c8c;
 $ui-font: 'Baloo 2', sans-serif;
-$title-font: 'Lilita One', sans-serif;
+$card-title-font: 'Sofia Sans Extra Condensed', sans-serif;
+$title-font: 'Sofia Sans Extra Condensed', sans-serif;
 $nav-height: 42px;
 $chat-width: 320px;
-$card-w: 130px;
-$card-h: 180px;
+$card-w: 143px;
+$card-h: 198px;
+$prompt-card-scale: 1;
+$prompt-card-w: $card-w * $prompt-card-scale;
+$prompt-card-h: $card-h * $prompt-card-scale;
 $card-back-w: $card-w * 0.6;
 $card-back-h: $card-h * 0.6;
 $card-radius: 0;
@@ -22,7 +26,7 @@ $card-radius: 0;
 @mixin card-back-surface($border-width: 1px) {
     border: $border-width solid $ink;
     border-radius: $card-radius;
-    background: repeating-linear-gradient(45deg, $paper 0 10px, $pink 10px 20px);
+    background: $paper url('/unstable_unicorns/images/card-back.png') center / 100% 100% no-repeat;
 }
 
 @mixin game-cue {
@@ -50,10 +54,14 @@ $card-radius: 0;
 }
 $pile-gap: 46px;
 $hud-height: 286px;
+$hand-drop: 24px;
 $z-hand-above-modal: 1002;
 $kind-baby: #ff8fd0;
 $kind-basic: #63b7ff;
 $kind-magic: #47d1a5;
-$kind-upgrade: #ffc94d;
-$kind-downgrade: #ff8b6b;
+$kind-instant: #e53935;
+$kind-upgrade: #f28c28;
+$kind-downgrade: #f4d03f;
+$status-upgrade: #35b6a0;
+$status-downgrade: #d23c2a;
 $kind-unknown: #7a7a7a;

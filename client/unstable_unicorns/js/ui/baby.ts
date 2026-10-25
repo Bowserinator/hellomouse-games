@@ -20,7 +20,8 @@ export class BabyModal {
         this.submit = submit;
 
         host.addEventListener('click', event => {
-            const slot = (event.target as HTMLElement | null)
+            const target = event.target as HTMLElement | null;
+            const slot = target
                 ?.closest<HTMLElement>('.card-slot[data-iid]');
             const iid = slot?.dataset.iid;
             if (iid) this.submit(iid);

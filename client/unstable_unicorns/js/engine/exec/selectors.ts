@@ -1,4 +1,5 @@
-import type { CountSpec, Filter, OwnerRef, Selector } from '../dsl/ast.js';
+import type { CountSpec, EventType, Filter, OwnerRef, Selector } from '../dsl/ast.js';
+import { protectedFrom } from '../query/modifiers.js';
 import { isOwnerRef, matches } from '../dsl/filter.js';
 import type { Frame, Zone } from '../state.js';
 import type { Iid } from '../ids.js';
@@ -8,13 +9,16 @@ import type { ExecCtx } from './context.js';
 import { controllerOf, readCount } from './context.js';
 import { ask } from './prompt.js';
 
-export function candidatesOf(ex: ExecCtx, sel: Selector, controller: number): Array<Iid> {
-    const ctx = filterCtx({ state: ex.state, defOf: ex.defOf }, controller);
+export function candidatesOf(ex: ExecCtx, sel: Selector, controller: number, cause?: EventType): Array<Iid> {
+    const world = { state: ex.state, defOf: ex.defOf };
+    const ctx = filterCtx(world, controller);
+    const accepts = (iid: Iid) => matches(sel.filter, iid, ctx) &&
+        (cause !== 'destroy' && cause !== 'sacrifice' || !protectedFrom(world, iid, cause));
     const out: Array<Iid> = [];
     if (sel.zone === 'any') {
         for (const iid of Object.keys(ex.state.cards)) {
-            if (!isOwnerRef(sel.owner, ownerOf({ state: ex.state, defOf: ex.defOf }, iid), ctx)) continue;
-            if (matches(sel.filter, iid, ctx)) out.push(iid);
+            if (!isOwnerRef(sel.owner, ownerOf(world, iid), ctx)) continue;
+            if (accepts(iid)) out.push(iid);
         }
         return out;
     }
@@ -24,12 +28,12 @@ export function candidatesOf(ex: ExecCtx, sel: Selector, controller: number): Ar
         for (const p of ex.state.players) {
             if (!isOwnerRef(sel.owner, p.id, ctx)) continue;
             for (const iid of zone === 'hand' ? p.hand : p.stable)
-                if (matches(sel.filter, iid, ctx)) out.push(iid);
+                if (accepts(iid)) out.push(iid);
         }
         return out;
     }
 
-    for (const iid of ex.state[zone]) if (matches(sel.filter, iid, ctx)) out.push(iid);
+    for (const iid of ex.state[zone]) if (accepts(iid)) out.push(iid);
     return out;
 }
 
@@ -61,8 +65,10 @@ function chooserFor(ex: ExecCtx, sel: Selector, candidates: Array<Iid>, controll
     return owners.size === 1 ? [...owners][0] : controller;
 }
 
-function reasonFor(sel: Selector, key: string): string {
-    return sel.as ? `choose:${sel.as}` : `choose:${key}`;
+function reasonFor(count: number, cause?: EventType): string {
+    const action = cause === 'discard' || cause === 'destroy' || cause === 'sacrifice' || cause === 'return'
+        ? ` to ${cause}` : '';
+    return `Choose ${count === 1 ? 'a card' : 'cards'}${action}`;
 }
 
 export function resolveSelection(
@@ -70,14 +76,15 @@ export function resolveSelection(
     frame: Frame,
     key: string,
     sel: Selector,
-    fallbackSource: Iid | null
+    fallbackSource: Iid | null,
+    cause?: EventType
 ): Array<Iid> | 'wait' {
     const slot = sel.as ?? key;
     const stored = frame.bindings[slot];
     if (Array.isArray(stored)) return stored as Array<Iid>;
 
     const controller = controllerOf(ex, frame);
-    const candidates = candidatesOf(ex, sel, controller);
+    const candidates = candidatesOf(ex, sel, controller, cause);
     const range = targetRange(sel.count, frame);
     const wanted = Math.min(range.max, candidates.length);
 
@@ -92,7 +99,7 @@ export function resolveSelection(
         return ask(ex, frame, slot, {
             player: chooser,
             kind: 'cards',
-            reason: reasonFor(sel, key),
+            reason: reasonFor(range.max, cause),
             source: fallbackSource,
             cards: candidates,
             min: Math.min(range.min, range.max),
@@ -105,8 +112,8 @@ export function resolveSelection(
     return chosen;
 }
 
-export function canSatisfy(ex: ExecCtx, sel: Selector, controller: number, frame: Frame): boolean {
-    const candidates = candidatesOf(ex, sel, controller);
+export function canSatisfy(ex: ExecCtx, sel: Selector, controller: number, frame: Frame, cause?: EventType): boolean {
+    const candidates = candidatesOf(ex, sel, controller, cause);
     return candidates.length >= targetRange(sel.count, frame).min;
 }
 

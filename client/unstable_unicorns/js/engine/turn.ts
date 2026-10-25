@@ -31,8 +31,14 @@ function runLingering(table: Table, until: 'endOfTurn') {
     const due = state.lingering.filter(entry => entry.until === until);
     state.lingering = state.lingering.filter(entry => entry.until !== until);
     for (const entry of due) {
-        startEffect(table.ex, entry.effect, entry.player, entry.source);
-        resolveLinks(table.ex);
+        if (entry.returnCard !== undefined && entry.returnOwner !== undefined) {
+            const card = state.cards[entry.returnCard];
+            if (card?.zone === 'stable' && card.owner === entry.player)
+                moveCard(moveCtxOf(table.ex), entry.returnCard, { zone: 'stable', owner: entry.returnOwner }, 'return');
+        } else {
+            startEffect(table.ex, entry.effect, entry.player, entry.source);
+            resolveLinks(table.ex);
+        }
         if (state.phase === 'OVER' || state.prompt !== null) return;
     }
 }
@@ -56,6 +62,7 @@ export function advanceTurn(table: Table) {
         player: next,
         actionsUsed: 0,
         drawsUsed: 0,
+        bonusPlays: 0,
         extraTurns: state.turn.extraTurns,
         endNow: false
     };
@@ -72,6 +79,7 @@ export function beginTurn(table: Table, player: number): Result {
     state.phase = 'TURN_START';
     state.turn.actionsUsed = 0;
     state.turn.drawsUsed = 0;
+    state.turn.bonusPlays = state.players[player].stable.some(iid => table.ex.defOf(iid)?.id === 'double-dutch') ? 1 : 0;
     raise(table, { type: 'turnStart', player });
     if (state.phase !== 'TURN_START') return OK;
 
@@ -91,11 +99,14 @@ export function finishBeginTurn(table: Table): Result {
 }
 
 export function actionsLeft(table: Table, player: number): number {
-    return actionsPerTurn(worldOf(table.ex), player) - table.state.turn.actionsUsed;
+    const turn = table.state.turn;
+    if (turn.player !== player || turn.drawsUsed > 0) return 0;
+    return Math.max(0, actionsPerTurn(worldOf(table.ex), player) + turn.bonusPlays - turn.actionsUsed);
 }
 
 export function drawsLeft(table: Table, player: number): number {
-    return actionsLeft(table, player);
+    const turn = table.state.turn;
+    return turn.player === player && turn.actionsUsed === 0 && turn.drawsUsed === 0 ? 1 : 0;
 }
 
 export function afterAction(table: Table) {
@@ -108,7 +119,7 @@ export function drawAction(table: Table, player: number): Result {
     if (state.phase !== 'ACTION') return fail('You cannot draw now');
     if (state.turn.player !== player) return fail('It is not your turn');
     if (state.pendingWinner !== null) return fail('Let the current play resolve first');
-    if (actionsLeft(table, player) <= 0) return fail('You have no actions left');
+    if (drawsLeft(table, player) <= 0) return fail('You have no draws left');
     if (state.deck.length === 0 && state.discard.length === 0)
         return fail('There are no cards left to draw');
     commitChain(table);

@@ -303,6 +303,7 @@ body.in-game.chat-open #hud {
 
 .pack-tile {
     min-width: 150px;
+    max-width: 300px;
     padding: 14px 16px;
     background: $paper;
     border: 3px solid $ink;
@@ -325,6 +326,12 @@ body.in-game.chat-open #hud {
         box-shadow: 2px 2px 0 $ink;
         transform: translate(2px, 2px);
     }
+}
+
+.pack-description {
+    flex-basis: 100%;
+    font-size: 10pt;
+    line-height: 1.1;
 }
 
 .pack-check {

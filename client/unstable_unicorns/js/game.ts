@@ -3,25 +3,26 @@ import { CameraController } from './ui/camera-input.js';
 import { CenterView } from './ui/center.js';
 import { ChainBanner } from './ui/chain-banner.js';
 import { ConfirmModal } from './ui/confirm.js';
-import { TargetModal } from './ui/target-modal.js';
+import { TargetModal, targetWarning } from './ui/target-modal.js';
 import { HandView, handInteraction } from './ui/hand.js';
 import { applyHint, hints } from './ui/indicators.js';
 import { Preview } from './ui/preview.js';
 import { PromptModal } from './ui/prompt.js';
-import { flyCard, stampNeighed } from './ui/flight.js';
+import { flyCard, showNeighWarning } from './ui/flight.js';
 import { contentSize, layout } from './ui/polygon.js';
 import type { TableLayout } from './ui/polygon.js';
-import { seatElement } from './ui/seat.js';
+import { seatElement, StatusTooltip } from './ui/seat.js';
 import { tableArt, tableArtExtent } from './ui/table-art.js';
 import { describeEvent } from './ui/log.js';
 import { mockHandDefaults, mockView } from './ui/mock.js';
-import { cardName } from './ui/card.js';
+import { cardEntry, cardName } from './ui/card.js';
 import { bindEffectToast, effectToast } from './ui/effect-toast.js';
 import { canDraw } from './next-step.js';
 import type { Answer } from './ui/prompt.js';
 import type { PromptView, ViewModel } from './engine/view.js';
 import type { LoggedEvent } from './engine/events.js';
 import { DEFAULT_PACK, PACKS } from './catalog/index.js';
+import { WILDCARD } from './vars.js';
 
 interface SeatSync {
     username: string | null;
@@ -45,7 +46,7 @@ interface SyncMessage {
     events?: Array<LoggedEvent>;
 }
 
-const CARD_SIZE = { w: 130, h: 180 };
+const CARD_SIZE = { w: 143, h: 198 };
 const MOCK_PLAYERS = Number(new URLSearchParams(window.location.search).get('mock') ?? '0');
 const uuid = window.location.search.substr(1).split('=')[0];
 
@@ -107,6 +108,7 @@ let lastTurn = -1;
 let tableLayout: TableLayout | null = null;
 let tableCount = -1;
 let prevRects = new Map<string, DOMRect>();
+let pendingRects: Map<string, DOMRect> | null = null;
 const moved = new Set<string>();
 let logOpen = false;
 let logUnread = 0;
@@ -117,14 +119,24 @@ const center = new CenterView(centerHost);
 const banner = new ChainBanner(bannerHost);
 const hand = new HandView(handHost);
 const preview = new Preview(previewHost);
+const statusTooltip = new StatusTooltip(document.body);
 let camera: CameraController | null = null;
+
+seatsHost.addEventListener('pointermove', event => {
+    const item = (event.target as HTMLElement | null)?.closest<HTMLElement>('.seat-status li[data-tip]');
+    const text = item?.dataset.tip;
+    if (text) statusTooltip.show(text, event.clientX + 16, event.clientY);
+    else statusTooltip.hide();
+});
+seatsHost.addEventListener('pointerleave', () => statusTooltip.hide());
 
 bindEffectToast($('effect-toast'));
 
 const promptModal = new PromptModal($('prompt-body'), (answer: Answer) => {
     if (!view?.prompt) return;
-    sendMove('RESPOND', { promptId: view.prompt.id, selection: answer });
-}, () => names);
+    if (answer === 'cancel') sendMove('CANCEL_PROMPT', { promptId: view.prompt.id });
+    else sendMove('RESPOND', { promptId: view.prompt.id, selection: answer });
+}, () => names, () => view?.players.map(player => player.handCount) ?? []);
 
 const babyModal = new BabyModal($('baby-overlay'), $('baby-modal'), (iid: string) => {
     sendMove('PICK_BABY', { iid });
@@ -281,12 +293,18 @@ function renderHud(): void {
     endTurnButton.disabled = viewHints.endTurn === null;
 }
 
-function captureRects(): void {
-    prevRects = new Map();
+function captureRects(): Map<string, DOMRect> {
+    const rects = new Map<string, DOMRect>();
     for (const slot of gameDiv.querySelectorAll<HTMLElement>('.card-slot[data-iid]')) {
         const iid = slot.dataset.iid;
-        if (iid) prevRects.set(iid, slot.getBoundingClientRect());
+        if (iid) rects.set(iid, slot.getBoundingClientRect());
     }
+    return rects;
+}
+
+function preserveRectsForEvents(): void {
+    pendingRects = captureRects();
+    prevRects = pendingRects;
 }
 
 function animateMoves(): void {
@@ -298,7 +316,7 @@ function animateMoves(): void {
         if (!slot || !before || !defId) continue;
         const after = slot.getBoundingClientRect();
         if (Math.abs(before.left - after.left) < 2 && Math.abs(before.top - after.top) < 2) continue;
-        flyCard(flightLayer, defId, after, after);
+        flyCard(flightLayer, defId, before, after);
     }
     moved.clear();
 }
@@ -329,7 +347,11 @@ function render(): void {
         (selectedHand === null || !view.needsTarget.includes(selectedHand)))
         targetModal.close();
 
-    captureRects();
+    if (pendingRects) {
+        prevRects = pendingRects;
+        pendingRects = null;
+    } else
+        prevRects = captureRects();
     renderWorld();
     renderHud();
     animateMoves();
@@ -360,21 +382,25 @@ function applyView(next: ViewModel): void {
     render();
 }
 
-function appendLog(events: Array<LoggedEvent>): void {
-    if (!view) return;
+function appendLog(events: Array<LoggedEvent>, next: ViewModel | null = view): void {
+    if (!next) return;
     let appended = 0;
     for (const event of events) {
         if (event.seq <= lastSeq) continue;
         lastSeq = event.seq;
 
-        if (event.type === 'neigh') {
-            const slot = gameDiv.querySelector<HTMLElement>('.card-slot');
-            if (slot) stampNeighed(slot.getBoundingClientRect());
+        const card = event.card;
+        const defId = card === undefined ? undefined : next.cards[card]?.defId;
+        if (card !== undefined && prevRects.has(card) && defId && defId !== WILDCARD) moved.add(card);
+        if (event.type === 'neigh' && event.targetCard &&
+            event.targetPlayer !== undefined && event.player !== undefined) {
+            const original = next.cards[event.targetCard]?.defId;
+            showNeighWarning(flightLayer, nameOf(event.player), nameOf(event.targetPlayer),
+                original && original !== WILDCARD ? cardName(original) : 'a card', event.superNeigh);
         }
-        if (event.card) moved.add(event.card);
 
-        effectToast(event, view, names);
-        const text = describeEvent(event, view.cards, names);
+        effectToast(event, next, names);
+        const text = describeEvent(event, next.cards, names);
         if (!text) continue;
         const line = document.createElement('div');
         line.className = 'log-line';
@@ -390,9 +416,10 @@ function appendLog(events: Array<LoggedEvent>): void {
 }
 
 function previewFor(target: HTMLElement | null): void {
-    const slot = target?.closest<HTMLElement>('.card-slot');
-    const defId = slot?.dataset.iid ? view?.cards[slot.dataset.iid]?.defId : undefined;
-    if (!slot || !defId || slot.closest('#hand')) {
+    const slot = target?.closest<HTMLElement>('.card-slot') ??
+        target?.closest<HTMLElement>('.banner-card[data-iid]');
+    const defId = slot?.dataset.defId ?? (slot?.dataset.iid ? view?.cards[slot.dataset.iid]?.defId : undefined);
+    if (!slot || !defId || defId === WILDCARD || slot.closest('#hand')) {
         if (!target?.closest('.preview')) preview.hideSoon();
         return;
     }
@@ -429,9 +456,13 @@ function playHandCard(iid: string): void {
             return;
         }
     }
-    if (view.futile[iid] || view.cards[iid]?.inertAt?.includes(target)) {
+    const kind = cardEntry(view.cards[iid]?.defId ?? '')?.kind;
+    const warning = targetWarning(kind, target === view.seat);
+    const ineffective = view.futile[iid] || view.cards[iid]?.inertAt?.includes(target);
+    if (warning || ineffective) {
         pendingPlay = { iid, target: needsTarget ? target : null };
-        confirmModal.open('This card currently can have no effect. Continue?');
+        confirmModal.open([warning, ineffective ? 'This card currently can have no effect. Continue?' : '']
+            .filter(Boolean).join(' '));
         return;
     }
     sendMove('PLAY_CARD', needsTarget && selectedTarget !== null
@@ -560,8 +591,11 @@ function renderLobby(sync: SyncMessage): void {
             check.className = 'pack-check';
             check.textContent = '✓';
             const label = document.createElement('span');
-            label.textContent = pack;
-            tile.append(check, label);
+            label.textContent = `${pack} (${PACKS[pack].cards.reduce((total, entry) => total + entry.copies, 0)} cards)`;
+            const description = document.createElement('span');
+            description.className = 'pack-description';
+            description.textContent = PACKS[pack].dsc;
+            tile.append(check, label, description);
             tile.dataset.pack = pack;
             packList.append(tile);
         }
@@ -676,12 +710,14 @@ center.deck.addEventListener('keydown', event => {
     onClick(event);
 });
 gameDiv.addEventListener('pointerover', event => previewFor(event.target as HTMLElement | null));
+gameDiv.addEventListener('focusin', event => previewFor(event.target as HTMLElement | null));
+gameDiv.addEventListener('focusout', () => preview.hideSoon());
 hud.addEventListener('pointerover', event => previewFor(event.target as HTMLElement | null));
 hud.addEventListener('pointerout', event => {
     if ((event.target as HTMLElement | null)?.closest('.card-slot')) preview.hideSoon();
 });
 gameDiv.addEventListener('pointerout', event => {
-    if ((event.target as HTMLElement | null)?.closest('.card-slot')) preview.hideSoon();
+    if ((event.target as HTMLElement | null)?.closest('.card-slot, .banner-card[data-iid]')) preview.hideSoon();
 });
 previewHost.addEventListener('pointerenter', () => preview.cancelHide());
 previewHost.addEventListener('pointerleave', () => preview.hideSoon());
@@ -728,8 +764,11 @@ function handleMessage(raw: { data: string }): void {
                 renderLobby(message);
                 break;
             }
+            if (message.events?.length) {
+                preserveRectsForEvents();
+                appendLog(message.events, message.view ?? view);
+            }
             if (message.view) applyView(message.view);
-            if (message.events?.length) appendLog(message.events);
             break;
         }
         default:
@@ -766,7 +805,7 @@ function catalogOptions(select: HTMLSelectElement): void {
     select.replaceChildren();
     let group: HTMLOptGroupElement | null = null;
     let currentKind = '';
-    for (const entry of PACKS[DEFAULT_PACK]) {
+    for (const entry of PACKS[DEFAULT_PACK].cards) {
         if (group === null || entry.kind !== currentKind) {
             currentKind = entry.kind;
             group = document.createElement('optgroup');
@@ -884,13 +923,9 @@ const MOCK_PROMPT_REASONS: Record<string, string> = {
     yesno: 'Shuffle the discard pile into the deck?',
     options: 'Draw how many cards?'
 };
-let mockPromptKind = 0;
-
-function openPromptPreview(): void {
+function openPromptPreview(kind: string): void {
     const current = view;
-    if (!current) return;
-    const kind = MOCK_PROMPT_KINDS[mockPromptKind % MOCK_PROMPT_KINDS.length];
-    mockPromptKind++;
+    if (!current || !MOCK_PROMPT_KINDS.includes(kind)) return;
     const orderCards = current.players.flatMap(player => player.stable.slice(0, 2));
     const limits = kind === 'order'
         ? { min: orderCards.length, max: orderCards.length }
@@ -958,10 +993,9 @@ $('mock-modals').addEventListener('click', event => {
     const buttonNode = (event.target as HTMLElement | null)?.closest<HTMLButtonElement>('button[data-modal]');
     if (!buttonNode) return;
     const which = buttonNode.dataset.modal ?? '';
-    if (which === 'prompt') {
-        openPromptPreview();
-        buttonNode.textContent = `Prompt: ${MOCK_PROMPT_KINDS[mockPromptKind % MOCK_PROMPT_KINDS.length]}`;
-    } else if (which === 'confirm')
+    if (which.startsWith('prompt-'))
+        openPromptPreview(which.slice('prompt-'.length));
+    else if (which === 'confirm')
         confirmModal.open('This card currently can have no effect. Continue?');
     else if (which === 'target')
         openTargetPreview();
@@ -969,7 +1003,12 @@ $('mock-modals').addEventListener('click', event => {
         openBabyPreview();
     else if (which === 'win')
         openWinPreview();
-    else if (which === 'rules')
+    else if (which === 'neigh') {
+        const player = Number(mockPlayBySelect.value);
+        const defId = mockPlaySelect.value;
+        if (defId && Number.isInteger(player) && player >= 0 && player < mockPlayers)
+            showNeighWarning(flightLayer, nameOf((player + 1) % mockPlayers), nameOf(player), cardName(defId));
+    } else if (which === 'rules')
         rulesModal.style.display = 'block';
     else if (which === 'disconnect')
         disconnectBanner.style.top = '0';

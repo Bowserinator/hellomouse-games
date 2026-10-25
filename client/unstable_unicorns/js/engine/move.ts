@@ -1,10 +1,12 @@
-import type { Effect, EventType } from './dsl/ast.js';
+import type { CardEvent, Effect, EventType } from './dsl/ast.js';
 import type { EventLog } from './events.js';
 import type { Iid } from './ids.js';
 import type { CardInstance, GameState, Zone } from './state.js';
 import { zoneList } from './zones.js';
 import type { World } from './query/modifiers.js';
-import { protectedFrom } from './query/modifiers.js';
+import { blocksOtherPlay, blocksTriggers, isUnicorn, protectedFrom } from './query/modifiers.js';
+import { holds } from './dsl/cond.js';
+import { condCtx } from './query/active.js';
 import { findReplacements } from './query/replacements.js';
 import type { ReplacementPlan } from './query/replacements.js';
 
@@ -12,8 +14,9 @@ export type Destination = Zone | { zone: Zone; owner?: number };
 
 export interface MoveCtx extends World {
     log: EventLog;
-    runReplacement(player: number, source: Iid, effect: Effect): void;
+    runReplacement(player: number, source: Iid, effect: Effect, event: CardEvent): void;
     order?: Array<Iid>;
+    ignoredReplacements?: Array<Iid>;
 }
 
 export interface MoveOutcome {
@@ -67,21 +70,31 @@ export function moveCard(ctx: MoveCtx, iid: Iid, dest: Destination, cause: Event
     if (!card) throw new Error(`Cannot move unknown card ${iid}`);
 
     const from = card.zone;
+    const previousOwner = card.owner;
     let to = destZone(dest);
     const owner = destOwner(card, dest);
 
     if (isShielded(ctx, iid, cause, to)) return { moved: false, from, to, replaced: false, shielded: true };
 
-    const plans = orderedPlans(findReplacements(ctx, iid, { type: cause, card: iid, player: card.owner }), ctx.order);
+    const def = ctx.defOf(iid);
+    if (to === 'stable' && def &&
+        (blocksOtherPlay(ctx, owner, previousOwner, def.kind, iid) ||
+            !holds(def.playIf, condCtx(ctx, owner, iid))))
+        return { moved: false, from, to, replaced: false, shielded: true };
+
+    const event: CardEvent = { type: cause, card: iid, player: card.owner };
+    const plans = orderedPlans(findReplacements(ctx, iid, event, ctx.ignoredReplacements), ctx.order);
     for (const plan of plans) {
         if (plan.kind === 'redirect') {
             to = plan.zone;
             break;
         }
-        ctx.runReplacement(plan.player, plan.source, plan.effect);
+        ctx.runReplacement(plan.player, plan.source, plan.effect, event);
         return { moved: false, from, to, replaced: true, shielded: false };
     }
 
+    const wasUnicorn = from === 'stable' && isUnicorn(ctx, iid);
+    const suppressed = wasUnicorn && blocksTriggers(ctx, previousOwner);
     const source = zoneList(ctx.state, from, card.owner);
     const index = source.indexOf(iid);
     if (index >= 0) source.splice(index, 1);
@@ -91,9 +104,13 @@ export function moveCard(ctx: MoveCtx, iid: Iid, dest: Destination, cause: Event
     if (to === 'deck') zoneList(ctx.state, to).unshift(iid);
     else zoneList(ctx.state, to, owner).push(iid);
 
-    ctx.log.emit({ type: cause, card: iid, player: owner });
-    if (from === 'stable' && to !== 'stable') ctx.log.emit({ type: 'leaveStable', card: iid, player: owner });
-    if (to === 'stable' && from !== 'stable') ctx.log.emit({ type: 'enterStable', card: iid, player: owner });
+    ctx.log.emit({ type: cause, card: iid, player: from === 'stable' ? previousOwner : owner,
+        publicDefId: cause === 'play' && from === 'hand' && to === 'stable' ? def?.id : undefined,
+        unicorn: wasUnicorn, suppressed });
+    if (from === 'stable' && (to !== 'stable' || owner !== previousOwner))
+        ctx.log.emit({ type: 'leaveStable', card: iid, player: previousOwner, unicorn: wasUnicorn, suppressed });
+    if (to === 'stable' && (from !== 'stable' || owner !== previousOwner))
+        ctx.log.emit({ type: 'enterStable', card: iid, player: owner, unicorn: isUnicorn(ctx, iid) });
 
     return { moved: true, from, to, replaced: false, shielded: false };
 }

@@ -5,6 +5,7 @@ import type { Iid } from '../ids.js';
 import type { Zone } from '../state.js';
 import { condCtx, filterCtx, ownerOf } from './active.js';
 import type { World } from './modifiers.js';
+import { blocksTriggers, isUnicorn } from './modifiers.js';
 
 export type ReplacementPlan =
     | { kind: 'redirect'; zone: Zone }
@@ -32,7 +33,9 @@ function ownerOrder(state: World['state'], first: number): Array<number> {
     return order;
 }
 
-export function findReplacements(world: World, iid: Iid, event: CardEvent): Array<ReplacementPlan> {
+export function findReplacements(
+    world: World, iid: Iid, event: CardEvent, ignored: Array<Iid> = []
+): Array<ReplacementPlan> {
     const plans: Array<ReplacementPlan> = [];
     const redirect = defaultRedirect(world, iid, event);
     if (redirect) plans.push({ kind: 'redirect', zone: redirect });
@@ -40,13 +43,17 @@ export function findReplacements(world: World, iid: Iid, event: CardEvent): Arra
     const affected = ownerOf(world, iid);
     for (const owner of ownerOrder(world.state, affected < 0 ? 0 : affected)) {
         const ctx = filterCtx(world, owner);
-        for (const source of world.state.players[owner].stable)
+        for (const source of world.state.players[owner].stable) {
+            if (ignored.includes(source) || isUnicorn(world, source) && blocksTriggers(world, owner)) continue;
             for (const rep of replacementsOf(world, source)) {
                 if (rep.when !== event.type) continue;
+                if (rep.scope === 'source' && source !== iid) continue;
+                if (rep.scope === 'owner' && owner !== affected) continue;
                 if (!matches(rep.filter, iid, ctx)) continue;
                 if (rep.unless && holds(rep.unless, condCtx(world, owner, source, event))) continue;
                 plans.push({ kind: 'effect', player: owner, source, effect: rep.effect });
             }
+        }
     }
 
     return plans;

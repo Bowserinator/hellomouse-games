@@ -4,12 +4,13 @@ import type { GameState } from './state.js';
 import type { PlayStack } from './stack.js';
 import { resolveLinks } from './chain.js';
 import { holds } from './dsl/cond.js';
-import { moveCard } from './move.js';
+import { bulkMove, moveCard } from './move.js';
 import { condCtx } from './query/active.js';
-import { actionsPerTurn, blocksPlay } from './query/modifiers.js';
+import { blocksOtherPlay, blocksPlay, protectedFrom } from './query/modifiers.js';
 import { restoreInto, snapshot } from './snapshot.js';
 import { moveCtxOf, worldOf, type ExecCtx } from './exec/context.js';
 import { startEffect } from './exec/interpreter.js';
+import { actionsLeft } from './turn.js';
 
 export interface Table {
     state: GameState;
@@ -45,14 +46,12 @@ function spentAction(table: Table, player: number, iid: Iid, def: CardDef): Resu
 
 function applyCard(table: Table, player: number, iid: Iid, def: CardDef, stable: number) {
     const ex = table.ex;
-    if (def.kind !== 'magic' && def.kind !== 'instant')
-        moveCard(moveCtxOf(ex), iid, { zone: 'stable', owner: stable }, 'play');
+    if (def.kind === 'magic' || def.kind === 'instant') {
+        bulkMove(table.state, [iid], 'limbo');
+        ex.log.record({ type: 'play', card: iid, player, publicDefId: def.id });
+    } else moveCard(moveCtxOf(ex), iid, { zone: 'stable', owner: stable }, 'play');
     if (def.onPlay?.id) startEffect(ex, def.onPlay.id, player, iid);
     resolveLinks(ex);
-    if ((def.kind === 'magic' || def.kind === 'instant') && table.state.cards[iid].zone !== 'discard') {
-        moveCard(moveCtxOf(ex), iid, 'discard', 'discard');
-        resolveLinks(ex);
-    }
 }
 
 export function commitChain(table: Table) {
@@ -66,13 +65,16 @@ export function commitChain(table: Table) {
     table.stack.clear();
 }
 
-function targetStable(table: Table, player: number, def: CardDef, target: number | undefined): number | Result {
+function targetStable(
+    table: Table, player: number, iid: Iid, def: CardDef, target: number | undefined
+): number | Result {
     if (def.kind === 'magic' || def.kind === 'instant') return player;
     if (def.kind === 'baby' || def.kind === 'basic') return player;
     const seat = target === undefined ? player : target;
     if (!table.state.players[seat]) return fail('That card needs a target stable');
     if (def.playTarget === 'self' && seat !== player) return fail('That card must go into your own stable');
     if (def.playTarget === 'other' && seat === player) return fail('That card must go into another stable');
+    if (blocksOtherPlay(worldOf(table.ex), seat, player, def.kind, iid)) return fail('That card cannot enter that stable');
     return seat;
 }
 
@@ -84,8 +86,8 @@ export function playCard(table: Table, player: number, iid: Iid, target?: number
     if (state.turn.player !== player) return fail('It is not your turn');
     const invalid = spentAction(table, player, iid, found);
     if (invalid.error) return invalid;
-    if (state.turn.actionsUsed >= actionsPerTurn(worldOf(table.ex), player)) return fail('You have no actions left');
-    const stable = targetStable(table, player, found, target);
+    if (actionsLeft(table, player) <= 0) return fail('You have no actions left');
+    const stable = targetStable(table, player, iid, found, target);
     if (typeof stable !== 'number') return stable;
 
     commitChain(table);
@@ -96,7 +98,7 @@ export function playCard(table: Table, player: number, iid: Iid, target?: number
         by: player,
         kind: 'play',
         actionCost: 1,
-        immune: !!found.unneighable,
+        immune: !!found.unneighable || protectedFrom(worldOf(table.ex), iid, 'neigh'),
         before: snapshot(state)
     });
     state.turn.actionsUsed++;
@@ -143,7 +145,8 @@ export function neigh(table: Table, player: number, iid: Iid, targetEntryId: num
     const ctx = moveCtxOf(table.ex);
     moveCard(ctx, top.card, 'discard', 'discard');
     moveCard(ctx, iid, 'discard', 'discard');
-    table.ex.log.emit({ type: 'neigh', card: iid, player });
+    table.ex.log.emit({ type: 'neigh', card: iid, player, targetCard: top.card, targetPlayer: top.by,
+        superNeigh: !!found.instant.superNeigh });
     resolveLinks(table.ex);
     return OK;
 }

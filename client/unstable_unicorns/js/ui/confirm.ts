@@ -44,8 +44,8 @@ export class ConfirmModal {
         header.append(element('h2', 'prompt-reason', question));
         this.host.append(header);
 
-        const body = element('div', 'prompt-body');
-        const row = element('div', 'prompt-players');
+        const body = element('div', 'prompt-body prompt-body-confirm');
+        const row = element('div', 'prompt-confirm-actions');
         row.append(this.button('Yes', 'yes'), this.button('Cancel', 'cancel'));
         body.append(row);
         this.host.append(body);

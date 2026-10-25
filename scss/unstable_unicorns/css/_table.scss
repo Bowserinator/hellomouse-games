@@ -1,5 +1,7 @@
 @use './tokens' as *;
 
+$table-felt: desaturate($felt, 20%);
+
 #board {
     position: relative;
     flex: 1;
@@ -7,9 +9,9 @@
     overflow: hidden;
     background:
         radial-gradient(circle at 50% 42%,
-            lighten($felt, 6%) 0%,
-            darken($felt, 22%) 70%,
-            darken($felt, 34%) 100%);
+            lighten($table-felt, 6%) 0%,
+            darken($table-felt, 22%) 70%,
+            darken($table-felt, 34%) 100%);
     box-shadow: inset 0 0 160px rgba($ink, 0.22);
 }
 
@@ -85,8 +87,8 @@ svg.table-art {
 }
 
 .table-felt {
-    fill: $felt;
-    stroke: darken($felt, 16%);
+    fill: $table-felt;
+    stroke: darken($table-felt, 16%);
     stroke-width: 3;
     stroke-linejoin: round;
 }
@@ -181,42 +183,40 @@ svg.table-art {
     pointer-events: none;
 }
 
-.deck-layer,
+.deck-stack::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(var(--layer-max, 0) * 1px);
+    border-inline: 1px solid #c8c8c8;
+    background: repeating-linear-gradient(to bottom, #e9e9e9 0 1px, #f7f7f7 1px 2px);
+}
+
+.deck-card,
 .discard-layer {
     position: absolute;
     left: 0;
     top: 0;
     width: $card-w;
     height: $card-h;
-    transform: translateY(calc((var(--layer, 0) - var(--layer-max, 0)) * 1px));
-    z-index: calc(60 - var(--layer, 0));
 }
 
-.deck-layer {
-    @include card-back-surface;
-    border-width: 0;
+.deck-card {
+    @include card-back-surface(3px);
+    transform: translateY(calc(var(--layer-max, 0) * -1px));
 }
 
 .discard-layer {
+    transform: translateY(calc((var(--layer, 0) - var(--layer-max, 0)) * 1px));
+    z-index: calc(60 - var(--layer, 0));
     border: 0;
     background: $paper-shade;
 }
 
 .discard .pile-top {
     transform: translateY(calc(var(--layer-max, 0) * -1px));
-}
-
-.deck-layer:first-child {
-    border-width: 3px;
-
-    &::after {
-        content: '';
-        position: absolute;
-        inset: 12px;
-        border: 3px solid $ink;
-        box-shadow: inset 0 0 0 3px $paper;
-        pointer-events: none;
-    }
 }
 
 .draw-bar {
@@ -333,6 +333,16 @@ svg.table-art {
     background: $paper;
     border: 3px solid $ink;
     box-shadow: 4px 4px 0 $ink;
+
+    &[data-iid] {
+        pointer-events: auto;
+        cursor: help;
+    }
+
+    &:focus-visible {
+        outline: 3px solid $signal;
+        outline-offset: 4px;
+    }
 }
 
 .banner-hint {

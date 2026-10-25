@@ -25,7 +25,6 @@ export class CenterView {
     readonly deck: HTMLElement;
     private host: HTMLElement;
     private deckCount: HTMLElement;
-    private deckLayers: Array<HTMLElement> = [];
     private lastDeckCount = -1;
     private discard: HTMLElement;
     private discardStack: HTMLElement;
@@ -47,8 +46,7 @@ export class CenterView {
 
         const stack = element('div', 'deck-stack');
         stack.setAttribute('aria-hidden', 'true');
-        this.deckLayers = buildLayers('deck-layer', 0);
-        stack.append(...this.deckLayers);
+        stack.append(element('span', 'deck-card'));
 
         this.drawCue = element('span', 'draw-cue');
         this.drawCue.setAttribute('aria-hidden', 'true');
@@ -116,7 +114,6 @@ export class CenterView {
         this.setCount(this.deckCount, count);
         this.deck.classList.toggle('empty', count === 0);
         this.deck.style.setProperty('--layer-max', String(Math.max(0, visible - 1)));
-        this.setLayers(this.deckLayers, visible);
     }
 
     private updateDiscard(count: number): void {

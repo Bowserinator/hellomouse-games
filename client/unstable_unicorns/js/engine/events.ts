@@ -9,9 +9,14 @@ export class EventLog {
     private queue: Array<LoggedEvent> = [];
     history: Array<LoggedEvent> = [];
 
-    emit(event: CardEvent): LoggedEvent {
+    record(event: CardEvent): LoggedEvent {
         const logged: LoggedEvent = { ...event, seq: this.next++ };
         this.history.push(logged);
+        return logged;
+    }
+
+    emit(event: CardEvent): LoggedEvent {
+        const logged = this.record(event);
         this.queue.push(logged);
         return logged;
     }
@@ -24,5 +29,11 @@ export class EventLog {
 
     peek(): Array<LoggedEvent> {
         return [...this.queue];
+    }
+
+    truncate(size: number): void {
+        const lastSeq = this.history[size - 1]?.seq ?? 0;
+        this.history.length = size;
+        this.queue = this.queue.filter(event => event.seq <= lastSeq);
     }
 }

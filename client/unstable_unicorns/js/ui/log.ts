@@ -20,6 +20,7 @@ export function describeEvent(
         : names[event.player] ?? `Seat ${event.player + 1}`;
 
     if (event.type === 'neigh') return `${who} neighed`;
+    if (event.type === 'cancel') return `${who} canceled an action`;
     if (event.type === 'draw') return `${who} drew a card`;
     if (event.type === 'turnStart') return `${who} started their turn`;
     if (event.type === 'deckOut')
@@ -30,6 +31,6 @@ export function describeEvent(
     const verb = VERBS[event.type];
     if (!verb || !event.card) return '';
 
-    const defId = faces[event.card]?.defId;
+    const defId = (event.type === 'play' ? event.publicDefId : undefined) ?? faces[event.card]?.defId;
     return `${who} ${verb} ${defId ? cardName(defId) : 'a card'}`;
 }

@@ -20,13 +20,14 @@ export type EventType =
     | 'return'
     | 'draw'
     | 'neigh'
+    | 'cancel'
     | 'turnStart'
     | 'turnEnd'
     | 'deckOut';
 
 export const EVENT_TYPES: Array<EventType> = [
     'play', 'enterStable', 'leaveStable', 'destroy', 'discard',
-    'sacrifice', 'return', 'draw', 'neigh', 'turnStart', 'turnEnd', 'deckOut'
+    'sacrifice', 'return', 'draw', 'neigh', 'cancel', 'turnStart', 'turnEnd', 'deckOut'
 ];
 
 export type NodeId = string;
@@ -73,27 +74,39 @@ export type Primitive =
     | { p: 'discard'; sel: Selector }
     | { p: 'destroy'; sel: Selector }
     | { p: 'sacrifice'; sel: Selector }
+    | { p: 'sacrificeSource' }
     | { p: 'returnToHand'; sel: Selector }
+    | { p: 'returnToHandAndDiscard'; sel: Selector }
     | { p: 'moveCard'; sel: Selector; zone: Zone; owner: OwnerRef }
     | { p: 'moveStable'; sel: Selector; owner: OwnerRef }
     | { p: 'stealRandom'; sel: Selector }
+    | { p: 'pullRandomFromPlayer' }
+    | { p: 'stealFromPlayer' }
+    | { p: 'discardFromPlayer' }
+    | { p: 'returnFromPlayer' }
+    | { p: 'stealUntil'; sel: Selector; until: LingeringUntil }
     | { p: 'lookAndSteal'; from: 'deck' | 'discard'; count: number }
     | { p: 'swapHands'; who: OwnerRef }
     | { p: 'tradeUnicorns'; mine: Selector; theirs: Selector }
+    | { p: 'swapWithPlayer' }
     | { p: 'search'; from: 'deck' | 'discard'; filter?: Filter; count: CountSpec; as?: string }
     | { p: 'fetchFromDiscard'; filter?: Filter; count: CountSpec; as?: string }
     | { p: 'shuffleInto'; sel: Selector; zone: Zone; owner: OwnerRef }
+    | { p: 'shuffleZonesIntoDeck'; zones: Array<Zone>; owner?: OwnerRef }
     | { p: 'replaceUnicornsWithBabies'; sel?: Selector }
     | { p: 'takeExtraTurn' }
     | { p: 'endTurnNow' }
     | { p: 'addLingering'; effect: Effect; until: LingeringUntil }
+    | { p: 'returnSourceToNursery' }
+    | { p: 'returnSourceToHand' }
+    | { p: 'guardUnicorn' }
     | { p: 'custom'; name: string };
 
 export const PRIMITIVE_KINDS: Array<Primitive['p']> = [
-    'draw', 'discard', 'destroy', 'sacrifice', 'returnToHand', 'moveCard',
-    'moveStable', 'stealRandom', 'lookAndSteal', 'swapHands', 'tradeUnicorns',
-    'search', 'fetchFromDiscard', 'shuffleInto', 'replaceUnicornsWithBabies', 'takeExtraTurn',
-    'endTurnNow', 'addLingering', 'custom'
+    'draw', 'discard', 'destroy', 'sacrifice', 'sacrificeSource', 'returnToHand', 'returnToHandAndDiscard', 'moveCard',
+    'moveStable', 'stealRandom', 'pullRandomFromPlayer', 'stealFromPlayer', 'discardFromPlayer', 'returnFromPlayer', 'stealUntil', 'lookAndSteal', 'swapHands', 'tradeUnicorns', 'swapWithPlayer',
+    'search', 'fetchFromDiscard', 'shuffleInto', 'shuffleZonesIntoDeck', 'replaceUnicornsWithBabies', 'takeExtraTurn',
+    'endTurnNow', 'addLingering', 'returnSourceToNursery', 'returnSourceToHand', 'guardUnicorn', 'custom'
 ];
 
 export type Effect = ({
@@ -138,16 +151,19 @@ export type Modifier =
     | { m: 'unicornType'; type: UnicornType; filter?: Filter }
     | { m: 'protect'; against: 'destroy' | 'sacrifice' | 'neigh' | 'play'; filter?: Filter }
     | { m: 'blockPlay'; kind: Kind }
+    | { m: 'blockOtherPlay'; kind: Kind; filter?: Filter }
+    | { m: 'blockTriggers' }
     | { m: 'handVisible' };
 
 export const MODIFIER_KINDS: Array<Modifier['m']> = [
     'actionsPerTurn', 'drawsPerTurn', 'handLimit', 'stableLimit', 'unicornCount',
-    'unicornType', 'protect', 'blockPlay', 'handVisible'
+    'unicornType', 'protect', 'blockPlay', 'blockOtherPlay', 'blockTriggers', 'handVisible'
 ];
 
 export type Replacement = {
     r: 'replace';
     when: EventType;
+    scope?: 'source' | 'owner';
     filter?: Filter;
     effect: Effect;
     unless?: Cond;
@@ -155,6 +171,8 @@ export type Replacement = {
 
 export interface Trigger {
     on: EventType;
+    scope?: 'source' | 'owner';
+    unicorn?: boolean;
     when?: Cond;
     effect: Effect;
 }
@@ -181,11 +199,18 @@ export interface CatalogEntry {
     unicornType?: UnicornType;
     text: string;
     copies: number;
+    image?: string;
 }
 
 export interface CardEvent {
     type: EventType;
     card?: Iid;
     player?: number;
+    targetCard?: Iid;
+    targetPlayer?: number;
+    publicDefId?: string;
     cause?: string;
+    unicorn?: boolean;
+    suppressed?: boolean;
+    superNeigh?: boolean;
 }

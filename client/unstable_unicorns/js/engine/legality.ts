@@ -91,10 +91,14 @@ function explore(ex: ExecCtx, budget: { left: number }): boolean | 'unknown' {
         if (answers.length === 0) return false;
         for (const answer of answers) {
             const next = branch(ex);
-            const result = respond(next, answer);
-            if ('error' in result) continue;
-            const outcome = explore(next, budget);
-            if (outcome !== false) return outcome;
+            try {
+                const result = respond(next, answer);
+                if ('error' in result) continue;
+                const outcome = explore(next, budget);
+                if (outcome !== false) return outcome;
+            } catch (error) {
+                if (!(error instanceof ImpossibleError)) throw error;
+            }
         }
         return false;
     }

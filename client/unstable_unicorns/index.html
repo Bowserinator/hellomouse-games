@@ -14,8 +14,7 @@
 
     <title>Unstable Unicorns</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700&family=Sofia+Sans+Extra+Condensed:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/shared/css/index.css">
     <link rel="stylesheet" href="css/index.css">
 </head>
@@ -27,6 +26,7 @@
     <nav>
         <h1>Unstable Unicorns</h1>
         <div class="nav-buttons">
+            <a class="nav-link" href="gallery.html" target="_blank" rel="noopener">Gallery</a>
             <a class="nav-link" id="rules-button" href="#" aria-haspopup="dialog"
                 aria-controls="rules-modal">Rules</a>
             <a class="nav-link" target="_blank" href="/">More Games</a>
@@ -134,11 +134,16 @@
         </div>
         <div class="mock-section" id="mock-modals">
             <h3>Modals</h3>
-            <button type="button" data-modal="prompt">Prompt</button>
+            <button type="button" data-modal="prompt-cards">Cards prompt</button>
+            <button type="button" data-modal="prompt-order">Order prompt</button>
+            <button type="button" data-modal="prompt-player">Player prompt</button>
+            <button type="button" data-modal="prompt-yesno">Yes/no prompt</button>
+            <button type="button" data-modal="prompt-options">Options prompt</button>
             <button type="button" data-modal="confirm">Confirm</button>
             <button type="button" data-modal="target">Target</button>
             <button type="button" data-modal="baby">Baby pick</button>
             <button type="button" data-modal="win">Win</button>
+            <button type="button" data-modal="neigh">Neigh!</button>
             <button type="button" data-modal="rules">Rules</button>
             <button type="button" data-modal="disconnect">Disconnect</button>
             <button type="button" data-modal="close">Close all</button>
@@ -146,7 +151,8 @@
     </div>
 
     <div class="modal-darken" id="prompt-overlay" style="display: none">
-        <div class="modal prompt-modal" id="prompt-body"></div>
+        <div class="modal prompt-modal" id="prompt-body" role="dialog" aria-modal="true"
+            aria-labelledby="prompt-title" tabindex="-1"></div>
     </div>
 
     <div class="modal-darken" id="confirm-overlay" style="display: none">
@@ -163,11 +169,11 @@
     </div>
 
     <div class="modal-darken" id="win-modal" style="display: none">
-        <div class="modal">
-            <button class="modal-close-button"
-                onclick="document.getElementById('win-modal').style.display = 'none'">X</button><br>
+        <div class="modal win-modal">
             <h1>Game Over</h1>
             <p id="win-text"></p>
+            <button class="win-exit-button"
+                onclick="document.getElementById('win-modal').style.display = 'none'">EXIT GAME</button>
         </div>
     </div>
 
@@ -180,22 +186,21 @@
 
             <h2>Goal</h2>
             <p>Be the first to collect enough unicorns in your stable: 7 unicorns in a normal game
-                (2-5 players), 6 in a big game (6+ players). Every unicorn card counts as one.</p>
+                (2-5 players), 6 in a big game (6+ players). <a href="https://www.shecodes.io/challenge_submissions/412653/embed">Official rules.</a></p>
 
             <h2>Card types</h2>
             <ul>
-                <li><b>Baby unicorn</b> — every player starts with one in their stable. More babies
-                    only enter your stable through card effects, never from your hand.</li>
-                <li><b>Basic unicorn</b> — a unicorn with no effect.</li>
-                <li><b>Magical unicorn</b> — a unicorn with a special effect.</li>
-                <li><b>Magic</b> — a one-time effect. It goes to the discard pile right after you play it.</li>
-                <li><b>Upgrade</b> — a lasting bonus. It stays in a stable until sacrificed or destroyed.
+                <li><b>Baby unicorn</b> — Every player starts with one in their stable. More babies
+                    can only enter your stable through card effects.</li>
+                <li><b>Basic unicorn</b> — A unicorn with no effect.</li>
+                <li><b>Magical unicorn</b> — A unicorn with a special effect.</li>
+                <li><b>Magic</b> — A one-time effect. It goes to the discard pile right after you play it.</li>
+                <li><b>Upgrade</b> — A lasting bonus, active when in a stable until sacrificed or destroyed.
                     Unless the card says otherwise, you may put it into any player's stable.</li>
-                <li><b>Downgrade</b> — a lasting penalty. It stays in a stable until sacrificed or destroyed.
+                <li><b>Downgrade</b> — A lasting penalty. active when in a stable until sacrificed or destroyed.
                     Unless the card says otherwise, you may put it into any player's stable.</li>
-                <li><b>Instant (neigh)</b> — the only card type you can play at any time, even on
-                    another player's turn. Neighing the most recent play undoes it completely; any number
-                    of neighs can chain during a turn.</li>
+                <li><b>Instant (neigh)</b> — The only card type you can play at any time, even on
+                    another player's turn. Neighing the most recent play undoes it completely, and yes, you can also chain neighs.</li>
             </ul>
 
             <h2>Setup</h2>
@@ -205,13 +210,12 @@
 
             <h2>Turn phases</h2>
             <ul>
-                <li><b>Beginning of turn</b> — effects that trigger "at the beginning of your turn" fire
-                    now, then you automatically draw one card from the deck. This draw is free and does
-                    not use your action.</li>
-                <li><b>Action phase</b> — choose one: play a unicorn, magic, upgrade, or downgrade
-                    card, <b>or</b> draw one additional card from the deck. Either choice spends your
-                    action for the turn.</li>
-                <li><b>End of turn</b> — discard down to the hand limit of 7 cards.</li>
+                <li><b>Beginning of turn</b> — Click the deck to draw a card and begin your turn. Effects that trigger
+                    "at the beginning of your turn" fire. This draw is free and does not use your action.</li>
+                <li><b>Action phase</b> — Choose one: play a unicorn, magic, upgrade, or downgrade
+                    card, <b>or</b> draw one additional card from the deck. If you have multiple actions (due to an upgrade), you may
+                    perform additional actions. Note neighs only affect the results of the current action.</li>
+                <li><b>End of turn</b> — Discard down to the hand limit of 7 cards.</li>
             </ul>
 
             <h2>End of the game</h2>

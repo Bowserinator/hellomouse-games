@@ -1,4 +1,5 @@
 import { PACKS } from '../catalog/index.js';
+import { config } from '../config.js';
 import { WILDCARD } from '../vars.js';
 import type { CatalogEntry } from '../engine/dsl/ast.js';
 
@@ -21,25 +22,35 @@ function artFor(kind: string): string {
     return `/unstable_unicorns/img/placeholders/${KINDS.includes(kind) ? kind : 'unknown'}.svg`;
 }
 
-function cardArt(kind: string): HTMLElement {
+function cardArt(kind: string, source?: string): HTMLElement {
     const art = document.createElement('span');
     art.className = 'card-art';
     const image = document.createElement('img');
-    image.src = artFor(kind);
+    image.src = (source ?? artFor(kind)).replace('{{theme}}', config.theme);
     image.alt = '';
     art.append(image);
     return art;
 }
 
-function kindBadge(kind: string): HTMLElement {
+function unicornTypeForKind(kind: string): string | undefined {
+    if (kind === 'baby') return 'baby';
+    if (kind === 'basic') return 'basic';
+    return undefined;
+}
+
+function kindBadge(kind: string, unicornType?: string): HTMLElement {
     const badge = document.createElement('span');
     badge.className = 'card-kind';
-    badge.textContent = ART[kind] ?? ART.unknown;
+    let subtype = 'Basic';
+    if (unicornType === 'baby') subtype = 'Baby';
+    else if (unicornType === 'special') subtype = 'Magical';
+    badge.textContent = kind === 'basic' || kind === 'baby'
+        ? `Unicorn (${subtype})` : ART[kind] ?? ART.unknown;
     return badge;
 }
 
 for (const pack of Object.values(PACKS))
-    for (const entry of pack) ENTRIES[entry.id] = entry;
+    for (const entry of pack.cards) ENTRIES[entry.id] = entry;
 
 export function cardEntry(defId: string): CatalogEntry | undefined {
     return ENTRIES[defId];
@@ -56,7 +67,7 @@ export function cardFace(defId: string): HTMLElement {
 
     if (defId === WILDCARD) {
         face.classList.add('down');
-        face.append(kindBadge('down'), cardArt('down'));
+        face.append(cardArt('down'), kindBadge('down'));
         return face;
     }
 
@@ -66,13 +77,17 @@ export function cardFace(defId: string): HTMLElement {
 
     const name = document.createElement('span');
     name.className = 'card-name';
-    name.textContent = entry ? entry.name : '?';
+    name.textContent = entry?.name ?? '?';
 
     const text = document.createElement('span');
     text.className = 'card-text';
     text.textContent = entry ? entry.text : '';
 
-    face.append(kindBadge(kind), name, cardArt(kind), text);
+    const description = document.createElement('div');
+    description.className = 'card-description';
+    description.append(kindBadge(kind, entry?.unicornType ?? unicornTypeForKind(kind)), text);
+
+    face.append(name, cardArt(kind, entry?.image), description);
     return face;
 }
 
