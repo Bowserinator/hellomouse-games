@@ -1,0 +1,55 @@
+@use './tokens' as *;
+
+.seat.targeted .seat-card .card-face {
+    outline: 3px solid $signal;
+}
+
+.seat.targeted {
+    cursor: crosshair;
+}
+
+#game-note,
+.hand-note {
+    padding: 3px 12px;
+    margin-bottom: 10px;
+    font-size: 11pt;
+    color: $ink;
+    background: $rim;
+    border: 2px solid $ink;
+}
+
+[data-hint='highlight'] {
+    outline: 3px solid $rim;
+    outline-offset: 3px;
+}
+
+[data-hint='animate'] {
+    outline: 3px solid $rim;
+    outline-offset: 3px;
+    animation: hint-pulse 1.1s ease-in-out infinite;
+}
+
+[data-hint='animate']:focus-visible {
+    animation: none;
+}
+
+@keyframes hint-pulse {
+    0%,
+    100% {
+        outline-color: $rim;
+        outline-offset: 3px;
+    }
+
+    50% {
+        outline-color: rgba($rim, 0.25);
+        outline-offset: 8px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-hint='animate'] {
+        animation: none;
+        outline-color: $rim;
+        outline-offset: 3px;
+    }
+}

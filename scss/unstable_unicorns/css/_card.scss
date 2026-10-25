@@ -1,0 +1,110 @@
+@use './tokens' as *;
+
+.card-slot {
+    cursor: pointer;
+    transition: transform 0.15s;
+
+    &:hover {
+        transform: translateY(-6px);
+    }
+
+    &.selected .card-face {
+        outline: 3px solid $rim;
+    }
+}
+
+.pile .card-slot {
+    &:hover {
+        transform: none;
+    }
+}
+
+.preview .card-slot {
+    cursor: default;
+
+    &:hover {
+        transform: none;
+    }
+}
+
+.card-face {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: $card-w;
+    height: $card-h;
+    padding: 8px;
+    border: 3px solid $ink;
+    border-radius: $card-radius;
+    background: $paper;
+    color: $ink;
+    font-family: $ui-font;
+    overflow: hidden;
+
+    &.baby .card-kind {
+        background: $kind-baby;
+    }
+
+    &.basic .card-kind {
+        background: $kind-basic;
+    }
+
+    &.magic .card-kind {
+        background: $kind-magic;
+    }
+
+    &.upgrade .card-kind {
+        background: $kind-upgrade;
+    }
+
+    &.downgrade .card-kind {
+        background: $kind-downgrade;
+    }
+
+    &.unknown .card-kind {
+        background: $kind-unknown;
+    }
+
+    &.down {
+        background: repeating-linear-gradient(45deg, $paper-shade, $paper-shade 6px, $paper, $paper 12px);
+
+        .card-kind {
+            background: $ink;
+            color: $paper;
+        }
+    }
+}
+
+.card-kind {
+    align-self: stretch;
+    margin: -8px -8px 4px;
+    padding: 3px 8px;
+    font-size: 9pt;
+    letter-spacing: 0.04em;
+    color: $ink;
+}
+
+.card-name {
+    font-family: $title-font;
+    font-size: 14pt;
+}
+
+.card-art {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    img {
+        width: 52px;
+        height: 52px;
+        border-radius: $card-radius;
+        background: $paper;
+        border: 2px solid $ink;
+    }
+}
+
+.card-text {
+    font-size: 7pt;
+    line-height: 1.15;
+}

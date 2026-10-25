@@ -1,0 +1,207 @@
+@use './tokens' as *;
+
+.prompt-modal {
+    width: min(760px, 92vw);
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+}
+
+.prompt-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+
+.prompt-reason {
+    font-family: $ui-font;
+    font-size: 13pt;
+    color: $rust;
+}
+
+.prompt-source {
+    font-size: 11pt;
+    color: rgba($ink, 0.55);
+}
+
+.prompt-body {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.prompt-group-title {
+    font-family: $ui-font;
+    font-size: 12pt;
+    color: rgba($ink, 0.7);
+}
+
+.prompt-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.prompt-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.prompt-count {
+    font-size: 11pt;
+    color: rgba($ink, 0.55);
+}
+
+.prompt-players,
+.prompt-order-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    h1 {
+        margin: 0;
+        font-family: $title-font;
+    }
+}
+
+.modal-close-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    flex: none;
+    color: $ink;
+    line-height: 1;
+    border: 2px solid $ink;
+    background-color: transparent;
+    box-shadow: none;
+    transition: background-color 0.2s, color 0.2s;
+    font-family: $ui-font;
+    font-size: 12pt;
+    font-weight: bold;
+
+    &:hover:not(:disabled) {
+        background-color: $ink;
+        color: $paper;
+        transform: none;
+        box-shadow: none;
+    }
+
+    &:active:not(:disabled) {
+        transform: none;
+        box-shadow: none;
+    }
+
+    &:focus-visible {
+        outline: 3px solid $signal;
+        outline-offset: 2px;
+    }
+}
+
+.modal-darken[hidden] {
+    display: none;
+}
+
+.modal-darken {
+    background-color: rgba($ink, 0.55);
+}
+
+.modal {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 24px 32px;
+    background: $paper;
+    border: 3px solid $ink;
+    box-shadow: 8px 8px 0 $ink;
+    border-radius: 0;
+    text-align: center;
+    color: $ink;
+}
+
+body.in-game .modal {
+    top: calc(50% - #{$hud-height} / 2);
+}
+
+body.in-game .prompt-modal,
+body.in-game #baby-overlay .modal,
+body.in-game #rules-modal .modal {
+    max-height: calc(100vh - #{$hud-height} - 40px);
+}
+
+#rules-modal .modal {
+    width: min(640px, 92vw);
+    max-height: 80vh;
+    overflow-y: auto;
+    text-align: left;
+
+    h2 {
+        margin: 18px 0 6px;
+        font-family: $title-font;
+        font-size: 15pt;
+        color: $ink;
+    }
+
+    p {
+        margin: 6px 0;
+    }
+
+    ul {
+        margin: 6px 0;
+        padding-left: 0;
+        list-style-position: inside;
+        line-height: 1.45;
+    }
+}
+
+#baby-overlay {
+    z-index: 1003;
+}
+
+.baby-modal {
+    width: min(920px, 92vw);
+    text-align: left;
+}
+
+.baby-modal .prompt-body {
+    align-items: center;
+}
+
+.baby-grid {
+    justify-content: center;
+}
+
+.baby-choice {
+    cursor: pointer;
+}
+
+.prompt-modal .card-slot {
+    transition: none;
+
+    &:hover {
+        transform: none;
+    }
+
+    &:hover:not(.selected) .card-face {
+        outline: 3px solid $signal;
+    }
+}

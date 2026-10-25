@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="Unstable Unicorns - Hellomouse Games">
+    <meta name="author" content="Bowserinator">
+
+    <meta property="og:title" content="Unstable Unicorns - Hellomouse Games">
+    <meta property="og:description" content="Build a unicorn army and neigh everyone else.">
+    <meta property="og:image" content="/unstable_unicorns/img/thumbnail.png">
+
+    <title>Unstable Unicorns</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared/css/index.css">
+    <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body>
+    <script src="/shared/js/index.js" defer></script>
+    <script src="./js/game.js" type="module" defer></script>
+
+    <nav>
+        <h1>Unstable Unicorns</h1>
+        <div class="nav-buttons">
+            <a class="nav-link" id="rules-button" href="#" aria-haspopup="dialog"
+                aria-controls="rules-modal">Rules</a>
+            <a class="nav-link" target="_blank" href="/">More Games</a>
+        </div>
+    </nav>
+
+    <button class="chat-tab" id="chat-toggle" type="button" aria-controls="chat"
+        aria-expanded="false" aria-label="Open chat">
+        <span id="chat-unread" class="unread-badge chat-tab-badge" hidden aria-hidden="true">0</span>
+    </button>
+
+    <div id="chat" aria-hidden="true" inert>
+        <label for="chat-input" class="chat-container">
+            <div id="messages"></div>
+            <input type="text" autocomplete="off" id="chat-input" maxlength="1000"
+                placeholder="Chat with other players...">
+        </label>
+    </div>
+
+    <div id="lobby" style="display: block">
+        <div class="container">
+            <h2>Players</h2>
+            <div id="lobby-player-list"></div>
+
+            <h2>Invite</h2>
+            <p class="lobby-hint">Click the box below to copy an invite link.
+                Players can only join while the game is in a lobby. 3 to 8 players.</p>
+
+            <p class="game-link" id="game-link">
+                <small>Click to copy invite link</small>
+                <span id="link">Loading...</span>
+            </p>
+
+            <div class="lobby-actions">
+                <label for="username">Username</label>
+                <input type="text" id="username" autocomplete="off" maxlength="16" />
+                <button id="set-username">Set Username</button>
+                <button id="ready">Ready</button>
+                <button id="start-game" style="display: none" disabled>Start Game</button>
+            </div>
+
+            <h2>Card packs</h2>
+            <div id="packs"></div>
+        </div>
+    </div>
+
+    <div id="game" style="display: none">
+        <div id="board">
+            <div id="world-frame">
+                <div id="world">
+                    <div id="table-art" class="table-art-host"></div>
+                    <div id="center" class="table-center"></div>
+                    <div id="seats"></div>
+                    <div id="chain-banner" class="chain-banner"></div>
+                </div>
+            </div>
+            <div id="camera-controls" role="group" aria-label="Camera controls">
+                <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
+                <button id="recenter" type="button" aria-label="Recenter board">Recenter</button>
+                <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="hud" style="display: none">
+        <div id="hud-banner" class="hud-banner" role="status" aria-live="polite"
+            hidden>DRAW A CARD FIRST</div>
+        <div class="hud-row">
+            <span id="game-note" hidden></span>
+            <span class="hand-note" hidden></span>
+        </div>
+        <div class="hand-tools">
+            <button id="end-turn" type="button">End turn</button>
+        </div>
+        <div id="hand"></div>
+        <div id="log-panel" data-state="collapsed">
+            <button id="log-toggle" class="log-toggle" type="button" aria-expanded="false"
+                aria-controls="log" aria-label="Game log">
+                <span>Log</span>
+                <span id="log-unread" class="unread-badge" hidden aria-hidden="true">0</span>
+            </button>
+            <div id="log" role="log" aria-live="polite" aria-relevant="additions" hidden></div>
+        </div>
+    </div>
+
+    <div id="preview-layer"></div>
+    <div id="flight-layer"></div>
+    <div id="effect-toast" class="effect-toast" hidden></div>
+
+    <div id="mock-panel" class="mock-panel" hidden>
+        <h2>Mock controls</h2>
+        <label>Players <select id="mock-players"></select></label>
+        <label>You are <select id="mock-seat"></select></label>
+        <div class="mock-section">
+            <h3>Your hand</h3>
+            <div id="mock-hand"></div>
+            <select id="mock-add-card"></select>
+            <button id="mock-add" type="button">Add to hand</button>
+        </div>
+        <div class="mock-section">
+            <h3>Simulate a play</h3>
+            <label>By <select id="mock-play-by"></select></label>
+            <select id="mock-play-card"></select>
+            <button id="mock-play" type="button">Play card</button>
+        </div>
+        <div class="mock-section" id="mock-modals">
+            <h3>Modals</h3>
+            <button type="button" data-modal="prompt">Prompt</button>
+            <button type="button" data-modal="confirm">Confirm</button>
+            <button type="button" data-modal="target">Target</button>
+            <button type="button" data-modal="baby">Baby pick</button>
+            <button type="button" data-modal="win">Win</button>
+            <button type="button" data-modal="rules">Rules</button>
+            <button type="button" data-modal="disconnect">Disconnect</button>
+            <button type="button" data-modal="close">Close all</button>
+        </div>
+    </div>
+
+    <div class="modal-darken" id="prompt-overlay" style="display: none">
+        <div class="modal prompt-modal" id="prompt-body"></div>
+    </div>
+
+    <div class="modal-darken" id="confirm-overlay" style="display: none">
+        <div class="modal prompt-modal" id="confirm-body" role="dialog" aria-modal="true"></div>
+    </div>
+
+    <div class="modal-darken" id="target-overlay" style="display: none">
+        <div class="modal prompt-modal" id="target-body" role="dialog" aria-modal="true"></div>
+    </div>
+
+    <div class="modal-darken" id="baby-overlay" hidden>
+        <div class="modal prompt-modal baby-modal" id="baby-modal" role="dialog" aria-modal="true"
+            aria-labelledby="baby-title"></div>
+    </div>
+
+    <div class="modal-darken" id="win-modal" style="display: none">
+        <div class="modal">
+            <button class="modal-close-button"
+                onclick="document.getElementById('win-modal').style.display = 'none'">X</button><br>
+            <h1>Game Over</h1>
+            <p id="win-text"></p>
+        </div>
+    </div>
+
+    <div class="modal-darken" id="rules-modal" style="display: none">
+        <div class="modal">
+            <div class="modal-header">
+                <h1>Rules</h1>
+                <button class="modal-close-button" id="rules-close">X</button>
+            </div>
+
+            <h2>Goal</h2>
+            <p>Be the first to collect enough unicorns in your stable: 7 unicorns in a normal game
+                (2-5 players), 6 in a big game (6+ players). Every unicorn card counts as one.</p>
+
+            <h2>Card types</h2>
+            <ul>
+                <li><b>Baby unicorn</b> — every player starts with one in their stable. More babies
+                    only enter your stable through card effects, never from your hand.</li>
+                <li><b>Basic unicorn</b> — a unicorn with no effect.</li>
+                <li><b>Magical unicorn</b> — a unicorn with a special effect.</li>
+                <li><b>Magic</b> — a one-time effect. It goes to the discard pile right after you play it.</li>
+                <li><b>Upgrade</b> — a lasting bonus. It stays in a stable until sacrificed or destroyed.
+                    Unless the card says otherwise, you may put it into any player's stable.</li>
+                <li><b>Downgrade</b> — a lasting penalty. It stays in a stable until sacrificed or destroyed.
+                    Unless the card says otherwise, you may put it into any player's stable.</li>
+                <li><b>Instant (neigh)</b> — the only card type you can play at any time, even on
+                    another player's turn. Neighing the most recent play undoes it completely; any number
+                    of neighs can chain during a turn.</li>
+            </ul>
+
+            <h2>Setup</h2>
+            <p>Each player picks a baby unicorn for their stable. The remaining babies form the
+                nursery. Every player is dealt 5 cards; the rest is the draw deck, with a discard pile
+                next to it. Discarded, sacrificed, and destroyed cards all go to the discard pile.</p>
+
+            <h2>Turn phases</h2>
+            <ul>
+                <li><b>Beginning of turn</b> — effects that trigger "at the beginning of your turn" fire
+                    now, then you automatically draw one card from the deck. This draw is free and does
+                    not use your action.</li>
+                <li><b>Action phase</b> — choose one: play a unicorn, magic, upgrade, or downgrade
+                    card, <b>or</b> draw one additional card from the deck. Either choice spends your
+                    action for the turn.</li>
+                <li><b>End of turn</b> — discard down to the hand limit of 7 cards.</li>
+            </ul>
+
+            <h2>End of the game</h2>
+            <p>The first player to reach the required number of unicorns in their stable wins. If the
+                deck runs out first, the player with the most unicorns wins. If players tie for the most
+                unicorns, the player with the most letters in their unicorn card names wins. If that ties
+                too, everyone loses. Ouch.</p>
+        </div>
+    </div>
+
+    <div id="disconnect-banner" class="banner">
+        Disconnected from server — reconnecting…
+    </div>
+</body>
+
+</html>

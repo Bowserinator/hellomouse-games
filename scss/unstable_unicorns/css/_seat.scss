@@ -1,0 +1,202 @@
+@use './tokens' as *;
+
+#seats {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.seat {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    pointer-events: auto;
+}
+
+.seat-plate-host {
+    position: absolute;
+    left: 0;
+    top: calc(#{$card-h} * 1.25);
+    translate: -50% 0;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+}
+
+.seat-plate {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: min(320px, calc(var(--seat-chord, 300px) + 120px));
+    padding: 4px 12px;
+    white-space: nowrap;
+    background: $paper;
+    border: 3px solid $ink;
+    box-shadow: 3px 3px 0 $ink;
+    font-family: $ui-font;
+    font-size: 12pt;
+    color: $ink;
+}
+
+.seat-status {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    margin: 0;
+    padding: 0 0 0 3px;
+    list-style: none;
+    font-family: $ui-font;
+    font-size: 10pt;
+    font-weight: bold;
+    white-space: nowrap;
+
+    li {
+        position: relative;
+        cursor: help;
+    }
+
+    li[data-tip]::after {
+        content: attr(data-tip);
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        translate: -50% 0;
+        width: max-content;
+        max-width: 220px;
+        padding: 4px 10px;
+        font-size: 10pt;
+        font-weight: normal;
+        white-space: normal;
+        text-align: left;
+        color: $ink;
+        background: $paper;
+        border: 2px solid $ink;
+        box-shadow: 3px 3px 0 $ink;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.12s ease;
+    }
+
+    li[data-tip]:hover::after {
+        opacity: 1;
+    }
+
+    li.upgrade {
+        color: $kind-upgrade;
+    }
+
+    li.downgrade {
+        color: $kind-downgrade;
+    }
+}
+
+.seat-avatar {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $title-font;
+    font-size: 12pt;
+    color: $paper;
+    background: $felt;
+    border: 2px solid $ink;
+}
+
+.seat-name {
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: bold;
+}
+
+.seat-unicorns {
+    font-size: 11pt;
+    color: $rust;
+}
+
+.seat-hand-count {
+    font-size: 11pt;
+    color: rgba($ink, 0.6);
+}
+
+.seat-badge {
+    padding: 1px 7px;
+    font-size: 10pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $paper;
+}
+
+.seat-badge.turn {
+    background: $rust;
+}
+
+.seat-badge.waiting {
+    background: $felt;
+}
+
+.seat-badge.offline {
+    background: rgba($ink, 0.55);
+}
+
+.seat-stable {
+    position: absolute;
+    left: 0;
+    top: 0;
+    translate: -50% -50%;
+    display: flex;
+    z-index: 2;
+}
+
+.seat-card {
+    transform: translateY(calc(var(--i, 0) * 3px));
+}
+
+.seat-card + .seat-card {
+    margin-left: calc((var(--step, 1) - 1) * #{$card-w});
+}
+
+.seat-hand {
+    position: absolute;
+    left: 0;
+    top: calc(#{$card-h} * 0.60);
+    translate: -50% 0;
+    display: flex;
+    gap: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.card-back {
+    flex: 0 0 auto;
+    width: $card-back-w;
+    height: $card-back-h;
+    @include card-back-surface(2px);
+    box-shadow: 1px 1px 0 rgba($ink, 0.22);
+
+    & + & {
+        margin-left: calc((var(--hand-step, 1) - 1) * #{$card-back-w});
+    }
+}
+
+.seat.bottom .seat-plate-host {
+    top: calc(#{$card-h} * 0.55);
+}
+
+.seat.active .seat-plate {
+    background: $rim;
+    box-shadow: 0 0 0 3px $paper, 5px 5px 0 $ink;
+}
+
+.seat.targeted .seat-plate {
+    background: $signal;
+    color: $paper;
+}

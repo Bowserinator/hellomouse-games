@@ -1,0 +1,448 @@
+@use './tokens' as *;
+
+nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: $nav-height;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: $paper;
+    border-bottom: 3px solid $ink;
+    z-index: 20;
+
+    h1 {
+        margin: 0;
+        font-family: $title-font;
+        font-size: 17pt;
+        color: $ink;
+    }
+}
+
+.nav-buttons {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    .nav-link {
+        margin: 0;
+        padding: 4px 6px;
+        color: $ink;
+        font-family: $ui-font;
+        font-size: 13pt;
+        font-weight: normal;
+        line-height: 1.2;
+        text-decoration: none;
+        background: none;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        cursor: pointer;
+
+        &:hover:not(:disabled) {
+            color: $rust;
+            text-decoration: underline;
+            text-decoration-thickness: 2px;
+            text-underline-offset: 3px;
+            background: none;
+            transform: none;
+            box-shadow: none;
+        }
+
+        &:active:not(:disabled) {
+            color: $ink;
+            transform: none;
+            box-shadow: none;
+        }
+
+        &:focus-visible {
+            outline: 3px solid $signal;
+            outline-offset: 2px;
+        }
+    }
+}
+
+.chat-tab {
+    position: fixed;
+    right: 0;
+    top: calc(#{$nav-height} + (100vh - #{$nav-height}) / 2);
+    transform: translateY(-50%);
+    width: 30px;
+    height: 96px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+    color: $ink;
+    background: $paper;
+    font-family: $title-font;
+    font-size: 16pt;
+    line-height: 1;
+    border: 3px solid $ink;
+    border-right: 0;
+    border-radius: 0;
+    box-shadow: -4px 4px 0 rgba($ink, 0.16);
+    z-index: 16;
+    transition: right 0.2s ease, background-color 0.15s ease, color 0.15s ease;
+
+    &::before {
+        content: '<';
+    }
+
+    &:hover:not(:disabled),
+    &:active:not(:disabled) {
+        color: $ink;
+        background: $rim;
+        transform: translateY(-50%);
+        box-shadow: -4px 4px 0 $ink;
+    }
+
+    &:focus-visible {
+        outline: 3px solid $signal;
+        outline-offset: -3px;
+    }
+}
+
+body.chat-open .chat-tab {
+    right: min(#{$chat-width}, calc(100vw - 30px));
+
+    &::before {
+        content: '>';
+    }
+}
+
+.chat-tab-badge {
+    position: absolute;
+    top: -9px;
+    left: -9px;
+    margin: 0;
+}
+
+#chat {
+    position: fixed;
+    right: 0;
+    top: $nav-height;
+    bottom: 0;
+    width: $chat-width;
+    max-width: 100vw;
+    background: $paper;
+    border-left: 3px solid $ink;
+    box-shadow: -8px 0 0 rgba($ink, 0.16);
+    z-index: 15;
+    transform: translateX(100%);
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform 0.2s ease, visibility 0s linear 0.2s;
+}
+
+body.chat-open #chat {
+    transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
+    transition: transform 0.2s ease;
+}
+
+body.in-game #chat {
+    bottom: 0;
+}
+
+body.in-game.chat-open #hud {
+    clip-path: inset(0 $chat-width 0 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #chat,
+    body.chat-open #chat,
+    .chat-tab {
+        transition: none;
+    }
+}
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    font-size: 11pt;
+}
+
+.chat-line {
+    padding: 2px 0;
+    word-wrap: break-word;
+}
+
+#chat-input {
+    margin: 8px;
+    width: calc(100% - 16px);
+}
+
+#lobby {
+    padding: calc(#{$nav-height} + 24px) 24px 24px;
+    height: 100%;
+    overflow-y: auto;
+    color: $ink;
+
+    input[type='text'] {
+        background: $paper;
+        border: 3px solid $ink;
+        border-radius: 0;
+        color: $ink;
+    }
+
+    button:not(:disabled) {
+        background: $paper;
+        color: $ink;
+
+        &:hover {
+            background: $rim;
+        }
+
+        &#ready,
+        &#start-game {
+            background: $rim;
+        }
+    }
+}
+
+.container {
+    max-width: 720px;
+    margin: 0 auto;
+
+    h2 {
+        margin: 26px 0 10px;
+        font-family: $title-font;
+        font-size: 17pt;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 4px solid $rim;
+        display: inline-block;
+    }
+}
+
+.lobby-hint {
+    margin: 4px 0 10px;
+    font-size: 11pt;
+}
+
+#lobby-player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.lobby-row {
+    display: flex;
+    gap: 14px;
+    padding: 10px 14px;
+    background: $paper;
+    border: 3px solid $ink;
+    box-shadow: 4px 4px 0 $ink;
+    font-family: $ui-font;
+    font-size: 13pt;
+
+    span:first-child {
+        flex: 1;
+    }
+
+    span {
+        padding: 0 6px;
+    }
+
+    span:last-child {
+        color: $felt;
+        font-weight: bold;
+    }
+
+    &.offline {
+        opacity: 0.5;
+    }
+}
+
+.game-link {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    background: $paper;
+    border: 3px dashed $ink;
+    cursor: pointer;
+    word-break: break-all;
+
+    small {
+        color: rgba(43, 33, 24, 0.6);
+    }
+}
+
+.lobby-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+
+    label {
+        font-family: $ui-font;
+        font-size: 13pt;
+    }
+}
+
+#packs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.pack-tile {
+    min-width: 150px;
+    padding: 14px 16px;
+    background: $paper;
+    border: 3px solid $ink;
+    box-shadow: 4px 4px 0 $ink;
+    font-family: $ui-font;
+    font-size: 14pt;
+    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: center;
+    gap: 4px 8px;
+
+    &.locked {
+        cursor: not-allowed;
+    }
+
+    &.selected {
+        background: $pink;
+        box-shadow: 2px 2px 0 $ink;
+        transform: translate(2px, 2px);
+    }
+}
+
+.pack-check {
+    visibility: hidden;
+    font-weight: bold;
+}
+
+.pack-tile.selected .pack-check {
+    visibility: visible;
+}
+
+.host-tag {
+    margin-left: 8px;
+    font-size: 10pt;
+    font-weight: bold;
+    color: darken($felt, 20%);
+}
+
+#log-panel {
+    position: fixed;
+    left: 8px;
+    bottom: 8px;
+    width: auto;
+    max-width: min(280px, calc(100vw - 16px));
+    padding: 2px 6px;
+    font-family: $ui-font;
+    font-size: 11pt;
+    color: rgba($ink, 0.8);
+    background: rgba($paper, 0.9);
+    border: 3px solid $ink;
+    z-index: 6;
+
+    &[data-state='open'] {
+        width: 280px;
+        padding: 4px 8px;
+    }
+}
+
+.log-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    margin: 0;
+    padding: 2px;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    cursor: pointer;
+
+    &::before {
+        content: '▸';
+    }
+
+    #log-panel[data-state='open'] &::before {
+        content: '▾';
+    }
+
+    &:hover:not(:disabled),
+    &:active:not(:disabled) {
+        color: $ink;
+        background: none;
+        transform: none;
+        box-shadow: none;
+    }
+
+    &:focus-visible {
+        outline: 3px solid $signal;
+        outline-offset: 2px;
+    }
+}
+
+.unread-badge {
+    display: inline-block;
+    min-width: 18px;
+    padding: 0 5px;
+    margin-left: 4px;
+    font-size: 10pt;
+    line-height: 16px;
+    text-align: center;
+    color: $paper;
+    background: $signal;
+    border: 2px solid $ink;
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+#log {
+    height: 120px;
+    overflow-y: auto;
+    padding: 2px;
+}
+
+.log-line {
+    padding: 1px 4px;
+    font-size: 10pt;
+    line-height: 1.25;
+
+    &:nth-child(even) {
+        background: rgba($ink, 0.08);
+    }
+}
+
+#disconnect-banner {
+    position: fixed;
+    top: -100px;
+    left: 0;
+    right: 0;
+    padding: 10px;
+    text-align: center;
+    color: white;
+    background: $signal;
+    border-bottom: 3px solid $ink;
+    transition: top 0.3s;
+    z-index: 100;
+}

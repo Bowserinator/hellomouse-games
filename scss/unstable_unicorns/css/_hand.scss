@@ -1,0 +1,183 @@
+@use './tokens' as *;
+
+#game {
+    position: fixed;
+    top: $nav-height;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+}
+
+#hud {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: $hud-height;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 6px 16px 8px;
+    background: transparent;
+    z-index: $z-hand-above-modal;
+    pointer-events: none;
+}
+
+#hud button,
+#hand .hand-card,
+#log-panel {
+    pointer-events: auto;
+}
+
+#game,
+#hud,
+#preview-layer,
+#flight-layer {
+    user-select: none;
+}
+
+.hud-banner {
+    position: absolute;
+    top: calc(100% - #{$card-h * 0.5 + 8px});
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    z-index: 3;
+    padding: 5px 12px;
+    text-align: center;
+    font-family: $title-font;
+    font-size: 13pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: white;
+    background: black;
+    white-space: nowrap;
+    pointer-events: none;
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+.hud-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 24px;
+    font-family: $ui-font;
+    font-size: 12pt;
+    color: $ink;
+}
+
+.hand-tools {
+    position: relative;
+    z-index: 4;
+    display: flex;
+    flex: none;
+    align-self: center;
+    width: max-content;
+    justify-content: center;
+    margin-bottom: 6px;
+}
+
+#end-turn {
+    white-space: nowrap;
+
+    &:focus-visible {
+        outline: 3px solid $signal;
+        outline-offset: 2px;
+    }
+}
+
+#hand {
+    --hand-brightness: 1;
+    --hand-saturation: 1;
+    --hand-contrast: 1;
+
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex: 0 1 auto;
+    align-items: flex-end;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    min-height: calc(#{$card-h} + 20px);
+    padding-top: 20px;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0 -16px -8px;
+        z-index: -1;
+        pointer-events: none;
+        background: linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.88) 0%,
+            rgba(0, 0, 0, 0.55) 45%,
+            rgba(0, 0, 0, 0) 100%
+        );
+    }
+}
+
+.hand-card {
+    filter: #{"saturate(var(--hand-saturation)) brightness(var(--hand-brightness)) contrast(var(--hand-contrast))"};
+    transform-origin: 50% 100%;
+    transform: rotate(var(--fan-deg, 0deg)) translateY(var(--fan-y, 0px));
+    transition: transform 0.16s ease-out;
+
+    & + & {
+        margin-left: var(--hand-overlap, -34px);
+    }
+
+    &:hover {
+        z-index: 3;
+        transform: rotate(0deg) translateY(-20px) scale(1.03);
+    }
+
+    &.blocked {
+        --hand-saturation: 0;
+        --hand-contrast: 0.7;
+        cursor: default;
+
+        &:hover {
+            z-index: auto;
+            transform: rotate(var(--fan-deg, 0deg)) translateY(var(--fan-y, 0px));
+        }
+    }
+
+    &.neigh-ready {
+        --hand-saturation: 1;
+        --hand-brightness: 1;
+        --hand-contrast: 1;
+    }
+
+}
+
+#hand.dimmed {
+    --hand-brightness: 0.8;
+    --hand-saturation: 0;
+    --hand-contrast: 0.8;
+}
+
+#hand.draw-first {
+    --hand-brightness: 0.9;
+    --hand-saturation: 0;
+    --hand-contrast: 0.85;
+}
+
+#hand.no-actions {
+    --hand-brightness: 0.72;
+    --hand-saturation: 0;
+    --hand-contrast: 0.8;
+}
+
+#hand .hand-card.selected .card-face {
+    outline: 3px solid $rim;
+    box-shadow: 3px 3px 0 $ink;
+}

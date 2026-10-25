@@ -1,0 +1,60 @@
+@use './tokens' as *;
+@use './table';
+@use './card';
+@use './seat';
+@use './hand';
+@use './hud';
+@use './modal';
+@use './indicators';
+@use './motion';
+@use './mock';
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: white;
+    color: $ink;
+    font-family: 'Baloo 2', sans-serif;
+    overflow: hidden;
+}
+
+input[type='text'],
+button,
+select {
+    padding: 6px 10px;
+    font-family: 'Baloo 2', sans-serif;
+    font-size: 11pt;
+    color: $ink;
+    background: $paper;
+    border: 3px solid $ink;
+    border-radius: 0;
+    outline: none;
+}
+
+button {
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 3px 3px 0 $ink;
+
+    &:hover:not(:disabled) {
+        background: $rim;
+        transform: translate(-1px, -1px);
+        box-shadow: 4px 4px 0 $ink;
+    }
+
+    &:active:not(:disabled) {
+        transform: translate(2px, 2px);
+        box-shadow: none;
+    }
+
+    &:disabled {
+        color: $disabled-ink;
+        background: $disabled-bg;
+        border-color: $disabled-border;
+        cursor: default;
+        box-shadow: none;
+    }
+}

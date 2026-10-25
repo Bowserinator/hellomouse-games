@@ -15,7 +15,7 @@ module.exports = {
         project: './tsconfig.json'
     },
     extends: ['@hellomouse/typescript'],
-    ignorePatterns: ['build/**'],
+    ignorePatterns: ['build/**', 'scripts/**'],
     rules: {
         '@typescript-eslint/indent': ['error', 4, { SwitchCase: 1 }],
         'curly': ['error', 'multi'],

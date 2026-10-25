@@ -1,0 +1,355 @@
+@use './tokens' as *;
+
+#board {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 50% 42%,
+            lighten($felt, 6%) 0%,
+            darken($felt, 22%) 70%,
+            darken($felt, 34%) 100%);
+    box-shadow: inset 0 0 160px rgba($ink, 0.22);
+}
+
+#world-frame {
+    position: absolute;
+    inset: 0 0 $hud-height;
+    overflow: visible;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+
+    &:active {
+        cursor: grabbing;
+    }
+}
+
+#camera-controls {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 6;
+    display: flex;
+    gap: 6px;
+
+    button {
+        padding: 3px 10px;
+        touch-action: manipulation;
+
+        &:focus-visible {
+            outline: 3px solid $signal;
+            outline-offset: 2px;
+        }
+    }
+}
+
+#world {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform-origin: 0 0;
+
+    &.panning {
+        will-change: transform;
+    }
+}
+
+.table-art-host {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+svg.table-art {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.table-shadow {
+    fill: rgba($ink, 0.32);
+}
+
+.table-rim {
+    fill: $rim;
+    stroke: $ink;
+    stroke-width: 7;
+    stroke-linejoin: round;
+}
+
+.table-felt {
+    fill: $felt;
+    stroke: darken($felt, 16%);
+    stroke-width: 3;
+    stroke-linejoin: round;
+}
+
+.table-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    display: flex;
+    align-items: center;
+    gap: $pile-gap;
+    z-index: 2;
+}
+
+.pile {
+    position: relative;
+    width: $card-w;
+    height: $card-h;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pile-label {
+    position: absolute;
+    bottom: calc(100% - 4px + var(--layer-max, 0) * 1px);
+    left: 50%;
+    translate: -50% 0;
+    z-index: 30;
+    padding: 1px 6px;
+    white-space: nowrap;
+    font-family: $title-font;
+    font-size: 10pt;
+    line-height: 1.1;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: $ink;
+    background: $paper;
+    border: 2px solid $ink;
+}
+
+.pile-count {
+    position: absolute;
+    right: -8px;
+    bottom: -8px;
+    z-index: 3;
+    min-width: 30px;
+    padding: 1px 6px;
+    text-align: center;
+    font-family: $ui-font;
+    font-size: 11pt;
+    font-weight: bold;
+    color: $paper;
+    background: $ink;
+}
+
+.pile-ring {
+    position: absolute;
+    inset: -10px;
+    z-index: 1;
+    border: 3px dashed rgba($ink, 0.45);
+    pointer-events: none;
+}
+
+.pile-top {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+}
+
+.deck .card-slot,
+.discard .card-slot,
+.nursery .card-slot {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.deck {
+    isolation: isolate;
+}
+
+.deck-stack,
+.discard-stack {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.discard-stack {
+    pointer-events: none;
+}
+
+.deck-layer,
+.discard-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: $card-w;
+    height: $card-h;
+    transform: translateY(calc((var(--layer, 0) - var(--layer-max, 0)) * 1px));
+    z-index: calc(60 - var(--layer, 0));
+}
+
+.deck-layer {
+    @include card-back-surface;
+    border-width: 0;
+}
+
+.discard-layer {
+    border: 0;
+    background: $paper-shade;
+}
+
+.discard .pile-top {
+    transform: translateY(calc(var(--layer-max, 0) * -1px));
+}
+
+.deck-layer:first-child {
+    border-width: 3px;
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 12px;
+        border: 3px solid $ink;
+        box-shadow: inset 0 0 0 3px $paper;
+        pointer-events: none;
+    }
+}
+
+.draw-bar {
+    position: absolute;
+    left: 50%;
+    top: calc(50% - var(--layer-max, 0) * 1px);
+    translate: -50% -50%;
+    z-index: 32;
+    width: max-content;
+    min-width: calc(100% + 10px);
+    padding: 3px 6px;
+    text-align: center;
+    white-space: nowrap;
+    font-family: $title-font;
+    font-size: 10pt;
+    line-height: 1.1;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: white;
+    background: black;
+    box-shadow: 2px 2px 0 rgba($ink, 0.35);
+    pointer-events: none;
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+.draw-cue {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 14px + var(--layer-max, 0) * 1px);
+    translate: -50% 0;
+    z-index: 31;
+    display: none;
+    @include game-cue;
+}
+
+.deck[data-draw='true'] .draw-cue {
+    display: block;
+}
+
+.deck[data-draw='true'] .pile-label {
+    display: none;
+}
+
+.deck:not(.empty) .pile-ring {
+    opacity: 0;
+}
+
+.deck.empty .deck-stack {
+    display: none;
+}
+
+.discard.empty .discard-stack {
+    display: none;
+}
+
+.deck.empty .pile-ring {
+    background: rgba($ink, 0.06);
+    border-color: rgba($ink, 0.3);
+}
+
+.deck.empty .pile-count {
+    background: rgba($ink, 0.55);
+}
+
+
+.deck[data-available='true'] {
+    cursor: pointer;
+}
+
+.deck[data-available='false'] {
+    cursor: default;
+}
+
+.deck:focus-visible {
+    outline: 3px solid $signal;
+    outline-offset: 4px;
+}
+
+.chain-banner {
+    position: absolute;
+    left: 50%;
+    top: calc(50% + #{$card-h} * 0.85);
+    translate: -50% -50%;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+    font-family: $ui-font;
+    font-size: 13pt;
+    color: $ink;
+
+    &[data-state='plain'] {
+        opacity: 0.75;
+    }
+}
+
+.banner-title {
+    padding: 4px 14px;
+    font-family: $title-font;
+    font-size: 13pt;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: $paper;
+    background: $ink;
+}
+
+.banner-card {
+    padding: 4px 12px;
+    background: $paper;
+    border: 3px solid $ink;
+    box-shadow: 4px 4px 0 $ink;
+}
+
+.banner-hint {
+    font-size: 12pt;
+    color: $ink;
+    opacity: 0.75;
+}
+
+.banner-warn {
+    padding: 3px 10px;
+    font-weight: bold;
+    color: $paper;
+    background: $rust;
+}
+
+@media (max-width: 860px) {
+    .chain-banner {
+        font-size: 11pt;
+    }
+}

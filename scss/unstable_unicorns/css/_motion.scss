@@ -1,0 +1,103 @@
+@use './tokens' as *;
+
+.card-face {
+    transition: transform 0.18s ease-out, box-shadow 0.18s ease-out;
+}
+
+.flight {
+    position: fixed;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.stamp {
+    position: fixed;
+    z-index: 1000;
+    pointer-events: none;
+    padding: 6px 16px;
+    font-family: $title-font;
+    font-size: 16pt;
+    text-transform: uppercase;
+    color: $paper;
+    background: $signal;
+    border: 3px solid $ink;
+    box-shadow: 4px 4px 0 $ink;
+    transform: translate(-50%, -50%);
+}
+
+.preview {
+    position: fixed;
+    z-index: 900;
+    pointer-events: none;
+}
+
+.effect-toast {
+    position: fixed;
+    top: calc(#{$nav-height} + 10px);
+    left: 50%;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-width: min(420px, calc(100vw - 24px));
+    padding: 8px 18px;
+    text-align: center;
+    font-family: $ui-font;
+    color: $ink;
+    background: $paper;
+    border: 3px solid $ink;
+    box-shadow: 4px 4px 0 $ink;
+    pointer-events: none;
+
+    strong {
+        font-family: $title-font;
+        font-size: 14pt;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    span {
+        font-size: 11pt;
+    }
+
+    &.show {
+        animation: effect-toast 3.4s ease forwards;
+    }
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+@keyframes effect-toast {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -14px);
+    }
+
+    10% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+
+    85% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -10px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card-face,
+    .hand-card {
+        transition: none;
+    }
+
+    .effect-toast.show {
+        animation: none;
+    }
+}

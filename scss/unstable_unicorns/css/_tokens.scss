@@ -1,0 +1,59 @@
+$ink: #2b2118;
+$paper: #fffdf5;
+$paper-shade: #f3e7d0;
+$felt: #35b6a0;
+$rim: #ffd23f;
+$pink: #ff7ac2;
+$signal: #ff5d73;
+$rust: #b3541e;
+$disabled-ink: #575757;
+$disabled-bg: #d4d4d4;
+$disabled-border: #8c8c8c;
+$ui-font: 'Baloo 2', sans-serif;
+$title-font: 'Lilita One', sans-serif;
+$nav-height: 42px;
+$chat-width: 320px;
+$card-w: 130px;
+$card-h: 180px;
+$card-back-w: $card-w * 0.6;
+$card-back-h: $card-h * 0.6;
+$card-radius: 0;
+
+@mixin card-back-surface($border-width: 1px) {
+    border: $border-width solid $ink;
+    border-radius: $card-radius;
+    background: repeating-linear-gradient(45deg, $paper 0 10px, $pink 10px 20px);
+}
+
+@mixin game-cue {
+    padding: 3px 9px;
+    font-family: $title-font;
+    font-size: 10pt;
+    line-height: 1.1;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: white;
+    background: black;
+    box-shadow: 2px 2px 0 rgba($ink, 0.35);
+    pointer-events: none;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 7px solid transparent;
+        border-top-color: black;
+    }
+}
+$pile-gap: 46px;
+$hud-height: 286px;
+$z-hand-above-modal: 1002;
+$kind-baby: #ff8fd0;
+$kind-basic: #63b7ff;
+$kind-magic: #47d1a5;
+$kind-upgrade: #ffc94d;
+$kind-downgrade: #ff8b6b;
+$kind-unknown: #7a7a7a;
