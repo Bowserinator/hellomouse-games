@@ -9,24 +9,23 @@
     --ink-soft: #8a8272;
     --blue: #2b4c9b;
     --red: #b5342c;
-    --hand: 'Patrick Hand', cursive;
-    --head: 'Kalam', cursive;
-    --title: 'Caveat', cursive;
+    --hand: 'Pangolin', cursive;
+    --title: 'Pangolin', cursive;
 }
 
 body {
     background-color: var(--paper);
     background-image:
         repeating-linear-gradient(to bottom,
-            transparent 0 31px, var(--rule-line) 31px 32px);
+            transparent 0 15px, var(--rule-line) 15px 16px);
     color: var(--ink);
     font-family: var(--hand);
-    font-size: 12pt;
+    font-size: 11pt;
 }
 
 h1,
 h2 {
-    font-family: var(--head);
+    font-family: var(--title);
     color: var(--ink);
     letter-spacing: 0.02em;
 }
@@ -49,7 +48,7 @@ a {
 
 .game-title {
     font-family: var(--title);
-    font-size: 34pt;
+    font-size: 25pt;
     font-weight: 700;
     margin: 0;
     padding: 0 10px 0 2px;
@@ -93,21 +92,20 @@ a {
 }
 
 .blitz-timer-label {
-    font-size: 9pt;
+    font-size: 7.65pt;
     letter-spacing: 0.14em;
 }
 
 .blitz-timer-time {
-    font-family: var(--head);
-    font-size: 16pt;
+    font-family: var(--hand);
+    font-size: 13.6pt;
 }
 
 // Right hand column
 .right-container {
     margin-top: 10px;
-    padding-left: 14px;
-    // Red margin rule down the page
-    border-left: 2px solid var(--margin);
+    margin-left: 10px;
+    padding-left: 10px;
 }
 
 // Tabs, drawn like notebook index tabs
@@ -115,8 +113,9 @@ a {
     display: flex;
     flex-wrap: wrap;
     margin-top: 10px;
-    font-family: var(--head);
-    font-size: 13pt;
+    border-bottom: 1px solid var(--margin);
+    font-family: var(--hand);
+    font-size: 11.05pt;
 
     >div {
         padding: 5px 18px;
@@ -139,13 +138,13 @@ a {
 .js-tab-container>div:nth-child(3),
 .js-tab-container>div:nth-child(4) {
     max-width: 500px;
-    font-size: 15pt;
+    font-size: 11pt;
     line-height: 1.25;
     overflow-wrap: break-word;
 
     ol,
     ul {
-        font-size: 13.75pt;
+        font-size: 11pt;
         line-height: 1.25;
     }
 }
@@ -155,7 +154,7 @@ a {
     line-height: 30pt;
     vertical-align: middle;
     position: relative;
-    font-size: 14pt;
+    font-size: 11.9pt;
     margin-right: 20px;
     margin-top: 10px;
 
@@ -167,7 +166,7 @@ a {
 
 // The turn banner sits lower than the tabs
 .js-tab-container>div:nth-child(2)>.players:first-child {
-    padding-top: 20px;
+    padding-top: 10px;
 }
 
 .players-split {
@@ -191,7 +190,7 @@ a {
 .player {
     padding: 4px 14px;
     border: 1px solid var(--ink);
-    font-family: var(--head);
+    font-family: var(--hand);
     transition: background-color 0.1s, color 0.1s;
 
     &.blue {
@@ -207,6 +206,10 @@ a {
     }
 }
 
+#youare {
+    margin-left: 6px;
+}
+
 // Host settings
 #lobby-settings {
     display: none;
@@ -220,7 +223,7 @@ a {
     flex-direction: column;
 
     label {
-        font-size: 10pt;
+        font-size: 8.5pt;
         color: var(--ink-soft);
         margin-bottom: 4px;
         letter-spacing: 0.06em;
@@ -234,7 +237,7 @@ a {
         background-color: var(--paper);
         color: var(--ink);
         font-family: var(--hand);
-        font-size: 11pt;
+        font-size: 9.35pt;
         min-width: 130px;
         cursor: pointer;
 
@@ -252,12 +255,12 @@ a {
 #disabled-reason {
     padding: 6px 0;
     color: var(--red);
-    font-size: 12pt;
+    font-size: 10.2pt;
 }
 
 // Invite link
 .game-link {
-    font-size: 12pt;
+    font-size: 10.2pt;
     margin-bottom: 0;
     border-bottom: 1px solid var(--ink-soft);
     white-space: nowrap;
@@ -286,12 +289,12 @@ a {
 // Page body copy
 ol,
 ul {
-    font-size: 11pt;
+    font-size: 9.35pt;
     line-height: 1.5;
 }
 
 li {
-    margin-bottom: 6px;
+    margin-bottom: 3px;
 }
 
 b {
@@ -299,8 +302,8 @@ b {
 }
 
 button {
-    font-family: var(--head);
-    font-size: 12pt;
+    font-family: var(--hand);
+    font-size: 10.2pt;
     padding: 6px 18px;
     border: 1px solid var(--ink);
     border-bottom: 2px solid var(--ink);
@@ -337,7 +340,7 @@ button {
 
     h1 {
         font-family: var(--title);
-        font-size: 30pt;
+        font-size: 25.5pt;
         margin: 0 0 10px;
     }
 }

@@ -31,11 +31,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .card {
-    width: 300px;
-    height: 269px;
+    width: 240px;
+    height: 220px;
     max-width: 90%;
     display: inline-block;
-    margin: 0 15px 15px 0;
+    margin: 0 10px 10px 0;
     vertical-align: top;
 
     text-decoration: none;
@@ -47,11 +47,11 @@ h1, h2, h3, h4, h5, h6 {
 
     // Card body
     & > .body {
-        padding: 15px;
+        padding: 10px;
 
         // Card title
         & > h2 {
-            font-size: 15pt;
+            font-size: 12pt;
             margin: 0;
         }
 
@@ -60,14 +60,14 @@ h1, h2, h3, h4, h5, h6 {
             // white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            font-size: 11pt;
+            font-size: 10pt;
         }
     }
 
     // Card image
     & > img {
         width: 100%;
-        height: 170px;
+        height: 140px;
         object-fit: cover;
     }
 }

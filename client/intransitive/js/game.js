@@ -234,7 +234,7 @@ function drawGrid() {
 /** Draw the column and row labels */
 function drawLabels() {
     ctx.fillStyle = LABEL_COLOR;
-    ctx.font = `${Math.round(cellSize * 0.42)}px "Patrick Hand", sans-serif`;
+    ctx.font = `${Math.round(cellSize * 0.3)}px ${getComputedStyle(document.documentElement).getPropertyValue('--title')}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -399,3 +399,4 @@ window.onresize = () => {
 };
 window.onresize();
 loadPieces();
+document.fonts.ready.then(drawBoard);
