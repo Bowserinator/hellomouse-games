@@ -1,0 +1,60 @@
+@use '../../connect6/css/index';
+
+// Canvas sits inside a wrapper so the controls can overlay its corner
+.board-wrap {
+    position: relative;
+    display: inline-block;
+    margin: 10px 0;
+    vertical-align: top;
+
+    canvas {
+        display: block;
+        margin: 0;
+    }
+}
+
+@media only screen and (min-width: 992px) {
+    .board-wrap { margin: 10px 40px; }
+
+    .board-coords { margin-left: 40px; }
+}
+
+.board-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 6px;
+
+    button {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        background-color: rgba(0, 0, 0, 0.75);
+        box-shadow: none;
+        font-size: 18pt;
+        line-height: 1;
+
+        &:hover {
+            background-color: black;
+            box-shadow: none;
+        }
+
+        &.jump {
+            width: auto;
+            padding: 0 10px;
+            font-size: 11pt;
+        }
+
+        &:disabled {
+            background-color: rgba(0, 0, 0, 0.75);
+        }
+    }
+}
+
+.board-coords {
+    margin-top: -4px;
+    font-size: 10pt;
+    color: #777;
+    font-variant-numeric: tabular-nums;
+}
