@@ -1,4 +1,4 @@
-import { cardName, cardSlot } from './card.js';
+import { cardEntry, cardName, cardSlot } from './card.js';
 import { counterclockwiseSeats } from './player-picker.js';
 import type { CardView, PromptView } from '../engine/view.js';
 
@@ -100,6 +100,12 @@ export class PromptModal {
 
         const body = element('div', `prompt-body prompt-body-${prompt.kind}`);
         this.host.append(body);
+        if (prompt.kind === 'yesno') {
+            const text = source ? cardEntry(source.defId)?.text : undefined;
+            if (text) body.append(element('p', 'prompt-effect', text));
+            body.append(element('p', 'prompt-source',
+                'Choosing No or pressing Escape skips only this effect. It does not cancel the card\'s placement.'));
+        }
 
         if (prompt.kind === 'cards' || prompt.kind === 'order') this.drawCards(body, prompt);
         else if (prompt.kind === 'player') this.drawPlayerOptions(body, prompt);
@@ -180,7 +186,7 @@ export class PromptModal {
 
     private drawYesNo(body: HTMLElement): void {
         const row = element('div', 'prompt-choice-actions');
-        row.append(this.pickButton('Yes', 'yes', true), this.pickButton('No', 'no', true));
+        row.append(this.pickButton('No', 'no', true), this.pickButton('Yes', 'yes', true));
         body.append(row);
     }
 

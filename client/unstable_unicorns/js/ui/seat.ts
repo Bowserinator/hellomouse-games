@@ -30,6 +30,24 @@ export class StatusTooltip {
     }
 
     show(text: string, x: number, y: number): void {
+        delete this.node.dataset.placement;
+        this.place(text, x, y);
+    }
+
+    // Centered over the anchor with a gap and no overlap; flips underneath when there is no room above.
+    showAbove(text: string, anchor: DOMRect): void {
+        const gap = 8;
+        this.node.textContent = text;
+        this.node.hidden = false;
+        const half = this.node.offsetWidth / 2;
+        const below = anchor.top - this.node.offsetHeight - gap < gap;
+        const x = Math.min(Math.max(anchor.left + anchor.width / 2, half + gap), window.innerWidth - half - gap);
+        this.node.dataset.placement = below ? 'below' : 'above';
+        this.node.style.left = `${x}px`;
+        this.node.style.top = `${below ? anchor.bottom + gap : anchor.top - gap}px`;
+    }
+
+    private place(text: string, x: number, y: number): void {
         this.node.textContent = text;
         this.node.style.left = `${x}px`;
         this.node.style.top = `${y}px`;

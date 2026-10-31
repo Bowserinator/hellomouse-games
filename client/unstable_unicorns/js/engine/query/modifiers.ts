@@ -119,6 +119,18 @@ export function stableLimit(world: World, player: number): number {
     return limit;
 }
 
+export function stableLimitSource(world: World, player: number): Iid | null {
+    let best: Iid | null = null;
+    let limit = Infinity;
+    for (const iid of stableCards(world, player))
+        for (const mod of modifiersOn(world, iid))
+            if (mod.m === 'stableLimit' && mod.value < limit) {
+                limit = mod.value;
+                best = iid;
+            }
+    return best;
+}
+
 export function blocksTriggers(world: World, player: number): boolean {
     return selfModifiers(world, player).some(mod => mod.m === 'blockTriggers');
 }
@@ -132,10 +144,10 @@ export function blocksPlay(world: World, player: number, kind: Kind): boolean {
 }
 
 export function blocksOtherPlay(world: World, target: number, player: number, kind: Kind, iid?: Iid): boolean {
-    const ctx = plainCtx(world, target);
-    return target !== player && selfModifiers(world, target).some(mod =>
-        mod.m === 'blockOtherPlay' && mod.kind === kind &&
-        (!mod.filter || iid === undefined || matches(mod.filter, iid, ctx)));
+    return world.state.players.some(owner => owner.id !== target &&
+        selfModifiers(world, owner.id).some(mod =>
+            mod.m === 'blockOtherPlay' && mod.kind === kind &&
+            (!mod.filter || iid === undefined || matches(mod.filter, iid, plainCtx(world, owner.id)))));
 }
 
 export function protectedFrom(world: World, iid: Iid, against: Protection): boolean {

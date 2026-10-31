@@ -27,6 +27,12 @@ export function playerPicker(
         button.dataset.step = `player:${seat}`;
         const name = currentNames[seat] ?? `Seat ${seat + 1}`;
         button.textContent = `${name}\u00a0\u00a0(${counts[seat] ?? 0} in hand)`;
+        if (seat === options.localSeat) {
+            const marker = document.createElement('span');
+            marker.className = 'prompt-yourself';
+            marker.textContent = ' [YOURSELF!!]';
+            button.append(marker);
+        }
         group.append(button);
         root.append(group);
     }

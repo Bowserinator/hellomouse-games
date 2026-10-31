@@ -61,6 +61,11 @@ export function cardName(defId: string): string {
     return ENTRIES[defId]?.name ?? 'an unknown card';
 }
 
+export function cardLabel(defId: string): string {
+    const kind = ENTRIES[defId]?.kind;
+    return kind === 'upgrade' || kind === 'downgrade' ? `${cardName(defId)} (${kind})` : cardName(defId);
+}
+
 export function cardFace(defId: string): HTMLElement {
     const face = document.createElement('div');
     face.className = 'card-face';

@@ -2,7 +2,7 @@ import type { CardEvent, CountSpec, EventType, Filter, OwnerRef, Primitive, Sele
 import type { Frame, Zone } from '../state.js';
 import type { Iid } from '../ids.js';
 import { matches } from '../dsl/filter.js';
-import { bulkMove, moveCard } from '../move.js';
+import { bulkMove, moveCard, recordMove } from '../move.js';
 import { zoneList } from '../zones.js';
 import type { Destination } from '../move.js';
 import { shuffle } from '../rng.js';
@@ -29,7 +29,7 @@ function requireCandidates(ex: ExecCtx, frame: Frame, prim: Primitive, controlle
 
 function ensureDeck(ex: ExecCtx) {
     if (ex.state.deck.length > 0 || ex.state.discard.length === 0) return;
-    bulkMove(ex.state, shuffle(ex.rng, [...ex.state.discard]), 'deck');
+    bulkMove(ex.state, shuffle(ex.rng, [...ex.state.discard]), 'deck', undefined, ex.log);
 }
 
 function ownerFor(ex: ExecCtx, frame: Frame, ref: OwnerRef): number {
@@ -207,7 +207,7 @@ function lookAndSteal(ex: ExecCtx, frame: Frame, prim: { from: 'deck' | 'discard
         const from = ex.state[prim.from];
         if (from.length === 0) return 'done';
         looked = from.slice(0, prim.count);
-        bulkMove(ex.state, looked, 'limbo');
+        bulkMove(ex.state, looked, 'limbo', undefined, ex.log);
         revealToAll(ex, looked);
         frame.bindings[lookKey] = looked;
     }
@@ -229,7 +229,7 @@ function lookAndSteal(ex: ExecCtx, frame: Frame, prim: { from: 'deck' | 'discard
     const taken = (frame.bindings[pickKey] as Array<Iid>)[0];
     const rest = looked.filter(iid => iid !== taken);
     if (taken) moveCard(moveCtxOf(ex), taken, { zone: 'hand', owner: controller }, 'play');
-    if (rest.length > 0) bulkMove(ex.state, rest, prim.from);
+    if (rest.length > 0) bulkMove(ex.state, rest, prim.from, undefined, ex.log);
     shuffleZone(ex, prim.from, controller);
     return 'done';
 }
@@ -437,8 +437,14 @@ export function runPrimitive(ex: ExecCtx, frame: Frame, prim: Primitive): PrimRe
             const tmp = a.hand;
             a.hand = b.hand;
             b.hand = tmp;
-            for (const iid of a.hand) ex.state.cards[iid].owner = controller;
-            for (const iid of b.hand) ex.state.cards[iid].owner = other;
+            for (const iid of a.hand) {
+                ex.state.cards[iid].owner = controller;
+                recordMove(ex.log, iid, { zone: 'hand', owner: other }, { zone: 'hand', owner: controller });
+            }
+            for (const iid of b.hand) {
+                ex.state.cards[iid].owner = other;
+                recordMove(ex.log, iid, { zone: 'hand', owner: controller }, { zone: 'hand', owner: other });
+            }
             return 'done';
         }
         case 'tradeUnicorns': {
@@ -475,7 +481,7 @@ export function runPrimitive(ex: ExecCtx, frame: Frame, prim: Primitive): PrimRe
                 const cards = (zone === 'hand' || zone === 'stable')
                     ? [...zoneList(ex.state, zone, owner)]
                     : [...ex.state[zone]];
-                bulkMove(ex.state, cards, 'deck');
+                bulkMove(ex.state, cards, 'deck', undefined, ex.log);
             }
             shuffleZone(ex, 'deck', owner);
             return 'done';
@@ -496,7 +502,7 @@ export function runPrimitive(ex: ExecCtx, frame: Frame, prim: Primitive): PrimRe
             const ctx = moveCtxOf(ex);
             for (const iid of chosen) {
                 const owner = ex.state.cards[iid].owner;
-                bulkMove(ex.state, [iid], 'discard');
+                bulkMove(ex.state, [iid], 'discard', undefined, ex.log);
                 const index = ex.state.nursery.findIndex(card => ex.defOf(card)?.kind === 'baby');
                 if (index < 0) continue;
                 const baby = ex.state.nursery[index];

@@ -29,16 +29,15 @@ export function raise(table: Table, event: CardEvent) {
 function runLingering(table: Table, until: 'endOfTurn') {
     const state = table.state;
     const due = state.lingering.filter(entry => entry.until === until);
-    state.lingering = state.lingering.filter(entry => entry.until !== until);
     for (const entry of due) {
+        state.lingering = state.lingering.filter(pending => pending !== entry);
         if (entry.returnCard !== undefined && entry.returnOwner !== undefined) {
             const card = state.cards[entry.returnCard];
             if (card?.zone === 'stable' && card.owner === entry.player)
                 moveCard(moveCtxOf(table.ex), entry.returnCard, { zone: 'stable', owner: entry.returnOwner }, 'return');
-        } else {
+        } else
             startEffect(table.ex, entry.effect, entry.player, entry.source);
-            resolveLinks(table.ex);
-        }
+        resolveLinks(table.ex);
         if (state.phase === 'OVER' || state.prompt !== null) return;
     }
 }
@@ -89,6 +88,10 @@ export function beginTurn(table: Table, player: number): Result {
 export function finishBeginTurn(table: Table): Result {
     const state = table.state;
     if (state.phase !== 'TURN_START' || state.prompt !== null) return OK;
+    if (state.turn.endNow) {
+        state.phase = 'ACTION';
+        return endTurn(table, state.turn.player);
+    }
     if (state.deck.length === 0 && state.discard.length === 0) {
         table.ex.deckOut?.();
         return OK;
@@ -139,9 +142,16 @@ export function endTurn(table: Table, player: number): Result {
 
     state.phase = 'TURN_END';
     raise(table, { type: 'turnEnd', player });
+    return finishEndTurn(table);
+}
+
+export function finishEndTurn(table: Table): Result {
+    const state = table.state;
+    if (state.phase !== 'TURN_END' || state.prompt !== null) return OK;
     runLingering(table, 'endOfTurn');
     if (isOver(state) || state.prompt !== null) return OK;
 
+    const player = state.turn.player;
     if (state.players[player].hand.length > handLimit(worldOf(table.ex), player)) {
         state.phase = 'DISCARD_LIMIT';
         return OK;

@@ -17,7 +17,7 @@ export class Preview {
         this.host.append(this.node);
     }
 
-    show(defId: string, anchor: DOMRect): void {
+    show(defId: string, anchor: DOMRect, aboveHand = false): void {
         if (this.shownFor !== defId) {
             this.face?.remove();
             this.face = cardFace(defId);
@@ -25,8 +25,13 @@ export class Preview {
             this.node.append(this.face);
             this.shownFor = defId;
         }
+        this.node.classList.toggle('above-hand', aboveHand);
         this.node.hidden = false;
         this.place(anchor);
+    }
+
+    rect(): DOMRect | null {
+        return this.node.hidden ? null : this.node.getBoundingClientRect();
     }
 
     hide(): void {

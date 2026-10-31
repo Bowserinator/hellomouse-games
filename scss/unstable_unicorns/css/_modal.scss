@@ -30,7 +30,14 @@
 
 .prompt-source {
     font-size: 11pt;
+    line-height: 1.05;
     color: rgba($ink, 0.55);
+}
+
+.prompt-effect {
+    margin: 0;
+    font-size: 12pt;
+    line-height: 1.05;
 }
 
 .prompt-body {
@@ -112,6 +119,11 @@
     width: 100%;
 }
 
+.prompt-options button,
+.prompt-player-choice > button {
+    text-align: left;
+}
+
 .prompt-player-picker {
     display: flex;
     flex-direction: column;
@@ -129,6 +141,11 @@
     width: 100%;
     min-height: 48px;
     font-size: 13pt;
+}
+
+.prompt-yourself {
+    color: $kind-instant;
+    font-weight: bold;
 }
 
 .prompt-cancel {
@@ -244,16 +261,6 @@
     transform: none;
 }
 
-.prompt-confirm-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-}
-
-.prompt-confirm-actions button {
-    min-width: 150px;
-}
-
 .modal-header {
     display: flex;
     align-items: center;
@@ -336,8 +343,10 @@ body.in-game .modal {
     width: 80vw;
 }
 
-#target-body {
-    width: 80vw;
+#target-body,
+.prompt-modal[data-prompt-kind='player'] {
+    width: min(600px, 95vw);
+    max-width: 95vw;
 }
 
 body.in-game .prompt-modal,

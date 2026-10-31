@@ -76,7 +76,7 @@
     position: fixed;
     left: 0;
     top: 0;
-    z-index: 999;
+    z-index: 1301;
     width: max-content;
     max-width: 220px;
     padding: 4px 10px;
@@ -91,6 +91,14 @@
     border: 2px solid $ink;
     box-shadow: 3px 3px 0 $ink;
     pointer-events: none;
+
+    &[data-placement='above'] {
+        transform: translate(-50%, -100%);
+    }
+
+    &[data-placement='below'] {
+        transform: translate(-50%, 0);
+    }
 }
 
 .seat-avatar {

@@ -4,23 +4,25 @@ import { CenterView } from './ui/center.js';
 import { ChainBanner } from './ui/chain-banner.js';
 import { ConfirmModal } from './ui/confirm.js';
 import { TargetModal, targetWarning } from './ui/target-modal.js';
-import { HandView, handInteraction } from './ui/hand.js';
+import { HandView, describeBlocker, handInteraction } from './ui/hand.js';
 import { applyHint, hints } from './ui/indicators.js';
 import { Preview } from './ui/preview.js';
 import { PromptModal } from './ui/prompt.js';
 import { flyCard, showNeighWarning } from './ui/flight.js';
+import { planFlights } from './ui/flight-plan.js';
 import { contentSize, layout } from './ui/polygon.js';
 import type { TableLayout } from './ui/polygon.js';
 import { seatElement, StatusTooltip } from './ui/seat.js';
 import { tableArt, tableArtExtent } from './ui/table-art.js';
 import { describeEvent } from './ui/log.js';
 import { mockHandDefaults, mockView } from './ui/mock.js';
-import { cardEntry, cardName } from './ui/card.js';
+import { cardEntry, cardLabel, cardName } from './ui/card.js';
 import { bindEffectToast, effectToast } from './ui/effect-toast.js';
 import { canDraw } from './next-step.js';
 import type { Answer } from './ui/prompt.js';
 import type { PromptView, ViewModel } from './engine/view.js';
 import type { LoggedEvent } from './engine/events.js';
+import type { Place } from './engine/dsl/ast.js';
 import { DEFAULT_PACK, PACKS } from './catalog/index.js';
 import { WILDCARD } from './vars.js';
 
@@ -94,6 +96,7 @@ const noteHost = $('game-note');
 const hudBanner = $('hud-banner');
 
 let view: ViewModel | null = null;
+let previousView: ViewModel | null = null;
 let names: Array<string | null> = [];
 let connected: Array<boolean> = [];
 let seats: Array<SeatSync> = [];
@@ -105,11 +108,12 @@ let pendingPlay: { iid: string; target: number | null } | null = null;
 let picks: Array<string> = [];
 let lastSeq = 0;
 let lastTurn = -1;
+let lastPhase = '';
 let tableLayout: TableLayout | null = null;
 let tableCount = -1;
 let prevRects = new Map<string, DOMRect>();
 let pendingRects: Map<string, DOMRect> | null = null;
-const moved = new Set<string>();
+let pendingFlights: Array<LoggedEvent> = [];
 let logOpen = false;
 let logUnread = 0;
 let chatOpen = false;
@@ -122,20 +126,25 @@ const preview = new Preview(previewHost);
 const statusTooltip = new StatusTooltip(document.body);
 let camera: CameraController | null = null;
 
-seatsHost.addEventListener('pointermove', event => {
-    const item = (event.target as HTMLElement | null)?.closest<HTMLElement>('.seat-status li[data-tip]');
-    const text = item?.dataset.tip;
-    if (text) statusTooltip.show(text, event.clientX + 16, event.clientY);
-    else statusTooltip.hide();
-});
-seatsHost.addEventListener('pointerleave', () => statusTooltip.hide());
+for (const host of [seatsHost, handHost]) {
+    host.addEventListener('pointermove', event => {
+        const item = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-tip]');
+        const text = item?.dataset.tip;
+        if (!item || !text) statusTooltip.hide();
+        else if (item.closest('#hand')) statusTooltip.showAbove(text, preview.rect() ?? item.getBoundingClientRect());
+        else statusTooltip.show(text, event.clientX + 16, event.clientY);
+    });
+    host.addEventListener('pointerleave', () => statusTooltip.hide());
+}
 
 bindEffectToast($('effect-toast'));
 
 const promptModal = new PromptModal($('prompt-body'), (answer: Answer) => {
     if (!view?.prompt) return;
-    if (answer === 'cancel') sendMove('CANCEL_PROMPT', { promptId: view.prompt.id });
-    else sendMove('RESPOND', { promptId: view.prompt.id, selection: answer });
+    if (answer === 'cancel') {
+        selectionReset();
+        sendMove('CANCEL_PROMPT', { promptId: view.prompt.id });
+    } else sendMove('RESPOND', { promptId: view.prompt.id, selection: answer });
 }, () => names, () => view?.players.map(player => player.handCount) ?? []);
 
 const babyModal = new BabyModal($('baby-overlay'), $('baby-modal'), (iid: string) => {
@@ -269,6 +278,7 @@ function renderWorld(): void {
 }
 
 function renderHud(): void {
+    statusTooltip.hide();
     if (!view) return;
     const viewHints = hints(view);
     hand.render(view, {
@@ -295,9 +305,14 @@ function renderHud(): void {
 
 function captureRects(): Map<string, DOMRect> {
     const rects = new Map<string, DOMRect>();
-    for (const slot of gameDiv.querySelectorAll<HTMLElement>('.card-slot[data-iid]')) {
+    for (const slot of document.querySelectorAll<HTMLElement>('.card-slot[data-iid]')) {
         const iid = slot.dataset.iid;
-        if (iid) rects.set(iid, slot.getBoundingClientRect());
+        if (iid && !rects.has(iid)) rects.set(iid, slot.getBoundingClientRect());
+    }
+    const scale = worldScale();
+    for (const chip of document.querySelectorAll<HTMLElement>('.banner-card[data-iid]')) {
+        const iid = chip.dataset.iid;
+        if (iid && !rects.has(iid)) rects.set(iid, cardRectAround(chip, CARD_SIZE.w * scale, CARD_SIZE.h * scale));
     }
     return rects;
 }
@@ -307,18 +322,59 @@ function preserveRectsForEvents(): void {
     prevRects = pendingRects;
 }
 
-function animateMoves(): void {
-    if (!view) return;
-    for (const iid of moved) {
-        const slot = gameDiv.querySelector<HTMLElement>(`.card-slot[data-iid="${iid}"]`);
-        const before = prevRects.get(iid);
-        const defId = view.cards[iid]?.defId;
-        if (!slot || !before || !defId) continue;
-        const after = slot.getBoundingClientRect();
-        if (Math.abs(before.left - after.left) < 2 && Math.abs(before.top - after.top) < 2) continue;
-        flyCard(flightLayer, defId, before, after);
+function worldScale(): number {
+    return world.offsetWidth === 0 ? 1 : world.getBoundingClientRect().width / world.offsetWidth;
+}
+
+function cardRectAround(host: Element, width: number, height: number): DOMRect {
+    const box = host.getBoundingClientRect();
+    return new DOMRect(box.left + box.width / 2 - width / 2, box.top + box.height / 2 - height / 2, width, height);
+}
+
+function anchorRect(place: Place, iid: string): DOMRect | null {
+    const scale = worldScale();
+    const width = CARD_SIZE.w * scale;
+    const height = CARD_SIZE.h * scale;
+    const around = (host: Element | null, w = width, h = height) => host ? cardRectAround(host, w, h) : null;
+    switch (place.zone) {
+        case 'deck':
+            return around(center.deck);
+        case 'discard':
+            return around(centerHost.querySelector('.discard'));
+        case 'nursery':
+            return around(centerHost.querySelector('.nursery'));
+        case 'limbo':
+            return around(bannerHost.querySelector(`.banner-card[data-iid="${iid}"]`) ?? bannerHost);
+        case 'hand':
+            if (place.owner === view?.seat) return around(handHost, CARD_SIZE.w, CARD_SIZE.h);
+            return around(seatsHost.querySelector(`.seat[data-seat="${place.owner}"] .seat-hand`),
+                width * 0.6, height * 0.6);
+        case 'stable':
+            return around(seatsHost.querySelector(`.seat[data-seat="${place.owner}"] .seat-stable`));
     }
-    moved.clear();
+}
+
+function faceOf(iid: string): string {
+    for (const source of [view, previousView]) {
+        const defId = source?.cards[iid]?.defId;
+        if (defId && defId !== WILDCARD) return defId;
+    }
+    return WILDCARD;
+}
+
+function animateMoves(): void {
+    const events = pendingFlights;
+    pendingFlights = [];
+    if (!view || events.length === 0) return;
+    for (const step of planFlights(events)) {
+        const slot = step.last
+            ? document.querySelector<HTMLElement>(`.card-slot[data-iid="${step.iid}"]`) : null;
+        const to = slot?.getBoundingClientRect() ?? anchorRect(step.to, step.iid);
+        const from = (step.first ? prevRects.get(step.iid) : undefined) ?? anchorRect(step.from, step.iid);
+        if (!from || !to) continue;
+        if (Math.abs(from.left - to.left) < 2 && Math.abs(from.top - to.top) < 2) continue;
+        flyCard(flightLayer, faceOf(step.iid), from, to, { delay: step.delay, hide: slot });
+    }
 }
 
 function winLine(): string {
@@ -368,6 +424,7 @@ function render(): void {
 }
 
 function applyView(next: ViewModel): void {
+    previousView = view;
     view = next;
     document.body.classList.add('in-game');
     lobby.style.display = 'none';
@@ -377,7 +434,9 @@ function applyView(next: ViewModel): void {
     if (MOCK_PLAYERS === 0 && lastTurn !== -1 && next.turn.player !== lastTurn)
         // @ts-expect-error
         beep(next.turn.player === next.seat ? 2 : undefined);
+    if (next.turn.player !== lastTurn || next.phase !== lastPhase) note('');
     lastTurn = next.turn.player;
+    lastPhase = next.phase;
 
     render();
 }
@@ -389,9 +448,7 @@ function appendLog(events: Array<LoggedEvent>, next: ViewModel | null = view): v
         if (event.seq <= lastSeq) continue;
         lastSeq = event.seq;
 
-        const card = event.card;
-        const defId = card === undefined ? undefined : next.cards[card]?.defId;
-        if (card !== undefined && prevRects.has(card) && defId && defId !== WILDCARD) moved.add(card);
+        if (event.card !== undefined && event.from && event.to) pendingFlights.push(event);
         if (event.type === 'neigh' && event.targetCard &&
             event.targetPlayer !== undefined && event.player !== undefined) {
             const original = next.cards[event.targetCard]?.defId;
@@ -419,12 +476,13 @@ function previewFor(target: HTMLElement | null): void {
     const slot = target?.closest<HTMLElement>('.card-slot') ??
         target?.closest<HTMLElement>('.banner-card[data-iid]');
     const defId = slot?.dataset.defId ?? (slot?.dataset.iid ? view?.cards[slot.dataset.iid]?.defId : undefined);
-    if (!slot || !defId || defId === WILDCARD || slot.closest('#hand')) {
+    const inHand = !!slot?.closest('#hand');
+    if (!slot || !defId || defId === WILDCARD || (inHand && !slot.classList.contains('blocked'))) {
         if (!target?.closest('.preview')) preview.hideSoon();
         return;
     }
     preview.cancelHide();
-    preview.show(defId, slot.getBoundingClientRect());
+    preview.show(defId, slot.getBoundingClientRect(), inHand);
 }
 
 function targetReason(model: ViewModel, iid: string, seat: number): string | null {
@@ -440,7 +498,7 @@ function playHandCard(iid: string): void {
     const needsTarget = view.needsTarget.includes(iid);
     if (needsTarget && selectedTarget === null) {
         selectedHand = iid;
-        note(`Choose a target for ${cardName(view.cards[iid].defId)}.`);
+        note(`Choose a target for ${cardLabel(view.cards[iid].defId)}.`);
         targetModal.open(view, iid);
         render();
         return;
@@ -460,9 +518,11 @@ function playHandCard(iid: string): void {
     const warning = targetWarning(kind, target === view.seat);
     const ineffective = view.futile[iid] || view.cards[iid]?.inertAt?.includes(target);
     if (warning || ineffective) {
+        selectionReset();
         pendingPlay = { iid, target: needsTarget ? target : null };
         confirmModal.open([warning, ineffective ? 'This card currently can have no effect. Continue?' : '']
             .filter(Boolean).join(' '));
+        render();
         return;
     }
     sendMove('PLAY_CARD', needsTarget && selectedTarget !== null
@@ -491,21 +551,9 @@ function onHandCard(iid: string): void {
             return playHandCard(iid);
         default:
             selectedHand = null;
-            note(describeBlocker(iid));
+            note(describeBlocker(view, iid));
             render();
     }
-}
-
-function describeBlocker(iid: string): string {
-    if (!view) return '';
-    if (view.promptOpen) return 'Answer the open prompt first.';
-    if (view.chain.top && view.cards[iid]?.neighable && !view.chain.canNeigh)
-        return 'That play cannot be neighed by you.';
-    const reason = view.blockers[iid];
-    if (reason) return reason;
-    if (view.turn.player !== view.seat) return 'It is not your turn.';
-    if (view.phase !== 'ACTION') return 'You cannot play that card now.';
-    return 'That card cannot be played right now.';
 }
 
 function onClick(event: Event): void {
@@ -906,7 +954,10 @@ mockPlayButton.addEventListener('click', () => {
     if (!defId || Number.isNaN(player)) return;
     const iid = `mocksim${++mockSeq}`;
     view.cards[iid] = { defId, owner: player, zone: 'discard', revealed: true, neighable: false };
-    appendLog([{ type: 'play', player, card: iid, seq: lastSeq + 1 }]);
+    prevRects = captureRects();
+    appendLog([{ type: 'play', player, card: iid, from: { zone: 'hand', owner: player }, to: { zone: 'discard' },
+        seq: lastSeq + 1 }]);
+    animateMoves();
 });
 
 const MOCK_PROMPT_KINDS = ['cards', 'order', 'player', 'yesno', 'options'];

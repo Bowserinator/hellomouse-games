@@ -5,7 +5,7 @@ import { holds } from './dsl/cond.js';
 import { EventLog } from './events.js';
 import type { Iid } from './ids.js';
 import { seedFrom } from './rng.js';
-import { blocksPlay } from './query/modifiers.js';
+import { blocksOtherPlay, blocksPlay } from './query/modifiers.js';
 import { condCtx } from './query/active.js';
 import type { World } from './query/modifiers.js';
 import { ImpossibleError, type CustomHandler, type ExecCtx } from './exec/context.js';
@@ -40,13 +40,13 @@ function answersFor(prompt: Prompt): Array<Binding> {
             return combinations(prompt.cards, Math.max(prompt.min, prompt.max))
                 .filter(picked => picked.length >= prompt.min && picked.length <= prompt.max);
         case 'player':
-            return prompt.players.map(player => player);
+            return prompt.players.map(player => [player]);
         case 'yesno':
             return [true, false];
         case 'order':
             return [prompt.cards];
         case 'option':
-            return Array.from({ length: Math.max(1, prompt.max) }, (_unused, index) => index);
+            return Array.from({ length: prompt.max - prompt.min + 1 }, (_unused, index) => prompt.min + index);
         default:
             return [];
     }
@@ -124,6 +124,7 @@ export function whyBlocked(
 
     const world: World = { state, defOf };
     if (blocksPlay(world, seat, def.kind)) return 'A card in a stable blocks that kind of card';
+    if (blocksOtherPlay(world, seat, seat, def.kind, iid)) return 'That card cannot enter that stable';
     if (!holds(def.playIf, condCtx(world, seat, iid))) return 'That card\u2019s play condition is not met';
     if (!def.onPlay?.id) return null;
 
@@ -178,10 +179,14 @@ function exploreEffectless(ex: ExecCtx, budget: { left: number }, before: string
         let completing = 0;
         for (const answer of answers) {
             const next = branch(ex);
-            const result = respond(next, answer);
-            if ('error' in result) continue;
-            completing++;
-            if (!exploreEffectless(next, budget, before, ignore)) return false;
+            try {
+                const result = respond(next, answer);
+                if ('error' in result) continue;
+                if (!exploreEffectless(next, budget, before, ignore)) return false;
+                completing++;
+            } catch (error) {
+                if (!(error instanceof ImpossibleError)) throw error;
+            }
         }
         return completing > 0;
     }

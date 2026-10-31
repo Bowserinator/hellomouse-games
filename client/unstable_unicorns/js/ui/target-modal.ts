@@ -1,4 +1,4 @@
-import { cardName } from './card.js';
+import { cardLabel } from './card.js';
 import { playerPicker } from './player-picker.js';
 import type { ViewModel } from '../engine/view.js';
 
@@ -63,7 +63,7 @@ export class TargetModal {
 
         const header = element('header', 'prompt-header');
         header.append(element('h2', 'prompt-reason',
-            card ? `Choose a player for ${cardName(card.defId)}` : 'Choose a player'));
+            card ? `Choose a player for ${cardLabel(card.defId)}` : 'Choose a player'));
         this.host.append(header);
 
         const body = element('div', 'prompt-body');

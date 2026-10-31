@@ -1,4 +1,5 @@
 import { cardEntry } from './card.js';
+import { playTarget, seatName } from './log.js';
 import type { LoggedEvent } from '../engine/events.js';
 import type { ViewModel } from '../engine/view.js';
 
@@ -13,14 +14,15 @@ export function bindEffectToast(node: HTMLElement): void {
 }
 
 export function effectToast(event: LoggedEvent, view: ViewModel, names: Array<string | null>): void {
-    if (event.type !== 'play' || event.card === undefined) return;
+    if ((event.type !== 'play' && event.type !== 'enterStable') || event.card === undefined) return;
     const defId = event.publicDefId ?? view.cards[event.card]?.defId;
     const entry = defId === undefined ? undefined : cardEntry(defId);
-    if (!entry || !EFFECT_KINDS.includes(entry.kind)) return;
-    const who = event.player === undefined
-        ? 'Someone'
-        : names[event.player] ?? `Seat ${event.player + 1}`;
-    showEffectToast(`${who} played ${entry.name}`, entry.text);
+    if (!entry) return;
+    if (event.type === 'play' ? !EFFECT_KINDS.includes(entry.kind) : entry.unicornType !== 'special') return;
+    const who = seatName(names, event.player);
+    showEffectToast(event.type === 'enterStable'
+        ? `${entry.name} entered ${who}'s Stable`
+        : `${who} played ${entry.name}${playTarget(event, names)}`, entry.text);
 }
 
 export function showEffectToast(title: string, text: string): void {

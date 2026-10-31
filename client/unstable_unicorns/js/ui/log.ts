@@ -10,14 +10,22 @@ const VERBS: Record<string, string> = {
     return: 'returned'
 };
 
+export function seatName(names: Array<string | null>, seat: number | undefined): string {
+    return seat === undefined ? 'Someone' : names[seat] ?? `Seat ${seat + 1}`;
+}
+
+export function playTarget(event: LoggedEvent, names: Array<string | null>): string {
+    const target = event.targetPlayer;
+    return event.type === 'play' && target !== undefined && target !== event.player
+        ? ` on ${seatName(names, target)}` : '';
+}
+
 export function describeEvent(
     event: LoggedEvent,
     faces: Record<string, CardView>,
     names: Array<string | null>
 ): string {
-    const who = event.player === undefined
-        ? 'Someone'
-        : names[event.player] ?? `Seat ${event.player + 1}`;
+    const who = seatName(names, event.player);
 
     if (event.type === 'neigh') return `${who} neighed`;
     if (event.type === 'cancel') return `${who} canceled an action`;
@@ -32,5 +40,5 @@ export function describeEvent(
     if (!verb || !event.card) return '';
 
     const defId = (event.type === 'play' ? event.publicDefId : undefined) ?? faces[event.card]?.defId;
-    return `${who} ${verb} ${defId ? cardName(defId) : 'a card'}`;
+    return `${who} ${verb} ${defId ? cardName(defId) : 'a card'}${playTarget(event, names)}`;
 }

@@ -5,7 +5,7 @@ import type { Pending } from './state.js';
 import { holds } from './dsl/cond.js';
 import { moveCard } from './move.js';
 import { condCtx } from './query/active.js';
-import { blocksTriggers, isUnicorn, protectedFrom, stableLimit, unicornCount } from './query/modifiers.js';
+import { blocksTriggers, isUnicorn, protectedFrom, stableLimit, stableLimitSource, unicornCount } from './query/modifiers.js';
 import { zoneOf } from './zones.js';
 import { moveCtxOf, worldOf, type ExecCtx } from './exec/context.js';
 import { run, startEffect, type RunState } from './exec/interpreter.js';
@@ -78,7 +78,7 @@ function overflowStable(ex: ExecCtx) {
             }
         };
         ex.nodes[node] = effect;
-        ex.state.exec.push({ node, pc: 0, bindings: { frameBy: player.id, frameSource: '' } });
+        ex.state.exec.push({ node, pc: 0, bindings: { frameBy: player.id, frameSource: stableLimitSource(world, player.id) ?? '' } });
         return;
     }
 }

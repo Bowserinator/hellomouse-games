@@ -36,10 +36,6 @@ body:has(#prompt-body[data-prompt-required='true']) #hud:has(#hand .neigh-ready)
     z-index: 1201;
 }
 
-body:has(#prompt-body[data-prompt-required='true']) #hand .hand-card:not(.neigh-ready) {
-    pointer-events: none;
-}
-
 #game,
 #hud,
 #preview-layer,

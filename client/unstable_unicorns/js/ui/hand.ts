@@ -23,6 +23,17 @@ export function handInteraction(view: ViewModel, iid: string): HandInteraction {
     return 'blocked';
 }
 
+export function describeBlocker(view: ViewModel, iid: string): string {
+    if (view.promptOpen) return 'Answer the open prompt first.';
+    if (view.chain.top && view.cards[iid]?.neighable && !view.chain.canNeigh)
+        return 'That play cannot be neighed by you.';
+    const reason = view.blockers[iid];
+    if (reason) return reason;
+    if (view.turn.player !== view.seat) return 'It is not your turn.';
+    if (view.phase !== 'ACTION') return 'You cannot play that card now.';
+    return 'That card cannot be played right now.';
+}
+
 export class HandView {
     private host: HTMLElement;
     private slots = new Map<string, HTMLElement>();
@@ -62,6 +73,8 @@ export class HandView {
             slot.classList.toggle('playable', interaction === 'play');
             slot.classList.toggle('neigh-ready', interaction === 'neigh');
             slot.classList.toggle('blocked', interaction === 'blocked');
+            if (interaction === 'blocked') slot.dataset.tip = describeBlocker(view, iid);
+            else delete slot.dataset.tip;
         });
 
         for (const [iid, slot] of this.slots)

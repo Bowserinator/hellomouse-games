@@ -47,7 +47,7 @@ function spentAction(table: Table, player: number, iid: Iid, def: CardDef): Resu
 function applyCard(table: Table, player: number, iid: Iid, def: CardDef, stable: number) {
     const ex = table.ex;
     if (def.kind === 'magic' || def.kind === 'instant') {
-        bulkMove(table.state, [iid], 'limbo');
+        bulkMove(table.state, [iid], 'limbo', undefined, ex.log);
         ex.log.record({ type: 'play', card: iid, player, publicDefId: def.id });
     } else moveCard(moveCtxOf(ex), iid, { zone: 'stable', owner: stable }, 'play');
     if (def.onPlay?.id) startEffect(ex, def.onPlay.id, player, iid);
@@ -69,8 +69,7 @@ function targetStable(
     table: Table, player: number, iid: Iid, def: CardDef, target: number | undefined
 ): number | Result {
     if (def.kind === 'magic' || def.kind === 'instant') return player;
-    if (def.kind === 'baby' || def.kind === 'basic') return player;
-    const seat = target === undefined ? player : target;
+    const seat = def.kind === 'baby' || def.kind === 'basic' || target === undefined ? player : target;
     if (!table.state.players[seat]) return fail('That card needs a target stable');
     if (def.playTarget === 'self' && seat !== player) return fail('That card must go into your own stable');
     if (def.playTarget === 'other' && seat === player) return fail('That card must go into another stable');

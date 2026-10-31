@@ -14,7 +14,7 @@ import type { PendingEntry } from './stack.js';
 import { restoreInto, snapshot } from './snapshot.js';
 import type { Result, Table } from './play.js';
 import { neigh, playCard } from './play.js';
-import { afterAction, beginTurn, finishBeginTurn, discardCards, drawAction, endTurn, actionsLeft, drawsLeft } from './turn.js';
+import { afterAction, beginTurn, finishBeginTurn, finishEndTurn, discardCards, drawAction, endTurn, actionsLeft, drawsLeft } from './turn.js';
 import { bulkMove, moveCard } from './move.js';
 import { respond } from './exec/interpreter.js';
 import { resolveLinks } from './chain.js';
@@ -147,7 +147,7 @@ export class Engine {
             for (let i = 0; i < OPENING_HAND; i++) {
                 const iid = this.state.deck.pop();
                 if (!iid) break;
-                bulkMove(this.state, [iid], 'hand', player.id);
+                bulkMove(this.state, [iid], 'hand', player.id, this.log);
             }
     }
 
@@ -331,6 +331,8 @@ export class Engine {
                 resolveLinks(this.ex);
                 if (this.state.phase === 'TURN_START' && this.state.prompt === null)
                     finishBeginTurn(this.table);
+                if (this.state.phase === 'TURN_END') finishEndTurn(this.table);
+                afterAction(this.table);
                 if (this.cancellable && (this.cancellable.actor !== seat ||
                     this.state.prompt?.player !== seat)) this.cancellable = null;
                 return { ok: true };

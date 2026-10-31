@@ -1,8 +1,8 @@
-import type { CardEvent, Effect, EventType } from './dsl/ast.js';
+import type { CardEvent, Effect, EventType, Place } from './dsl/ast.js';
 import type { EventLog } from './events.js';
 import type { Iid } from './ids.js';
 import type { CardInstance, GameState, Zone } from './state.js';
-import { zoneList } from './zones.js';
+import { ownerOfZone, zoneList } from './zones.js';
 import type { World } from './query/modifiers.js';
 import { blocksOtherPlay, blocksTriggers, isUnicorn, protectedFrom } from './query/modifiers.js';
 import { holds } from './dsl/cond.js';
@@ -52,16 +52,26 @@ function orderedPlans(plans: Array<ReplacementPlan>, order: Array<Iid> | undefin
     return [...plans].sort((a, b) => rank(a) - rank(b));
 }
 
-export function bulkMove(state: GameState, iids: Array<Iid>, to: Zone, owner?: number): void {
+export function placeOf(zone: Zone, owner: number): Place {
+    return ownerOfZone(zone) ? { zone, owner } : { zone };
+}
+
+export function recordMove(log: EventLog, iid: Iid, from: Place, to: Place): void {
+    log.record({ type: 'move', card: iid, from, to });
+}
+
+export function bulkMove(state: GameState, iids: Array<Iid>, to: Zone, owner?: number, log?: EventLog): void {
     for (const iid of iids) {
         const card = state.cards[iid];
         if (!card) continue;
+        const from = placeOf(card.zone, card.owner);
         const source = zoneList(state, card.zone, card.owner);
         const index = source.indexOf(iid);
         if (index >= 0) source.splice(index, 1);
         card.zone = to;
         if (owner !== undefined) card.owner = owner;
         zoneList(state, to, card.owner).push(iid);
+        if (log) recordMove(log, iid, from, placeOf(to, card.owner));
     }
 }
 
@@ -104,8 +114,11 @@ export function moveCard(ctx: MoveCtx, iid: Iid, dest: Destination, cause: Event
     if (to === 'deck') zoneList(ctx.state, to).unshift(iid);
     else zoneList(ctx.state, to, owner).push(iid);
 
-    ctx.log.emit({ type: cause, card: iid, player: from === 'stable' ? previousOwner : owner,
-        publicDefId: cause === 'play' && from === 'hand' && to === 'stable' ? def?.id : undefined,
+    const played = cause === 'play' && from === 'hand' && to === 'stable';
+    ctx.log.emit({ type: cause, card: iid, player: from === 'stable' || played ? previousOwner : owner,
+        from: placeOf(from, previousOwner), to: placeOf(to, owner),
+        publicDefId: played ? def?.id : undefined,
+        ...played && owner !== previousOwner ? { targetPlayer: owner } : {},
         unicorn: wasUnicorn, suppressed });
     if (from === 'stable' && (to !== 'stable' || owner !== previousOwner))
         ctx.log.emit({ type: 'leaveStable', card: iid, player: previousOwner, unicorn: wasUnicorn, suppressed });

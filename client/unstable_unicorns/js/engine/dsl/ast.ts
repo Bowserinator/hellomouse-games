@@ -23,11 +23,12 @@ export type EventType =
     | 'cancel'
     | 'turnStart'
     | 'turnEnd'
-    | 'deckOut';
+    | 'deckOut'
+    | 'move';
 
 export const EVENT_TYPES: Array<EventType> = [
     'play', 'enterStable', 'leaveStable', 'destroy', 'discard',
-    'sacrifice', 'return', 'draw', 'neigh', 'cancel', 'turnStart', 'turnEnd', 'deckOut'
+    'sacrifice', 'return', 'draw', 'neigh', 'cancel', 'turnStart', 'turnEnd', 'deckOut', 'move'
 ];
 
 export type NodeId = string;
@@ -202,10 +203,17 @@ export interface CatalogEntry {
     image?: string;
 }
 
+export interface Place {
+    zone: Zone;
+    owner?: number;
+}
+
 export interface CardEvent {
     type: EventType;
     card?: Iid;
     player?: number;
+    from?: Place;
+    to?: Place;
     targetCard?: Iid;
     targetPlayer?: number;
     publicDefId?: string;

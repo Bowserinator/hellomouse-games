@@ -8,9 +8,9 @@ const upgradeOrDowngrade: Filter = anyOf({ f: 'type', type: 'upgrade' }, { f: 't
 const discard = (count: number): Effect => prim({ p: 'discard', sel: sel('hand', 'self', count) });
 const optional = (effect: Effect): Effect => ({ e: 'optional', effect });
 const draw = (count: number): Effect => prim({ p: 'draw', count });
-const destroyUnicorn = (): Effect => prim({ p: 'destroy', sel: sel('stable', 'any', 1, { filter: unicorn }) });
-const destroyCard = (): Effect => prim({ p: 'destroy', sel: sel('stable', 'any', 1) });
-const destroyStableCard = (): Effect => prim({ p: 'destroy', sel: sel('stable', 'any', 1, { filter: upgradeOrDowngrade }) });
+const destroyUnicorn = (): Effect => prim({ p: 'destroy', sel: sel('stable', 'other', 1, { filter: unicorn }) });
+const destroyCard = (): Effect => prim({ p: 'destroy', sel: sel('stable', 'other', 1) });
+const destroyStableCard = (): Effect => prim({ p: 'destroy', sel: sel('stable', 'other', 1, { filter: upgradeOrDowngrade }) });
 const sacrificeUnicorn = (): Effect => prim({ p: 'sacrifice', sel: sel('stable', 'self', 1, { filter: unicorn }) });
 const allPlayers = (effect: Effect): Effect => ({ e: 'forEachPlayer', who: 'any', effect });
 const on = (event: Trigger['on'], effect: Effect): Trigger => ({
@@ -23,7 +23,7 @@ const returnReplacement = (when: Replacement['when'], filter: Filter = unicorn):
     r: 'replace', when, scope: 'source', filter, effect: prim({ p: 'returnSourceToHand' })
 });
 const nurseryReplacement = (when: Replacement['when']): Replacement => ({
-    r: 'replace', when, effect: prim({ p: 'returnSourceToNursery' })
+    r: 'replace', when, scope: 'source', effect: prim({ p: 'returnSourceToNursery' })
 });
 
 const effects = new Map<string, Effect>([
@@ -48,7 +48,7 @@ const effects = new Map<string, Effect>([
     ['rainbow-unicorn', prim({ p: 'moveCard', sel: sel('hand', 'self', 1, { filter: plainBasicUnicorn }), zone: 'stable', owner: 'self' })],
     ['re-target', effectWhen(has('stable', 'any', upgradeOrDowngrade), prim({ p: 'moveCard', sel: sel('stable', 'any', 1, { filter: upgradeOrDowngrade }), zone: 'stable', owner: 'other' }))],
     ['reset-button', seq(prim({ p: 'sacrifice', sel: sel('stable', 'any', { min: 0, max: 99 }, { filter: upgradeOrDowngrade }) }), prim({ p: 'shuffleZonesIntoDeck', zones: ['discard'] }))],
-    ['rhinocorn', effectWhen(has('stable', 'any', unicorn), optional(destroyUnicorn()))],
+    ['rhinocorn', effectWhen(has('stable', 'other', unicorn), optional(destroyUnicorn()))],
 
     ['shabby-the-narwhal', optional(prim({ p: 'search', from: 'deck', filter: { f: 'type', type: 'downgrade' }, count: 1 }))],
     ['shake-up', seq(prim({ p: 'shuffleZonesIntoDeck', zones: ['hand', 'discard', 'limbo'] }), draw(5))],
@@ -82,7 +82,7 @@ const triggers = new Map<string, Array<Trigger>>([
     ['glitter-bomb', [on('turnStart', { e: 'ifYouDo', effect: seq(prim({ p: 'sacrifice', sel: sel('stable', 'self', 1) }), destroyCard()) })]],
     ['greedy-flying-unicorn', [on('enterStable', draw(1))]],
     ['rainbow-mane', [on('turnStart', optional(effects.get('rainbow-mane')!))]],
-    ['rhinocorn', [on('turnStart', effectWhen(has('stable', 'any', unicorn), { e: 'ifYouDo', effect: seq(destroyUnicorn(), prim({ p: 'endTurnNow' })) }))]],
+    ['rhinocorn', [on('turnStart', effectWhen(has('stable', 'other', unicorn), { e: 'ifYouDo', effect: seq(destroyUnicorn(), prim({ p: 'endTurnNow' })) }))]],
     ['sadistic-ritual', [on('turnStart', effectWhen(has('stable', 'self', unicorn), seq(sacrificeUnicorn(), draw(1))))]],
     ['unicorn-lasso', [on('turnStart', effects.get('unicorn-lasso')!)]],
     ['summoning-ritual', [on('turnStart', effectWhen(has('hand', 'self', unicorn, 2), optional(seq(prim({ p: 'discard', sel: sel('hand', 'self', 2, { filter: unicorn }) }), prim({ p: 'moveCard', sel: sel('discard', 'any', 1, { filter: unicorn }), zone: 'stable', owner: 'self' })))))]],
@@ -90,8 +90,10 @@ const triggers = new Map<string, Array<Trigger>>([
     ['rainbow-unicorn', [on('enterStable', effectWhen(has('hand', 'self', plainBasicUnicorn), optional(effects.get('rainbow-unicorn')!)))]],
     ['shark-with-a-horn', [on('enterStable', effectWhen(has('stable', 'self', unicorn), { e: 'ifYouDo', effect: seq(prim({ p: 'sacrificeSource' }), destroyUnicorn()) }))]],
     ['seductive-unicorn', [on('enterStable', effectWhen(has('stable', 'other', unicorn), effects.get('seductive-unicorn')!))]],
-    ['stabby-the-unicorn', [on('destroy', effectWhen(has('stable', 'any', unicorn), optional(destroyUnicorn())))]],
-    ['tiny-stable', [{ ...on('enterStable', effectWhen(has('stable', 'self', unicorn, 6), sacrificeUnicorn())), scope: 'owner' }]]
+    ['stabby-the-unicorn', [
+        on('destroy', effectWhen(has('stable', 'other', unicorn), optional(destroyUnicorn()))),
+        on('sacrifice', effectWhen(has('stable', 'other', unicorn), optional(destroyUnicorn())))
+    ]]
 ]);
 
 const replacements = new Map<string, Array<Replacement>>([
@@ -111,6 +113,7 @@ const modifiers = new Map<string, Array<Modifier>>([
     ['pandamonium', [{ m: 'unicornType', type: 'panda' }]],
     ['rainbow-aura', [{ m: 'protect', against: 'destroy', filter: unicorn }]],
     ['slowdown', [{ m: 'blockPlay', kind: 'instant' }]],
+    ['tiny-stable', [{ m: 'stableLimit', value: 5 }]],
     ['blinding-light', [{ m: 'blockTriggers' }]],
     ['broken-stable', [{ m: 'blockPlay', kind: 'upgrade' }]],
     ['yay', [{ m: 'protect', against: 'neigh' }]],
@@ -145,7 +148,7 @@ export const BASE_DEFS: Array<CardDef> = BASE_CATALOG.map(card => ({
         ] }],
         ['extra-tail', has('stable', 'self', plainBasicUnicorn)],
         ['rainbow-mane', has('stable', 'self', plainBasicUnicorn)],
-        ['unicorn-poison', has('stable', 'any', unicorn)]
+        ['unicorn-poison', has('stable', 'other', unicorn)]
     ]).get(card.id)
 }));
 
