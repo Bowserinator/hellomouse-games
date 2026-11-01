@@ -1,4 +1,4 @@
-/* global gameState:false, drawBoard:false, createConnection:false, beep:false, copyToClipboard:false */
+/* global gameState:false, drawBoard:false, createConnection:false, beep:false, copyToClipboard:false, saveReplay:false */
 
 /**
  * All UI / server communication stuff
@@ -225,6 +225,7 @@ connection.onmessage = message => {
         gameState.maxMoves = message.round === 0 ? 1 : 2;
         gameState.moves = [];
         gameState.lastMoves = message.lastMoves;
+        gameState.history = message.history || [];
         gameState.winner = message.winner;
         gameState.winningLine = message.winningLine;
         gameState.youAre = message.youAre;
@@ -245,8 +246,13 @@ connection.onmessage = message => {
 
         // Update winner modal
         let modal = document.getElementById('modals');
+        let saved = document.getElementById('replay-saved');
         if (gameState.winner) {
             modal.style.display = 'block';
+
+            let replayId = saveReplay(gameState.history, gameState.winner);
+            saved.style.display = replayId ? 'block' : 'none';
+            if (replayId) saved.innerText = `Saved as replay ${replayId}`;
 
             let winnerTitle = document.getElementById('winner');
             if (gameState.winner < 3)

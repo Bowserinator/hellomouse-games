@@ -386,3 +386,167 @@ button:disabled {
 ::-webkit-scrollbar-corner {
     background: transparent;
 }
+
+// Replay viewer
+.replay-dialog {
+    position: fixed;
+    top: 3vh;
+    left: 3vw;
+    width: 94vw;
+    height: 94vh;
+    z-index: 1002;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 24px;
+    background-color: white;
+
+    button {
+        width: auto;
+        padding: 8px 18px;
+        font-size: 12pt;
+    }
+}
+
+.replay-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+
+    h1 {
+        margin: 0;
+        font-family: 'Raleway', Sans-Serif;
+        font-weight: normal;
+    }
+}
+
+.replay-header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.replay-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    gap: 20px;
+}
+
+.replay-list {
+    flex: 0 0 280px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+}
+
+.replay-item {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+
+    &:hover {
+        background-color: #f4f4f4;
+    }
+
+    &.active {
+        background-color: black;
+        color: white;
+    }
+}
+
+.replay-item-subtitle {
+    font-size: 10pt;
+    opacity: 0.7;
+}
+
+.replay-list-empty,
+#replay-empty {
+    padding: 20px;
+    color: #777;
+}
+
+.replay-viewer {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+#replay-content {
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#replay-board-area {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    canvas {
+        margin: 0;
+    }
+}
+
+.replay-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    input[type='range'] {
+        flex: 1;
+        cursor: pointer;
+    }
+}
+
+.replay-position-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Raleway', Sans-Serif;
+}
+
+.replay-dialog .link-button {
+    width: auto;
+    padding: 0;
+    background: none;
+    color: #0366d6;
+    box-shadow: none;
+    font-family: inherit;
+    font-size: inherit;
+    text-decoration: underline;
+
+    &:hover {
+        background: none;
+        box-shadow: none;
+        color: #024c9f;
+    }
+}
+
+#replay-analysis-status {
+    color: #555;
+}
+
+.replay-games-row {
+    align-items: center;
+    gap: 10px;
+    font-family: 'Raleway', Sans-Serif;
+
+    .link-button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+}
+
+@media only screen and (max-width: 700px) {
+    .replay-body {
+        flex-direction: column;
+    }
+
+    .replay-list {
+        flex: 0 0 25%;
+    }
+}

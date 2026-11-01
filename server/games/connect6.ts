@@ -29,6 +29,7 @@ class Connect6Game extends Game {
     winningLine: Array<Array<number>>;
     board: Array<Array<number>>;
     lastMoves: Array<Array<number>>;
+    history: Array<Array<Array<number>>>;
     mode: string;
     highlight: boolean;
     blitzTime: number;
@@ -43,6 +44,7 @@ class Connect6Game extends Game {
         this.round = 0;            // Current turn, increments
         this.winningLine = [];     // [[x, y], [x, y]]
         this.lastMoves = [];       // [[x, y], ...]
+        this.history = [];         // Moves of every turn so far, in order
         this.board = [];           // 2D array of 0, 1 or 2 (empty, black or white)
         this.mode = 'normal';
         this.highlight = false;
@@ -103,6 +105,7 @@ class Connect6Game extends Game {
         this.round = 0;
         this.winningLine = [];
         this.lastMoves = [];
+        this.history = [];
         this.clocks = [this.blitzTime * 1000, this.blitzTime * 1000];
 
         this.board = [];
@@ -132,6 +135,7 @@ class Connect6Game extends Game {
             winner: this.winner,
             winningLine: this.winningLine,
             lastMoves: this.lastMoves,
+            history: this.history,
             mode: this.mode,
             highlight: this.highlight,
             blitzTime: this.blitzTime,
@@ -249,6 +253,7 @@ class Connect6Game extends Game {
         }
 
         this.lastMoves = message.moves;
+        this.history.push(message.moves);
 
         // Each move adds time back to the clock of the player who made it.
         // This runs before the turn changes, so this.turn is still the mover

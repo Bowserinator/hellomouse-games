@@ -39,7 +39,8 @@
             </div>
             <div class="misc-links">
                 <a href="/">Other Games</a> |
-                <a href="javascript:newGame()">New Game</a>
+                <a href="javascript:newGame()">New Game</a> |
+                <a href="javascript:openReplays()">Replays</a>
             </div>
             <canvas id="board"></canvas>
         </div>
@@ -174,12 +175,58 @@
         <div class="modal-darken"></div>
         <div class="modal">
             <h1 id="winner">X WINS!</h1>
+            <p id="replay-saved" style="display: none"></p>
             <button onclick="restart()">Play Again</button>
+        </div>
+    </div>
+
+    <div style="display: none" id="replay-modal">
+        <div class="modal-darken" onclick="closeReplays()"></div>
+        <div class="replay-dialog">
+            <div class="replay-header">
+                <h1>Replays</h1>
+                <div class="replay-header-actions">
+                    <button class="replay-clear" onclick="clearReplays()">Clear replays</button>
+                    <button class="replay-close" onclick="closeReplays()" title="Close">✕</button>
+                </div>
+            </div>
+            <div class="replay-body">
+                <div class="replay-list" id="replay-list"></div>
+                <div class="replay-viewer">
+                    <div id="replay-empty">Select a replay to view it</div>
+                    <div id="replay-content" style="display: none">
+                        <div id="replay-board-area">
+                            <canvas id="replay-board"></canvas>
+                        </div>
+                        <div class="replay-controls">
+                            <button id="replay-prev" onclick="stepReplay(-1)">&lt;</button>
+                            <button id="replay-next" onclick="stepReplay(1)">&gt;</button>
+                            <input type="range" id="replay-slider" min="0" max="0" value="0"
+                                oninput="onReplaySlider()">
+                        </div>
+                        <div class="replay-position-row">
+                            <span id="replay-position"></span>
+                            <button class="link-button" id="replay-analysis"
+                                onclick="toggleAnalysis()">Analysis</button>
+                        </div>
+                        <div id="replay-analysis-status"></div>
+                        <div class="replay-games-row" id="replay-games" style="display: none">
+                            <button class="link-button" id="replay-game-prev"
+                                onclick="stepGame(-1)">&lt;</button>
+                            <span id="replay-game-label"></span>
+                            <button class="link-button" id="replay-game-next"
+                                onclick="stepGame(1)">&gt;</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="/shared/js/index.js"></script>
     <script src="./js/game.js"></script>
+    <script src="./js/analysis.js"></script>
+    <script src="./js/replays.js"></script>
     <script src="./js/client.js"></script>
 </body>
 

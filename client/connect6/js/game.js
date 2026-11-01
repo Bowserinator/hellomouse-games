@@ -33,6 +33,7 @@ const gameState = {
     maxMoves: 2,   // Depends on turn
     moves: [],     // Array of [x,y]
     lastMoves: [], // Array of [x,y]
+    history: [],   // Array of turns, each an array of [x,y]
 
     currentTurn: 0, // Whose turn is it
     currentRound: 0, // Round number, increments by 1 each turn
@@ -72,20 +73,15 @@ function moveAt(x, y) {
 }
 
 /**
- * In gameState.lastMoves, is there a move at this location?
- * @param {number} x
- * @param {number} y
- * @return {boolean}
+ * Positions of stones that are part of a six-window with
+ * four of one color and none of the other
+ * @param {Array<Array<number>>} board
+ * @return {Set<string>} Set of "x,y"
  */
-function lastMoveAt(x, y) {
-    return gameState.lastMoves.some(m => m[0] === x && m[1] === y);
-}
-
-function getHighlightedPositions() {
+function getHighlightedPositions(board) {
     let highlighted = new Set();
-    let board = gameState.board;
 
-    if (!gameState.highlight || !board || !board.length) return highlighted;
+    if (!board || !board.length) return highlighted;
 
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
 
@@ -119,6 +115,7 @@ function getHighlightedPositions() {
 
 /**
  * Draw a line from (x1, y1) to (x2, y2)
+ * @param {CanvasRenderingContext2D} ctx
  * @param {number} x1
  * @param {number} y1
  * @param {number} x2
@@ -126,7 +123,7 @@ function getHighlightedPositions() {
  * @param {number} thickness
  * @param {string} color
  */
-function drawLine(x1, y1, x2, y2, thickness, color) {
+function drawLine(ctx, x1, y1, x2, y2, thickness, color) {
     ctx.strokeStyle = color;
     ctx.lineWidth = thickness;
     ctx.beginPath();
@@ -137,6 +134,7 @@ function drawLine(x1, y1, x2, y2, thickness, color) {
 
 /**
  * Draw a circle centered at (x, y)
+ * @param {CanvasRenderingContext2D} ctx
  * @param {number} x
  * @param {number} y
  * @param {number} radius
@@ -144,7 +142,7 @@ function drawLine(x1, y1, x2, y2, thickness, color) {
  * @param {string} stroke
  * @param {number} strokeWidth
  */
-function drawCircle(x, y, radius, fill, stroke, strokeWidth) {
+function drawCircle(ctx, x, y, radius, fill, stroke, strokeWidth) {
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
     if (fill) {
@@ -160,63 +158,78 @@ function drawCircle(x, y, radius, fill, stroke, strokeWidth) {
 
 /**
  * Fill square centered on (x, y)
+ * @param {CanvasRenderingContext2D} ctx
  * @param {number} x
  * @param {number} y
  * @param {number} width
  * @param {string} color
  */
-function drawCenteredSquare(x, y, width, color) {
+function drawCenteredSquare(ctx, x, y, width, color) {
     ctx.fillStyle = color;
     ctx.fillRect(x - width / 2, y - width / 2, width, width);
 }
 
 /**
  * Draw a single piece on the board
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} size Cell size in pixels
  * @param {number} cx
  * @param {number} cy
  * @param {string} color
  * @param {string} strokeColor
  * @param {number} thick Thickness
  */
-function drawPiece(cx, cy, color, strokeColor, thick = 1) {
-    drawCircle(cx, cy, CIRCLE_SIZE * cellSize, color, strokeColor, thick);
+function drawPiece(ctx, size, cx, cy, color, strokeColor, thick = 1) {
+    drawCircle(ctx, cx, cy, CIRCLE_SIZE * size, color, strokeColor, thick);
 }
 
 /**
- * Redraw the board from gameState board state
+ * Render a board onto a canvas context
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} size Cell size in pixels
+ * @param {object} state
+ * @param {Array<Array<number>>} state.board 2D array of 0, 1 or 2
+ * @param {Array<Array<number>>} state.lastMoves Stones to mark as just played
+ * @param {Set<string>} [state.highlighted] "x,y" of stones to tint
+ * @param {Array<Array<number>>} [state.moves] Unconfirmed stones to outline
+ * @param {number} [state.movesTurn] 0 = black, 1 = white, color of state.moves
+ * @param {Array<{x: number, y: number, color: number, label: number}>} [state.ghosts]
+ *     Hypothetical stones (color 0 = black, 1 = white) drawn translucent with a number
+ * @param {Array<Array<number>>} [state.winningLine] [[x, y], [x, y]]
  */
-function drawBoard() {
-    let board = gameState.board;
+function renderBoard(ctx, size, state) {
+    let { board, lastMoves } = state;
+    let highlighted = state.highlighted || new Set();
 
     // Background color
-    ctx.rect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.rect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.fillStyle = BOARD_COLOR;
     ctx.fill();
 
     // Grid lines
-    let M = 2 * MARGIN * cellSize;
+    let M = 2 * MARGIN * size;
 
     for (let i = 0; i < BOARD_SIZE; i++) {
-        let x = i * cellSize + M;
-        drawLine(x, M, x, M + (BOARD_SIZE - 1) * cellSize, 1, LINE_COLOR);
+        let x = i * size + M;
+        drawLine(ctx, x, M, x, M + (BOARD_SIZE - 1) * size, 1, LINE_COLOR);
     }
     for (let i = 0; i < BOARD_SIZE; i++) {
-        let y = i * cellSize + M;
-        drawLine(M, y, M + (BOARD_SIZE - 1) * cellSize, y, 1, LINE_COLOR);
+        let y = i * size + M;
+        drawLine(ctx, M, y, M + (BOARD_SIZE - 1) * size, y, 1, LINE_COLOR);
     }
 
     // Little circles every 6 grid spaces, starting at (2,2) (0 indexed)
     for (let x = 3; x <= BOARD_SIZE; x += 6)
         for (let y = 3; y <= BOARD_SIZE; y += 6) {
-            let [cx, cy] = [M + x * cellSize, M + y * cellSize];
-            drawCircle(cx, cy, cellSize * MARKER_SIZE, LINE_COLOR, null, 0);
+            let [cx, cy] = [M + x * size, M + y * size];
+            drawCircle(ctx, cx, cy, size * MARKER_SIZE, LINE_COLOR, null, 0);
         }
 
     // Board not loaded yet
     if (!board || !board.length) return;
 
     // Pieces
-    let highlighted = getHighlightedPositions();
     for (let x = 0; x < BOARD_SIZE; x++)
         for (let y = 0; y < BOARD_SIZE; y++) {
             let state = board[y][x];
@@ -225,38 +238,75 @@ function drawBoard() {
             let color = state === 1 ? BLACK_COLOR : WHITE_COLOR;
             if (highlighted.has(`${x},${y}`))
                 color = state === 1 ? BLACK_HIGHLIGHT_COLOR : WHITE_HIGHLIGHT_COLOR;
-            let [cx, cy] = [M + x * cellSize, M + y * cellSize];
+            let [cx, cy] = [M + x * size, M + y * size];
 
-            drawPiece(cx, cy, color, PIECE_BORDER);
+            drawPiece(ctx, size, cx, cy, color, PIECE_BORDER);
 
             // It was a last move, mark
-            if (lastMoveAt(x, y))
-                drawCenteredSquare(cx, cy, RECT_MARKER_SIZE * cellSize, RECT_MARKER_COLOR);
+            if (lastMoves.some(m => m[0] === x && m[1] === y))
+                drawCenteredSquare(ctx, cx, cy, RECT_MARKER_SIZE * size, RECT_MARKER_COLOR);
         }
 
-    // Current turn moves
-    for (let move of gameState.moves)
-        drawPiece(
-            (move[0] + 2 * MARGIN) * cellSize,
-            (move[1] + 2 * MARGIN) * cellSize,
-            gameState.turn === 0 ? BLACK_COLOR : WHITE_COLOR,
+    // Unconfirmed moves
+    for (let move of state.moves || [])
+        drawPiece(ctx, size,
+            (move[0] + 2 * MARGIN) * size,
+            (move[1] + 2 * MARGIN) * size,
+            state.movesTurn === 0 ? BLACK_COLOR : WHITE_COLOR,
             PIECE_PLACE_BORDER, PIECE_TENTATIVE_THICKNESS);
 
-    // Winning line
-    if (gameState.winningLine) {
-        let [x1, y1, x2, y2] = gameState.winningLine.flat();
+    // Hypothetical stones
+    for (let ghost of state.ghosts || []) {
+        let cx = (ghost.x + 2 * MARGIN) * size;
+        let cy = (ghost.y + 2 * MARGIN) * size;
+        drawPiece(ctx, size, cx, cy,
+            ghost.color === 0 ? BLACK_TENTATIVE_COLOR : WHITE_TENTATIVE_COLOR, PIECE_BORDER);
 
-        x1 = M + x1 * cellSize;
-        y1 = M + y1 * cellSize;
-        x2 = M + x2 * cellSize;
-        y2 = M + y2 * cellSize;
-        drawLine(x1, y1, x2, y2, 8, 'red');
+        ctx.fillStyle = ghost.color === 0 ? WHITE_COLOR : BLACK_COLOR;
+        ctx.font = `${Math.round(size * 0.5)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(ghost.label), cx, cy);
     }
+
+    // Winning line
+    if (state.winningLine && state.winningLine.length) {
+        let [x1, y1, x2, y2] = state.winningLine.flat();
+
+        x1 = M + x1 * size;
+        y1 = M + y1 * size;
+        x2 = M + x2 * size;
+        y2 = M + y2 * size;
+        drawLine(ctx, x1, y1, x2, y2, 8, 'red');
+    }
+}
+
+/**
+ * Redraw the board from gameState board state
+ */
+function drawBoard() {
+    renderBoard(ctx, cellSize, {
+        board: gameState.board,
+        lastMoves: gameState.lastMoves,
+        highlighted: gameState.highlight ?
+            getHighlightedPositions(gameState.board) : new Set(),
+        moves: gameState.moves,
+        movesTurn: gameState.turn,
+        winningLine: gameState.winningLine
+    });
+}
+
+/**
+ * Is a modal overlay capturing input over the board?
+ * @return {boolean}
+ */
+function boardInputBlocked() {
+    return document.body.classList.contains('replays-open');
 }
 
 // Update ghost placements
 window.onmousemove = e => {
-    if (gameState.placing) {
+    if (gameState.placing && !boardInputBlocked()) {
         let color1 = gameState.turn === 0 ? BLACK_TENTATIVE_COLOR : WHITE_TENTATIVE_COLOR;
         let [gx, gy] = mouseToBoardCoordinate(e);
 
@@ -264,13 +314,14 @@ window.onmousemove = e => {
         // Empty space, no tentative move there either, and is placing
         if (gameState.moves.length < gameState.maxMoves &&
                 gameState.board[gy] && gameState.board[gy][gx] === 0 && !moveAt(gx, gy))
-            drawPiece((gx + 2 * MARGIN) * cellSize, (gy + 2 * MARGIN) * cellSize, color1, PIECE_BORDER);
+            drawPiece(ctx, cellSize, (gx + 2 * MARGIN) * cellSize,
+                (gy + 2 * MARGIN) * cellSize, color1, PIECE_BORDER);
     }
 };
 
 // Attempt ghost placement
 window.onpointerdown = e => {
-    if (!gameState.placing) return;
+    if (!gameState.placing || boardInputBlocked()) return;
     let [gx, gy] = mouseToBoardCoordinate(e);
 
     // Place tentative piece there
