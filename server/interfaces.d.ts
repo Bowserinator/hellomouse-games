@@ -16,6 +16,7 @@ interface MessageData {
 
 // Game config
 interface GameConfig {
+    allowChat?: boolean;
     syncAfterMove?: boolean;
     maxLobbies?: number;
 }

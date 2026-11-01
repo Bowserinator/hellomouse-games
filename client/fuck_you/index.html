@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="FUCK YOU — UNO with extra consequences. Hellomouse Games.">
+    <meta property="og:title" content="FUCK YOU — Hellomouse Games">
+    <meta property="og:image" content="/fuck_you/img/thumbnail.png">
+    <title>FUCK YOU</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;800;900&family=Nunito+Sans:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/index.css">
+    <script src="/shared/js/index.js" defer></script>
+    <script src="js/game.js" type="module"></script>
+</head>
+<body>
+    <nav>
+        <h1>FUCK <span>YOU</span></h1>
+        <div><button id="rules-button">Rules &amp; cards</button><a href="/" target="_blank" rel="noopener">More games</a></div>
+    </nav>
+    <p id="connection-status" role="status">Connecting…</p>
+    <main id="lobby">
+        <div class="lobby-card">
+            <ol id="players"></ol>
+            <label for="invite">Invite your friends</label>
+            <div class="invite-row"><input id="invite" readonly aria-label="Invite link"><button id="copy-invite">Copy invite</button></div>
+            <form id="username-form"><label for="username">Your name</label><input id="username" maxlength="16" pattern="[A-Za-z0-9_]+" required><button>Set name</button></form>
+            <div class="lobby-actions"><button id="ready">Ready</button><button id="start-game" hidden>Start game</button></div>
+        </div>
+    </main>
+    <section id="game" aria-label="Game table" hidden>
+        <div id="world-frame"><div id="world"><div id="table-art"></div><div id="center"></div><div id="seats"></div></div></div>
+    </section>
+    <div id="camera-controls" role="group" aria-label="Table camera" hidden>
+        <button id="zoom-out" aria-label="Zoom out">−</button><button id="recenter">Recenter</button><button id="zoom-in" aria-label="Zoom in">+</button>
+    </div>
+    <section id="hud" aria-label="Your hand" hidden>
+        <p id="turn-status" role="status" aria-live="polite"></p>
+        <div class="hand-tools">
+            <button id="draw">Draw a card</button><button id="pass">Pass</button>
+            <label><input type="checkbox" id="announce"> Call UNO with my play</label>
+            <button id="uno">UNO!</button><button id="catch" hidden>Catch missed UNO</button>
+        </div>
+        <div id="hand"></div>
+    </section>
+    <p id="notice" role="alert" hidden></p>
+    <details id="log-panel" hidden><summary>Game log</summary><div id="log" role="log"></div></details>
+    <div id="preview" hidden></div><div id="flight-layer" aria-hidden="true"></div>
+    <dialog id="choice" aria-labelledby="choice-title"><h2 id="choice-title"></h2><p id="choice-help"></p><div id="choice-options"></div><label id="choice-uno-label" hidden><input type="checkbox" id="choice-uno"> Call UNO with this play</label><div class="dialog-actions"><button id="choice-submit" hidden>Confirm selection</button><button id="choice-cancel">Cancel</button></div></dialog>
+    <dialog id="win-modal" aria-labelledby="win-title"><p class="eyebrow">No cards. No mercy.</p><h2 id="win-title">Game over</h2><p id="win-text"></p><button id="win-close">View table</button><a href="/fuck_you/">New game</a></dialog>
+    <dialog id="rules-modal" aria-labelledby="rules-title">
+        <button class="close" id="rules-close" aria-label="Close rules">×</button><h2 id="rules-title"><i>Fuck You (aka Uno)</i> rules</h2>
+        <h3>The basics</h3>
+        <p>2-8 players. Deal 7 cards each. The first player to empty their hand after resolving effects wins. 
+            Start on a number card, then each player plays a card to match the active color, number, or symbol. 
+            Purple and ultimate cards are wild: choose a color when playing them. There is no stacking or jumping in.</p>
+        
+        <p>If you can't play anything, draw one card. If it is playable, play that card or pass; 
+            otherwise your turn ends. Other notes:
+
+            <ul>
+                <li>Draw two and draw four make the next player draw and miss their turn. </li>
+                <li>Reverse acts as Skip with two players. </li>
+                <li>Draw four is only legal if you have no card of the active color<</li>
+            </ul>
+        </p>
+        
+        <p>Tick “Call UNO with my play” before playing down to one card, or press UNO afterward. 
+            Another player can catch a missed call for 2 cards until the next player acts. 
+            Effects resolve before a winner is declared, except Sacrifice explicitly wins when played last.</p>
+
+        <h3>All cards</h3><div id="catalog"></div>
+        <p>Original FUCK-YOU-NO! card art by Draftss.com and credited contributors in the supplied PDF. <a href="https://creativecommons.org/licenses/by-nc-sa/2.0/" target="_blank" rel="noopener">CC BY-NC-SA 2.0</a>. Non-commercial use only.</p>
+    </dialog>
+</body>
+</html>

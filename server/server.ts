@@ -143,6 +143,8 @@ wsServer.on('request', (request: any) => {
 
         // Chat message
         if (message.type === 'CHAT') {
+            if (game.config.allowChat === false)
+                return error(client, 'Chat is disabled for this game', 'CHAT_DISABLED');
             // Invalid chat message
             if (!message.message)
                 return error(client, 'Invalid chat message', 'BAD_CHAT');
