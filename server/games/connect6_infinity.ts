@@ -5,6 +5,9 @@ const BLITZ_TIMES = [60, 180, 300, 600];
 const CLOCK_INTERVAL = 250;
 const MOVE_TIME_BONUS = 5000;
 
+// Budget 256 bytes per stone for map entries and board snapshots (~20 MiB total).
+export const MAX_STONES = 20 * 1024 * 1024 / 256;
+
 // Furthest a stone may be placed from the origin along either axis
 const MAX_COORD = 1_000_000;
 const KEY_SPAN = 2 * MAX_COORD + 1;
@@ -61,7 +64,7 @@ class Connect6InfinityGame extends Game {
     lastClockTick: number;
 
     constructor() {
-        super();
+        super({ maxLobbies: 10 });
         this.turn = Turn.BLACK;    // 0 = player 1, 1 = player 2
         this.winner = Winner.NONE; // 0 = no winner, 1 = black, 2 = white
         this.round = 0;            // Current turn, increments
@@ -281,6 +284,15 @@ class Connect6InfinityGame extends Game {
         // Both stones must be on different spaces
         if (moveCount === 2 && message.moves[0][0] === message.moves[1][0] &&
                 message.moves[0][1] === message.moves[1][1]) return;
+
+        if (this.stones.size + moveCount > MAX_STONES) {
+            client.connection.sendUTF(JSON.stringify({
+                type: 'ERROR',
+                code: 'STATE_LIMIT',
+                error: 'Game state limit reached. Create a new game to continue.'
+            }));
+            return;
+        }
 
         // Make move
         let moves = message.moves.map(move => [move[0], move[1]]);
