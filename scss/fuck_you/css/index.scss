@@ -739,6 +739,19 @@ dialog {
     }
 }
 
+#table-rematch {
+    position: fixed;
+    left: 50%;
+    bottom: max(.75rem, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 30;
+    background: $yellow;
+
+    body:has(dialog[open]) & {
+        display: none;
+    }
+}
+
 #taunt {
     position: fixed;
     inset: auto max(.5rem, env(safe-area-inset-right)) max(.5rem, env(safe-area-inset-bottom)) auto;

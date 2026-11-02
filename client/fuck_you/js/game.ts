@@ -183,6 +183,7 @@ function render(): void {
     $('ready').textContent = sync.seats[sync.youAre]?.ready ? 'Unready' : 'Ready';
     if (!sync.view) {
         state = null; won = false; promptKey = '';
+        $('table-rematch').hidden = true;
         clearTimeout(winTimer);
         dialog('win-modal').close(); dialog('choice').close();
         $('preview').hidden = true;
@@ -445,7 +446,10 @@ $('recenter').onclick = () => camera?.fit();
 $('rules-button').onclick = () => dialog('rules-modal').showModal();
 $('rules-close').onclick = () => dialog('rules-modal').close();
 $('win-close').onclick = () => dialog('win-modal').close();
-$('win-rematch').onclick = () => move({ action: 'RETURN_TO_LOBBY' });
+$('win-rematch').onclick = $('table-rematch').onclick = () => move({ action: 'RETURN_TO_LOBBY' });
+dialog('win-modal').addEventListener('close', () => {
+    $('table-rematch').hidden = !state || state.winner === null || !sync || sync.youAre < 0;
+});
 $('taunt').onclick = () => {
     const now = Date.now();
     taunts = taunts.filter(time => time > now - 1000);
