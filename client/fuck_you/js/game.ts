@@ -27,11 +27,37 @@ let state: View | null = null;
 let retry = 0;
 let promptKey = '';
 let won = false;
+let winTimer = 0;
 let noticeTimer = 0;
 let resumeSent = false;
 let camera: CameraController | null = null;
 let tableSize = { w: 1000, h: 1000 };
 let tableKey = '';
+let taunts: Array<number> = [];
+const voiceContext = typeof AudioContext === 'undefined' ? null : new AudioContext();
+const voiceBuffer = voiceContext ? fetch('audio/fuck-you.wav').then(response => {
+    if (!response.ok) throw new Error('Voice clip could not be loaded');
+    return response.arrayBuffer();
+}).then(bytes => voiceContext.decodeAudioData(bytes)).catch(() => null) : Promise.resolve(null);
+
+for (const event of ['pointerdown', 'keydown']) document.addEventListener(event, () => {
+    if (voiceContext?.state === 'suspended') void voiceContext.resume().catch(() => {});
+});
+
+async function playTaunt(): Promise<void> {
+    const buffer = await voiceBuffer;
+    if (!voiceContext || !buffer) return notify('Voice audio is unavailable in this browser.');
+    if (voiceContext.state !== 'running') return notify('Click anywhere in the page to enable voice audio.');
+    const source = voiceContext.createBufferSource();
+    const gain = voiceContext.createGain();
+    source.buffer = buffer;
+    gain.gain.value = .3;
+    source.connect(gain); gain.connect(voiceContext.destination);
+    source.onended = () => {
+        source.disconnect(); gain.disconnect();
+    };
+    source.start();
+}
 
 function send(message: Record<string, unknown>): void {
     if (mock !== null) {
@@ -97,7 +123,8 @@ function connect(): void {
                 }
             }
             render();
-        } else if (data.type === 'ERROR')
+        } else if (data.type === 'TAUNT') void playTaunt();
+        else if (data.type === 'ERROR')
             if (data.code === 'NO_GAME') {
                 room = ''; history.replaceState(null, '', location.pathname);
                 notify('That room has closed. A new room was created.');
@@ -138,6 +165,7 @@ function cardButton(card: CardView): HTMLButtonElement {
 function render(): void {
     if (!sync) return;
     $('lobby').hidden = sync.started;
+    $<HTMLButtonElement>('taunt').disabled = voiceContext === null || sync.youAre < 0;
     $('game').hidden = $('hud').hidden = $('log-panel').hidden = $('camera-controls').hidden = !sync.started;
     $('players').replaceChildren(...sync.seats.map((seat, i) => {
         const li = document.createElement('li');
@@ -153,7 +181,15 @@ function render(): void {
     $('start-game').hidden = !sync.isHost;
     $<HTMLButtonElement>('start-game').disabled = sync.seats.length < 2 || !sync.seats.every(seat => seat.ready);
     $('ready').textContent = sync.seats[sync.youAre]?.ready ? 'Unready' : 'Ready';
-    if (!sync.view) return;
+    if (!sync.view) {
+        state = null; won = false; promptKey = '';
+        clearTimeout(winTimer);
+        dialog('win-modal').close(); dialog('choice').close();
+        $('preview').hidden = true;
+        $('flight-layer').replaceChildren();
+        $<HTMLInputElement>('announce').checked = false;
+        return;
+    }
     const before = new Map<string, DOMRect>();
     document.querySelectorAll<HTMLElement>('[data-iid], [data-place]').forEach(el => {
         if (el.dataset.iid) before.set(el.dataset.iid, el.getBoundingClientRect());
@@ -173,7 +209,7 @@ function render(): void {
         won = true;
         $('win-title').textContent = state.winner === sync.youAre ? 'You win!' : `${name(state.winner)} wins!`;
         $('win-text').textContent = 'The final card and all its effects have resolved.';
-        window.setTimeout(() => dialog('win-modal').showModal(), wasStarted ? 650 : 0);
+        winTimer = window.setTimeout(() => dialog('win-modal').showModal(), wasStarted ? 650 : 0);
     }
 }
 function renderTable(): void {
@@ -409,6 +445,14 @@ $('recenter').onclick = () => camera?.fit();
 $('rules-button').onclick = () => dialog('rules-modal').showModal();
 $('rules-close').onclick = () => dialog('rules-modal').close();
 $('win-close').onclick = () => dialog('win-modal').close();
+$('win-rematch').onclick = () => move({ action: 'RETURN_TO_LOBBY' });
+$('taunt').onclick = () => {
+    const now = Date.now();
+    taunts = taunts.filter(time => time > now - 1000);
+    if (taunts.length >= 3) return;
+    taunts.push(now);
+    move({ action: 'TAUNT' });
+};
 for (const def of CARDS) {
     const entry = document.createElement('div'); entry.className = 'catalog-card';
     const img = document.createElement('img'); img.src = image(def.id); img.alt = def.name; img.loading = 'lazy';

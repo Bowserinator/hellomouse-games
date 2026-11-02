@@ -23,6 +23,7 @@ export default class FuckYouGame extends Game {
     private tokens: Array<string> = [];
     private observers = new Set<Client>();
     private seen = new Map<Client, number>();
+    private taunts: Array<number> = [];
 
     constructor() {
         super({ syncAfterMove: false, allowChat: false });
@@ -79,6 +80,27 @@ export default class FuckYouGame extends Game {
         }
         seat = this.players.indexOf(client);
         if (seat === -1) return this.error(client, 'You are watching. Resume your seat or create a new game.');
+        if (move.action === 'TAUNT') {
+            const now = Date.now();
+            this.taunts = this.taunts.filter(time => time > now - 1000);
+            if (this.taunts.length >= 3) return;
+            this.taunts.push(now);
+            this.broadcast({ type: 'TAUNT' });
+            return;
+        }
+        if (move.action === 'RETURN_TO_LOBBY') {
+            if (!this.engine || this.engine.winner === null) return this.error(client, 'The game has not ended');
+            this.engine = null;
+            this.players = this.players.filter(player => player !== null);
+            this.playerCount = this.players.length;
+            for (const player of this.players) if (player) player.ready = false;
+            this.held.clear();
+            this.tokens = [];
+            this.seen.clear();
+            this.broadcastWhoYouAre();
+            this.syncAll();
+            return;
+        }
         if (!this.engine) {
             if (move.action !== 'START_GAME') return this.error(client, 'Start the game first');
             if (this.players.find(player => player !== null) !== client) return this.error(client, 'Only the host can start');
@@ -119,5 +141,6 @@ export default class FuckYouGame extends Game {
         this.observers.clear();
         this.seen.clear();
         this.tokens = [];
+        this.taunts = [];
     }
 }

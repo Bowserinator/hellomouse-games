@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+    <defs>
+        <linearGradient id="base" x1="0" y1="0" x2="0.8" y2="1">
+            <stop stop-color="#eaf2f7"/>
+            <stop offset=".3" stop-color="#a7b4c0"/>
+            <stop offset=".6" stop-color="#475764"/>
+            <stop offset=".85" stop-color="#c5ced4"/>
+            <stop offset="1" stop-color="#6e7b86"/>
+        </linearGradient>
+        <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+            <stop stop-color="#fff"/>
+            <stop offset=".25" stop-color="#edf6fc"/>
+            <stop offset=".5" stop-color="#8295a5"/>
+            <stop offset=".72" stop-color="#edf4f9"/>
+            <stop offset="1" stop-color="#a4b2bd"/>
+        </linearGradient>
+        <linearGradient id="side" x1="0" y1="0" x2="0" y2="1">
+            <stop stop-color="#c92c30"/>
+            <stop offset=".7" stop-color="#a8151b"/>
+            <stop offset="1" stop-color="#5e070b"/>
+        </linearGradient>
+        <radialGradient id="cap" cx=".32" cy=".2" r=".9">
+            <stop stop-color="#ff8c8e"/>
+            <stop offset=".3" stop-color="#ef454c"/>
+            <stop offset=".75" stop-color="#df242c"/>
+            <stop offset="1" stop-color="#ad1018"/>
+        </radialGradient>
+        <filter id="texture" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="1.8" numOctaves="3" seed="8"/>
+            <feColorMatrix type="saturate" values="0"/>
+            <feComposite in2="SourceGraphic" operator="in"/>
+            <feBlend in="SourceGraphic" mode="soft-light"/>
+        </filter>
+    </defs>
+    <g id="button-base">
+        <ellipse cx="120" cy="132" rx="106" ry="98" fill="url(#base)" stroke="#82909c" stroke-width="1"/>
+        <ellipse cx="120" cy="122" rx="106" ry="98" fill="url(#rim)" stroke="#b4c4cf" stroke-width="1"/>
+        <ellipse cx="120" cy="123" rx="99" ry="92" fill="#53616d"/>
+        <ellipse cx="120" cy="126" rx="95" ry="89" fill="url(#side)"/>
+    </g>
+    <g id="button-cap">
+        <ellipse cx="120" cy="114" rx="94" ry="88" fill="url(#cap)"/>
+        <ellipse cx="120" cy="114" rx="94" ry="88" fill="#e93b42" opacity=".18" filter="url(#texture)"/>
+        <path d="M29 111a91 85 0 0 1 181-8" fill="none" stroke="#ffb0b3" stroke-opacity=".4" stroke-width="1.5"/>
+        <g transform="rotate(-12 120 114)" font-family="Arial, sans-serif" font-size="25" font-weight="900" text-anchor="middle" letter-spacing="-.7">
+            <text x="121" y="127" fill="#791016" opacity=".6">FUCK YOU</text>
+            <text x="120" y="125" fill="#a9a9ad">FUCK YOU</text>
+            <text x="120" y="123" fill="#d4d4d8">FUCK YOU</text>
+            <text x="120" y="121" fill="#fff">FUCK YOU</text>
+        </g>
+    </g>
+</svg>

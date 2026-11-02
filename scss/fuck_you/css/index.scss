@@ -26,7 +26,7 @@ button, input {
     font: inherit;
 }
 
-button, #win-modal a {
+button {
     border: 2px solid #202027;
     border-radius: 0;
     background: white;
@@ -43,7 +43,7 @@ button {
     }
 
     &:disabled {
-        opacity: .4;
+        filter: saturate(.5) contrast(.55);
         cursor: not-allowed;
     }
 }
@@ -77,20 +77,19 @@ nav {
     justify-content: space-between;
     gap: .5rem;
     padding: 0 .6rem;
-    background: $red;
-    color: white;
-    border-bottom: 2px solid $yellow;
+    background: #f7f7f8;
+    color: #202027;
+    border: 0;
 
     h1 {
-        font-size: 1.125rem;
+        font-size: 1.5rem;
         font-style: italic;
         margin: 0;
         line-height: 1;
-        text-shadow: 1px 1px #202027;
         white-space: nowrap;
 
         span {
-            color: $yellow;
+            color: $red;
         }
     }
 
@@ -106,8 +105,8 @@ nav {
         min-height: 22px;
         border: 0;
         background: none;
-        color: white;
-        font-size: .75rem;
+        color: #62626c;
+        font-size: 1rem;
         font-weight: 400;
         line-height: 1;
         padding: 0 .25rem;
@@ -117,7 +116,7 @@ nav {
 
     button:hover:not(:disabled), a:hover {
         background: none;
-        color: $yellow;
+        color: #202027;
         text-decoration: none;
     }
 }
@@ -403,7 +402,7 @@ p, li {
     transform: translate(-50%, -50%) rotate(var(--seat-rotation, 0deg));
     border: 3px solid transparent;
     border-radius: 0;
-    padding: .5rem;
+    padding: .15rem;
 
     &.active {
         border-color: $red;
@@ -572,7 +571,7 @@ input[type=checkbox] {
         }
 
         &:not(.playable) img {
-            filter: saturate(0) contrast(.55);
+            filter: saturate(.5) contrast(.55);
         }
 
         &[aria-disabled=true] {
@@ -735,9 +734,42 @@ dialog {
         font-style: italic;
     }
 
-    a {
-        display: inline-block;
+    #win-rematch {
         background: $yellow;
+    }
+}
+
+#taunt {
+    position: fixed;
+    inset: auto max(.5rem, env(safe-area-inset-right)) max(.5rem, env(safe-area-inset-bottom)) auto;
+    z-index: 80;
+    display: block;
+    width: 112px;
+    height: 112px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none !important;
+    pointer-events: auto;
+
+    svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    .taunt-cap {
+        transform-origin: 120px 202px;
+        transition: transform .08s, filter .08s;
+    }
+
+    &:hover:not(:disabled) .taunt-cap {
+        filter: brightness(1.06);
+    }
+
+    &:active:not(:disabled) .taunt-cap {
+        transform: translateY(10px) scaleY(.96);
+        filter: brightness(.9);
     }
 }
 
@@ -778,21 +810,18 @@ dialog {
         padding: 0 .6rem;
         gap: .4rem;
 
-        h1 {
-            font-size: 1rem;
-        }
-
         > div {
             gap: .25rem;
-        }
-
-        button, a {
-            font-size: .7rem;
         }
     }
 
     .lobby-card {
         padding: 1rem;
+    }
+
+    #taunt {
+        width: 88px;
+        height: 88px;
     }
 
     #turn-status {

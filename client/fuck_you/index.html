@@ -44,11 +44,17 @@
         </div>
         <div id="hand"></div>
     </section>
+    <button id="taunt" type="button" aria-label="Play FUCK YOU for everyone" title="Say FUCK YOU" disabled>
+        <svg viewBox="0 0 240 240" width="112" height="112" aria-hidden="true">
+            <use href="images/taunt.svg#button-base"></use>
+            <use class="taunt-cap" href="images/taunt.svg#button-cap"></use>
+        </svg>
+    </button>
     <p id="notice" role="alert" hidden></p>
     <details id="log-panel" hidden><summary>Game log</summary><div id="log" role="log"></div></details>
     <div id="preview" hidden></div><div id="flight-layer" aria-hidden="true"></div>
     <dialog id="choice" aria-labelledby="choice-title"><h2 id="choice-title"></h2><p id="choice-help"></p><div id="choice-options"></div><label id="choice-uno-label" hidden><input type="checkbox" id="choice-uno"> Call UNO with this play</label><div class="dialog-actions"><button id="choice-submit" hidden>Confirm selection</button><button id="choice-cancel">Cancel</button></div></dialog>
-    <dialog id="win-modal" aria-labelledby="win-title"><p class="eyebrow">No cards. No mercy.</p><h2 id="win-title">Game over</h2><p id="win-text"></p><button id="win-close">View table</button><a href="/fuck_you/">New game</a></dialog>
+    <dialog id="win-modal" aria-labelledby="win-title"><p class="eyebrow">No cards. No mercy.</p><h2 id="win-title">Game over</h2><p id="win-text"></p><button id="win-close">View table</button><button id="win-rematch">Back to lobby</button></dialog>
     <dialog id="rules-modal" aria-labelledby="rules-title">
         <button class="close" id="rules-close" aria-label="Close rules">×</button><h2 id="rules-title"><i>Fuck You (aka Uno)</i> rules</h2>
         <h3>The basics</h3>
@@ -62,7 +68,7 @@
             <ul>
                 <li>Draw two and draw four make the next player draw and miss their turn. </li>
                 <li>Reverse acts as Skip with two players. </li>
-                <li>Draw four is only legal if you have no card of the active color<</li>
+                <li>Draw four is only legal if you have no card of the active color&lt;</li>
             </ul>
         </p>
         
