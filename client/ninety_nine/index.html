@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Add up to 99 without busting.">
+    <meta property="og:title" content="Ninety-Nine: Hellomouse Games">
+    <meta property="og:image" content="/ninety_nine/img/thumbnail.png">
+    <title>Ninety-Nine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caudex:wght@700&family=Crimson+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/index.css">
+    <script src="/shared/js/index.js" defer></script>
+    <script src="js/game.js" type="module"></script>
+</head>
+<body>
+    <nav><h1>Ninety-Nine</h1><div><button id="rules-button">Rules &amp; cards</button><a href="/" target="_blank" rel="noopener">More games</a></div></nav>
+    <p id="connection-status" role="status">Connecting…</p>
+    <main id="lobby">
+        <section class="lobby-card">
+            <h2>Lobby</h2><ol id="players"></ol>
+            <label for="invite">Invite your friends</label>
+            <div class="invite-row"><input id="invite" readonly aria-label="Invite link"><button id="copy-invite">Copy invite</button></div>
+            <form id="username-form"><label for="username">Your name</label><input id="username" maxlength="16" pattern="[A-Za-z0-9_]+" required><button>Set name</button></form>
+            <div class="lobby-actions"><button id="ready">Ready</button><button id="start-game" hidden>Start game</button></div>
+        </section>
+        <section class="lobby-card settings"><h2>House rules</h2><p id="settings-help"></p>
+            <fieldset id="variant-picker"><legend>Rules variant</legend><div id="variants"></div></fieldset>
+            <div class="option-row"><label for="seats-option">Seats:</label><select id="seats-option"><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select>
+                <label for="tokens-option">Starting tokens:</label><input id="tokens-option" type="number" min="1" max="10" value="3"><div id="token-chips"></div></div>
+            <div id="variant-preview"></div>
+        </section>
+    </main>
+    <section id="game" aria-label="Game table" hidden><div id="world-frame"><div id="world"><div id="table-art"></div><div id="center"></div><div id="seats"></div></div></div></section>
+    <div id="camera-controls" role="group" aria-label="Table camera" hidden><button id="zoom-out" aria-label="Zoom out">−</button><button id="recenter">Recenter</button><button id="zoom-in" aria-label="Zoom in">+</button></div>
+    <aside id="scorecard" aria-label="Leaderboard" hidden></aside>
+    <section id="hud" aria-label="Your hand" hidden>
+        <p id="turn-status" role="status" aria-live="polite"></p><div class="hand-tools" id="hand-tools"></div><div id="hand"></div>
+    </section>
+    <button id="table-rematch" hidden>Back to lobby</button>
+    <p id="notice" role="alert" hidden></p>
+    <details id="log-panel" hidden><summary>Game log</summary><div id="log" role="log"></div></details>
+    <div id="preview" hidden></div><div id="flight-layer" aria-hidden="true"></div>
+    <dialog id="win-modal" aria-labelledby="win-title"><p class="eyebrow">The last chips on the table</p>
+        <h2 id="win-title">Game over</h2><p>Last player with tokens wins.</p><button id="win-close">View table</button><button id="win-rematch">Back to lobby</button></dialog>
+    <dialog id="rules-modal" aria-labelledby="rules-title">
+        <button id="rules-close" aria-label="Close rules">×</button>
+        <h2 id="rules-title">Rules &amp; cards</h2>
+        <ul>
+            <li>Play one card, then draw another. The total cannot exceed 99; negative values cannot take the total below zero</li>
+            <li>If no card is legal at the start of your turn, reveal your hand and lose a token. Zero tokens means you are out. The last player with tokens wins.</li>
+            <li>After each round, the dealer rotates clockwise</li>
+            <li>Reverse and skip give you another turn when only two players remain.</li>
+            <li>The draw pile recycles the discard pile except its top card.</li>
+            <li>A round with 300 plays is voided without penalty</li>
+        </ul>
+    </dialog>
+</body>
+</html>
