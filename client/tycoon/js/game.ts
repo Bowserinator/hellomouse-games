@@ -149,6 +149,7 @@ function connect(): void {
             room = data.uuid; history.replaceState(null, '', `?${room}`);
             $<HTMLInputElement>('invite').value = location.href;
         } else if (data.type === 'SYNC') accept(data as Sync);
+        else if (data.type === 'NOTICE') notify(data.text);
         else if (data.type === 'ERROR')
             if (data.code === 'NO_GAME') {
                 room = ''; history.replaceState(null, '', location.pathname);
@@ -189,7 +190,7 @@ function renderLobby(): void {
 }
 function options(): void {
     const input = $<HTMLInputElement>('rounds'); const raw = Number(input.value);
-    const rounds = Math.max(1, Math.min(20, Math.round(Number.isFinite(raw) ? raw : 5)));
+    const rounds = Math.max(1, Math.min(20, Math.round(Number.isFinite(raw) ? raw : 3)));
     if (!input.value || rounds !== raw) notify('Rounds must be a whole number from 1 to 20.');
     input.value = String(rounds);
     send({ type: 'MOVE', action: 'SET_OPTIONS', rounds, jokers: $<HTMLInputElement>('jokers').checked });
@@ -492,7 +493,7 @@ $('zoom-in').onclick = () => camera?.zoom(1.2); $('zoom-out').onclick = () => ca
 if (mock !== null) {
     $('connection-status').textContent = 'MOCK PREVIEW';
     const engine = new Engine();
-    accept({ type: 'SYNC', started: true, youAre: 0, isHost: true, settings: { rounds: 5, jokers: true },
+    accept({ type: 'SYNC', started: true, youAre: 0, isHost: true, settings: { rounds: 3, jokers: true },
         seats: ['You', 'Ann', 'CPU 1', 'CPU 2'].map((username, i) => ({ username, ready: true, connected: true, ai: i >= 2 })),
         view: engine.view(0, Infinity) });
 } else connect();

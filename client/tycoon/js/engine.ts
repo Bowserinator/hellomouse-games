@@ -85,7 +85,7 @@ export class Engine implements RuleState {
     private rng: () => number;
     private exchangeChoices = new Map<number, Array<TCard>>();
 
-    constructor({ jokers = true, rounds = 5, rng = Math.random }: {
+    constructor({ jokers = true, rounds = 3, rng = Math.random }: {
         jokers?: boolean; rounds?: number; rng?: () => number;
     } = {}) {
         if (typeof jokers !== 'boolean' || !Number.isInteger(rounds) || rounds < 1 || rounds > 20)
@@ -120,12 +120,12 @@ export class Engine implements RuleState {
             if (lap < 13 || (this.options.jokers && extra.includes(seat)))
                 this.move(this.deck[0], 'deck', { hand: seat }, 'deal');
         if (this.round === 1) {
-            const holder = this.hands.findIndex(h => h.some(c => c.value === 2 && c.suit === 'Hearts'));
-            const card = this.hands[holder].find(c => c.value === 2 && c.suit === 'Hearts') as TCard;
+            const holder = this.hands.findIndex(h => h.some(c => c.value === 3 && c.suit === 'Diamonds'));
+            const card = this.hands[holder].find(c => c.value === 3 && c.suit === 'Diamonds') as TCard;
             this.move(card, { hand: holder }, 'table', 'reveal');
             this.move(card, 'table', { hand: holder }, 'reveal');
             this.leader = this.turn = holder; this.phase = 'play';
-            this.say(`Player ${holder + 1} reveals 2♥ and leads`);
+            this.say(`Player ${holder + 1} reveals 3♦ and leads`);
         } else {
             this.phase = 'exchange';
             for (const [fromTitle, toTitle, count] of [['beggar', 'tycoon', 2], ['poor', 'rich', 1]] as const) {
@@ -188,8 +188,8 @@ export class Engine implements RuleState {
                 this.say(`Player ${previousTycoon + 1} — 都落ち Bankruptcy`);
             }
         }
-        if (result.set.rank === 7) this.say('ラッキーセブン — Lucky Seven');
-        this.advance(result.set.rank === 7 || result.set.spade2OverJoker);
+        if (result.set.rank === 8) this.say('八切り — Eight Cut');
+        this.advance(result.set.rank === 8 || result.set.spade2OverJoker);
         return null;
     }
     private next(after: number, skipPassed: boolean): number {

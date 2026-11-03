@@ -32,7 +32,7 @@ export function decide(view: View, rng: () => number = Math.random): Move {
         if (!view.table) cost -= (ids.length - 1) * 2;
         const goodRevolution = view.revolution ? average > 6 : average < 6 || ['poor', 'beggar'].includes(view.titles[seat] ?? '');
         if (ids.length === 4) cost += goodRevolution ? -30 : 35;
-        if (natural?.value === 7 && average > 4 && average < 9) cost -= 4;
+        if (natural?.value === 8 && average > 4 && average < 9) cost -= 4;
         if (view.titles[seat] === 'tycoon') cost -= ids.length * 3;
         return { ids, cost, premium, tie: rng() };
     }).sort((a, b) => a.cost - b.cost || a.tie - b.tie);

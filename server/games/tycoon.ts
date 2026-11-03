@@ -8,7 +8,7 @@ import type { Move, Sync } from '../../client/tycoon/js/types.js';
 
 export default class TycoonGame extends Game {
     engine: Engine | null = null;
-    settings = { rounds: 5, jokers: true };
+    settings = { rounds: 3, jokers: true };
     private held = new Map<number, { username: string; ready: boolean }>();
     private tokens: Array<string> = [];
     private observers = new Set<Client>();
@@ -105,11 +105,10 @@ export default class TycoonGame extends Game {
         const since = this.engine.events.length;
         const error = this.engine.dispatch(seat, move);
         if (!error) {
+            this.clearTimers();
             this.animationUntil = Math.max(Date.now(), this.animationUntil) +
                 eventDuration(this.engine.events.slice(since));
-            if (move.action === 'CONTINUE') {
-                this.continued.clear(); this.clearTimers();
-            }
+            if (move.action === 'CONTINUE') this.continued.clear();
         }
         return error;
     }
@@ -149,16 +148,26 @@ export default class TycoonGame extends Game {
         }
         if (this.timers.size || this.engine.phase === 'gameEnd') return;
         const engine = this.engine;
+        const autoPass = engine.phase === 'play' && engine.table !== null && !engine.legalPlays(engine.turn).length;
         const actor = engine.phase === 'exchange'
             ? [...engine.pendingExchange.keys()].find(i => i >= this.humanSeats && engine.view(i, Infinity).exchange)
-            : engine.phase === 'play' && engine.turn >= this.humanSeats ? engine.turn : undefined;
+            : engine.phase === 'play' && (autoPass || engine.turn >= this.humanSeats) ? engine.turn : undefined;
         if (engine.phase !== 'roundEnd' && actor === undefined) return;
+        const thinkTime = autoPass ? 2500 : 700 + Math.floor(Math.random() * 601);
         const delay = Math.max(0, this.animationUntil - Date.now()) +
-            (engine.phase === 'roundEnd' ? 8000 : 700 + Math.floor(Math.random() * 601));
+            (engine.phase === 'roundEnd' ? 8000 : thinkTime);
         const timer = setTimeout(() => {
             this.timers.delete(timer);
             if (this.engine !== engine || !this.players.some(p => p !== null)) return;
-            if (engine.phase === 'roundEnd') this.act(0, { action: 'CONTINUE' });
+            if (autoPass && actor !== undefined) {
+                if (engine.phase !== 'play' || engine.turn !== actor || !engine.table || engine.legalPlays(actor).length) {
+                    this.syncAll(); return;
+                }
+                if (!this.act(actor, { action: 'PASS' }))
+                    try {
+                        this.players[actor]?.connection.sendUTF(JSON.stringify({ type: 'NOTICE', text: 'Auto-passed.' }));
+                    } catch {/* The connection lifecycle handles disconnects. */}
+            } else if (engine.phase === 'roundEnd') this.act(0, { action: 'CONTINUE' });
             else if (actor !== undefined) {
                 const error = this.act(actor, decide(engine.view(actor, Infinity)));
                 if (error) {

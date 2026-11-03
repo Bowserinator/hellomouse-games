@@ -9,11 +9,13 @@ export const TITLE_LABELS: Record<Title, { jp: string; en: string }> = {
 export const TERM_LABELS = {
     revolution: { jp: '革命', en: 'REVOLUTION' }, counter: { jp: '革命返し', en: 'COUNTER-REVOLUTION' },
     bankruptcy: { jp: '都落ち', en: 'BANKRUPTCY' }, pass: { jp: 'パス', en: 'PASS' },
-    lucky: { jp: 'ラッキーセブン', en: 'LUCKY SEVEN' }
+    lucky: { jp: '八切り', en: 'EIGHT CUT' }
 };
 export const TITLES: Array<Title> = ['tycoon', 'rich', 'poor', 'beggar'];
 export function strength(card: CardView): number {
-    return card.joker ? 13 : card.value === 1 ? 12 : (card.value ?? 2) - 2;
+    if (card.joker) return 13;
+    if (card.value === 1 || card.value === 2) return card.value + 10;
+    return (card.value ?? 3) - 3;
 }
 export function cardName(card: CardView): string {
     return card.value === null ? 'Hidden card' : card.joker ? 'Joker' : `${getSymbol(card.value)}${SUIT_SYMBOL_MAP[card.suit ?? '']}`;

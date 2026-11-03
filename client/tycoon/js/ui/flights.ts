@@ -109,7 +109,7 @@ export class FlightQueue {
         const stagger = events.length > 1 ? Math.max(0, total - duration) / (events.length - 1) : 0;
         for (const event of events) applyEvent(zones, event, view.youAre);
         this.render(visualView(view, zones));
-        if (group === 'play' && events.some(e => e.card.value === 7 && !e.card.joker))
+        if (group === 'play' && events.some(e => e.card.value === 8 && !e.card.joker))
             document.querySelector('[data-zone="table"]')?.animate([
                 { filter: 'drop-shadow(0 0 0 #f2c200)' },
                 { filter: 'drop-shadow(0 0 24px #f2c200)' }, { filter: 'drop-shadow(0 0 0 #f2c200)' }

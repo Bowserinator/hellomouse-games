@@ -64,7 +64,7 @@
                 <div class="settings">
                     <div class="round-settings">
                         <label>Rounds <span class="input-frame">
-                                <input id="rounds" type="number" min="1" max="20" step="1" value="5">
+                                <input id="rounds" type="number" min="1" max="20" step="1" value="3">
                             </span>
                         </label>
                         <div id="round-chips" aria-label="Round presets"></div>
@@ -122,17 +122,17 @@
                         <span class="action-label">Play</span>
                         <span id="play-reason" class="play-reason" role="tooltip"></span>
                     </button>
-                    <button id="pass" class="button-action">
-                        <svg viewBox="0 0 260 100" preserveAspectRatio="none" aria-hidden="true">
-                            <use href="#action-shape" />
-                        </svg>
-                        <span class="action-label">Pass</span>
-                    </button>
                     <button id="clear" class="button-action">
                         <svg viewBox="0 0 260 100" preserveAspectRatio="none" aria-hidden="true">
                             <use href="#action-shape" />
                         </svg>
                         <span class="action-label">Clear Selection</span>
+                    </button>
+                    <button id="pass" class="button-action">
+                        <svg viewBox="0 0 260 100" preserveAspectRatio="none" aria-hidden="true">
+                            <use href="#action-shape" />
+                        </svg>
+                        <span class="action-label">Pass</span>
                     </button>
                 </div>
                 <button id="table-rematch" hidden>Back to lobby</button>
@@ -159,19 +159,20 @@
         <dialog id="rules">
             <h2>RULES &amp; CARDS</h2>
             <p>The goal is to empty your hand before the other players. Play one to four cards of the same rank. A response must have the same number of cards and a strictly stronger rank. You cannot pass when leading, and a pass lasts until the trick is over. Card strengths are listed ascending below:</p>
-                        <p class="strength-strip">2 3 4 5 6 7 8 9 10 J Q K A → JOKER</p>
+                        <p class="strength-strip">3 4 5 6 7 8 9 10 J Q K A 2 → JOKER</p>
             
             <p><b>Definitions:</b>
             <ol>
                 <li><b>Trick:</b> A sequence of going around the table, responding until all active players pass, or a special play clears the table. The last player to play starts the next trick (or if they are out, the next player after)</li>
-                <li><b>Natural card:</b> A real card, ie a natural seven is a seven, not a joker pretending to be a seven.</li>
+                <li><b>Natural card:</b> A real card, ie a natural eight is an eight, not a joker pretending to be an eight.</li>
             </ol></p>
 
             <p><b>Rules:</b></p>
             <ol>
                 <li>Play goes clockwise. A trick starts when someone leads and ends when the table is cleared.</li>
-                <li>Jokers are wild cards. A lone joker can only be beaten by a single 2♠, which immediately ends the trick. No other 2 has a special effect.</li>
-                <li>Playing a real 7 clears the table immediately. A joker used as a 7 does not count.</li>
+                <li>Jokers are wild cards. When combined with natural cards, they use that rank and must be answered with the same number of cards. A lone joker can only be beaten by a single 2♠, which immediately ends the trick. No other 2 has a special effect.</li>
+                <li>Playing a natural 8 clears the table immediately.</li>
+                <li>If you have no legal play, you automatically pass after 2.5 seconds once card animations finish.</li>
                 <li>Four of a kind reverses the card rankings. Jokers can help make four of a kind, but they stay strongest even when the rankings are reversed. This is called a
             revolution.</li>
                 <li>The table clears after three passes, or when everyone still in the round except the last player to play has passed. Whenever the table clears, all passes
@@ -180,12 +181,12 @@
                 <li>From round two onward, the previous Tycoon must finish first. If someone else finishes first, the Tycoon goes bankrupt: they become Beggar, and their remaining
             cards are discarded.</li>
                 <li>Before each new round, Beggar gives Tycoon their two highest cards, and Poor Man gives Rich Man their highest card. These cards are chosen automatically. For this
-            exchange, jokers rank highest, followed by A down to 2, regardless of revolution. Equal-ranked cards are chosen at random.</li>
+            exchange, jokers rank highest, followed by 2, A, K down to 3, regardless of revolution. Equal-ranked cards are chosen at random.</li>
                 <li>After receiving those cards, Tycoon chooses any two cards to give back, and Rich Man chooses any one. Both must finish choosing before play starts. Beggar leads
             the new round.</li>
                 <li>With jokers enabled, two players get 14 cards and the others get 13. The extra cards go to random players in round one, then to Tycoon and Rich Man in later
             rounds. Without jokers, everyone gets 13 cards.</li>
-                <li>In round one, whoever holds the 2♥ reveals it and leads.</li>
+                <li>In round one, whoever holds the 3♦ reveals it and leads.</li>
                 <li>After the chosen number of rounds, the player with the most points wins. Players tied for the highest score share the win.</li>
             </ol>
             <dl>

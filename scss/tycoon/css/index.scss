@@ -1133,8 +1133,12 @@ button.button-action {
         pointer-events: none;
     }
 
-    &:disabled:hover .play-reason:not(:empty) {
-        visibility: visible;
+    &:disabled:hover {
+        z-index: 5;
+
+        .play-reason:not(:empty) {
+            visibility: visible;
+        }
     }
 }
 
