@@ -192,7 +192,7 @@ wsServer.on('request', (request: any) => {
         clients.delete(client);
 
         // No one in game, remove it
-        if (game && !game.players.some((x: Client | null) => x))
+        if (game && !game.config.holdEmptySeats && !game.players.some((x: Client | null) => x))
             removeGame(game.uuid);
         else if (game)
             gameStateSync(game.uuid);

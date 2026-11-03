@@ -19,4 +19,5 @@ interface GameConfig {
     allowChat?: boolean;
     syncAfterMove?: boolean;
     maxLobbies?: number;
+    holdEmptySeats?: boolean;
 }
