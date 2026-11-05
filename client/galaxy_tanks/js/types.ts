@@ -1,0 +1,37 @@
+export { Powerup, PowerupCategory, BulletType, ExplosionGraphics } from '../../tanks/js/types.js';
+
+export enum GalaxySync {
+    CHANGE_COLOR, CHANGE_ROUNDS, CREATE_ALL_TANKS, ANNOUNCE_WINNER,
+    STATE_SYNC, ADD_BULLET, REMOVE_BULLETS, SYNC_ALL_BULLETS, ADD_EXPLOSIONS,
+    ADD_POWERUP_ITEM, DELETE_POWERUP_ITEM, GIVE_POWERUP, TANK_FIRED, GENERIC_TANK_SYNC,
+    MAP_DESC, FLIGHT_START, TANK_KILLED, YOUARE_SPECTATOR, SPECTATOR_COUNT, CORRECT_POSITION,
+    ROCKET_STRIKE, LASER_BEAM, TELEPORT_SWAP, JOIN_PLAYER
+}
+
+export enum Action {
+    MOVE_INTENT, LEAP, POUND, FIRE, STOP_FIRE, UPDATE_AIM, UPDATE_STATE
+}
+export enum SurfaceType {
+    ROCK, ICE, GRASS, MIRROR, SNOW, PLASTIC, SAND
+}
+export enum ObstacleStrategyType {
+    SCATTER, HOLES, WALLS
+}
+export enum HoleStyle {
+    RANDOM, CIRCULAR
+}
+export enum SkyType {
+    STARS, DAY
+}
+export enum CoreType {
+    BLACK_HOLE, LAVA, DARK_MATTER
+}
+export enum ShapeKind {
+    BOX, CYLINDER, CONE, ROCK, ZIGGURAT, CAPSULE_PILLAR, WALL_SEGMENT
+}
+export enum TankState {
+    GROUNDED, AIRBORNE, FLYING, FALLING, DEAD
+}
+export enum TreadStyle {
+    NORMAL, SCRATCH, GROOVE, ETCHED
+}

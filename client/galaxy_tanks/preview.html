@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Galaxy Tanks planet preview - Hellomouse Games">
+    <meta name="author" content="Bowserinator">
+
+    <title>Galaxy Tanks - Planet Preview</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/preview.css">
+</head>
+
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+    <script src="./js/preview.js" type="module" defer></script>
+
+    <canvas id="board"></canvas>
+
+    <div id="panel">
+        <h1>PLANET PREVIEW</h1>
+        <p class="hint">Leave a setting on Random to roll it with every new planet.</p>
+
+        <label for="surface">Surface</label>
+        <select id="surface"></select>
+
+        <label for="strategy">Obstacles</label>
+        <select id="strategy"></select>
+
+        <label for="hole-style">Hole shape</label>
+        <select id="hole-style"></select>
+
+        <label for="sky">Sky</label>
+        <select id="sky"></select>
+
+        <label for="atmosphere">Atmosphere <span id="atmosphere-value"></span></label>
+        <input type="range" id="atmosphere" min="0" max="100" step="1">
+
+        <label class="check"><input type="checkbox" id="auto-rotate" checked> Auto-rotate</label>
+
+        <button id="generate" class="text-button">Generate planet</button>
+        <a href="./">Back to game</a>
+
+        <pre id="info"></pre>
+    </div>
+</body>
+
+</html>
