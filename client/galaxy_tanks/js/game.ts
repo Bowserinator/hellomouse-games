@@ -11,7 +11,7 @@ import { makePalette } from './render/tank/tank-rig.js';
 import { DEFAULT_TANK_STYLE } from './render/tank/tank-style.js';
 import { Lobby, el } from './lobby.js';
 import { POWERUPS } from './sim/powerups.js';
-import { MAGNET_ARM_TIME, TANK_COLORS, TANK_TURN_RATE } from './vars.js';
+import { DASH_COOLDOWN, MAGNET_ARM_TIME, TANK_COLORS, TANK_TURN_RATE } from './vars.js';
 import { sound, setGlobalVolume, unlockLoops } from './audio/sound.js';
 import { Soundscape } from './audio/soundscape.js';
 
@@ -66,6 +66,7 @@ let lastAmmo = '', lastLabels = 0, labelTick = 0, wipeRound = 0, wipeCovered = f
 const labels = new Map<number, HTMLSpanElement>(), mineBeeps = new Map<number, number>();
 const occluded = new Map<number, boolean>();
 const spectatorCountLabel = el('spectator-count'), spectatingLabel = el('spectating');
+const dashBar = el('dash-bar'), dashFill = dashBar.firstElementChild as HTMLElement;
 const countdownLabel = el('countdown'), debugLabel = el('debug'), nameplates = el('nameplates');
 const showDebug = el('show-debug') as HTMLInputElement;
 const setText = (node: HTMLElement, text: string): void => {
@@ -561,6 +562,13 @@ function draw(time: number): void {
                 }
             }
         }
+        const showDash = !!self && !spec && !state.inLobby;
+        dashBar.style.display = showDash ? 'block' : 'none';
+        if (self && showDash) {
+            const charge = 1 - self.dashCd / DASH_COOLDOWN;
+            dashFill.style.transform = `scaleX(${THREE.MathUtils.clamp(charge, 0, 1)})`;
+            dashBar.classList.toggle('ready', self.dashCd <= 0);
+        }
         debugLabel.hidden = !showDebug.checked;
         if (!debugLabel.hidden) debugLabel.textContent = `FPS: ${Math.round(fps)}\nDraws: ${view.renderer.info.render.calls}\n` +
             `Triangles: ${view.renderer.info.render.triangles}\nTextures: ${view.renderer.info.memory.textures}\n` +
@@ -574,6 +582,7 @@ function draw(time: number): void {
                 labels.delete(id);
                 occluded.delete(id);
             }
+            const focus = tanks.find(t => t.id === target);
             for (const t of tanks) {
                 let label = labels.get(t.id);
                 if (!label) {
@@ -586,6 +595,7 @@ function draw(time: number): void {
                 if (label.hidden || !rig) continue;
                 labelPoint.fromArray(DEFAULT_TANK_STYLE.anchors.nameplate).applyMatrix4(rig.root.matrixWorld);
                 if (labelTick % 3 === t.id % 3 || !occluded.has(t.id)) occluded.set(t.id, view.isOccluded(labelPoint));
+                label.classList.toggle('other-planet', !!focus && t.planet !== focus.planet);
                 label.style.opacity = occluded.get(t.id) ? '.25' : '1';
                 labelPoint.project(view.camera.camera);
                 const behind = labelPoint.z > 1;
