@@ -1,7 +1,7 @@
 import type * as T from 'three';
 import { World } from '../sim/world/planet.js';
 import { Tank } from '../sim/tank.js';
-import { Bullet, PowerupItem } from '../sim/bullet.js';
+import { Bullet, PowerupItem, isStrike, strikeAltitude } from '../sim/bullet.js';
 import { BulletType, SkyType, SurfaceType, TankState } from '../types.js';
 import { Sky } from './sky.js';
 import { CameraRig } from './camera-rig.js';
@@ -32,7 +32,7 @@ export class GameView {
     private planets: Array<PlanetView> = [];
     private stars?: LaunchStars;
     private entities = new Entities();
-    private trails = new TreadTrails();
+    private trails: TreadTrails;
     private textures = new Map<SurfaceType, ReturnType<typeof makeTextures>>();
     private stoneTextures: ReturnType<typeof makeTextures>;
     private preserved = new Set<T.Texture>();
@@ -58,6 +58,7 @@ export class GameView {
     constructor(canvas: HTMLCanvasElement) {
         this.quality = localStorage.getItem('galaxy-quality') ?? 'MED';
         const low = this.quality === 'LOW';
+        this.trails = new TreadTrails(low ? 1 : 10);
         // Scenes are drawn offscreen, so the canvas only needs a plain color buffer for the final full-screen pass.
         this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, depth: false, stencil: false,
             powerPreference: 'high-performance' });
@@ -178,6 +179,7 @@ export class GameView {
                 world.position(tank.planet, tank.dir, tank.h + .15, this.effectPos);
                 this.effects.sparks(this.effectPos, tank.dir, this.dust, now,
                     previous.pounding ? 40 : 18, previous.pounding ? 2 : .8);
+                if (previous.pounding) this.effects.shockwave(this.effectPos, tank.dir, this.dust, now);
             }
             if (previous) {
                 previous.state = tank.state;
@@ -213,10 +215,9 @@ export class GameView {
             this.previewTime = now;
         }
         for (const bullet of bullets) {
-            if (bullet.type !== BulletType.FAST && bullet.type !== BulletType.ROCKET) continue;
+            if (bullet.type !== BulletType.FAST && !isStrike(bullet.type)) continue;
             if (Math.random() >= dt * 55) continue;
-            const height = bullet.type === BulletType.ROCKET
-                ? 20 * (1 - THREE.MathUtils.clamp((bullet.age - 1.3) / .7, 0, 1)) : bullet.altitude;
+            const height = isStrike(bullet.type) ? strikeAltitude(bullet) : bullet.altitude;
             world.position(bullet.planet, bullet.dir, height, this.effectPos);
             this.effects.sparks(this.effectPos, bullet.dir, this.colors[bullet.color], now, 1, .6);
         }

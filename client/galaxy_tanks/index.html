@@ -86,10 +86,11 @@
             <h2>Controls</h2>
             <ul>
                 <li><b>WASD</b> - Move tank</li>
-                <li><b>Ctrl (press)</b> - Dash in the movement direction; 3-second cooldown</li>
+                <li><b>Shift (press)</b> - Dash in the movement direction; 3-second cooldown</li>
                 <li><b>Q/E (hold)</b> - Turn tank and camera left/right</li>
                 <li><b>Left Click (hold)</b> - Fire gun</li>
-                <li><b>Space</b> - Leap; <b>Shift</b> - Ground pound while airborne</li>
+                <li><b>Space</b> - Leap</li>
+                <li><b>Right Click</b> - Ground pound while airborne, pushing nearby tanks away</li>
                 <li><b>Scroll</b> - Zoom</li>
                 <li><b>A/D or arrows</b> - Cycle spectator target; <b>Tab</b> - Overview; drag to orbit</li>
                 <li><b>Mouse</b> - Aim</li>
@@ -104,7 +105,8 @@
                 <li>Death explosions are visual only and cause no damage</li>
                 <li>Rounds end when one or fewer players are left</li>
                 <li>You get an extra point for surviving to the end of the round</li>
-                <li>Pick up powerups to get special shots / abilities. Each weapon pickup grants one shot</li>
+                <li>Carry up to 5 normal rounds. One round reloads every 2.5 seconds while inventory is below full</li>
+                <li>Pick up powerups to get special shots / abilities. Most weapon pickups grant one shot; 360 Fire grants five</li>
                 <li>Powerups spawn randomly in pairs every 20 seconds, up to 8 items on the map</li>
                 <li>Bullets are destroyed when they hit another bullet (with some exceptions)</li>
                 <li>All bullet-type powerups conflict, and shield + stealth conflict. Getting a new conflicting powerup will replace the old one.</li>
@@ -126,7 +128,7 @@
                 </li>
                 <li>
                     <img src="/tanks/img/items/magnet.png" class="powerup-tutorial-img">
-                    <b>Magnetic Mine</b> - Launches forward, arms after 2s, then seeks the nearest tank and explodes. Cannot be shot once armed
+                    <b>Magnetic Mine</b> - Launches forward, arms after 2s, then seeks the nearest tank and explodes. Explodes if shot, even while chasing
                 </li>
                 <li>
                     <img src="/tanks/img/items/rocket.png" class="powerup-tutorial-img">
@@ -145,8 +147,12 @@
                     <b>Stealth</b> - Makes you invisible to other players and any targeting (ie rocket artillery + magnetic mine)
                 </li>
                 <li>
-                    <img src="/tanks/img/items/teleport.png" class="powerup-tutorial-img">
-                    <b>Teleswap</b> - Swaps you with the nearest non-hidden player. Grants no protection after the swap
+                    <img src="/tanks/img/items/meteor_rain.png" class="powerup-tutorial-img">
+                    <b>Meteor Rain</b> - Summons 20 meteors over 10 seconds at random spots around the planet.
+                </li>
+                <li>
+                    <img src="/tanks/img/items/360.png" class="powerup-tutorial-img">
+                    <b>360 Fire</b> - Turns your turret into a cross for 5 shots, each firing in four directions at once.
                 </li>
             </ul>
         </div>

@@ -2,7 +2,8 @@ import performStateDiff from '../../../tanks/js/util/diff.js';
 import { Powerup, TankState } from '../types.js';
 import { ACCEL, AIR_CONTROL, DASH_COOLDOWN, DASH_DURATION, DASH_SPEED,
     EDGE_FORGIVENESS, FALL_DEATH_TIME, FALL_SPEED, GRAVITY, IFRAMES_LAND,
-    IFRAMES_SPAWN, JUMP_V, POUND_V, STAR_COOLDOWN, STAR_HOLD_MS, STAR_TRIGGER_R, STEP_UP, TANK_SPEED, TANK_TURN_RATE } from '../vars.js';
+    IFRAMES_SPAWN, JUMP_V, MAX_NORMAL_AMMO, NORMAL_RELOAD_TIME, POUND_V,
+    STAR_COOLDOWN, STAR_HOLD_MS, STAR_TRIGGER_R, STEP_UP, TANK_SPEED, TANK_TURN_RATE } from '../vars.js';
 import { advance, angDist } from './math/sphere.js';
 import { V3, add, copy, cross, dot, fromTuple, length, lerp, normalize, reproject, scale, set,
     rotate, tangentProject, tuple, vec } from './math/vec3.js';
@@ -28,6 +29,8 @@ export class Tank {
     stealth = 0;
     bulletPowerup = Powerup.NONE;
     ammo = 0;
+    normalAmmo = MAX_NORMAL_AMMO;
+    reloadTime = 0;
     fireCd = 0;
     firing = false;
     pounding = false;
@@ -84,6 +87,8 @@ export class Tank {
         this.stealth = 0;
         this.bulletPowerup = Powerup.NONE;
         this.ammo = 0;
+        this.normalAmmo = MAX_NORMAL_AMMO;
+        this.reloadTime = 0;
     }
     dash(direction: V3): boolean {
         if (this.dashCd > 0 || this.state !== TankState.GROUNDED && this.state !== TankState.AIRBORNE) return false;
@@ -128,6 +133,14 @@ export class Tank {
         this.dashTime = Math.max(0, this.dashTime - dt);
         if (this.dashTime < 1e-6) this.dashTime = 0;
         if (this.isDead) return;
+        if (this.normalAmmo < MAX_NORMAL_AMMO) {
+            this.reloadTime -= dt;
+            while (this.reloadTime <= 0 && this.normalAmmo < MAX_NORMAL_AMMO) {
+                this.normalAmmo++;
+                this.reloadTime += NORMAL_RELOAD_TIME;
+            }
+            if (this.normalAmmo === MAX_NORMAL_AMMO) this.reloadTime = 0;
+        }
         if (this.clientAirborne && this.state === TankState.AIRBORNE) {
             if (this.turn) rotate(this.fwd, this.fwd, this.dir, this.turn * TANK_TURN_RATE * dt);
             else if (length(this.vel) > .05) reproject(this.fwd, this.vel, this.dir);
@@ -235,7 +248,8 @@ export class Tank {
             round(this.iFrames), round(this.shield), round(this.stealth), this.bulletPowerup, this.ammo,
             Number(this.ready), this.score, this.color, Number(this.missingPlayer), this.username,
             this.flightStar, this.flightStart, round(this.fallTime), Number(this.pounding), round(this.fireCd),
-            round(this.dashCd), round(this.dashTime), ...tuple(this.dashDirection).map(round)];
+            round(this.dashCd), round(this.dashTime), ...tuple(this.dashDirection).map(round),
+            this.normalAmmo, round(this.reloadTime)];
         const [result, next] = performStateDiff(data, diff, this.diff);
         if (diff) this.diff = next;
         return result;
@@ -272,5 +286,7 @@ export class Tank {
         this.dashCd = n[32] ?? 0;
         this.dashTime = n[33] ?? 0;
         set(this.dashDirection, n[34] ?? 0, n[35] ?? 0, n[36] ?? 0);
+        this.normalAmmo = n[37] ?? MAX_NORMAL_AMMO;
+        this.reloadTime = n[38] ?? 0;
     }
 }

@@ -29,6 +29,11 @@ const barrel = (x = 0, length = 1.6, width = 0.28): PartDef => ({
     shape: 'box', size: [width, width, length], position: [x, MUZZLE_H, -1.1],
     color: { slot: ColorSlot.PRIMARY, blend: 0.7, neutral: 0x949daa }
 });
+const crossArm = (x: number, z: number, length = 1.6, width = 0.28): PartDef => ({
+    shape: 'box', size: [x ? length : width, width, z ? length : width],
+    position: [x * (length / 2 + 0.3), MUZZLE_H, z * (length / 2 + 0.3)],
+    color: { slot: ColorSlot.PRIMARY, blend: 0.7, neutral: 0x949daa }
+});
 const turretBase = part([1.15, 0.45, 1.05], [0, 0.97, 0], ColorSlot.PRIMARY);
 const turret = (parts: Array<PartDef>): TurretDef =>
     ({ parts: [turretBase, ...parts], muzzle: [0, MUZZLE_H, -MUZZLE_OFFSET], recoil: 0.14 });
@@ -59,6 +64,12 @@ export const DEFAULT_TANK_STYLE: TankStyle = {
             part([1.1, 0.3, 0.3], [0, 1.1, -0.6], ColorSlot.ACCENT)]),
         [Powerup.ROCKET]: turret([-0.45, 0, 0.45].map(x =>
             part([0.35, 0.45, 1.45], [x, 1.1, -0.4], ColorSlot.SECONDARY))),
+        [Powerup.METEOR_RAIN]: turret([
+            ...[-0.45, 0, 0.45].map(x => part([0.35, 0.45, 1.45], [x, 1.1, -0.4], ColorSlot.SECONDARY)),
+            ...[-0.22, 0.22].map(x => part([0.35, 0.45, 1.45], [x, 1.55, -0.4], ColorSlot.ACCENT)),
+            part([0.35, 0.45, 1.45], [0, 2, -0.4], ColorSlot.SECONDARY)]),
+        [Powerup.CROSS_FIRE]: turret([crossArm(0, -1), crossArm(0, 1), crossArm(-1, 0), crossArm(1, 0),
+            part([0.5, 0.4, 0.5], [0, 1.1, 0], ColorSlot.ACCENT)]),
         [Powerup.TELEPORT]: turret([barrel(),
             part([0.48, 0.16, 0.48], [0, 1.1, -1.85], ColorSlot.GLOW, 'ring', [Math.PI / 2, 0, 0])]),
         [Powerup.SHIELD]: standard,

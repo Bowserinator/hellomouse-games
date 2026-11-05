@@ -509,6 +509,7 @@ input[type=text] {
 
     i {
         flex: 1;
+        margin-block: -1px;
         background: #05070d;
         transform: scaleX(0);
         transform-origin: left;

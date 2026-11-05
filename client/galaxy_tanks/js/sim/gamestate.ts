@@ -1,16 +1,17 @@
 import { BulletType, GalaxySync, Powerup, TankState } from '../types.js';
 import { DELAY_AFTER_WIN_ROUND, DELAY_POWERUP_SPAWN, ITEM_FLOAT_HEIGHT, MAGNET_ARM_TIME, MAGNET_CHASE_ACCEL,
-    MAGNET_CHASE_SPEED, LASER_LENGTH, MAX_NORMAL_AMMO, MAX_POWERUP_ITEMS, MUZZLE_H, MUZZLE_OFFSET,
-    PRE_ROUND_DELAY, ROUND_SETTLE_TIME,
+    MAGNET_CHASE_SPEED, LASER_LENGTH, MAX_NORMAL_AMMO, MAX_POWERUP_ITEMS, METEOR_COUNT, METEOR_SPAWN_ATTEMPTS,
+    METEOR_SPREAD_MS, MUZZLE_H, MUZZLE_OFFSET,
+    NORMAL_RELOAD_TIME, POUND_KNOCKBACK, POUND_RADIUS, PRE_ROUND_DELAY, ROUND_SETTLE_TIME,
     TANK_FIRE_DELAY, TANK_HEIGHT, TANK_RADIUS } from '../vars.js';
-import { Bullet, BULLETS, PowerupItem } from './bullet.js';
+import { Bullet, BULLETS, PowerupItem, isStrike } from './bullet.js';
 import { generateMap } from './mapgen/index.js';
 import { MapDesc } from './mapgen/map-desc.js';
 import { Rng } from './math/rng.js';
 import { advance, angDist, slerpDir } from './math/sphere.js';
 import { V3, copy, dot, fromTuple, length, normalize, reflect, reproject, rotate,
     scale, set, sub, tangentProject, vec } from './math/vec3.js';
-import { givePowerup, POWERUPS } from './powerups.js';
+import { CROSS_FIRE_ANGLES, SPAWNABLE_POWERUPS, givePowerup, POWERUPS } from './powerups.js';
 import { Tank } from './tank.js';
 import { World } from './world/planet.js';
 import { magnetTarget, nearestTarget, rocketTargets } from './targeting.js';
@@ -36,6 +37,7 @@ export class GameState {
     settleEnd = 0;
     now = 0;
     private lastItems = 0;
+    private meteors: Array<{ owner: number; planet: number; at: number }> = [];
     private nextId = 1;
     private rng: Rng;
     private tmp = vec();
@@ -52,6 +54,7 @@ export class GameState {
         this.rng = new Rng(map.seed);
         this.bullets = [];
         this.powerupItems = [];
+        this.meteors = [];
     }
     sync(): StateSync {
         return { inLobby: this.inLobby, round: this.round, totalRounds: this.totalRounds,
@@ -105,14 +108,16 @@ export class GameState {
             return;
         }
         for (const t of this.tanks) {
-            const previous = t.state;
+            const previous = t.state, pounding = t.pounding;
             t.update(this.world, dt, now);
+            if (pounding && previous === TankState.AIRBORNE && t.state === TankState.GROUNDED) this.groundPound(t);
             if (t.state === TankState.FLYING && previous !== TankState.FLYING)
                 this.events.push({ type: GalaxySync.FLIGHT_START, id: t.id, star: t.flightStar, t0: now });
             if (t.fell) this.killTank(t, -1, true);
             if (t.firing) this.fire(t);
         }
         this.resolveTanks();
+        this.spawnMeteors();
         this.updateBullets(dt);
         this.pickupItems();
         if (now - this.lastItems >= DELAY_POWERUP_SPAWN) {
@@ -153,6 +158,21 @@ export class GameState {
                 this.world.colliders.resolve(b);
             }
     }
+    groundPound(tank: Tank): void {
+        const radius = this.world.desc.planets[tank.planet].radius;
+        for (const other of this.tanks) {
+            if (other === tank || other.isDead || other.planet !== tank.planet ||
+                other.state === TankState.FLYING || other.state === TankState.FALLING ||
+                Math.abs(other.h - tank.h) >= TANK_HEIGHT ||
+                angDist(tank.dir, other.dir) * radius > POUND_RADIUS) continue;
+            tangentProject(this.tmp, tank.dir, other.dir);
+            if (length(this.tmp) < 1e-7) reproject(this.tmp, tank.fwd, other.dir);
+            normalize(this.tmp, this.tmp);
+            scale(other.vel, this.tmp, -POUND_KNOCKBACK);
+            this.events.push({ type: GalaxySync.KNOCKBACK, id: other.id, velocity: { ...other.vel },
+                seed: this.world.desc.seed, round: this.round });
+        }
+    }
     killTank(tank: Tank, killer = -1, fall = false): void {
         if (tank.isDead || (!fall && !tank.vulnerable)) return;
         tank.state = TankState.DEAD;
@@ -167,9 +187,14 @@ export class GameState {
         if (tank.isDead || tank.iFrames > 0 || tank.fireCd > 0 || tank.state === TankState.FLYING ||
             tank.state === TankState.FALLING || this.now < this.roundStart || this.roundEnd || this.inLobby) return;
         const powerup = tank.bulletPowerup, config = POWERUPS[powerup];
-        if (powerup === Powerup.NONE && this.bullets.filter(b => b.owner === tank.id).length >= MAX_NORMAL_AMMO) return;
+        if (powerup === Powerup.NONE && tank.normalAmmo <= 0) return;
         const type = config.bullet;
-        if (this.bullets.filter(b => b.owner === tank.id && b.type === type).length >= BULLETS[type].maxAmmo) return;
+        if (powerup !== Powerup.NONE && powerup !== Powerup.CROSS_FIRE &&
+            this.bullets.filter(b => b.owner === tank.id && b.type === type).length >= BULLETS[type].maxAmmo) return;
+        if (powerup === Powerup.NONE) {
+            if (tank.normalAmmo === MAX_NORMAL_AMMO) tank.reloadTime = NORMAL_RELOAD_TIME;
+            tank.normalAmmo--;
+        }
         tank.fireCd = TANK_FIRE_DELAY / 1000;
         this.events.push({ type: GalaxySync.TANK_FIRED, id: tank.id, powerup });
         if (type === BulletType.TELEPORT) {
@@ -197,14 +222,32 @@ export class GameState {
         } else if (type === BulletType.ROCKET)
             for (const target of rocketTargets(tank, this.tanks, this.world))
                 this.addBullet(tank, type, target.dir, target.planet, 20, tank.aim);
+        else if (type === BulletType.METEOR)
+            for (let i = 0; i < METEOR_COUNT; i++)
+                this.meteors.push({ owner: tank.id, planet: tank.planet,
+                    at: this.now + this.rng.range(0, METEOR_SPREAD_MS) });
         else {
-            const count = powerup === Powerup.SHOTGUN ? 7 : 1;
-            for (let i = 0; i < count; i++) {
-                rotate(this.tmp, tank.aim, tank.dir, count > 1 ? (i - 3) * 14 / 3 * Math.PI / 180 : 0);
+            const angles = powerup === Powerup.SHOTGUN ? Array.from({ length: 7 }, (_, i) => (i - 3) * 14 / 3 * Math.PI / 180)
+                : powerup === Powerup.CROSS_FIRE ? CROSS_FIRE_ANGLES : [0];
+            for (const angle of angles) {
+                rotate(this.tmp, tank.aim, tank.dir, angle);
                 this.addBullet(tank, type, tank.dir, tank.planet, tank.h + MUZZLE_H, this.tmp, MUZZLE_OFFSET);
             }
         }
         if (powerup !== Powerup.NONE && --tank.ammo <= 0) tank.bulletPowerup = Powerup.NONE;
+    }
+    private spawnMeteors(): void {
+        this.meteors = this.meteors.filter(meteor => {
+            if (meteor.at > this.now) return true;
+            const owner = this.tanks[meteor.owner], field = this.world.fields[meteor.planet];
+            for (let attempt = 0; owner && attempt < METEOR_SPAWN_ATTEMPTS; attempt++) {
+                const dir = this.rng.unitVec();
+                if (!field.isSolid(dir)) continue;
+                this.addBullet(owner, BulletType.METEOR, dir, meteor.planet, 20, owner.aim);
+                break;
+            }
+            return false;
+        });
     }
     private addBullet(tank: Tank, type: BulletType, dir: V3, planet: number, altitude: number,
         heading: V3, offset = 0): Bullet {
@@ -268,7 +311,7 @@ export class GameState {
                     scale(b.vel, reproject(this.tmp, target.dir, b.dir), speed);
                 } else set(b.vel, 0, 0, 0);
             }
-            if (b.type === BulletType.ROCKET) {
+            if (isStrike(b.type)) {
                 b.age += dt;
                 if (b.age >= config.life) {
                     const impact = new Bullet(b.id, b.owner, b.planet, b.dir, b.vel, 0.3, b.type, b.color);
@@ -303,8 +346,7 @@ export class GameState {
                     if (wall !== null) advance(b.dir, b.vel, -(1 - wall), p.radius + b.altitude);
                     for (const other of initial) {
                         if (other.planet !== b.planet ||
-                            other.type === BulletType.ROCKET || other.type === BulletType.LASER ||
-                            (other.type === BulletType.MAGNET && other.age >= MAGNET_ARM_TIME) ||
+                            isStrike(other.type) || other.type === BulletType.LASER ||
                             Math.abs(other.altitude - b.altitude) > 0.5) continue;
                         for (let k = 0; k <= 8; k++) {
                             slerpDir(this.posA, b.previous, b.dir, k / 8);
@@ -368,9 +410,7 @@ export class GameState {
             for (let j = i + 1; j < initial.length; j++) {
                 const a = initial[i], b = initial[j];
                 if (removed.has(a.id) || removed.has(b.id) || a.planet !== b.planet ||
-                    a.type === BulletType.ROCKET || b.type === BulletType.ROCKET ||
-                    (a.type === BulletType.MAGNET && a.age >= MAGNET_ARM_TIME) ||
-                    (b.type === BulletType.MAGNET && b.age >= MAGNET_ARM_TIME) ||
+                    isStrike(a.type) || isStrike(b.type) ||
                     Math.abs(a.altitude - b.altitude) > 0.5) continue;
                 // Test synchronous swept positions, so fast crossing rounds cancel too.
                 for (let k = 0; k <= 12; k++) {
@@ -407,7 +447,7 @@ export class GameState {
                     this.world.stars.some(s => (s.planet === p.id && angDist(d, fromTuple(s.dir)) * p.radius < 5) ||
                         (s.destPlanet === p.id && angDist(d, fromTuple(s.landDir)) * p.radius < 5)) ||
                     this.powerupItems.some(it => it.planet === p.id && angDist(it.dir, d) * p.radius < 3)) continue;
-                const item = { id: this.nextId++, planet: p.id, dir: d, powerup: this.rng.int(1, 9) };
+                const item = { id: this.nextId++, planet: p.id, dir: d, powerup: this.rng.pick(SPAWNABLE_POWERUPS) };
                 this.powerupItems.push(item);
                 this.events.push({ type: GalaxySync.ADD_POWERUP_ITEM, item });
                 break;

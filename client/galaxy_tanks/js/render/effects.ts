@@ -1,6 +1,6 @@
 import type * as T from 'three';
 import { DEATH_EXPLOSION, GLOW_MASK_ALPHA, MAX_DEATH_EXPLOSIONS } from '../vars.js';
-import { V3 } from '../sim/math/vec3.js';
+import { V3, tangentBasis } from '../sim/math/vec3.js';
 import { commitInstances, streamInstances } from './geometry.js';
 
 export class Effects {
@@ -55,7 +55,8 @@ export class Effects {
     get exploding(): boolean {
         return this.fireballs.count > 0;
     }
-    private particle(pos: V3, up: V3, now: number, strength: number, tint?: T.Color, outward = false): void {
+    private particle(pos: V3, up: V3, now: number, strength: number, tint?: T.Color, outward = false,
+        velocity?: V3): void {
         const slot = this.free.pop();
         if (slot === undefined) return;
         this.active.push(slot);
@@ -64,12 +65,13 @@ export class Effects {
         d[n + 1] = pos.y;
         d[n + 2] = pos.z;
         const impulse = outward ? strength * 2 : -3 * strength;
-        d[n + 3] = (Math.random() - .5) * 6 * strength + up.x * impulse;
-        d[n + 4] = (Math.random() - .5) * 6 * strength + up.y * impulse;
-        d[n + 5] = (Math.random() - .5) * 6 * strength + up.z * impulse;
-        d[n + 6] = up.x;
-        d[n + 7] = up.y;
-        d[n + 8] = up.z;
+        d[n + 3] = velocity ? velocity.x : (Math.random() - .5) * 6 * strength + up.x * impulse;
+        d[n + 4] = velocity ? velocity.y : (Math.random() - .5) * 6 * strength + up.y * impulse;
+        d[n + 5] = velocity ? velocity.z : (Math.random() - .5) * 6 * strength + up.z * impulse;
+        // Particles with a set velocity ignore gravity so they travel flat along the ground
+        d[n + 6] = velocity ? 0 : up.x;
+        d[n + 7] = velocity ? 0 : up.y;
+        d[n + 8] = velocity ? 0 : up.z;
         // Relative times avoid millisecond precision loss in the Float32 pool.
         d[n + 9] = 0;
         d[n + 10] = .35 + Math.random() * .55;
@@ -85,6 +87,18 @@ export class Effects {
     }
     sparks(pos: V3, up: V3, tint: T.Color, now: number, count = 16, strength = 1): void {
         for (let i = 0; i < count; i++) this.particle(pos, up, now, strength, tint, true);
+    }
+    shockwave(pos: V3, up: V3, tint: T.Color, now: number, speeds = [7, 11], count = 36): void {
+        const [axis, side] = tangentBasis(up), velocity = { x: 0, y: 0, z: 0 };
+        for (const speed of speeds)
+            for (let i = 0; i < count; i++) {
+                const angle = (i + Math.random() * .5) / count * Math.PI * 2;
+                const c = Math.cos(angle) * speed, s = Math.sin(angle) * speed;
+                velocity.x = axis.x * c + side.x * s;
+                velocity.y = axis.y * c + side.y * s;
+                velocity.z = axis.z * c + side.z * s;
+                this.particle(pos, up, now, 2, tint, true, velocity);
+            }
     }
     death(pos: V3, up: V3, tint: T.Color, now: number,
         opts: { radius?: number; durationMs?: number; chunks?: number } = {}): void {

@@ -5,14 +5,13 @@ import { World } from './sim/world/planet.js';
 import { MapDesc } from './sim/mapgen/map-desc.js';
 import { Bullet, PowerupItem } from './sim/bullet.js';
 import { StateSync } from './sim/gamestate.js';
-import { copy, length, tuple, V3 } from './sim/math/vec3.js';
+import { copy, length, tangentProject, tuple, V3 } from './sim/math/vec3.js';
 import { GameView } from './render/game-view.js';
 import { makePalette } from './render/tank/tank-rig.js';
 import { DEFAULT_TANK_STYLE } from './render/tank/tank-style.js';
 import { Lobby, el } from './lobby.js';
 import { POWERUPS } from './sim/powerups.js';
-import { angDist } from './sim/math/sphere.js';
-import { DASH_SPEED, MAGNET_ARM_TIME, MAX_NORMAL_AMMO, TANK_COLORS, TANK_SPEED, TANK_TURN_RATE } from './vars.js';
+import { MAGNET_ARM_TIME, TANK_COLORS, TANK_TURN_RATE } from './vars.js';
 import { sound, setGlobalVolume, unlockLoops } from './audio/sound.js';
 import { Soundscape } from './audio/soundscape.js';
 
@@ -76,6 +75,7 @@ const labelPoint = new THREE.Vector3(), beepColor = new THREE.Color(0xff1717);
 let firing = false, dragging = false, lastX = 0, lastY = 0, lastIntent = 0, lastPosition = 0, previousFrame = 0;
 let fps = 60, emptyFire = false, pingMs = 0;
 let jumpSequence = 0, localJump = 0, jumpElapsed = 0, landingSentAt = 0;
+let teleportSync = false;
 let volume = Number(localStorage.getItem('galaxy-volume') ?? 50) / 100;
 setGlobalVolume(volume);
 const volumeInput = el('volume') as HTMLInputElement;
@@ -105,6 +105,7 @@ connection.onclose = () => {
     banner.style.top = '0';
     release();
     localJump = 0;
+    teleportSync = false;
     soundscape.reset();
     lobby.update(tanks, own, state.inLobby, state.round, state.totalRounds, false);
     revealWipe();
@@ -114,7 +115,7 @@ interface Message {
     map?: MapDesc; data?: Array<string> | StateSync | string; id?: number; time?: number;
     bullets?: Array<Bullet>; bullet?: Bullet; items?: Array<PowerupItem>; item?: PowerupItem;
     ids?: Array<number>; scores?: Array<[string, number]>; count?: number;
-    planet?: number; dir?: V3; h?: number; color?: number; fall?: boolean; startTime?: number;
+    planet?: number; dir?: V3; velocity?: V3; h?: number; color?: number; fall?: boolean; startTime?: number;
     star?: number; t0?: number; points?: Array<V3>; powerup?: Powerup;
     radius?: number; shield?: number; a?: number; b?: number;
     seed?: number; round?: number; jump?: number; force?: boolean;
@@ -124,21 +125,19 @@ function restoreBullet(raw: Bullet): Bullet {
         raw.altitude, raw.type, raw.color), raw);
 }
 function syncTank(tank: Tank, data: string): void {
-    const predicted = tank.id === own ? { dir: { ...tank.dir }, vel: { ...tank.vel }, aim: { ...tank.aim },
+    const predicted = tank.id === own && !teleportSync ? {
+        dir: { ...tank.dir }, vel: { ...tank.vel }, aim: { ...tank.aim },
         fwd: { ...tank.fwd }, h: tank.h, vy: tank.vy, state: tank.state, planet: tank.planet,
         pounding: tank.pounding, fallTime: tank.fallTime, dashCd: tank.dashCd, dashTime: tank.dashTime,
-        dashDirection: { ...tank.dashDirection }, speedLimit: tank.dashCd > 0 ? DASH_SPEED : TANK_SPEED } : undefined;
+        dashDirection: { ...tank.dashDirection } } : undefined;
+    if (tank.id === own) teleportSync = false;
     tank.applySync(data);
     const planet = world?.desc.planets[tank.planet];
     if (!predicted || !planet || predicted.planet !== tank.planet || tank.isDead || tank.state === TankState.FLYING) {
         if (tank.id === own) localJump = 0;
         return;
     }
-    const authoritative = localJump > 0 && !state.inLobby && !state.roundEnd;
-    if (authoritative || predicted.state === tank.state &&
-        angDist(predicted.dir, tank.dir) * planet.radius <
-            Math.max(2, Math.max(predicted.speedLimit, tank.syncSpeedLimit) * pingMs / 1000 + .6) &&
-        Math.abs(predicted.h - tank.h) < 1) {
+    if (!state.inLobby && predicted.state !== TankState.FLYING) {
         copy(tank.dir, predicted.dir);
         copy(tank.vel, predicted.vel);
         copy(tank.aim, predicted.aim);
@@ -148,11 +147,9 @@ function syncTank(tank: Tank, data: string): void {
         tank.dashCd = predicted.dashCd;
         tank.dashTime = predicted.dashTime;
         copy(tank.dashDirection, predicted.dashDirection);
-        if (authoritative) {
-            tank.state = predicted.state;
-            tank.pounding = predicted.pounding;
-            tank.fallTime = predicted.fallTime;
-        }
+        tank.state = predicted.state;
+        tank.pounding = predicted.pounding;
+        tank.fallTime = predicted.fallTime;
     }
 }
 connection.onmessage = event => {
@@ -194,6 +191,7 @@ connection.onmessage = event => {
         const previous = pendingMap ? [] : tanks;
         if (pendingMap) {
             localJump = 0;
+            teleportSync = false;
             soundscape.reset();
             if (pendingWorld) {
                 world = pendingWorld;
@@ -236,7 +234,8 @@ connection.onmessage = event => {
             lastPosition = 0;
         } else {
             localJump = 0;
-            tanks.find(t => t.id === own)?.applySync(m.data);
+            const self = tanks.find(t => t.id === own);
+            if (self) syncTank(self, m.data);
         }
     } else if (m.type === GalaxySync.STATE_SYNC && typeof m.data === 'object' && !Array.isArray(m.data)) {
         state = m.data!;
@@ -252,6 +251,11 @@ connection.onmessage = event => {
     else if (m.type === GalaxySync.FLIGHT_START) {
         if (m.id === own) localJump = 0;
         tanks.find(t => t.id === m.id)?.beginFlight(m.star!, m.t0!);
+    } else if (m.type === GalaxySync.KNOCKBACK && m.velocity &&
+        m.seed === world?.desc.seed && m.round === state.round) {
+        const tank = tanks.find(t => t.id === m.id);
+        if (tank && (tank.state === TankState.GROUNDED || tank.state === TankState.AIRBORNE))
+            tangentProject(tank.vel, m.velocity, tank.dir);
     } else if (m.type === GalaxySync.TANK_KILLED && world) {
         const killed = tanks.find(t => t.id === m.id);
         if (killed) killed.state = TankState.DEAD;
@@ -287,8 +291,9 @@ connection.onmessage = event => {
     else if (m.type === GalaxySync.SPECTATOR_COUNT) spectatorCount = m.count ?? 0;
     else if (m.type === GalaxySync.TANK_FIRED) {
         const tank = tanks.find(t => t.id === m.id);
+        const artillery = m.powerup === Powerup.ROCKET || m.powerup === Powerup.METEOR_RAIN;
         const name = m.powerup === Powerup.SHOTGUN ? 'tank_shotgun.mp3' : m.powerup === Powerup.FAST
-            ? 'railgun.mp3' : m.powerup === Powerup.LASER ? 'laser.ogg' : m.powerup === Powerup.ROCKET
+            ? 'railgun.mp3' : m.powerup === Powerup.LASER ? 'laser.ogg' : artillery
                 ? 'radio.ogg' : m.powerup === Powerup.TELEPORT ? 'teleport.mp3' : 'tank_fire_normal.mp3';
         sound(name, tank && world?.position(tank.planet, tank.dir, tank.h), view.camera.camera.position);
         if (tank && world) {
@@ -300,7 +305,10 @@ connection.onmessage = event => {
         }
     } else if (m.type === GalaxySync.TELEPORT_SWAP && world)
         for (const id of [m.a, m.b]) {
-            if (id === own) localJump = 0;
+            if (id === own) {
+                localJump = 0;
+                teleportSync = true;
+            }
             const tank = tanks.find(t => t.id === id);
             if (tank) tank.dashTime = 0;
             if (tank) view.effects.sparks(world.position(tank.planet, tank.dir, tank.h + 1), tank.dir,
@@ -346,8 +354,8 @@ function blocked(): boolean {
 }
 window.addEventListener('keydown', e => {
     const key = e.key.toLowerCase();
-    if (blocked() || e.ctrlKey && !['control', 'w', 'a', 's', 'd', 'q', 'e', ' ', 'shift'].includes(key)) return;
-    if (['control', ' ', 'tab', 'arrowleft', 'arrowright'].includes(key) || e.ctrlKey) e.preventDefault();
+    if (blocked() || e.ctrlKey) return;
+    if (['shift', ' ', 'tab', 'arrowleft', 'arrowright'].includes(key)) e.preventDefault();
     if (e.repeat) return;
     keys.add(key);
     if (spectating()) {
@@ -356,7 +364,7 @@ window.addEventListener('keydown', e => {
         if (key === 'tab') view.camera.overview = !view.camera.overview;
     } else if (!state.inLobby && !state.roundEnd && Date.now() + clockOffset >= state.roundStart) {
         const self = tanks.find(t => t.id === own);
-        if (key === 'control' && self && self.dash(length(self.vel) > .05 ? self.vel : self.move))
+        if (key === 'shift' && self && self.dash(length(self.vel) > .05 ? self.vel : self.move))
             send({ type: 'MOVE', action: Action.DASH, direction: tuple(self.dashDirection) });
         if (key === ' ' && self?.state === TankState.GROUNDED && world) {
             localJump = ++jumpSequence;
@@ -365,10 +373,6 @@ window.addEventListener('keydown', e => {
             send({ type: 'MOVE', action: Action.LEAP, jump: localJump,
                 p: self.planet, d: tuple(self.dir), h: self.h });
             self.leap();
-        }
-        if (key === 'shift') {
-            send({ type: 'MOVE', action: Action.POUND });
-            tanks[own]?.pound();
         }
     }
 });
@@ -390,6 +394,16 @@ function release(): void {
 }
 window.addEventListener('blur', release);
 canvas.addEventListener('pointerdown', e => {
+    if (e.button === 2) {
+        e.preventDefault();
+        const self = tanks.find(t => t.id === own);
+        if (!blocked() && !state.inLobby && !state.roundEnd &&
+            Date.now() + clockOffset >= state.roundStart && self?.state === TankState.AIRBORNE) {
+            send({ type: 'MOVE', action: Action.POUND });
+            self.pound();
+        }
+        return;
+    }
     if (e.button !== 0) return;
     dragging = view.camera.overview && spectating();
     firing = !dragging && !spectating();
@@ -397,7 +411,8 @@ canvas.addEventListener('pointerdown', e => {
     lastY = e.clientY;
     canvas.setPointerCapture(e.pointerId);
 });
-window.addEventListener('pointerup', () => {
+window.addEventListener('pointerup', e => {
+    if (e.button !== 0) return;
     firing = false;
     emptyFire = false;
     dragging = false;
@@ -449,12 +464,10 @@ function draw(time: number): void {
                     if (hit.lengthSq() > 0.01) copy(self.aim, hit.normalize());
                 }
                 if (time - lastIntent >= 80) {
-                    const available = self.bulletPowerup === Powerup.NONE
-                        ? MAX_NORMAL_AMMO - bullets.reduce((count, b) => count + Number(b.owner === own), 0)
-                        : self.ammo;
+                    const available = self.bulletPowerup === Powerup.NONE ? self.normalAmmo : self.ammo;
                     if (firing && available <= 0 && self.iFrames <= 0 &&
                         (self.state === TankState.GROUNDED || self.state === TankState.AIRBORNE)) {
-                        if (!emptyFire) soundscape.empty(now);
+                        if (!emptyFire) soundscape.empty(self.id, own, now);
                         emptyFire = true;
                     } else emptyFire = false;
                     send({ type: 'MOVE', action: Action.MOVE_INTENT, direction: tuple(self.move), turn: self.turn });
@@ -464,13 +477,21 @@ function draw(time: number): void {
                 if (localJump && self.state === TankState.AIRBORNE) jumpElapsed += dt;
                 const wasAirborne = self.state === TankState.AIRBORNE;
                 self.update(world, dt, now, false);
+                if (!localJump && self.state === TankState.AIRBORNE && self.vy <= 0) {
+                    localJump = ++jumpSequence;
+                    jumpElapsed = 0;
+                    landingSentAt = 0;
+                    send({ type: 'MOVE', action: Action.UPDATE_STATE, jump: localJump, fallStart: true,
+                        p: self.planet, d: tuple(self.dir), h: self.h, vy: self.vy,
+                        velocity: tuple(self.vel), pounding: self.pounding });
+                }
                 const landed = localJump > 0 && wasAirborne && self.state !== TankState.AIRBORNE;
                 if (time - lastPosition >= 30 || landed) {
                     if (localJump && self.state !== TankState.AIRBORNE && !landingSentAt) landingSentAt = time;
                     send({ type: 'MOVE', action: Action.UPDATE_STATE, p: self.planet,
                         d: tuple(self.dir).map(v => Math.round(v * 10000) / 10000), h: self.h,
-                        ...(localJump ? { jump: localJump, airTime: jumpElapsed, velocity: tuple(self.vel),
-                            vy: self.vy, state: self.state, pounding: self.pounding } : {}) });
+                        velocity: tuple(self.vel), vy: self.vy, state: self.state, pounding: self.pounding,
+                        ...(localJump ? { jump: localJump, airTime: jumpElapsed } : {}) });
                     lastPosition = time;
                 }
             }
@@ -510,9 +531,7 @@ function draw(time: number): void {
         setText(spectatingLabel, spec ? `${view.camera.overview ? 'Overview'
             : `Watching ${tanks.find(t => t.id === target)?.username ?? 'galaxy'}`} · A/D: target · Tab: overview` : '');
         setText(countdownLabel, !state.inLobby && now < state.roundStart ? 'GET READY' : '');
-        const ammo = self?.bulletPowerup === Powerup.NONE
-            ? Math.max(0, MAX_NORMAL_AMMO - bullets.reduce((count, b) => count + Number(b.owner === own), 0))
-            : self?.ammo;
+        const ammo = self?.bulletPowerup === Powerup.NONE ? self.normalAmmo : self?.ammo;
         const ammoKey = `${self?.bulletPowerup}/${ammo}/${self?.color}/${spec}/${state.inLobby}`;
         if (ammoKey !== lastAmmo) {
             lastAmmo = ammoKey;
@@ -534,7 +553,7 @@ function draw(time: number): void {
                     normal.ariaLabel = 'Normal ammunition';
                     counter.appendChild(normal);
                 }
-                const max = self.bulletPowerup === Powerup.NONE ? MAX_NORMAL_AMMO : 1;
+                const max = POWERUPS[self.bulletPowerup].ammo;
                 for (let i = 0; i < max; i++) {
                     const slot = document.createElement('div');
                     slot.className = `ammo-slot${i >= (ammo ?? 0) ? ' fired' : ''}`;

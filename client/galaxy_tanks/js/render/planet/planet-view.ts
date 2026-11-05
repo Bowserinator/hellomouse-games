@@ -120,8 +120,11 @@ export class PlanetView {
         if (desc.holes?.length) {
             const thickness = desc.crustThickness ?? 3;
             if (desc.core?.kind !== CoreType.DARK_MATTER) {
-                const inner = surfaceMaterial(desc, textures.albedo, textures.bump, sky, sdf,
-                    undefined, { pattern: false });
+                const soil = desc.surface === SurfaceType.GRASS && desc.core?.kind === CoreType.BLACK_HOLE
+                    ? DIRT_STYLE : undefined;
+                const underside = soil ? stoneTextures : textures;
+                const inner = surfaceMaterial(desc, underside.albedo, underside.bump, sky, sdf,
+                    soil, { pattern: false });
                 inner.side = THREE.DoubleSide;
                 if (desc.core?.kind !== CoreType.BLACK_HOLE) inner.uniforms.uUnderside.value = 1;
                 const bottom = new THREE.Mesh(new THREE.SphereGeometry(desc.radius - thickness, 72, 48), inner);

@@ -165,7 +165,7 @@ wsServer.on('request', (request: any) => {
             if (!message.username || !config.validateUsername(message.username))
                 return error(client, 'Invalid username', 'BAD_USERNAME');
             // Already taken
-            if ([...clients].filter(c => c !== client).map(c => c.username).includes(message.username))
+            if ([...clients].some(c => c !== client && c.gameID === client.gameID && c.username === message.username))
                 return error(client, 'Username already taken', 'ALREADY_TAKEN_USERNAME');
 
             client.username = message.username;

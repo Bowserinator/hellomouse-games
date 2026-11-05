@@ -1,14 +1,13 @@
 import Game from '../game.js';
 import Client from '../client.js';
 import { Action, GalaxySync, TankState } from '../../client/galaxy_tanks/js/types.js';
-import { CLIENT_JUMP_TIMEOUT, DASH_DURATION, DASH_SPEED,
-    EDGE_FORGIVENESS, FALL_DEATH_TIME, FALL_SPEED, GRAVITY, JUMP_V,
-    MAX_PLAYERS, POUND_V, ROUND_ARRAY, TANK_COLORS, TANK_SPEED, UPDATE_EVERY_N_MS
+import { CLIENT_JUMP_TIMEOUT, EDGE_FORGIVENESS, FALL_DEATH_TIME, FALL_SPEED, GRAVITY, JUMP_V,
+    MAX_PLAYERS, POUND_V, ROUND_ARRAY, TANK_COLORS, UPDATE_EVERY_N_MS
 } from '../../client/galaxy_tanks/js/vars.js';
 import { GameState } from '../../client/galaxy_tanks/js/sim/gamestate.js';
 import { generateMap } from '../../client/galaxy_tanks/js/sim/mapgen/index.js';
 import { Tank } from '../../client/galaxy_tanks/js/sim/tank.js';
-import { V3, copy, finiteTuple, fromTuple, length, normalize, reproject, tangentProject, vec
+import { copy, finiteTuple, fromTuple, length, normalize, reproject, tangentProject, vec
 } from '../../client/galaxy_tanks/js/sim/math/vec3.js';
 
 import { angDist } from '../../client/galaxy_tanks/js/sim/math/sphere.js';
@@ -16,7 +15,7 @@ import { angDist } from '../../client/galaxy_tanks/js/sim/math/sphere.js';
 interface Intent {
     p?: unknown; d?: unknown; h?: unknown; turn?: unknown;
     seed?: unknown; jump?: unknown; airTime?: unknown; vy?: unknown; velocity?: unknown; state?: unknown;
-    pounding?: unknown;
+    pounding?: unknown; fallStart?: unknown;
     action?: Action; type?: GalaxySync; direction?: unknown; aim?: unknown; color?: number; round?: number;
 }
 interface ClientJump {
@@ -25,11 +24,7 @@ interface ClientJump {
     seed: number;
     round: number;
     started: number;
-    origin: V3;
-    height: number;
     elapsed: number;
-    direction: V3;
-    dashDistance: number;
 }
 export default class GalaxyTankGame extends Game {
     state = new GameState();
@@ -37,7 +32,6 @@ export default class GalaxyTankGame extends Game {
     interval: ReturnType<typeof setInterval> | null = null;
     private lastTick = 0;
     private ticks = 0;
-    private lastPosition = new Map<number, number>();
     private jumps = new Map<number, ClientJump>();
     constructor() {
         super({ syncAfterMove: false, maxLobbies: 6 });
@@ -116,7 +110,6 @@ export default class GalaxyTankGame extends Game {
     }
     private resetLobby(): void {
         this.jumps.clear();
-        this.lastPosition.clear();
         this.state.tanks = this.state.tanks.filter(t => !t.missingPlayer);
         this.state.tanks.forEach((t, i) => {
             t.id = i;
@@ -184,7 +177,7 @@ export default class GalaxyTankGame extends Game {
             this.syncJump(client, tank, msg);
             return;
         }
-        if (tank.state === TankState.FALLING) return;
+        if (tank.state === TankState.FALLING && msg.action !== Action.UPDATE_STATE) return;
         if (msg.action === Action.MOVE_INTENT && finiteTuple(msg.direction)) {
             const move = fromTuple(msg.direction), turn = msg.turn ?? 0;
             if (length(move) > 1.01 || typeof turn !== 'number' || !Number.isInteger(turn) || Math.abs(turn) > 1) return;
@@ -203,17 +196,7 @@ export default class GalaxyTankGame extends Game {
         if (msg.action === Action.DASH && finiteTuple(msg.direction)) {
             const direction = fromTuple(msg.direction);
             if (length(direction) < .9 || length(direction) > 1.1) return;
-            if (tank.dash(direction)) {
-                tank.lastInput = Date.now();
-                const jump = this.jumps.get(tank.id);
-                if (jump) jump.dashDistance += (DASH_SPEED - TANK_SPEED) * DASH_DURATION;
-            } else {
-                const jump = this.jumps.get(tank.id);
-                tank.clientAirborne = false;
-                this.jumps.delete(tank.id);
-                this.send(client, { type: GalaxySync.CORRECT_POSITION, data: tank.sync(false),
-                    jump: jump?.id, seed: this.state.world.desc.seed, round: this.state.round, force: true });
-            }
+            if (tank.dash(direction)) tank.lastInput = Date.now();
         }
         if (msg.action === Action.LEAP)
             if (msg.jump !== undefined) this.syncJump(client, tank, msg);
@@ -222,29 +205,40 @@ export default class GalaxyTankGame extends Game {
         if (msg.action === Action.FIRE && tank.iFrames <= 0) tank.firing = true;
         if (msg.action === Action.STOP_FIRE) tank.firing = false;
         if (msg.action === Action.UPDATE_STATE) {
-            const now = Date.now();
-            const elapsed = Math.min(0.2, (now - (this.lastPosition.get(tank.id) ?? now - 30)) / 1000);
-            let valid = false;
-            if (msg.p === tank.planet && finiteTuple(msg.d) && typeof msg.h === 'number' && Number.isFinite(msg.h)) {
-                const dir = fromTuple(msg.d), len = length(dir);
-                if (Math.abs(len - 1) < 0.003) {
-                    normalize(dir, dir);
-                    const radius = this.state.world.desc.planets[tank.planet].radius;
-                    const support = this.state.world.colliders.supportHeight(tank.planet, dir, 1.1, msg.h);
-                    const probe = { planet: tank.planet, dir: { ...dir }, vel: { ...tank.vel }, h: msg.h };
-                    this.state.world.colliders.resolve(probe);
-                    valid = angDist(tank.dir, dir) * radius <= tank.syncSpeedLimit * elapsed * 1.5 + 0.6 &&
-                        msg.h >= support - 0.05 && msg.h <= support + 4.5 &&
-                        Math.abs(msg.h - tank.h) <= 0.5 + (Math.abs(tank.vy) + 14) * elapsed &&
-                        angDist(dir, probe.dir) * radius < 0.02;
-                    if (valid) {
-                        copy(tank.dir, dir);
-                        tank.h = Math.max(support, msg.h);
-                    }
-                }
+            const world = this.state.world, planet = world.desc.planets[tank.planet];
+            if (msg.p !== tank.planet || !finiteTuple(msg.d) || !finiteTuple(msg.velocity) ||
+                typeof msg.h !== 'number' || !Number.isFinite(msg.h) || msg.h < -.05 || msg.h > planet.radius * 2 ||
+                typeof msg.vy !== 'number' || !Number.isFinite(msg.vy) || msg.vy > JUMP_V + .1 ||
+                msg.vy < -POUND_V - GRAVITY * CLIENT_JUMP_TIMEOUT / 1000 || typeof msg.pounding !== 'boolean' ||
+                msg.state !== TankState.GROUNDED && msg.state !== TankState.AIRBORNE &&
+                msg.state !== TankState.FALLING) return;
+            const dir = fromTuple(msg.d), velocity = fromTuple(msg.velocity);
+            if (Math.abs(length(dir) - 1) > .003 || length(velocity) > tank.syncSpeedLimit + .1) return;
+            normalize(dir, dir);
+            const support = world.colliders.supportHeight(tank.planet, dir, 1.1, msg.h);
+            const inHole = world.fields[tank.planet].signedDistance(dir) < -EDGE_FORGIVENESS;
+            if (msg.h < support - .05 ||
+                msg.state === TankState.GROUNDED && (Math.abs(msg.h - support) > .05 ||
+                    Math.abs(msg.vy) > .01 || msg.h < .3 && inHole) ||
+                msg.state === TankState.FALLING && (msg.h >= .3 || !inHole)) return;
+            const enteringFall = msg.state === TankState.FALLING && tank.state !== TankState.FALLING;
+            const landedPound = msg.state === TankState.GROUNDED && tank.pounding;
+            copy(tank.dir, dir);
+            tangentProject(tank.vel, velocity, dir);
+            reproject(tank.fwd, tank.fwd, dir);
+            reproject(tank.aim, tank.aim, dir);
+            tank.h = msg.h;
+            tank.vy = msg.vy;
+            tank.state = msg.state;
+            tank.pounding = msg.pounding;
+            tank.lastInput = Date.now();
+            if (landedPound) this.state.groundPound(tank);
+            if (enteringFall) {
+                tank.fallTime = 0;
+                const lava = world.lavaHeight(tank.planet);
+                tank.fallLimit = lava === undefined ? FALL_DEATH_TIME : -lava / FALL_SPEED;
+                tank.firing = false;
             }
-            this.lastPosition.set(tank.id, now);
-            if (!valid) this.send(client, { type: GalaxySync.CORRECT_POSITION, data: tank.sync(false) });
         }
     }
     private syncJump(client: Client, tank: Tank, msg: Intent): void {
@@ -257,7 +251,8 @@ export default class GalaxyTankGame extends Game {
             this.send(client, { type: GalaxySync.CORRECT_POSITION, data: tank.sync(false),
                 jump: msg.jump, seed: world.desc.seed, round: this.state.round, force: true });
         };
-        if (msg.p !== tank.planet || !finiteTuple(msg.d) || typeof msg.h !== 'number' || !Number.isFinite(msg.h)) {
+        if (msg.p !== tank.planet || !finiteTuple(msg.d) || typeof msg.h !== 'number' ||
+            !Number.isFinite(msg.h) || msg.h < -.05 || msg.h > planet.radius * 2) {
             reject();
             return;
         }
@@ -274,23 +269,33 @@ export default class GalaxyTankGame extends Game {
             reject();
             return;
         }
-        if (msg.action === Action.LEAP) {
-            const elapsed = Math.max(0, Math.min(.2, (now - (this.lastPosition.get(tank.id) ?? now - 30)) / 1000));
-            if (tank.state !== TankState.GROUNDED ||
-                angDist(tank.dir, dir) * planet.radius > tank.syncSpeedLimit * elapsed * 1.5 + .6 ||
-                Math.abs(msg.h - support) > .05 || Math.abs(msg.h - tank.h) > .5 ||
+        const fallStart = msg.fallStart === true;
+        if (msg.action === Action.LEAP || fallStart) {
+            if (fallStart && this.jumps.has(tank.id)) return;
+            if ((fallStart ? typeof msg.vy !== 'number' || !Number.isFinite(msg.vy) || msg.vy > .1 ||
+                    msg.vy < -POUND_V - GRAVITY * CLIENT_JUMP_TIMEOUT / 1000 ||
+                    !finiteTuple(msg.velocity) || length(fromTuple(msg.velocity)) > tank.syncSpeedLimit + .1 ||
+                    typeof msg.pounding !== 'boolean' || msg.h < support - .05
+                : Math.abs(msg.h - support) > .05) ||
                 msg.h < .3 && world.fields[tank.planet].signedDistance(dir) < -EDGE_FORGIVENESS) {
                 reject();
                 return;
             }
             copy(tank.dir, dir);
-            tank.h = support;
-            tank.leap();
+            tank.h = msg.h;
+            if (fallStart) {
+                tank.state = TankState.AIRBORNE;
+                tank.vy = msg.vy as number;
+                tangentProject(tank.vel, fromTuple(msg.velocity as [number, number, number]), dir);
+                tank.pounding = msg.pounding as boolean;
+            } else {
+                tank.state = TankState.GROUNDED;
+                tank.leap();
+            }
             tank.clientAirborne = true;
             tank.lastInput = now;
             this.jumps.set(tank.id, { client, id: msg.jump, seed: world.desc.seed, round: this.state.round,
-                started: now, origin: { ...dir }, height: support, elapsed: 0, direction: { ...dir },
-                dashDistance: tank.syncSpeedLimit > TANK_SPEED ? (DASH_SPEED - TANK_SPEED) * DASH_DURATION : 0 });
+                started: now, elapsed: 0 });
             return;
         }
         const jump = this.jumps.get(tank.id);
@@ -308,11 +313,7 @@ export default class GalaxyTankGame extends Game {
         const velocity = fromTuple(msg.velocity), elapsed = msg.airTime;
         const falling = msg.state === TankState.FALLING;
         const grounded = msg.state === TankState.GROUNDED;
-        if (length(velocity) > tank.syncSpeedLimit + .1 ||
-            angDist(jump.origin, dir) * planet.radius > TANK_SPEED * elapsed + jump.dashDistance + 1 ||
-            angDist(jump.direction, dir) * planet.radius > tank.syncSpeedLimit * (elapsed - jump.elapsed) + .5 ||
-            msg.h < support - .05 || msg.h > jump.height + JUMP_V ** 2 / (2 * GRAVITY) + .3 ||
-            msg.h > jump.height + JUMP_V * elapsed - .5 * GRAVITY * elapsed ** 2 + 1.5 ||
+        if (length(velocity) > tank.syncSpeedLimit + .1 || msg.h < support - .05 ||
             !grounded && !falling && msg.state !== TankState.AIRBORNE ||
             grounded && (Math.abs(msg.h - support) > .05 || Math.abs(msg.vy) > .01 ||
                 msg.h < .3 && world.fields[tank.planet].signedDistance(dir) < -EDGE_FORGIVENESS) ||
@@ -320,19 +321,19 @@ export default class GalaxyTankGame extends Game {
             reject();
             return;
         }
+        const landedPound = grounded && tank.pounding;
         copy(tank.dir, dir);
         tangentProject(tank.vel, velocity, dir);
         reproject(tank.fwd, tank.fwd, dir);
         reproject(tank.aim, tank.aim, dir);
-        tank.h = grounded ? support : msg.h;
+        tank.h = msg.h;
         tank.vy = msg.vy;
         tank.state = grounded ? TankState.GROUNDED : falling ? TankState.FALLING : TankState.AIRBORNE;
         tank.pounding = !grounded && msg.pounding;
         tank.clientAirborne = !grounded && !falling;
         tank.lastInput = now;
         jump.elapsed = elapsed;
-        copy(jump.direction, dir);
-        this.lastPosition.set(tank.id, now);
+        if (landedPound) this.state.groundPound(tank);
         if (grounded || falling) {
             if (falling) {
                 tank.fallTime = 0;

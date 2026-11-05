@@ -33,12 +33,12 @@ export class TreadTrails {
     private marks: Array<Mark> = [];
     private changed = false;
     private last = new Map<number, T.Vector3>();
-    constructor() {
-        const g = new THREE.PlaneGeometry(0.5, 0.5, 2, 3), cap = TREAD_SAMPLES * 2 * 8;
+    constructor(private lifeScale = 1) {
+        const g = new THREE.PlaneGeometry(0.5, 0.5, 2, 3), cap = TREAD_SAMPLES * 16 * lifeScale;
         g.setAttribute('aBirth', new THREE.InstancedBufferAttribute(new Float32Array(cap), 1));
         g.setAttribute('aStyle', new THREE.InstancedBufferAttribute(new Float32Array(cap), 1));
         this.mesh = new THREE.InstancedMesh(g, new THREE.ShaderMaterial({
-            uniforms: { time: { value: 0 }, life: { value: TREAD_LIFE } },
+            uniforms: { time: { value: 0 }, life: { value: TREAD_LIFE * lifeScale } },
             transparent: true, depthWrite: false, side: THREE.DoubleSide, extensions: { derivatives: true },
             vertexShader: `attribute float aBirth,aStyle;uniform float time;varying vec2 vUv;
                 varying float vAge,vStyle;void main(){vUv=uv;vAge=time-aBirth;vStyle=aStyle;
@@ -91,12 +91,13 @@ export class TreadTrails {
             }
         }
         let kept = 0;
-        for (const mark of this.marks) if (now / 1000 - mark.born < TREAD_LIFE) this.marks[kept++] = mark;
+        for (const mark of this.marks)
+            if (now / 1000 - mark.born < TREAD_LIFE * this.lifeScale) this.marks[kept++] = mark;
         if (kept !== this.marks.length) {
             this.marks.length = kept;
             this.changed = true;
         }
-        const overflow = this.marks.length - TREAD_SAMPLES * 16;
+        const overflow = this.marks.length - this.mesh.instanceMatrix.count;
         if (overflow > 0) this.marks.splice(0, overflow);
         this.mesh.material.uniforms.time.value = now / 1000;
         if (!this.changed) return;

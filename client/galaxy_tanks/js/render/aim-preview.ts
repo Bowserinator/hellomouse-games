@@ -1,6 +1,6 @@
 import { BulletType, Powerup, TankState } from '../types.js';
 import { BULLETS } from '../sim/bullet.js';
-import { POWERUPS } from '../sim/powerups.js';
+import { CROSS_FIRE_ANGLES, POWERUPS } from '../sim/powerups.js';
 import { advance } from '../sim/math/sphere.js';
 import { copy, reflect, reproject, rotate, scale, vec } from '../sim/math/vec3.js';
 import { nearestTarget, rocketTargets } from '../sim/targeting.js';
@@ -51,6 +51,7 @@ export class AimPreview {
             this.rings.instanceMatrix.needsUpdate = true;
             return;
         }
+        if (tank.bulletPowerup === Powerup.METEOR_RAIN) return;
         if (tank.bulletPowerup === Powerup.TELEPORT) {
             const target = nearestTarget(tank, tanks, world);
             if (!target) return;
@@ -77,11 +78,13 @@ export class AimPreview {
             }
         } else {
             const type = POWERUPS[tank.bulletPowerup].bullet, config = BULLETS[type];
-            const rays = tank.bulletPowerup === Powerup.SHOTGUN ? 3 : 1;
+            const spread = 14 * Math.PI / 180;
+            const angles = tank.bulletPowerup === Powerup.SHOTGUN ? [-spread, 0, spread]
+                : tank.bulletPowerup === Powerup.CROSS_FIRE ? CROSS_FIRE_ANGLES : [0];
             const altitude = tank.h + MUZZLE_H, radius = world.desc.planets[tank.planet].radius;
-            for (let ray = 0; ray < rays; ray++) {
+            for (const angle of angles) {
                 copy(this.dir, tank.dir);
-                rotate(this.vel, tank.aim, tank.dir, rays > 1 ? (ray - 1) * 14 * Math.PI / 180 : 0);
+                rotate(this.vel, tank.aim, tank.dir, angle);
                 scale(this.vel, this.vel, MUZZLE_OFFSET);
                 advance(this.dir, this.vel, 1, radius + altitude);
                 const speed = type === BulletType.LASER ? 40 : config.speed;

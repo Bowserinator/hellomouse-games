@@ -1,5 +1,5 @@
 import type * as T from 'three';
-import { Bullet, BULLETS, PowerupItem } from '../sim/bullet.js';
+import { Bullet, BULLETS, PowerupItem, isStrike, strikeAltitude } from '../sim/bullet.js';
 import { Tank } from '../sim/tank.js';
 import { World } from '../sim/world/planet.js';
 import { BulletType, TankState } from '../types.js';
@@ -11,6 +11,7 @@ import { BULLET_OUTLINE_PX, ITEM_FLOAT_HEIGHT, MAGNET_ARM_TIME, MAGNET_TRACK_WID
     MAX_POWERUP_ITEMS, TANK_COLORS } from '../vars.js';
 import { magnetTarget } from '../sim/targeting.js';
 import { angDist, slerpDir } from '../sim/math/sphere.js';
+const ATLAS_SLOTS = Object.keys(POWERUPS).length, METEOR_TINT = 0xff6a1a;
 export class Entities {
     root = new THREE.Group();
     private bullets = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial(), 512);
@@ -48,7 +49,7 @@ export class Entities {
         this.trackGlow.setColorAt(0, new THREE.Color(0xffffff));
         this.lights.setColorAt(0, new THREE.Color(0xffffff));
         const canvas = document.createElement('canvas');
-        canvas.width = 640;
+        canvas.width = ATLAS_SLOTS * 64;
         canvas.height = 64;
         const ctx = canvas.getContext('2d')!;
         this.atlas = new THREE.CanvasTexture(canvas);
@@ -111,11 +112,11 @@ export class Entities {
         this.fuses.count = this.lights.count = this.tracks.count = this.trackGlow.count = 0;
         for (let i = 0; i < Math.min(bullets.length, 512); i++) {
             const b = bullets[i];
-            const altitude = b.type === BulletType.ROCKET ? 20 * (1 - Math.max(0, (b.age - 1.3) / 0.7)) : b.altitude;
+            const altitude = isStrike(b.type) ? strikeAltitude(b) : b.altitude;
             world.position(b.planet, b.dir, altitude, this.pos);
             this.dummy.position.set(this.pos.x, this.pos.y, this.pos.z);
             this.dummy.quaternion.identity();
-            const size = b.type === BulletType.ROCKET ? 0.65 : BULLETS[b.type].radius;
+            const size = b.type === BulletType.METEOR ? 1.3 : b.type === BulletType.ROCKET ? 0.65 : BULLETS[b.type].radius;
             if (b.type === BulletType.FAST) {
                 this.up.set(b.vel.x, b.vel.y, b.vel.z).normalize();
                 this.dummy.quaternion.setFromUnitVectors(this.axis, this.up);
@@ -124,6 +125,7 @@ export class Entities {
             this.dummy.updateMatrix();
             this.tint.copy(this.colors[b.color]);
             if (b.type === BulletType.MAGNET) this.tint.multiplyScalar(.35);
+            if (b.type === BulletType.METEOR) this.tint.setHex(METEOR_TINT);
             if (b.type === BulletType.BOMB && b.age % .45 < .2) this.tint.copy(this.red);
             this.bullets.setMatrixAt(bi, this.dummy.matrix);
             this.outlines.setMatrixAt(bi, this.dummy.matrix);
@@ -131,6 +133,10 @@ export class Entities {
             if (b.type === BulletType.MAGNET || b.type === BulletType.BOMB) this.bombDetails(b);
             if (b.type === BulletType.MAGNET) this.magnetTrack(b, tanks, world);
             if (b.type === BulletType.ROCKET) this.shadow(world, b.planet, b.dir, 3.5, si++, true);
+            if (b.type === BulletType.METEOR) {
+                const growth = Math.min(1, b.age / BULLETS[b.type].life);
+                this.shadow(world, b.planet, b.dir, BULLETS[b.type].radius / .88 * Math.max(.02, growth), si++, true);
+            }
         }
         this.bullets.count = this.outlines.count = bi;
         this.trackGlow.count = this.tracks.count;
@@ -219,7 +225,7 @@ export class Entities {
             for (let j = 0; j < pos.count; j++) {
                 const face = j >= 16, u = face ? pos.getX(j) / 2.2 + .5 : (x + .5) / 16;
                 const v = face ? pos.getY(j) / 2.2 + .5 : 1 - (y + .5) / 16;
-                uv.setXY(j, (icon + u) / 10, v);
+                uv.setXY(j, (icon + u) / ATLAS_SLOTS, v);
                 colors.fill(face ? 1 : .6, j * 3, j * 3 + 3);
             }
             g.setAttribute('color', new THREE.BufferAttribute(colors, 3));

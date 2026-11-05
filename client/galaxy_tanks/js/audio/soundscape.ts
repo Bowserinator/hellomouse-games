@@ -28,8 +28,8 @@ export class Soundscape {
         this.shields.set(id, now);
         sound('shield_hit.mp3', position, listener, .7);
     }
-    empty(now: number): void {
-        if (now - this.emptyAt < 500) return;
+    empty(id: number, own: number, now: number): void {
+        if (own < 0 || id !== own || now - this.emptyAt < 500) return;
         this.emptyAt = now;
         sound('ammunition_zero.mp3', undefined, undefined, .7);
     }
