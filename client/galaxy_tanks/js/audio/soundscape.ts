@@ -1,7 +1,6 @@
-import { CoreType, Powerup, TankState } from '../types.js';
+import { CoreType, TankState } from '../types.js';
 import { STAR_HEIGHT, STAR_HOLD_MS, TANK_SPEED } from '../vars.js';
 import { Tank } from '../sim/tank.js';
-import { Bullet } from '../sim/bullet.js';
 import { World } from '../sim/world/planet.js';
 import { V3, copy, distance, fromTuple, length, vec } from '../sim/math/vec3.js';
 import { LoopSound, sound, stopLoops, updateLoops } from './sound.js';
@@ -10,8 +9,6 @@ interface PreviousTank {
     state: TankState;
     flightStart: number;
     launched: boolean;
-    ammo: number;
-    powerup: Powerup;
 }
 export class Soundscape {
     private previous = new Map<number, PreviousTank>();
@@ -35,7 +32,7 @@ export class Soundscape {
         this.emptyAt = now;
         sound('ammunition_zero.mp3', undefined, undefined, .7);
     }
-    update(world: World, tanks: Array<Tank>, bullets: Array<Bullet>, own: number, target: number,
+    update(world: World, tanks: Array<Tank>, own: number, target: number,
         listener: V3, now: number, dt: number, active: boolean): void {
         if (!active) {
             updateLoops([], listener, dt);
@@ -54,25 +51,19 @@ export class Soundscape {
             if (tank === focus) copy(focusPosition, pos);
             const audible = !tank.isDead && !tank.missingPlayer && (tank.stealth <= 0 || tank.id === own);
             const launched = tank.state === TankState.FLYING && now >= tank.flightStart + STAR_HOLD_MS;
-            const ammo = tank.id === own && tank.bulletPowerup === Powerup.NONE
-                ? Math.max(0, 5 - bullets.reduce((count, b) => count + Number(b.owner === own), 0)) : tank.ammo;
             if (audible) {
                 if (previous?.state === TankState.GROUNDED && tank.state === TankState.AIRBORNE && tank.vy > 0)
                     sound('jump.mp3', pos, listener, .7);
                 if (previous && launched &&
                     (!previous.launched || previous.flightStart !== tank.flightStart))
-                    sound('launch_star_launch.mp3', pos, listener);
-                if (tank.id === own && previous && ((previous.ammo > 0 && ammo === 0) ||
-                    (previous.powerup !== Powerup.NONE && tank.bulletPowerup === Powerup.NONE && tank.ammo <= 0)))
-                    this.empty(now);
+                    sound('launch_star_launch.mp3', pos, listener, 3);
                 if (tank.state === TankState.GROUNDED) {
                     const speed = Math.min(1, length(tank.vel) / TANK_SPEED);
                     requests.push({ key: `tank:${tank.id}`, name: 'tank_hum.ogg', position: pos,
-                        gain: .08 + speed * .22, rate: .7 + speed * .8 });
+                        gain: (.08 + speed * .22) * .8, rate: .7 + speed * .8 });
                 }
             }
-            this.previous.set(tank.id, { state: tank.state, flightStart: tank.flightStart, launched,
-                ammo, powerup: tank.bulletPowerup });
+            this.previous.set(tank.id, { state: tank.state, flightStart: tank.flightStart, launched });
         }
         for (const id of this.previous.keys()) if (!tanks.some(tank => tank.id === id)) this.previous.delete(id);
         world.stars.forEach((star, index) => {
@@ -81,7 +72,7 @@ export class Soundscape {
             const held = tanks.some(tank => tank.state === TankState.FLYING && tank.flightStar === index &&
                 now < tank.flightStart + STAR_HOLD_MS && (tank.stealth <= 0 || tank.id === own));
             if (near > 0 || held) requests.push({ key: `star:${index}`, name: 'launch_star_idle.mp3', position: pos,
-                gain: held ? .55 : near * .3, rate: held ? 3 : .7 + near * 1.3 });
+                gain: (held ? .55 : near * .3) * 3, rate: held ? 3 : .7 + near * 1.3 });
         });
         const planet = focus && world.desc.planets[focus.planet];
         if (focus && planet?.core && planet.holes?.length) {

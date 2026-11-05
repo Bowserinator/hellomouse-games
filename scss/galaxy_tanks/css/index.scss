@@ -188,6 +188,10 @@ input[type=text] {
         filter: grayscale(40%);
     }
 
+    &.missing > .username {
+        color: #aaa;
+    }
+
     // Text inside, truncated
     & > .username {
         width: 160px;

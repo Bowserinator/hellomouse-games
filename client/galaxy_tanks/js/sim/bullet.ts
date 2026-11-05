@@ -1,12 +1,12 @@
 import { BulletType } from '../types.js';
-import { BULLET_LIFE, BULLET_SPEED } from '../vars.js';
+import { BULLET_LIFE, BULLET_SPEED, MAX_NORMAL_AMMO } from '../vars.js';
 import { advance } from './math/sphere.js';
 import { V3, copy, scale, vec } from './math/vec3.js';
 export interface BulletConfig {
     speed: number; life: number; radius: number; maxAmmo: number;
 }
 export const BULLETS: Record<BulletType, BulletConfig> = {
-    [BulletType.NORMAL]: { speed: BULLET_SPEED, life: BULLET_LIFE, radius: 0.22, maxAmmo: 5 },
+    [BulletType.NORMAL]: { speed: BULLET_SPEED, life: BULLET_LIFE, radius: 0.22, maxAmmo: MAX_NORMAL_AMMO },
     [BulletType.FAST]: { speed: 86, life: 3.2, radius: 0.16, maxAmmo: 5 },
     [BulletType.LASER]: { speed: 0, life: 0.16, radius: 0.12, maxAmmo: 3 },
     [BulletType.SMALL]: { speed: 32, life: 0.5 * 2, radius: 0.12, maxAmmo: 25 },
@@ -28,8 +28,9 @@ export class Bullet {
     }
     lifetime(radius: number): number {
         const config = BULLETS[this.type];
-        return this.type === BulletType.NORMAL || this.type === BulletType.FAST
+        const life = this.type === BulletType.NORMAL || this.type === BulletType.FAST
             ? 2 * Math.max(config.life, 2 * Math.PI * (radius + this.altitude) / config.speed + .1) : config.life;
+        return this.type === BulletType.NORMAL ? life * .8 : life;
     }
     update(dt: number, radius: number): void {
         this.age += dt;

@@ -64,11 +64,11 @@ export class Lobby {
                 });
         });
     }
-    update(tanks: Array<Tank>, own: number, inLobby: boolean, round: number, total: number): void {
+    update(tanks: Array<Tank>, own: number, inLobby: boolean, round: number, total: number, connected = true): void {
         const banner = el('disconnect-banner');
         if (banner.dataset.kind === 'username' && (!inLobby ||
             tanks.find(t => t.id === own)?.username === (el('username') as HTMLInputElement).value)) banner.hidden = true;
-        const state = JSON.stringify([own, inLobby, round, total,
+        const state = JSON.stringify([own, inLobby, round, total, connected,
             tanks.map(t => [t.id, t.ready, t.isDead, t.missingPlayer, t.color, t.username, t.score])]);
         if (state === this.lastState) return;
         this.lastState = state;
@@ -96,7 +96,8 @@ export class Lobby {
         el('scores').replaceChildren(...tanks.map(t => {
             const p = document.createElement('p');
             p.className = 'score';
-            p.classList.toggle('dead', t.isDead || inLobby && !t.ready);
+            p.classList.toggle('dead', t.isDead || t.missingPlayer || !connected || inLobby && !t.ready);
+            p.classList.toggle('missing', t.missingPlayer || !connected);
             p.classList.toggle('you', t.id === own);
             const name = document.createElement('span');
             name.className = 'username';

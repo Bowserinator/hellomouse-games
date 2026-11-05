@@ -9,7 +9,7 @@ export enum GalaxySync {
 }
 
 export enum Action {
-    MOVE_INTENT, LEAP, POUND, FIRE, STOP_FIRE, UPDATE_AIM, UPDATE_STATE
+    MOVE_INTENT, LEAP, POUND, FIRE, STOP_FIRE, UPDATE_AIM, UPDATE_STATE, DASH
 }
 export enum SurfaceType {
     ROCK, ICE, GRASS, MIRROR, SNOW, PLASTIC, SAND

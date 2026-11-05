@@ -1,6 +1,7 @@
 import { BulletType, GalaxySync, Powerup, TankState } from '../types.js';
 import { DELAY_AFTER_WIN_ROUND, DELAY_POWERUP_SPAWN, ITEM_FLOAT_HEIGHT, MAGNET_ARM_TIME, MAGNET_CHASE_ACCEL,
-    MAGNET_CHASE_SPEED, LASER_LENGTH, MAX_POWERUP_ITEMS, MUZZLE_H, MUZZLE_OFFSET, PRE_ROUND_DELAY, ROUND_SETTLE_TIME,
+    MAGNET_CHASE_SPEED, LASER_LENGTH, MAX_NORMAL_AMMO, MAX_POWERUP_ITEMS, MUZZLE_H, MUZZLE_OFFSET,
+    PRE_ROUND_DELAY, ROUND_SETTLE_TIME,
     TANK_FIRE_DELAY, TANK_HEIGHT, TANK_RADIUS } from '../vars.js';
 import { Bullet, BULLETS, PowerupItem } from './bullet.js';
 import { generateMap } from './mapgen/index.js';
@@ -166,7 +167,7 @@ export class GameState {
         if (tank.isDead || tank.iFrames > 0 || tank.fireCd > 0 || tank.state === TankState.FLYING ||
             tank.state === TankState.FALLING || this.now < this.roundStart || this.roundEnd || this.inLobby) return;
         const powerup = tank.bulletPowerup, config = POWERUPS[powerup];
-        if (powerup === Powerup.NONE && this.bullets.filter(b => b.owner === tank.id).length >= 5) return;
+        if (powerup === Powerup.NONE && this.bullets.filter(b => b.owner === tank.id).length >= MAX_NORMAL_AMMO) return;
         const type = config.bullet;
         if (this.bullets.filter(b => b.owner === tank.id && b.type === type).length >= BULLETS[type].maxAmmo) return;
         tank.fireCd = TANK_FIRE_DELAY / 1000;
@@ -185,6 +186,8 @@ export class GameState {
                     set(t.vel, 0, 0, 0);
                     set(t.move, 0, 0, 0);
                     t.vy = 0;
+                    t.clientAirborne = false;
+                    t.dashTime = 0;
                     t.starCd = 1.5;
                     reproject(t.fwd, t.fwd, t.dir);
                     reproject(t.aim, t.aim, t.dir);

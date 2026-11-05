@@ -11,8 +11,8 @@ let volume = .5;
 export function setGlobalVolume(value: number): void {
     volume = Math.max(0, Math.min(1, Number.isFinite(value) ? value : .5));
     setTankVolume(volume);
-    for (const voice of loops.values()) voice.audio.volume = voice.gain * volume;
-    for (const [audio, gain] of shots) audio.volume = gain * volume;
+    for (const voice of loops.values()) voice.audio.volume = Math.min(1, voice.gain * volume);
+    for (const [audio, gain] of shots) audio.volume = Math.min(1, gain * volume);
 }
 const shots = new Map<HTMLAudioElement, number>();
 export function sound(name: string, position?: V3, listener?: V3, gain = 1): void {
@@ -27,9 +27,9 @@ export function sound(name: string, position?: V3, listener?: V3, gain = 1): voi
         oldest.pause();
         shots.delete(oldest);
     }
-    const audio = new Audio(path(name)), level = Math.max(0, Math.min(1, attenuation * gain));
+    const audio = new Audio(path(name)), level = Math.max(0, attenuation * gain);
     shots.set(audio, level);
-    audio.volume = level * volume;
+    audio.volume = Math.min(1, level * volume);
     audio.addEventListener('ended', () => shots.delete(audio), { once: true });
     audio.addEventListener('error', () => shots.delete(audio), { once: true });
     void audio.play().catch(() => shots.delete(audio));

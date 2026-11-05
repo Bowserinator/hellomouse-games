@@ -5,19 +5,20 @@ import { World } from './sim/world/planet.js';
 import { MapDesc } from './sim/mapgen/map-desc.js';
 import { Bullet, PowerupItem } from './sim/bullet.js';
 import { StateSync } from './sim/gamestate.js';
-import { copy, tuple, V3 } from './sim/math/vec3.js';
+import { copy, length, tuple, V3 } from './sim/math/vec3.js';
 import { GameView } from './render/game-view.js';
 import { makePalette } from './render/tank/tank-rig.js';
 import { DEFAULT_TANK_STYLE } from './render/tank/tank-style.js';
 import { Lobby, el } from './lobby.js';
 import { POWERUPS } from './sim/powerups.js';
 import { angDist } from './sim/math/sphere.js';
-import { MAGNET_ARM_TIME, TANK_COLORS, TANK_TURN_RATE } from './vars.js';
+import { DASH_SPEED, MAGNET_ARM_TIME, MAX_NORMAL_AMMO, TANK_COLORS, TANK_SPEED, TANK_TURN_RATE } from './vars.js';
 import { sound, setGlobalVolume, unlockLoops } from './audio/sound.js';
 import { Soundscape } from './audio/soundscape.js';
 
 // Shared site connection factory.
 declare function createConnection(): WebSocket;
+declare function beep(): void;
 const connection = createConnection(), canvas = el('board') as HTMLCanvasElement;
 let view: GameView;
 try {
@@ -28,10 +29,12 @@ try {
     throw error;
 }
 let world: World | undefined, tanks: Array<Tank> = [], bullets: Array<Bullet> = [], items: Array<PowerupItem> = [];
+let pendingWorld: World | undefined, pendingMap = false;
 let own = -1, target = -1, spectatorCount = 0, clockOffset = 0, deadSince = 0;
 let state: StateSync = { inLobby: true, round: 0, totalRounds: 20, roundStart: 0, roundEnd: 0, serverTime: 0 };
 const send = (data: Record<string, unknown>): void => {
-    if (connection.readyState === WebSocket.OPEN) connection.send(JSON.stringify(data));
+    if (connection.readyState === WebSocket.OPEN) connection.send(JSON.stringify(data.type === 'MOVE'
+        ? { ...data, seed: world?.desc.seed, round: state.round } : data));
 };
 const lobby = new Lobby(send), keys = new Set<string>(), mouse = new THREE.Vector2();
 const ray = new THREE.Raycaster(), plane = new THREE.Plane(), hit = new THREE.Vector3();
@@ -71,7 +74,8 @@ const setText = (node: HTMLElement, text: string): void => {
 };
 const labelPoint = new THREE.Vector3(), beepColor = new THREE.Color(0xff1717);
 let firing = false, dragging = false, lastX = 0, lastY = 0, lastIntent = 0, lastPosition = 0, previousFrame = 0;
-let fps = 60;
+let fps = 60, emptyFire = false, pingMs = 0;
+let jumpSequence = 0, localJump = 0, jumpElapsed = 0, landingSentAt = 0;
 let volume = Number(localStorage.getItem('galaxy-volume') ?? 50) / 100;
 setGlobalVolume(volume);
 const volumeInput = el('volume') as HTMLInputElement;
@@ -100,7 +104,9 @@ connection.onclose = () => {
     banner.textContent = 'Disconnected from server';
     banner.style.top = '0';
     release();
+    localJump = 0;
     soundscape.reset();
+    lobby.update(tanks, own, state.inLobby, state.round, state.totalRounds, false);
     revealWipe();
 };
 interface Message {
@@ -111,10 +117,43 @@ interface Message {
     planet?: number; dir?: V3; h?: number; color?: number; fall?: boolean; startTime?: number;
     star?: number; t0?: number; points?: Array<V3>; powerup?: Powerup;
     radius?: number; shield?: number; a?: number; b?: number;
+    seed?: number; round?: number; jump?: number; force?: boolean;
 }
 function restoreBullet(raw: Bullet): Bullet {
     return Object.assign(new Bullet(raw.id, raw.owner, raw.planet, raw.dir, raw.vel,
         raw.altitude, raw.type, raw.color), raw);
+}
+function syncTank(tank: Tank, data: string): void {
+    const predicted = tank.id === own ? { dir: { ...tank.dir }, vel: { ...tank.vel }, aim: { ...tank.aim },
+        fwd: { ...tank.fwd }, h: tank.h, vy: tank.vy, state: tank.state, planet: tank.planet,
+        pounding: tank.pounding, fallTime: tank.fallTime, dashCd: tank.dashCd, dashTime: tank.dashTime,
+        dashDirection: { ...tank.dashDirection }, speedLimit: tank.dashCd > 0 ? DASH_SPEED : TANK_SPEED } : undefined;
+    tank.applySync(data);
+    const planet = world?.desc.planets[tank.planet];
+    if (!predicted || !planet || predicted.planet !== tank.planet || tank.isDead || tank.state === TankState.FLYING) {
+        if (tank.id === own) localJump = 0;
+        return;
+    }
+    const authoritative = localJump > 0 && !state.inLobby && !state.roundEnd;
+    if (authoritative || predicted.state === tank.state &&
+        angDist(predicted.dir, tank.dir) * planet.radius <
+            Math.max(2, Math.max(predicted.speedLimit, tank.syncSpeedLimit) * pingMs / 1000 + .6) &&
+        Math.abs(predicted.h - tank.h) < 1) {
+        copy(tank.dir, predicted.dir);
+        copy(tank.vel, predicted.vel);
+        copy(tank.aim, predicted.aim);
+        copy(tank.fwd, predicted.fwd);
+        tank.h = predicted.h;
+        tank.vy = predicted.vy;
+        tank.dashCd = predicted.dashCd;
+        tank.dashTime = predicted.dashTime;
+        copy(tank.dashDirection, predicted.dashDirection);
+        if (authoritative) {
+            tank.state = predicted.state;
+            tank.pounding = predicted.pounding;
+            tank.fallTime = predicted.fallTime;
+        }
+    }
 }
 connection.onmessage = event => {
     let m: Message;
@@ -143,22 +182,40 @@ connection.onmessage = event => {
         banner.hidden = banner.dataset.kind === 'username' && !state.inLobby;
         banner.textContent = m.error ?? 'Connection error';
         banner.style.top = '0';
-    } else if (m.type === 'PING') el('ping').textContent = `Ping: ${Date.now() - m.ping!} ms`;
-    else if (m.type === GalaxySync.MAP_DESC && m.map) {
-        if (!world || world.desc.seed !== m.map.seed) {
+    } else if (m.type === 'PING') {
+        pingMs = Math.max(0, Date.now() - m.ping!);
+        el('ping').textContent = `Ping: ${pingMs} ms`;
+    } else if (m.type === GalaxySync.MAP_DESC && m.map) {
+        pendingMap = true;
+        if (!world || world.desc.seed !== m.map.seed || world.desc.planets.length !== m.map.planets.length)
+            pendingWorld = new World(m.map);
+    } else if (m.type === GalaxySync.CREATE_ALL_TANKS && Array.isArray(m.data)) {
+        const occupied = new Set(tanks.filter(tank => !tank.missingPlayer).map(tank => tank.id));
+        const previous = pendingMap ? [] : tanks;
+        if (pendingMap) {
+            localJump = 0;
             soundscape.reset();
-            world = new World(m.map);
-            view.setWorld(world);
+            if (pendingWorld) {
+                world = pendingWorld;
+                pendingWorld = undefined;
+                view.setWorld(world);
+            }
             bullets = [];
             items = [];
+            pendingMap = false;
         }
-    } else if (m.type === GalaxySync.CREATE_ALL_TANKS && Array.isArray(m.data)) {
-        tanks = m.data.map(s => {
-            const t = new Tank(0);
-            t.applySync(s);
-            return t;
-        });
         own = m.id ?? -1;
+        tanks = m.data.map((s, i) => {
+            const tank = previous.find(t => t.id === i);
+            if (tank) {
+                syncTank(tank, s);
+                return tank;
+            }
+            const created = new Tank(i);
+            created.applySync(s);
+            return created;
+        });
+        if (tanks.some(tank => !tank.missingPlayer && !occupied.has(tank.id))) beep();
         const username = (el('username') as HTMLInputElement).value;
         if (!usernameInitialized && own >= 0) {
             usernameInitialized = true;
@@ -167,23 +224,21 @@ connection.onmessage = event => {
     } else if (m.type === GalaxySync.GENERIC_TANK_SYNC && Array.isArray(m.data))
         m.data.forEach((s, i) => {
             const tank = tanks[i];
-            if (!tank) return;
-            const predicted = i === own ? { dir: { ...tank.dir }, vel: { ...tank.vel }, aim: { ...tank.aim },
-                fwd: { ...tank.fwd }, h: tank.h, vy: tank.vy, state: tank.state, planet: tank.planet } : undefined;
-            tank.applySync(s);
-            if (predicted && predicted.planet === tank.planet && predicted.state === tank.state &&
-                angDist(predicted.dir, tank.dir) * (world?.desc.planets[tank.planet].radius ?? 30) < 2 &&
-                Math.abs(predicted.h - tank.h) < 1) {
-                copy(tank.dir, predicted.dir);
-                copy(tank.vel, predicted.vel);
-                copy(tank.aim, predicted.aim);
-                copy(tank.fwd, predicted.fwd);
-                tank.h = predicted.h;
-                tank.vy = predicted.vy;
-            }
+            if (tank) syncTank(tank, s);
         });
-    else if (m.type === GalaxySync.CORRECT_POSITION && typeof m.data === 'string') tanks[own]?.applySync(m.data);
-    else if (m.type === GalaxySync.STATE_SYNC && typeof m.data === 'object' && !Array.isArray(m.data)) {
+    else if (m.type === GalaxySync.CORRECT_POSITION && typeof m.data === 'string') {
+        if (m.seed !== undefined && m.seed !== world?.desc.seed ||
+            m.round !== undefined && m.round !== state.round || m.jump !== undefined && m.jump !== localJump) return;
+        if (localJump && m.jump === undefined && !m.force) return;
+        if (m.jump !== undefined && !m.force) {
+            if (landingSentAt) pingMs = Math.max(pingMs, performance.now() - landingSentAt);
+            localJump = 0;
+            lastPosition = 0;
+        } else {
+            localJump = 0;
+            tanks.find(t => t.id === own)?.applySync(m.data);
+        }
+    } else if (m.type === GalaxySync.STATE_SYNC && typeof m.data === 'object' && !Array.isArray(m.data)) {
         state = m.data!;
         if (state.serverTime > 0) clockOffset = state.serverTime - Date.now();
     } else if (m.type === GalaxySync.SYNC_ALL_BULLETS) bullets = (m.bullets ?? []).map(restoreBullet);
@@ -194,11 +249,16 @@ connection.onmessage = event => {
         if (m.items) items = m.items;
         if (m.item && !items.some(i => i.id === m.item!.id)) items.push(m.item);
     } else if (m.type === GalaxySync.DELETE_POWERUP_ITEM) items = items.filter(i => i.id !== m.id);
-    else if (m.type === GalaxySync.FLIGHT_START) tanks.find(t => t.id === m.id)?.beginFlight(m.star!, m.t0!);
-    else if (m.type === GalaxySync.TANK_KILLED && world) {
+    else if (m.type === GalaxySync.FLIGHT_START) {
+        if (m.id === own) localJump = 0;
+        tanks.find(t => t.id === m.id)?.beginFlight(m.star!, m.t0!);
+    } else if (m.type === GalaxySync.TANK_KILLED && world) {
         const killed = tanks.find(t => t.id === m.id);
         if (killed) killed.state = TankState.DEAD;
-        if (m.id === own) deadSince = Date.now();
+        if (m.id === own) {
+            localJump = 0;
+            deadSince = Date.now();
+        }
         if (!m.fall && m.dir) {
             view.effects.death(world.position(m.planet!, m.dir, m.h! + 0.7), m.dir,
                 makePalette(m.color!)[0], m.startTime ?? Date.now() + clockOffset);
@@ -231,8 +291,6 @@ connection.onmessage = event => {
             ? 'railgun.mp3' : m.powerup === Powerup.LASER ? 'laser.ogg' : m.powerup === Powerup.ROCKET
                 ? 'radio.ogg' : m.powerup === Powerup.TELEPORT ? 'teleport.mp3' : 'tank_fire_normal.mp3';
         sound(name, tank && world?.position(tank.planet, tank.dir, tank.h), view.camera.camera.position);
-        if (m.id === own && m.powerup !== undefined && m.powerup !== Powerup.NONE && !document.hidden)
-            soundscape.empty(Date.now() + clockOffset);
         if (tank && world) {
             const pos = world.position(tank.planet, tank.dir, tank.h + 1.1);
             pos.x += tank.aim.x * 1.9;
@@ -242,18 +300,20 @@ connection.onmessage = event => {
         }
     } else if (m.type === GalaxySync.TELEPORT_SWAP && world)
         for (const id of [m.a, m.b]) {
+            if (id === own) localJump = 0;
             const tank = tanks.find(t => t.id === id);
+            if (tank) tank.dashTime = 0;
             if (tank) view.effects.sparks(world.position(tank.planet, tank.dir, tank.h + 1), tank.dir,
                 new THREE.Color(0x88eeff), Date.now() + clockOffset, 36, 2);
         }
     else if (m.type === GalaxySync.GIVE_POWERUP) {
-        sound(m.powerup === Powerup.SHIELD ? 'shield.mp3' : m.powerup === Powerup.STEALTH ? 'stealth.ogg' : 'radio.ogg');
         const tank = tanks.find(t => t.id === m.id);
         if (tank && world) view.effects.sparks(world.position(tank.planet, tank.dir, tank.h + 1), tank.dir,
             makePalette(tank.color)[0], Date.now() + clockOffset, 24, 1.2);
     }
     if (tanks.find(t => t.id === own)?.username === automaticUsername) automaticUsername = undefined;
-    lobby.update(tanks, own, state.inLobby, state.round, state.totalRounds);
+    lobby.update(tanks, own, state.inLobby, state.round, state.totalRounds,
+        connection.readyState === WebSocket.OPEN);
 };
 function sweepWipe(from: number, to: number, duration: number): void {
     Array.from(el('round-wipe').children).forEach((stripe, i) => {
@@ -283,19 +343,26 @@ function blocked(): boolean {
         Array.from(document.querySelectorAll<HTMLElement>('.modal-darken')).some(m => m.style.display !== 'none');
 }
 window.addEventListener('keydown', e => {
-    if (blocked() || e.ctrlKey) return;
     const key = e.key.toLowerCase();
-    if ([' ', 'tab', 'arrowleft', 'arrowright'].includes(key)) e.preventDefault();
+    if (blocked() || e.ctrlKey && !['control', 'w', 'a', 's', 'd', 'q', 'e', ' ', 'shift'].includes(key)) return;
+    if (['control', ' ', 'tab', 'arrowleft', 'arrowright'].includes(key) || e.ctrlKey) e.preventDefault();
     if (e.repeat) return;
     keys.add(key);
     if (spectating()) {
         if (key === 'a' || key === 'arrowleft') cycle(-1);
         if (key === 'd' || key === 'arrowright') cycle(1);
         if (key === 'tab') view.camera.overview = !view.camera.overview;
-    } else if (!state.inLobby) {
-        if (key === ' ') {
-            send({ type: 'MOVE', action: Action.LEAP });
-            tanks[own]?.leap();
+    } else if (!state.inLobby && !state.roundEnd && Date.now() + clockOffset >= state.roundStart) {
+        const self = tanks.find(t => t.id === own);
+        if (key === 'control' && self && self.dash(length(self.vel) > .05 ? self.vel : self.move))
+            send({ type: 'MOVE', action: Action.DASH, direction: tuple(self.dashDirection) });
+        if (key === ' ' && self?.state === TankState.GROUNDED && world) {
+            localJump = ++jumpSequence;
+            jumpElapsed = 0;
+            landingSentAt = 0;
+            send({ type: 'MOVE', action: Action.LEAP, jump: localJump,
+                p: self.planet, d: tuple(self.dir), h: self.h });
+            self.leap();
         }
         if (key === 'shift') {
             send({ type: 'MOVE', action: Action.POUND });
@@ -312,6 +379,7 @@ function release(): void {
     keys.clear();
     movement.reset();
     firing = false;
+    emptyFire = false;
     dragging = false;
     const self = tanks.find(t => t.id === own);
     if (self) self.turn = 0;
@@ -329,6 +397,7 @@ canvas.addEventListener('pointerdown', e => {
 });
 window.addEventListener('pointerup', () => {
     firing = false;
+    emptyFire = false;
     dragging = false;
     send({ type: 'MOVE', action: Action.STOP_FIRE });
 });
@@ -378,14 +447,28 @@ function draw(time: number): void {
                     if (hit.lengthSq() > 0.01) copy(self.aim, hit.normalize());
                 }
                 if (time - lastIntent >= 80) {
+                    const available = self.bulletPowerup === Powerup.NONE
+                        ? MAX_NORMAL_AMMO - bullets.reduce((count, b) => count + Number(b.owner === own), 0)
+                        : self.ammo;
+                    if (firing && available <= 0 && self.iFrames <= 0 &&
+                        (self.state === TankState.GROUNDED || self.state === TankState.AIRBORNE)) {
+                        if (!emptyFire) soundscape.empty(now);
+                        emptyFire = true;
+                    } else emptyFire = false;
                     send({ type: 'MOVE', action: Action.MOVE_INTENT, direction: tuple(self.move), turn: self.turn });
                     send({ type: 'MOVE', action: firing ? Action.FIRE : Action.UPDATE_AIM, aim: tuple(self.aim) });
                     lastIntent = time;
                 }
+                if (localJump && self.state === TankState.AIRBORNE) jumpElapsed += dt;
+                const wasAirborne = self.state === TankState.AIRBORNE;
                 self.update(world, dt, now, false);
-                if (time - lastPosition >= 30) {
+                const landed = localJump > 0 && wasAirborne && self.state !== TankState.AIRBORNE;
+                if (time - lastPosition >= 30 || landed) {
+                    if (localJump && self.state !== TankState.AIRBORNE && !landingSentAt) landingSentAt = time;
                     send({ type: 'MOVE', action: Action.UPDATE_STATE, p: self.planet,
-                        d: tuple(self.dir).map(v => Math.round(v * 10000) / 10000), h: self.h });
+                        d: tuple(self.dir).map(v => Math.round(v * 10000) / 10000), h: self.h,
+                        ...(localJump ? { jump: localJump, airTime: jumpElapsed, velocity: tuple(self.vel),
+                            vy: self.vy, state: self.state, pounding: self.pounding } : {}) });
                     lastPosition = time;
                 }
             }
@@ -416,7 +499,7 @@ function draw(time: number): void {
         }
         view.preview.root.visible = !state.inLobby;
         view.render(world, tanks, bullets, items, own, target, now, dt);
-        soundscape.update(world, tanks, bullets, own, target, view.camera.camera.position, now, dt,
+        soundscape.update(world, tanks, own, target, view.camera.camera.position, now, dt,
             !document.hidden && connection.readyState === WebSocket.OPEN &&
             !state.inLobby && now >= state.roundStart && !state.roundEnd);
         if (wipeCovered && (state.round !== wipeRound || state.inLobby || now > state.roundEnd + 4000)) revealWipe();
@@ -426,7 +509,8 @@ function draw(time: number): void {
             : `Watching ${tanks.find(t => t.id === target)?.username ?? 'galaxy'}`} · A/D: target · Tab: overview` : '');
         setText(countdownLabel, !state.inLobby && now < state.roundStart ? 'GET READY' : '');
         const ammo = self?.bulletPowerup === Powerup.NONE
-            ? Math.max(0, 5 - bullets.reduce((count, b) => count + Number(b.owner === own), 0)) : self?.ammo;
+            ? Math.max(0, MAX_NORMAL_AMMO - bullets.reduce((count, b) => count + Number(b.owner === own), 0))
+            : self?.ammo;
         const ammoKey = `${self?.bulletPowerup}/${ammo}/${self?.color}/${spec}/${state.inLobby}`;
         if (ammoKey !== lastAmmo) {
             lastAmmo = ammoKey;
@@ -448,7 +532,7 @@ function draw(time: number): void {
                     normal.ariaLabel = 'Normal ammunition';
                     counter.appendChild(normal);
                 }
-                const max = self.bulletPowerup === Powerup.NONE ? 5 : 1;
+                const max = self.bulletPowerup === Powerup.NONE ? MAX_NORMAL_AMMO : 1;
                 for (let i = 0; i < max; i++) {
                     const slot = document.createElement('div');
                     slot.className = `ammo-slot${i >= (ammo ?? 0) ? ' fired' : ''}`;

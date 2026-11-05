@@ -1,6 +1,7 @@
 import performStateDiff from '../../../tanks/js/util/diff.js';
 import { Powerup, TankState } from '../types.js';
-import { ACCEL, AIR_CONTROL, EDGE_FORGIVENESS, FALL_DEATH_TIME, FALL_SPEED, GRAVITY, IFRAMES_LAND,
+import { ACCEL, AIR_CONTROL, DASH_COOLDOWN, DASH_DURATION, DASH_SPEED,
+    EDGE_FORGIVENESS, FALL_DEATH_TIME, FALL_SPEED, GRAVITY, IFRAMES_LAND,
     IFRAMES_SPAWN, JUMP_V, POUND_V, STAR_COOLDOWN, STAR_HOLD_MS, STAR_TRIGGER_R, STEP_UP, TANK_SPEED, TANK_TURN_RATE } from '../vars.js';
 import { advance, angDist } from './math/sphere.js';
 import { V3, add, copy, cross, dot, fromTuple, length, lerp, normalize, reproject, scale, set,
@@ -14,6 +15,9 @@ export class Tank {
     aim = vec(0, 0, -1);
     move = vec();
     turn = 0;
+    dashCd = 0;
+    dashTime = 0;
+    dashDirection = vec();
     h = 0;
     vy = 0;
     planet = 0;
@@ -37,6 +41,7 @@ export class Tank {
     missingPlayer = false;
     username = 'User';
     lastInput = 0;
+    clientAirborne = false;
     private diff: Array<string | number> = [];
     private syncFields: Array<string> = [];
     private tmp = vec();
@@ -45,6 +50,9 @@ export class Tank {
     constructor(public id: number) {}
     get isDead(): boolean {
         return this.state === TankState.DEAD;
+    }
+    get syncSpeedLimit(): number {
+        return this.dashCd > DASH_COOLDOWN - DASH_DURATION * 2 ? DASH_SPEED : TANK_SPEED;
     }
     get vulnerable(): boolean {
         return !this.isDead && this.state !== TankState.FLYING && this.state !== TankState.FALLING &&
@@ -60,7 +68,11 @@ export class Tank {
         this.h = 0;
         this.vy = 0;
         this.turn = 0;
+        this.dashCd = 0;
+        this.dashTime = 0;
+        set(this.dashDirection, 0, 0, 0);
         this.state = TankState.GROUNDED;
+        this.clientAirborne = false;
         this.iFrames = IFRAMES_SPAWN;
         this.starCd = STAR_COOLDOWN;
         this.flightStar = -1;
@@ -72,6 +84,15 @@ export class Tank {
         this.stealth = 0;
         this.bulletPowerup = Powerup.NONE;
         this.ammo = 0;
+    }
+    dash(direction: V3): boolean {
+        if (this.dashCd > 0 || this.state !== TankState.GROUNDED && this.state !== TankState.AIRBORNE) return false;
+        tangentProject(this.dashDirection, direction, this.dir);
+        if (length(this.dashDirection) < .05) return false;
+        normalize(this.dashDirection, this.dashDirection);
+        this.dashCd = DASH_COOLDOWN;
+        this.dashTime = DASH_DURATION;
+        return true;
     }
     leap(): void {
         if (this.state !== TankState.GROUNDED) return;
@@ -88,6 +109,8 @@ export class Tank {
         this.flightStar = star;
         this.flightStart = time;
         this.state = TankState.FLYING;
+        this.clientAirborne = false;
+        this.dashTime = 0;
         this.h = 0;
         this.vy = 0;
         this.firing = false;
@@ -100,7 +123,16 @@ export class Tank {
         this.fireCd = Math.max(0, this.fireCd - dt);
         this.shield = Math.max(0, this.shield - dt);
         this.stealth = Math.max(0, this.stealth - dt);
+        this.dashCd = Math.max(0, this.dashCd - dt);
+        const dashFraction = dt > 0 ? Math.min(dt, this.dashTime) / dt : 0;
+        this.dashTime = Math.max(0, this.dashTime - dt);
+        if (this.dashTime < 1e-6) this.dashTime = 0;
         if (this.isDead) return;
+        if (this.clientAirborne && this.state === TankState.AIRBORNE) {
+            if (this.turn) rotate(this.fwd, this.fwd, this.dir, this.turn * TANK_TURN_RATE * dt);
+            else if (length(this.vel) > .05) reproject(this.fwd, this.vel, this.dir);
+            return;
+        }
         if (this.state === TankState.FLYING) {
             const star = world.stars[this.flightStar], path = world.paths.get(star);
             if (path && now >= this.flightStart + STAR_HOLD_MS + path.duration * 1000) {
@@ -124,7 +156,10 @@ export class Tank {
         const moving = length(this.tmp) > 0.05;
         if (moving) normalize(this.tmp, this.tmp);
         scale(this.tmp, this.tmp, moving ? TANK_SPEED : 0);
-        if (grounded && p.tuning.friction < 1) {
+        if (dashFraction > 0) {
+            reproject(this.dashDirection, this.dashDirection, this.dir);
+            scale(this.vel, this.dashDirection, TANK_SPEED + (DASH_SPEED - TANK_SPEED) * dashFraction);
+        } else if (grounded && p.tuning.friction < 1) {
             scale(this.vel, this.vel, Math.exp(-ACCEL * p.tuning.friction * dt));
             if (moving) add(this.vel, this.vel, scale(this.tmp, this.tmp, ACCEL * dt));
             const speed = length(this.vel);
@@ -135,6 +170,10 @@ export class Tank {
         }
         copy(this.oldDir, this.dir);
         advance(this.dir, this.vel, dt, p.radius + Math.max(this.h, 0));
+        if (dashFraction > 0) {
+            reproject(this.dashDirection, this.vel, this.dir);
+            if (this.dashTime === 0) scale(this.vel, this.vel, TANK_SPEED / length(this.vel));
+        }
         // Parallel transport the independent hull and turret headings.
         cross(this.axis, this.oldDir, this.dir);
         const sine = length(this.axis), cosine = dot(this.oldDir, this.dir);
@@ -195,7 +234,8 @@ export class Tank {
             ...tuple(this.fwd).map(round), ...tuple(this.aim).map(round), round(this.vy), this.state,
             round(this.iFrames), round(this.shield), round(this.stealth), this.bulletPowerup, this.ammo,
             Number(this.ready), this.score, this.color, Number(this.missingPlayer), this.username,
-            this.flightStar, this.flightStart, round(this.fallTime), Number(this.pounding), round(this.fireCd)];
+            this.flightStar, this.flightStart, round(this.fallTime), Number(this.pounding), round(this.fireCd),
+            round(this.dashCd), round(this.dashTime), ...tuple(this.dashDirection).map(round)];
         const [result, next] = performStateDiff(data, diff, this.diff);
         if (diff) this.diff = next;
         return result;
@@ -229,5 +269,8 @@ export class Tank {
         this.fallTime = n[29];
         this.pounding = !!n[30];
         this.fireCd = n[31];
+        this.dashCd = n[32] ?? 0;
+        this.dashTime = n[33] ?? 0;
+        set(this.dashDirection, n[34] ?? 0, n[35] ?? 0, n[36] ?? 0);
     }
 }
