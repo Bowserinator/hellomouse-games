@@ -26,4 +26,3 @@ TODO.txt
 errors.txt
 .pi
 tests/*
-!tests/galaxy_tanks/
