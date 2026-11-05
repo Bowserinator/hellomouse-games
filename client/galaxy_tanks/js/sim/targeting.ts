@@ -1,10 +1,11 @@
 import { TankState } from '../types.js';
 import { advance, angDist } from './math/sphere.js';
+import type { Rng } from './math/rng.js';
 import type { Bullet } from './bullet.js';
 import { distance, rotate, scale, tangentBasis, vec } from './math/vec3.js';
 import { Tank } from './tank.js';
 import { World } from './world/planet.js';
-import { MAGNET_ARM_TIME } from '../vars.js';
+import { MAGNET_ARM_TIME, ROCKET_COUNT, ROCKET_SCATTER_RANGE } from '../vars.js';
 
 export function nearestTarget(tank: Tank, tanks: Array<Tank>, world: World): Tank | undefined {
     const origin = world.position(tank.planet, tank.dir, tank.h), pos = vec();
@@ -36,15 +37,26 @@ export function magnetTarget(bullet: Bullet, tanks: Array<Tank>): Tank | undefin
     return target;
 }
 
-export function rocketTargets(tank: Tank, tanks: Array<Tank>, world: World) {
+/** Impact points around the nearest target. Without an `rng` only the guaranteed hit on the target is returned */
+export function rocketTargets(tank: Tank, tanks: Array<Tank>, world: World, rng?: Rng) {
     const target = nearestTarget(tank, tanks, world);
     if (!target) return [];
-    const [axis] = tangentBasis(target.dir);
-    return [0, 1, 2].map(i => {
+    const [axis] = tangentBasis(target.dir), radius = world.desc.planets[target.planet].radius;
+    const strikes = [{ planet: target.planet, dir: { ...target.dir } }];
+    for (let i = 1; rng && i < ROCKET_COUNT; i++) {
         const dir = { ...target.dir }, heading = vec();
-        rotate(heading, axis, dir, i * Math.PI * 2 / 3);
-        scale(heading, heading, 2.5);
-        advance(dir, heading, 1, world.desc.planets[target.planet].radius);
-        return { planet: target.planet, dir };
-    });
+        rotate(heading, axis, dir, rng.range(0, Math.PI * 2));
+        scale(heading, heading, rng.range(ROCKET_SCATTER_RANGE[0], ROCKET_SCATTER_RANGE[1]));
+        advance(dir, heading, 1, radius);
+        strikes.push({ planet: target.planet, dir });
+    }
+    return strikes;
+}
+
+/** Planet a meteor shower falls on: the shooter's own if an enemy is on it, else a random enemy's */
+export function meteorPlanet(tank: Tank, tanks: Array<Tank>, rng: Rng): number {
+    const enemies = tanks.filter(other => other !== tank && !other.isDead && other.stealth <= 0 &&
+        other.state !== TankState.FLYING && other.state !== TankState.FALLING);
+    if (!enemies.length || enemies.some(other => other.planet === tank.planet)) return tank.planet;
+    return rng.pick(enemies).planet;
 }

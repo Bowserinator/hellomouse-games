@@ -107,10 +107,10 @@
                 <li>Rounds end when one or fewer players are left</li>
                 <li>You get an extra point for surviving to the end of the round</li>
                 <li>Carry up to 5 normal rounds. One round reloads every 2 seconds while inventory is below full</li>
-                <li>Pick up powerups to get special shots / abilities. Most weapon pickups grant one shot; 360 Fire grants five</li>
+                <li>Pick up powerups to get special shots / abilities. Most weapon pickups grant one shot; 360 Fire grants five and Landmine grants three</li>
                 <li>Powerups spawn randomly in pairs every 20 seconds, up to 8 items on the map</li>
                 <li>Bullets are destroyed when they hit another bullet (with some exceptions)</li>
-                <li>All bullet-type powerups conflict, and shield + stealth conflict. Getting a new conflicting powerup will replace the old one.</li>
+                <li>All bullet-type powerups conflict, and shield + stealth + chrono dampener conflict. Getting a new conflicting powerup will replace the old one.</li>
             </ul>
 
             <h2>Powerups</h2>
@@ -133,7 +133,7 @@
                 </li>
                 <li>
                     <img src="/tanks/img/items/rocket.png" class="powerup-tutorial-img">
-                    <b>Rocket Artillery</b> - Calls down three rockets around the nearest player. Impact zones are marked
+                    <b>Rocket Artillery</b> - Calls down four rockets: one directly on the nearest player and three at random spots 1-2 tank widths away from them. Impact zones are marked
                 </li>
                 <li>
                     <img src="/tanks/img/items/shotgun.png" class="powerup-tutorial-img">
@@ -149,11 +149,23 @@
                 </li>
                 <li>
                     <img src="/tanks/img/items/meteor_rain.png" class="powerup-tutorial-img">
-                    <b>Meteor Rain</b> - Summons 20 meteors over 10 seconds at random spots around the planet.
+                    <b>Meteor Rain</b> - Summons 20 meteors over 10 seconds at random spots around a planet. Targets your planet only if another player is on it, otherwise the planet a random player is on.
                 </li>
                 <li>
                     <img src="/tanks/img/items/360.png" class="powerup-tutorial-img">
                     <b>360 Fire</b> - Turns your turret into a cross for 5 shots, each firing in four directions at once.
+                </li>
+                <li>
+                    <img src="/tanks/img/items/chrono_dampener.png" class="powerup-tutorial-img">
+                    <b>Chrono Dampener</b> - Surrounds you with a thin blue field, 3 tank widths in radius, for 10s. Other players and their bullets move at half speed inside it, and return to full speed when they leave
+                </li>
+                <li>
+                    <img src="/tanks/img/items/landmine.png" class="powerup-tutorial-img">
+                    <b>Landmine</b> - Plants a mine in the ground under you. You get three. Mines arm after 1s (they flash until then) and explode when another player touches them, in a blast 1.5x the size of the bomb's. They also explode if shot at any time
+                </li>
+                <li>
+                    <img src="/tanks/img/items/seismic_shockwave.png" class="powerup-tutorial-img">
+                    <b>Seismic Shockwave</b> - Sends out a growing laser ring that wraps around the planet to the opposite pole. It passes through obstacles, destroys bullets it sweeps past, and kills players it touches
                 </li>
             </ul>
         </div>

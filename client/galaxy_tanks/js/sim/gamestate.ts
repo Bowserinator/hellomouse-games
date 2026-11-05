@@ -1,10 +1,12 @@
 import { BulletType, GalaxySync, Powerup, TankState } from '../types.js';
-import { DELAY_AFTER_WIN_ROUND, DELAY_POWERUP_SPAWN, ITEM_FLOAT_HEIGHT, MAGNET_ARM_TIME, MAGNET_CHASE_ACCEL,
+import { BOMB_BLAST_RADIUS, DELAY_AFTER_WIN_ROUND, DELAY_POWERUP_SPAWN, ITEM_FLOAT_HEIGHT, LANDMINE_ARM_TIME,
+    LANDMINE_BLAST_RADIUS, LANDMINE_RADIUS, MAGNET_ARM_TIME, MAGNET_CHASE_ACCEL,
     MAGNET_CHASE_SPEED, LASER_LENGTH, MAX_NORMAL_AMMO, MAX_POWERUP_ITEMS, METEOR_COUNT, METEOR_SPAWN_ATTEMPTS,
     METEOR_SPREAD_MS, MUZZLE_H, MUZZLE_OFFSET,
     NORMAL_RELOAD_TIME, POUND_KNOCKBACK, POUND_RADIUS, PRE_ROUND_DELAY, ROUND_SETTLE_TIME,
-    TANK_FIRE_DELAY, TANK_HEIGHT, TANK_RADIUS } from '../vars.js';
-import { Bullet, BULLETS, PowerupItem, isStrike } from './bullet.js';
+    SEISMIC_SPEED, SEISMIC_START_RADIUS, SHOTGUN_MUZZLE_OFFSET, TANK_FIRE_DELAY, TANK_HEIGHT, TANK_RADIUS } from '../vars.js';
+import { Bullet, BULLETS, PowerupItem, isStrike, sharesAltitude, shockwaveArc } from './bullet.js';
+import { bulletTimeScale, timeScaleAt } from './chrono.js';
 import { generateMap } from './mapgen/index.js';
 import { MapDesc } from './mapgen/map-desc.js';
 import { Rng } from './math/rng.js';
@@ -14,7 +16,7 @@ import { V3, copy, dot, fromTuple, length, normalize, reflect, reproject, rotate
 import { CROSS_FIRE_ANGLES, SPAWNABLE_POWERUPS, givePowerup, POWERUPS } from './powerups.js';
 import { Tank } from './tank.js';
 import { World } from './world/planet.js';
-import { magnetTarget, nearestTarget, rocketTargets } from './targeting.js';
+import { magnetTarget, meteorPlanet, nearestTarget, rocketTargets } from './targeting.js';
 
 export interface SimEvent {
     type: GalaxySync; [key: string]: unknown;
@@ -109,7 +111,7 @@ export class GameState {
         }
         for (const t of this.tanks) {
             const previous = t.state, pounding = t.pounding;
-            t.update(this.world, dt, now);
+            t.update(this.world, dt, now, true, timeScaleAt(this.tanks, this.world, t.planet, t.dir, t.id));
             if (pounding && previous === TankState.AIRBORNE && t.state === TankState.GROUNDED) this.groundPound(t);
             if (t.state === TankState.FLYING && previous !== TankState.FLYING)
                 this.events.push({ type: GalaxySync.FLIGHT_START, id: t.id, star: t.flightStar, t0: now });
@@ -220,18 +222,29 @@ export class GameState {
                 this.events.push({ type: GalaxySync.TELEPORT_SWAP, a: tank.id, b: target.id });
             }
         } else if (type === BulletType.ROCKET)
-            for (const target of rocketTargets(tank, this.tanks, this.world))
+            for (const target of rocketTargets(tank, this.tanks, this.world, this.rng))
                 this.addBullet(tank, type, target.dir, target.planet, 20, tank.aim);
-        else if (type === BulletType.METEOR)
+        else if (type === BulletType.METEOR) {
+            const planet = meteorPlanet(tank, this.tanks, this.rng);
             for (let i = 0; i < METEOR_COUNT; i++)
-                this.meteors.push({ owner: tank.id, planet: tank.planet,
-                    at: this.now + this.rng.range(0, METEOR_SPREAD_MS) });
+                this.meteors.push({ owner: tank.id, planet, at: this.now + this.rng.range(0, METEOR_SPREAD_MS) });
+        } else if (type === BulletType.LANDMINE)
+            this.addBullet(tank, type, tank.dir, tank.planet,
+                this.world.colliders.supportHeight(tank.planet, tank.dir, 0.1, tank.h), tank.aim);
+        else if (type === BulletType.SEISMIC)
+            this.addBullet(tank, type, tank.dir, tank.planet, tank.h + MUZZLE_H, tank.aim);
         else {
-            const angles = powerup === Powerup.SHOTGUN ? Array.from({ length: 7 }, (_, i) => (i - 3) * 14 / 3 * Math.PI / 180)
+            const angles = powerup === Powerup.SHOTGUN
+                ? Array.from({ length: 7 }, (_, i) => (i - 3) * 14 / 3 * Math.PI / 180)
                 : powerup === Powerup.CROSS_FIRE ? CROSS_FIRE_ANGLES : [0];
+            const altitude = tank.h + MUZZLE_H, radius = this.world.desc.planets[tank.planet].radius;
+            const offset = powerup === Powerup.SHOTGUN
+                ? SHOTGUN_MUZZLE_OFFSET * (1 + altitude / radius) : MUZZLE_OFFSET;
             for (const angle of angles) {
                 rotate(this.tmp, tank.aim, tank.dir, angle);
-                this.addBullet(tank, type, tank.dir, tank.planet, tank.h + MUZZLE_H, this.tmp, MUZZLE_OFFSET);
+                const bullet = this.addBullet(tank, type, tank.dir, tank.planet, altitude, this.tmp, offset);
+                if (powerup === Powerup.SHOTGUN)
+                    scale(bullet.vel, reproject(bullet.vel, bullet.vel, bullet.dir), BULLETS[type].speed);
             }
         }
         if (powerup !== Powerup.NONE && --tank.ammo <= 0) tank.bulletPowerup = Powerup.NONE;
@@ -298,26 +311,65 @@ export class GameState {
             this.addBullet(owner, BulletType.SMALL, bullet.dir, bullet.planet, bullet.altitude, this.tmp);
         }
     }
+    private landmineTriggered(mine: Bullet): boolean {
+        const r = this.world.desc.planets[mine.planet].radius;
+        return this.tanks.some(tank => !tank.isDead && tank.planet === mine.planet &&
+            tank.state !== TankState.FLYING && tank.state !== TankState.FALLING &&
+            tank.h <= mine.altitude + LANDMINE_RADIUS && tank.h + TANK_HEIGHT >= mine.altitude &&
+            angDist(tank.dir, mine.dir) * r < TANK_RADIUS + LANDMINE_RADIUS);
+    }
+    private sweepShockwave(wave: Bullet, bullets: Array<Bullet>, removed: Set<number>, dt: number): void {
+        const reach = this.world.desc.planets[wave.planet].radius + wave.altitude;
+        const to = shockwaveArc(wave), from = Math.max(SEISMIC_START_RADIUS, to - SEISMIC_SPEED * dt);
+        const thickness = BULLETS[wave.type].radius;
+        for (const tank of this.tanks) {
+            if (tank.isDead || tank.planet !== wave.planet || tank.state === TankState.FLYING ||
+                tank.state === TankState.FALLING || wave.altitude < tank.h - 0.1 ||
+                wave.altitude > tank.h + TANK_HEIGHT) continue;
+            const arc = angDist(tank.dir, wave.dir) * reach, margin = TANK_RADIUS + thickness;
+            if (arc >= from - margin && arc <= to + margin) this.killTank(tank, wave.owner);
+        }
+        for (const other of bullets) {
+            if (removed.has(other.id) || other.planet !== wave.planet || isStrike(other.type) ||
+                other.type === BulletType.LASER || other.type === BulletType.SEISMIC ||
+                !sharesAltitude(wave, other)) continue;
+            const before = angDist(wave.dir, other.previous) * reach, after = angDist(wave.dir, other.dir) * reach;
+            const margin = BULLETS[other.type].radius + thickness;
+            if (from <= Math.max(before, after) + margin && Math.min(before, after) - margin <= to)
+                removed.add(other.id);
+        }
+    }
     private updateBullets(dt: number): void {
         const removed = new Set<number>(), initial = [...this.bullets];
         let bounced = false;
         for (const b of initial) {
             if (removed.has(b.id)) continue;
             const p = this.world.desc.planets[b.planet], config = BULLETS[b.type];
+            const step = dt * bulletTimeScale(b, this.tanks, this.world);
             if (b.type === BulletType.MAGNET && b.age >= MAGNET_ARM_TIME) {
                 const target = magnetTarget(b, this.tanks);
                 if (target) {
-                    const speed = Math.min(MAGNET_CHASE_SPEED, length(b.vel) + MAGNET_CHASE_ACCEL * dt);
+                    const speed = Math.min(MAGNET_CHASE_SPEED, length(b.vel) + MAGNET_CHASE_ACCEL * step);
                     scale(b.vel, reproject(this.tmp, target.dir, b.dir), speed);
                 } else set(b.vel, 0, 0, 0);
             }
             if (isStrike(b.type)) {
-                b.age += dt;
+                b.age += step;
                 if (b.age >= config.life) {
                     const impact = new Bullet(b.id, b.owner, b.planet, b.dir, b.vel, 0.3, b.type, b.color);
                     this.explode(impact, config.radius);
                     removed.add(b.id);
                 }
+                continue;
+            }
+            if (b.type === BulletType.LANDMINE) {
+                b.age += dt;
+                if (b.age >= LANDMINE_ARM_TIME && this.landmineTriggered(b)) removed.add(b.id);
+                continue;
+            }
+            if (b.type === BulletType.SEISMIC) {
+                b.age += dt;
+                if (b.age >= b.lifetime(p.radius)) removed.add(b.id);
                 continue;
             }
             const laser = b.type === BulletType.LASER;
@@ -347,7 +399,7 @@ export class GameState {
                     for (const other of initial) {
                         if (other.planet !== b.planet ||
                             isStrike(other.type) || other.type === BulletType.LASER ||
-                            Math.abs(other.altitude - b.altitude) > 0.5) continue;
+                            other.type === BulletType.SEISMIC || !sharesAltitude(other, b)) continue;
                         for (let k = 0; k <= 8; k++) {
                             slerpDir(this.posA, b.previous, b.dir, k / 8);
                             if (angDist(this.posA, other.dir) * (p.radius + b.altitude) <
@@ -372,8 +424,8 @@ export class GameState {
                 removed.add(b.id);
                 continue;
             }
-            b.age += dt;
-            let remaining = dt;
+            b.age += step;
+            let remaining = step;
             for (let step = 0; step < 8 && remaining > 1e-8; step++) {
                 copy(b.previous, b.dir);
                 advance(b.dir, b.vel, remaining, p.radius + b.altitude);
@@ -406,12 +458,16 @@ export class GameState {
             }
             if (b.age >= b.lifetime(p.radius)) removed.add(b.id);
         }
+        for (const wave of initial)
+            if (wave.type === BulletType.SEISMIC) this.sweepShockwave(wave, initial, removed, dt);
         for (let i = 0; i < initial.length; i++)
             for (let j = i + 1; j < initial.length; j++) {
                 const a = initial[i], b = initial[j];
                 if (removed.has(a.id) || removed.has(b.id) || a.planet !== b.planet ||
                     isStrike(a.type) || isStrike(b.type) ||
-                    Math.abs(a.altitude - b.altitude) > 0.5) continue;
+                    a.type === BulletType.SEISMIC || b.type === BulletType.SEISMIC ||
+                    (a.type === BulletType.LANDMINE && b.type === BulletType.LANDMINE) ||
+                    !sharesAltitude(a, b)) continue;
                 // Test synchronous swept positions, so fast crossing rounds cancel too.
                 for (let k = 0; k <= 12; k++) {
                     slerpDir(this.posA, a.previous, a.dir, k / 12);
@@ -429,9 +485,10 @@ export class GameState {
         for (const b of initial)
             if (removed.has(b.id))
                 if (b.type === BulletType.BOMB) {
-                    this.explode(b, 3);
+                    this.explode(b, BOMB_BLAST_RADIUS);
                     this.splitBomb(b);
                 } else if (b.type === BulletType.MAGNET) this.explode(b, 3.5);
+                else if (b.type === BulletType.LANDMINE) this.explode(b, LANDMINE_BLAST_RADIUS);
         this.bullets = this.bullets.filter(b => !removed.has(b.id));
         if (removed.size) this.events.push({ type: GalaxySync.REMOVE_BULLETS, ids: [...removed] });
         if (bounced) this.events.push({ type: GalaxySync.SYNC_ALL_BULLETS, bullets: this.bullets });

@@ -10,6 +10,7 @@ import { GameView } from './render/game-view.js';
 import { makePalette } from './render/tank/tank-rig.js';
 import { DEFAULT_TANK_STYLE } from './render/tank/tank-style.js';
 import { Lobby, el } from './lobby.js';
+import { bulletTimeScale, timeScaleAt } from './sim/chrono.js';
 import { POWERUPS } from './sim/powerups.js';
 import { DASH_COOLDOWN, MAGNET_ARM_TIME, TANK_COLORS, TANK_TURN_RATE } from './vars.js';
 import { sound, setGlobalVolume, unlockLoops } from './audio/sound.js';
@@ -295,7 +296,8 @@ connection.onmessage = event => {
         const artillery = m.powerup === Powerup.ROCKET || m.powerup === Powerup.METEOR_RAIN;
         const name = m.powerup === Powerup.SHOTGUN ? 'tank_shotgun.mp3' : m.powerup === Powerup.FAST
             ? 'railgun.mp3' : m.powerup === Powerup.LASER ? 'laser.ogg' : artillery
-                ? 'radio.ogg' : m.powerup === Powerup.TELEPORT ? 'teleport.mp3' : 'tank_fire_normal.mp3';
+                ? 'radio.ogg' : m.powerup === Powerup.TELEPORT ? 'teleport.mp3' : m.powerup === Powerup.LANDMINE
+                    ? 'beep.mp3' : m.powerup === Powerup.SEISMIC_SHOCKWAVE ? 'explode3.mp3' : 'tank_fire_normal.mp3';
         sound(name, tank && world?.position(tank.planet, tank.dir, tank.h), view.camera.camera.position);
         if (tank && world) {
             const pos = world.position(tank.planet, tank.dir, tank.h + 1.1);
@@ -317,7 +319,7 @@ connection.onmessage = event => {
         }
     else if (m.type === GalaxySync.GIVE_POWERUP) {
         const tank = tanks.find(t => t.id === m.id);
-        if (tank && world && m.powerup === Powerup.SHIELD)
+        if (tank && world && (m.powerup === Powerup.SHIELD || m.powerup === Powerup.CHRONO_DAMPENER))
             sound('shield.mp3', world.position(tank.planet, tank.dir, tank.h), view.camera.camera.position);
         if (tank && world) view.effects.sparks(world.position(tank.planet, tank.dir, tank.h + 1), tank.dir,
             makePalette(tank.color)[0], Date.now() + clockOffset, 24, 1.2);
@@ -477,7 +479,7 @@ function draw(time: number): void {
                 }
                 if (localJump && self.state === TankState.AIRBORNE) jumpElapsed += dt;
                 const wasAirborne = self.state === TankState.AIRBORNE;
-                self.update(world, dt, now, false);
+                self.update(world, dt, now, false, timeScaleAt(tanks, world, self.planet, self.dir, self.id));
                 if (!localJump && self.state === TankState.AIRBORNE && self.vy <= 0) {
                     localJump = ++jumpSequence;
                     jumpElapsed = 0;
@@ -504,7 +506,7 @@ function draw(time: number): void {
             }
         }
         for (const b of bullets) {
-            b.update(dt, world.desc.planets[b.planet].radius);
+            b.update(dt * bulletTimeScale(b, tanks, world), world.desc.planets[b.planet].radius);
             if ((b.type === BulletType.MAGNET || b.type === BulletType.BOMB) &&
                 now - (mineBeeps.get(b.id) ?? 0) >
                     (b.type === BulletType.BOMB ? 450 : b.age < MAGNET_ARM_TIME ? 700 : 350)) {

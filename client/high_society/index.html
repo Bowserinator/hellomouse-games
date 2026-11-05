@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="High Society — outbid your rivals for status in this auction game. Don't be the poorest!">
+    <meta name="author" content="Bowserinator">
+    <meta name="theme-color" content="#0e1428">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Hellomouse Games">
+    <meta property="og:title" content="High Society - Hellomouse Games">
+    <meta property="og:description" content="Outbid your rivals for status in this auction game. Don't be the poorest!">
+    <meta property="og:image" content="https://games.hellomouse.net/high_society/img/thumbnail.png">
+    <meta property="og:image:width" content="560">
+    <meta property="og:image:height" content="300">
+    <meta property="og:image:alt" content="High Society card game">
+    <meta property="og:url" content="https://games.hellomouse.net/high_society/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="High Society - Hellomouse Games">
+    <meta name="twitter:description" content="Outbid your rivals for status in this auction game. Don't be the poorest!">
+    <meta name="twitter:image" content="https://games.hellomouse.net/high_society/img/thumbnail.png">
+    <title>High Society</title>
+    <link rel="icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/index.css">
+    <script src="/shared/js/index.js" defer></script>
+    <script src="js/game.js" type="module"></script>
+</head>
+<body>
+    <nav aria-label="Main navigation">
+        <a href="/" target="_blank" rel="noopener">More games ↗</a>
+        <span>Hellomouse · Private members' club</span>
+        <button id="rules-button" type="button">Rules</button>
+    </nav>
+    <noscript>This game requires JavaScript.</noscript>
+    <p id="connection-status" role="status"></p>
+    <main>
+        <section id="lobby" aria-label="Game lobby">
+            <h1>High Society</h1>
+            <section class="lobby-card">
+                <h2>The guest list</h2>
+                <ol id="players"></ol>
+                <form id="username-form">
+                    <label for="username">Your name</label>
+                    <div class="input-row">
+                        <input id="username" maxlength="16" pattern="[A-Za-z0-9_]+" required autocomplete="nickname">
+                        <button type="submit">Set name</button>
+                    </div>
+                </form>
+                <label for="invite">Invite your guests</label>
+                <div class="input-row">
+                    <input id="invite" readonly>
+                    <button id="copy-invite" type="button">Copy invite</button>
+                </div>
+                <button id="new-room" type="button" hidden>Room is full — start a new room</button>
+            </section>
+            <section class="lobby-card">
+                <h2>The house rules</h2>
+                <p>3–5 guests.</p>
+                <label for="seats-option">Seats at the table</label>
+                <select id="seats-option">
+                    <option value="3">3 guests</option>
+                    <option value="4" selected>4 guests</option>
+                    <option value="5">5 guests</option>
+                </select>
+                <div class="button-row">
+                    <button id="ready" type="button">Ready</button>
+                    <button id="start-game" class="primary" type="button">Start game</button>
+                </div>
+                <p id="start-help" role="status"></p>
+            </section>
+        </section>
+        <section id="game" aria-label="Auction table" hidden>
+            <div id="world-frame">
+                <div id="world">
+                    <div id="table-art" aria-hidden="true"></div>
+                    <section id="center" aria-label="Current auction">
+                        <p id="round-label" class="eyebrow"></p>
+                        <div id="end-countdown" aria-label="End cards revealed"></div>
+                        <div id="auction-card"></div>
+                        <p id="highest" class="plaque"></p>
+                        <p id="auction-help"></p>
+                    </section>
+                    <div id="seats"></div>
+                </div>
+            </div>
+        </section>
+        <div id="camera-controls" aria-label="Table camera" hidden>
+            <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
+            <button id="recenter" type="button">Recenter</button>
+            <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+        </div>
+        <p id="spectator" role="status" hidden></p>
+        <p id="waiting" role="status" hidden></p>
+        <button id="table-rematch" type="button" hidden>Back to lobby</button>
+        <details id="log-panel" hidden>
+            <summary>The evening's record</summary>
+            <ol id="log"></ol>
+        </details>
+    </main>
+    <section id="hud" aria-label="Your money" hidden>
+        <p id="turn-status" role="status" aria-live="polite"></p>
+        <div id="auto-pass" role="status" hidden>
+            <span id="auto-pass-text"></span>
+            <div class="auto-pass-track" aria-hidden="true"><span id="auto-pass-bar"></span></div>
+        </div>
+        <p id="bid-reason" hidden>You can’t outbid. You will pass automatically.</p>
+        <div id="hand"></div>
+        <div id="discard-choices" class="hand-tools" hidden></div>
+        <div id="replacement-controls" class="hand-tools" hidden></div>
+        <p id="bid-total"></p>
+        <div class="button-row hand-tools">
+            <button id="pass" type="button">Pass [P]</button>
+            <button id="bid" class="primary" type="button" aria-describedby="bid-reason">Bid [B]</button>
+        </div>
+    </section>
+    <p id="notice" role="alert" hidden></p>
+    <div id="preview" hidden></div>
+    <dialog id="rules-modal" aria-labelledby="rules-title">
+        <h2 id="rules-title">The Art of High Society</h2>
+        <ul>
+            <li>Each guest begins with 80K: money cards of 1–10K and 25K.</li>
+            <li>Keep your remaining money secret.</li>
+        </ul>
+        <h3>Luxury &amp; prestige</h3>
+        <ul>
+            <li>On your turn, add one or more money cards to your bid, or pass.</li>
+            <li>Your total must exceed the highest bid.</li>
+            <li>You cannot exchange cards already on the table.</li>
+            <li>Passing returns your bid to your hand and takes you out of this auction.</li>
+            <li>The last guest wins, pays their bid, and starts the next auction, and yes, a card can still be won for free.</li>
+        </ul>
+        <h3>Disgrace</h3>
+        <ul>
+            <li>Bid to avoid the card.</li>
+            <li>The first guest to pass takes the disgrace and gets their bid back.</li>
+            <li>Everyone else pays their bids.</li>
+            <li>The taker starts the next auction.</li>
+            <li>Faux Pas discards one of your luxuries, or your next luxury if you have none.</li>
+            <li>Passé subtracts 5 status.</li>
+            <li>Scandale halves your final status.</li>
+        </ul>
+        <h3>The end of the evening</h3>
+        <ul>
+            <li>The fourth dark-green card ends the game immediately.</li>
+            <li>Nobody receives it.</li>
+            <li>Guests tied for the least remaining money are cast out; if everyone has the same money, nobody is cast out.</li>
+            <li>Status = (luxury total − Passé 5) × 2 for each prestige, then ÷ 2 for Scandale.</li>
+            <li>Fractions round toward zero.</li>
+            <li>The highest status wins; ties use remaining money, then the highest luxury card.</li>
+            <li>A remaining tie is a shared victory.</li>
+        </ul>
+        <ul>
+            <li>Keyboard: Space or Enter selects a money card. B bids. P passes. +/− zoom. 0 recenters the table.</li>
+        </ul>
+        <footer>Unofficial fan implementation of Reiner Knizia's High Society.</footer>
+        <button id="rules-close" type="button">Close rules</button>
+    </dialog>
+    <dialog id="win-modal" aria-labelledby="win-title">
+        <h2 id="win-title">The evening concludes</h2>
+        <div id="results"></div>
+        <p id="tiebreak"></p>
+        <div class="button-row">
+            <button id="win-rematch" type="button">Back to lobby</button>
+            <button id="win-close" type="button">View the table</button>
+        </div>
+    </dialog>
+</body>
+</html>

@@ -1,5 +1,5 @@
 import { BulletType, Powerup, PowerupCategory } from '../types.js';
-import { CROSS_FIRE_SHOTS } from '../vars.js';
+import { CHRONO_DURATION, CROSS_FIRE_SHOTS, LANDMINE_COUNT, STEALTH_DURATION } from '../vars.js';
 import { Tank } from './tank.js';
 export interface PowerupDef {
     category: PowerupCategory; bullet: BulletType; ammo: number; duration: number; icon: string;
@@ -17,8 +17,13 @@ export const POWERUPS: Record<Powerup, PowerupDef> = {
     [Powerup.TELEPORT]: gun(BulletType.TELEPORT, 1, 'teleport'),
     [Powerup.METEOR_RAIN]: gun(BulletType.METEOR, 1, 'meteor_rain'),
     [Powerup.CROSS_FIRE]: gun(BulletType.NORMAL, CROSS_FIRE_SHOTS, '360'),
+    [Powerup.LANDMINE]: gun(BulletType.LANDMINE, LANDMINE_COUNT, 'landmine'),
+    [Powerup.SEISMIC_SHOCKWAVE]: gun(BulletType.SEISMIC, 1, 'seismic_shockwave'),
     [Powerup.SHIELD]: { category: PowerupCategory.TANK, bullet: BulletType.NORMAL, ammo: 0, duration: 6, icon: 'shield' },
-    [Powerup.STEALTH]: { category: PowerupCategory.TANK, bullet: BulletType.NORMAL, ammo: 0, duration: 10, icon: 'stealth' }
+    [Powerup.STEALTH]: { category: PowerupCategory.TANK, bullet: BulletType.NORMAL, ammo: 0,
+        duration: STEALTH_DURATION, icon: 'stealth' },
+    [Powerup.CHRONO_DAMPENER]: { category: PowerupCategory.TANK, bullet: BulletType.NORMAL, ammo: 0,
+        duration: CHRONO_DURATION, icon: 'chrono_dampener' }
 };
 /** Powerups that can appear as pickups on the map */
 export const SPAWNABLE_POWERUPS = (Object.keys(POWERUPS).map(Number) as Array<Powerup>)
@@ -32,5 +37,6 @@ export function givePowerup(tank: Tank, powerup: Powerup): void {
     } else {
         tank.shield = powerup === Powerup.SHIELD ? POWERUPS[powerup].duration : 0;
         tank.stealth = powerup === Powerup.STEALTH ? POWERUPS[powerup].duration : 0;
+        tank.chrono = powerup === Powerup.CHRONO_DAMPENER ? POWERUPS[powerup].duration : 0;
     }
 }

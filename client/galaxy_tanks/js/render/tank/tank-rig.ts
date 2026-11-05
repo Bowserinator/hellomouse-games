@@ -155,7 +155,7 @@ export class TankRig {
                 .lerp(new THREE.Color(0x77dfff), 0.5);
         }
         this.turrets.forEach((mesh, key) => {
-            mesh.visible = key === tank.bulletPowerup;
+            mesh.visible = key === tank.bulletPowerup || (key === Powerup.CHRONO_DAMPENER && tank.chrono > 0);
         });
         this.shield.visible = tank.shield > 0 && (tank.shield > 1 || Math.floor(now / 80) % 2 === 0);
         this.shield.material.uniforms.time.value = now / 1000;

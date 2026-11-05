@@ -1,5 +1,5 @@
 import type * as T from 'three';
-import { Bullet, BULLETS, PowerupItem, isStrike, strikeAltitude } from '../sim/bullet.js';
+import { Bullet, BULLETS, PowerupItem, isStrike, shockwaveArc, strikeAltitude } from '../sim/bullet.js';
 import { Tank } from '../sim/tank.js';
 import { World } from '../sim/world/planet.js';
 import { BulletType, TankState } from '../types.js';
@@ -7,8 +7,10 @@ import { POWERUPS } from '../sim/powerups.js';
 import { makePalette } from './tank/tank-rig.js';
 import { V3, vec } from '../sim/math/vec3.js';
 import { commitInstances, disposeTree, mergeGeometry, streamInstances } from './geometry.js';
-import { BULLET_OUTLINE_PX, ITEM_FLOAT_HEIGHT, MAGNET_ARM_TIME, MAGNET_TRACK_WIDTH,
-    MAX_POWERUP_ITEMS, TANK_COLORS } from '../vars.js';
+import { BULLET_OUTLINE_PX, CHRONO_RADIUS, CHRONO_RING, ITEM_FLOAT_HEIGHT, LANDMINE_ARMED_COLOR,
+    LANDMINE_ARM_TIME, LANDMINE_FLASH_PERIOD, MAGNET_ARM_TIME, MAGNET_TRACK_WIDTH, MAX_PLAYERS,
+    MAX_POWERUP_ITEMS, SEISMIC_MAX_ACTIVE, SEISMIC_RING, TANK_COLORS } from '../vars.js';
+import { RingLines } from './ring-lines.js';
 import { magnetTarget } from '../sim/targeting.js';
 import { angDist, slerpDir } from '../sim/math/sphere.js';
 const ATLAS_SLOTS = Object.keys(POWERUPS).length, METEOR_TINT = 0xff6a1a;
@@ -27,6 +29,8 @@ export class Entities {
     private trackGlow = new THREE.InstancedMesh(this.tracks.geometry,
         new THREE.MeshBasicMaterial({ transparent: true, opacity: .22,
             blending: THREE.AdditiveBlending, depthWrite: false }), 2048);
+    private chronoFields = new RingLines(CHRONO_RING.COLOR, CHRONO_RING.OPACITY, MAX_PLAYERS);
+    private shockwaves = new RingLines(SEISMIC_RING.COLOR, SEISMIC_RING.OPACITY, MAX_PLAYERS * SEISMIC_MAX_ACTIVE);
     private itemMeshes = new Map<number, T.InstancedMesh>();
     private streamed: Array<T.InstancedMesh> = [];
     private disposed = false;
@@ -71,6 +75,7 @@ export class Entities {
             };
             img.src = `/tanks/img/items/${p.icon}.png`;
         }
+        this.root.add(this.chronoFields.mesh, this.shockwaves.mesh);
         this.outlines = new THREE.InstancedMesh(this.bullets.geometry, new THREE.ShaderMaterial({
             side: THREE.BackSide, uniforms: { uOutline: { value: new THREE.Vector2() } },
             vertexShader: `uniform vec2 uOutline;
@@ -110,8 +115,14 @@ export class Entities {
         now: number): void {
         let bi = 0, si = 0;
         this.fuses.count = this.lights.count = this.tracks.count = this.trackGlow.count = 0;
+        this.chronoFields.begin();
+        this.shockwaves.begin();
         for (let i = 0; i < Math.min(bullets.length, 512); i++) {
             const b = bullets[i];
+            if (b.type === BulletType.SEISMIC) {
+                this.shockwaves.add(world, b.planet, b.dir, shockwaveArc(b), b.altitude, SEISMIC_RING.THICKNESS);
+                continue;
+            }
             const altitude = isStrike(b.type) ? strikeAltitude(b) : b.altitude;
             world.position(b.planet, b.dir, altitude, this.pos);
             this.dummy.position.set(this.pos.x, this.pos.y, this.pos.z);
@@ -127,6 +138,9 @@ export class Entities {
             if (b.type === BulletType.MAGNET) this.tint.multiplyScalar(.35);
             if (b.type === BulletType.METEOR) this.tint.setHex(METEOR_TINT);
             if (b.type === BulletType.BOMB && b.age % .45 < .2) this.tint.copy(this.red);
+            if (b.type === BulletType.LANDMINE &&
+                (b.age < LANDMINE_ARM_TIME || Math.floor(b.age / LANDMINE_FLASH_PERIOD) % 2))
+                this.tint.setHex(LANDMINE_ARMED_COLOR);
             this.bullets.setMatrixAt(bi, this.dummy.matrix);
             this.outlines.setMatrixAt(bi, this.dummy.matrix);
             this.bullets.setColorAt(bi++, this.tint);
@@ -161,6 +175,13 @@ export class Entities {
         for (const tank of tanks)
             if (!tank.isDead && tank.stealth <= 0 && tank.state !== TankState.FLYING && si < 64)
                 this.shadow(world, tank.planet, tank.dir, 1.7, si++);
+        for (const tank of tanks)
+            if (tank.chrono > 0 && !tank.isDead && tank.state !== TankState.FLYING &&
+                tank.state !== TankState.FALLING && (tank.chrono > 1 || Math.floor(now / 80) % 2 === 0))
+                this.chronoFields.add(world, tank.planet, tank.dir, CHRONO_RADIUS, tank.h + 0.15,
+                    CHRONO_RING.THICKNESS);
+        this.chronoFields.commit();
+        this.shockwaves.commit();
         this.shadows.count = Math.min(si, 64);
         this.shadows.instanceMatrix.needsUpdate = true;
         this.shadows.geometry.getAttribute('aWarning').needsUpdate = true;

@@ -11,6 +11,12 @@ export function advance(dir: V3, vel: V3, dt: number, radius: number): void {
     set(vel, vel.x * c - x * speed * s, vel.y * c - y * speed * s, vel.z * c - z * speed * s);
     normalize(dir, dir);
 }
+/** Point at angular distance `theta` from `center`, `phi` around it, given a tangent basis (u, v) at `center` */
+export function circlePoint(out: V3, center: V3, u: V3, v: V3, theta: number, phi: number): V3 {
+    const c = Math.cos(theta), a = Math.sin(theta) * Math.cos(phi), b = Math.sin(theta) * Math.sin(phi);
+    return set(out, center.x * c + u.x * a + v.x * b, center.y * c + u.y * a + v.y * b,
+        center.z * c + u.z * a + v.z * b);
+}
 export function slerpDir(out: V3, a: V3, b: V3, t: number): V3 {
     const angle = angDist(a, b), sine = Math.sin(angle);
     if (angle < 1e-7) return set(out, a.x, a.y, a.z);

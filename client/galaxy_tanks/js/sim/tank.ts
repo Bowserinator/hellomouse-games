@@ -27,6 +27,7 @@ export class Tank {
     starCd = STAR_COOLDOWN;
     shield = 0;
     stealth = 0;
+    chrono = 0;
     bulletPowerup = Powerup.NONE;
     ammo = 0;
     normalAmmo = MAX_NORMAL_AMMO;
@@ -85,6 +86,7 @@ export class Tank {
         this.fallTime = 0;
         this.shield = 0;
         this.stealth = 0;
+        this.chrono = 0;
         this.bulletPowerup = Powerup.NONE;
         this.ammo = 0;
         this.normalAmmo = MAX_NORMAL_AMMO;
@@ -122,12 +124,14 @@ export class Tank {
         this.pounding = false;
         set(this.vel, 0, 0, 0);
     }
-    update(world: World, dt: number, now: number, allowLaunch = true): void {
+    /** `timeScale` slows how fast movement and jumps play out, without changing velocities */
+    update(world: World, dt: number, now: number, allowLaunch = true, timeScale = 1): void {
         this.iFrames = Math.max(0, this.iFrames - dt);
         this.starCd = Math.max(0, this.starCd - dt);
         this.fireCd = Math.max(0, this.fireCd - dt);
         this.shield = Math.max(0, this.shield - dt);
         this.stealth = Math.max(0, this.stealth - dt);
+        this.chrono = Math.max(0, this.chrono - dt);
         this.dashCd = Math.max(0, this.dashCd - dt);
         const dashFraction = dt > 0 ? Math.min(dt, this.dashTime) / dt : 0;
         this.dashTime = Math.max(0, this.dashTime - dt);
@@ -165,6 +169,7 @@ export class Tank {
             return;
         }
         const p = world.desc.planets[this.planet], grounded = this.state === TankState.GROUNDED;
+        const step = dt * timeScale;
         tangentProject(this.tmp, this.move, this.dir);
         const moving = length(this.tmp) > 0.05;
         if (moving) normalize(this.tmp, this.tmp);
@@ -173,16 +178,16 @@ export class Tank {
             reproject(this.dashDirection, this.dashDirection, this.dir);
             scale(this.vel, this.dashDirection, TANK_SPEED + (DASH_SPEED - TANK_SPEED) * dashFraction);
         } else if (grounded && p.tuning.friction < 1) {
-            scale(this.vel, this.vel, Math.exp(-ACCEL * p.tuning.friction * dt));
-            if (moving) add(this.vel, this.vel, scale(this.tmp, this.tmp, ACCEL * dt));
+            scale(this.vel, this.vel, Math.exp(-ACCEL * p.tuning.friction * step));
+            if (moving) add(this.vel, this.vel, scale(this.tmp, this.tmp, ACCEL * step));
             const speed = length(this.vel);
             if (speed > TANK_SPEED) scale(this.vel, this.vel, TANK_SPEED / speed);
         } else {
             const rate = grounded ? ACCEL : ACCEL * AIR_CONTROL;
-            lerp(this.vel, this.vel, this.tmp, 1 - Math.exp(-rate * dt));
+            lerp(this.vel, this.vel, this.tmp, 1 - Math.exp(-rate * step));
         }
         copy(this.oldDir, this.dir);
-        advance(this.dir, this.vel, dt, p.radius + Math.max(this.h, 0));
+        advance(this.dir, this.vel, step, p.radius + Math.max(this.h, 0));
         if (dashFraction > 0) {
             reproject(this.dashDirection, this.vel, this.dir);
             if (this.dashTime === 0) scale(this.vel, this.vel, TANK_SPEED / length(this.vel));
@@ -204,8 +209,8 @@ export class Tank {
         const support = world.colliders.supportHeight(this.planet, this.dir, 1.1, oldHeight + STEP_UP);
         if (grounded && this.h > support + STEP_UP) this.state = TankState.AIRBORNE;
         if (this.state === TankState.AIRBORNE) {
-            this.h += this.vy * dt - 0.5 * GRAVITY * dt * dt;
-            this.vy -= GRAVITY * dt;
+            this.h += this.vy * step - 0.5 * GRAVITY * step * step;
+            this.vy -= GRAVITY * step;
             if (this.vy <= 0 && this.h <= support) {
                 this.h = support;
                 this.vy = 0;
@@ -249,7 +254,7 @@ export class Tank {
             Number(this.ready), this.score, this.color, Number(this.missingPlayer), this.username,
             this.flightStar, this.flightStart, round(this.fallTime), Number(this.pounding), round(this.fireCd),
             round(this.dashCd), round(this.dashTime), ...tuple(this.dashDirection).map(round),
-            this.normalAmmo, round(this.reloadTime)];
+            this.normalAmmo, round(this.reloadTime), round(this.chrono)];
         const [result, next] = performStateDiff(data, diff, this.diff);
         if (diff) this.diff = next;
         return result;
@@ -288,5 +293,6 @@ export class Tank {
         set(this.dashDirection, n[34] ?? 0, n[35] ?? 0, n[36] ?? 0);
         this.normalAmmo = n[37] ?? MAX_NORMAL_AMMO;
         this.reloadTime = n[38] ?? 0;
+        this.chrono = n[39] ?? 0;
     }
 }

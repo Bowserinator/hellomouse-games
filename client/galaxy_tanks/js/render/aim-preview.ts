@@ -6,7 +6,7 @@ import { copy, reflect, reproject, rotate, scale, vec } from '../sim/math/vec3.j
 import { nearestTarget, rocketTargets } from '../sim/targeting.js';
 import { Tank } from '../sim/tank.js';
 import { World } from '../sim/world/planet.js';
-import { MUZZLE_H, MUZZLE_OFFSET } from '../vars.js';
+import { MUZZLE_H, MUZZLE_OFFSET, SHOTGUN_MUZZLE_OFFSET } from '../vars.js';
 import { disposeTree } from './geometry.js';
 import { makePalette } from './tank/tank-rig.js';
 
@@ -51,7 +51,8 @@ export class AimPreview {
             this.rings.instanceMatrix.needsUpdate = true;
             return;
         }
-        if (tank.bulletPowerup === Powerup.METEOR_RAIN) return;
+        if (tank.bulletPowerup === Powerup.METEOR_RAIN || tank.bulletPowerup === Powerup.LANDMINE ||
+            tank.bulletPowerup === Powerup.SEISMIC_SHOCKWAVE) return;
         if (tank.bulletPowerup === Powerup.TELEPORT) {
             const target = nearestTarget(tank, tanks, world);
             if (!target) return;
@@ -82,13 +83,15 @@ export class AimPreview {
             const angles = tank.bulletPowerup === Powerup.SHOTGUN ? [-spread, 0, spread]
                 : tank.bulletPowerup === Powerup.CROSS_FIRE ? CROSS_FIRE_ANGLES : [0];
             const altitude = tank.h + MUZZLE_H, radius = world.desc.planets[tank.planet].radius;
+            const offset = tank.bulletPowerup === Powerup.SHOTGUN
+                ? SHOTGUN_MUZZLE_OFFSET * (1 + altitude / radius) : MUZZLE_OFFSET;
             for (const angle of angles) {
                 copy(this.dir, tank.dir);
                 rotate(this.vel, tank.aim, tank.dir, angle);
-                scale(this.vel, this.vel, MUZZLE_OFFSET);
+                scale(this.vel, this.vel, offset);
                 advance(this.dir, this.vel, 1, radius + altitude);
                 const speed = type === BulletType.LASER ? 40 : config.speed;
-                scale(this.vel, this.vel, speed / MUZZLE_OFFSET);
+                scale(this.vel, this.vel, speed / offset);
                 for (let i = 0; i < 6; i++) {
                     copy(this.previous, this.dir);
                     advance(this.dir, this.vel, 1.2 / speed, radius + altitude);

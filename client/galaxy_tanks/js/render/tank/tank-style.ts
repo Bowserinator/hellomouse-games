@@ -38,6 +38,9 @@ const turretBase = part([1.15, 0.45, 1.05], [0, 0.97, 0], ColorSlot.PRIMARY);
 const turret = (parts: Array<PartDef>): TurretDef =>
     ({ parts: [turretBase, ...parts], muzzle: [0, MUZZLE_H, -MUZZLE_OFFSET], recoil: 0.14 });
 const standard = turret([barrel()]);
+/** Extra parts shown on top of whichever turret the tank already has */
+const attachment = (parts: Array<PartDef>): TurretDef =>
+    ({ parts, muzzle: [0, MUZZLE_H, -MUZZLE_OFFSET], recoil: 0.14 });
 export const DEFAULT_TANK_STYLE: TankStyle = {
     id: 'galaxy-voxel', hitRadius: TANK_RADIUS,
     parts: [
@@ -72,6 +75,15 @@ export const DEFAULT_TANK_STYLE: TankStyle = {
             part([0.5, 0.4, 0.5], [0, 1.1, 0], ColorSlot.ACCENT)]),
         [Powerup.TELEPORT]: turret([barrel(),
             part([0.48, 0.16, 0.48], [0, 1.1, -1.85], ColorSlot.GLOW, 'ring', [Math.PI / 2, 0, 0])]),
+        [Powerup.LANDMINE]: turret([barrel(0, 1.1, 0.6),
+            part([0.4, 0.3, 0.4], [0, 1.35, 0.3], ColorSlot.GLOW, 'cylinder')]),
+        [Powerup.SEISMIC_SHOCKWAVE]: turret([barrel(0, 1.2, 0.5),
+            part([0.6, 0.12, 0.6], [0, MUZZLE_H, -1.55], ColorSlot.GLOW, 'ring'),
+            part([0.42, 0.1, 0.42], [0, MUZZLE_H, -1.2], ColorSlot.ACCENT, 'ring')]),
+        [Powerup.CHRONO_DAMPENER]: attachment([
+            part([0.62, 0.09, 0.62], [0, 1.6, 0.05], ColorSlot.GLOW, 'ring', [Math.PI / 2, 0, 0]),
+            part([0.1, 0.4, 0.1], [0, 1.32, 0.05], ColorSlot.SECONDARY),
+            part([0.46, 0.07, 0.46], [0, MUZZLE_H, -0.85], ColorSlot.ACCENT, 'ring')]),
         [Powerup.SHIELD]: standard,
         [Powerup.STEALTH]: standard
     },
