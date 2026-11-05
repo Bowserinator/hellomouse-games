@@ -308,6 +308,8 @@ connection.onmessage = event => {
         }
     else if (m.type === GalaxySync.GIVE_POWERUP) {
         const tank = tanks.find(t => t.id === m.id);
+        if (tank && world && m.powerup === Powerup.SHIELD)
+            sound('shield.mp3', world.position(tank.planet, tank.dir, tank.h), view.camera.camera.position);
         if (tank && world) view.effects.sparks(world.position(tank.planet, tank.dir, tank.h + 1), tank.dir,
             makePalette(tank.color)[0], Date.now() + clockOffset, 24, 1.2);
     }

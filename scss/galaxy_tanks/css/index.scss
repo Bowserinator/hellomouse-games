@@ -173,6 +173,8 @@ input[type=text] {
 }
 
 #sidebar .score {
+    display: flex;
+    align-items: center;
     margin: 4px;
     background-color: red;
     color: black;
@@ -195,9 +197,10 @@ input[type=text] {
     // Text inside, truncated
     & > .username {
         width: 160px;
+        font-size: 16px;
     }
     & > .score-number {
-        float: right;
+        margin-left: auto;
         width: 30px;
     }
     & > .username,
