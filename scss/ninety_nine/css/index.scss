@@ -251,7 +251,8 @@ table {
 
 #game, #world-frame {
     position: fixed;
-    inset: 66px 0 160px;
+    inset: 66px 0 0;
+    --camera-inset-bottom: 160px;
 }
 
 #world-frame {
@@ -400,11 +401,15 @@ table {
     width: 220px;
     min-height: 150px;
     padding: 8px;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) rotate(var(--seat-angle, 0deg));
     text-align: center;
     border: 1px solid transparent;
     border-radius: 10px;
     background: #072d20b0;
+
+    .flip {
+        transform: rotate(180deg);
+    }
 
     h3 {
         font-size: 16px;
@@ -416,6 +421,7 @@ table {
     }
 
     &.active {
+        border-radius: 0;
         border-color: var(--brass);
         box-shadow: 0 0 18px #c9a24a50;
     }
@@ -560,9 +566,19 @@ table {
     padding: 8px 16px 14px;
     pointer-events: none;
     text-align: center;
-    background: linear-gradient(to top, rgba(0, 0, 0, .25), transparent) bottom / 100% 25% no-repeat;
+    isolation: isolate;
+    background: transparent;
 
-    button {
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background: linear-gradient(to top, rgba(0, 0, 0, .44) 0%, rgba(0, 0, 0, .275) 45%, rgba(0, 0, 0, 0) 100%);
+    }
+
+    button, .hand-card {
         pointer-events: auto;
     }
 }
@@ -591,7 +607,7 @@ table {
     gap: 12px;
     overflow-x: auto;
     padding: 16px 10px 4px;
-    pointer-events: auto;
+    pointer-events: none;
 }
 
 .hand-card {
@@ -874,7 +890,7 @@ dialog {
 
     #game {
         top: 58px;
-        bottom: 190px;
+        --camera-inset-bottom: 190px;
     }
 
     #scorecard {

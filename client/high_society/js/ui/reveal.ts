@@ -19,16 +19,10 @@ export async function reveal(sync: Sync, result: Result, motion = true): Promise
         const seat = document.querySelector<HTMLElement>(`[data-seat="${i}"]`);
         const score = result.scores[i];
         seat?.classList.toggle('seat--out', score.castOut);
+        seat?.classList.toggle('seat--win', result.winners.includes(i));
         const text = document.createElement('p');
         seat?.querySelector('.seat-labels')?.append(text);
-        if (seat && !reduced)
-            for (const stage of [`Luxury: ${score.luxury}`, `Passé −${score.penalty}: ${score.luxury - score.penalty}`,
-                `Prestige ×${score.multiplier}: ${(score.luxury - score.penalty) * score.multiplier}`,
-                `Scandale ÷${score.divisor}: ${score.score}`]) {
-                text.textContent = stage;
-                await text.animate([{ opacity: .3 }, { opacity: 1 }], { duration: 300 }).finished.catch(() => {});
-            }
-        text.textContent = `${score.castOut ? 'Cast out · Least money · ' : ''}Status: (${score.luxury} − ${
-            score.penalty}) × ${score.multiplier} ÷ ${score.divisor} = ${score.score}`;
+        text.textContent = `${score.castOut ? 'Cast out · Least money · ' : ''}Status: ${score.score}`;
+        if (seat && !reduced) await text.animate([{ opacity: .3 }, { opacity: 1 }], { duration: 300 }).finished.catch(() => {});
     }
 }

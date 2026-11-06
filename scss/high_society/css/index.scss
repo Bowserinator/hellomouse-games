@@ -358,6 +358,10 @@ label {
         background: var(--burgundy);
     }
 
+    &--win {
+        background: var(--emerald);
+    }
+
     &__backs {
         display: flex;
         justify-content: center;
@@ -385,7 +389,7 @@ label {
     }
 
     &__bid .money-card {
-        width: 34px;
+        width: 44px;
     }
 
     &__collection .status-card {
@@ -559,11 +563,15 @@ label {
     gap: .25rem;
 }
 
-#table-rematch {
+#table-rematch, #mock-win {
     position: fixed;
     z-index: 20;
     right: 1rem;
     top: 80px;
+}
+
+#mock-win {
+    top: 130px;
 }
 
 #bid-total {
@@ -626,7 +634,16 @@ label {
     z-index: 40;
     width: 185px;
     pointer-events: none;
-    box-shadow: 0 5px 25px #000b;
+    filter: drop-shadow(0 5px 14px #000b);
+
+    .money-card {
+        display: block;
+        width: 100%;
+
+        strong {
+            font-size: 1.8rem;
+        }
+    }
 }
 
 dialog {
@@ -652,8 +669,9 @@ dialog {
 
 #rules-modal {
     font-family: Georgia, 'Times New Roman', serif;
-    font-size: 1.05rem;
-    line-height: 1.6;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.4;
 
     ul {
         padding-left: 1.4rem;
@@ -661,7 +679,8 @@ dialog {
     }
 
     li {
-        margin: .4rem 0;
+        margin: 0;
+        line-height: 1.1;
     }
 }
 
@@ -676,6 +695,10 @@ dialog {
 
     &--out {
         background: var(--burgundy);
+    }
+
+    &--win {
+        background: var(--emerald);
     }
 
     &__hand:empty {

@@ -95,7 +95,8 @@ export class CameraController {
     }
 
     private viewport(): Size {
-        return { w: this.frame.clientWidth, h: this.frame.clientHeight };
+        const inset = parseFloat(getComputedStyle(this.frame).getPropertyValue('--camera-inset-bottom')) || 0;
+        return { w: this.frame.clientWidth, h: Math.max(1, this.frame.clientHeight - inset) };
     }
 
     private local(point: Point): Point {

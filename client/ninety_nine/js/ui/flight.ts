@@ -1,12 +1,29 @@
 import type { CardView, GameEvent, Zone } from '../types.js';
 import { createCardElement } from './card-element.js';
 import { eventGroups, groupDuration } from './timing.js';
-export type Boxes = Map<string, DOMRect>;
+export interface Box {
+    x: number;
+    y: number;
+    cx: number;
+    cy: number;
+    width: number;
+    angle: number;
+}
+export type Boxes = Map<string, Box>;
+function measure(node: HTMLElement): Box {
+    const rect = node.getBoundingClientRect();
+    const angle = parseFloat(node.closest<HTMLElement>('.seat')?.style.getPropertyValue('--seat-angle') ?? '0') || 0;
+    const radians = angle * Math.PI / 180;
+    const rotated = node.offsetWidth * Math.abs(Math.cos(radians)) + node.offsetHeight * Math.abs(Math.sin(radians));
+    const zoom = rotated ? rect.width / rotated : 1;
+    return { x: rect.x, y: rect.y, cx: rect.x + rect.width / 2, cy: rect.y + rect.height / 2,
+        width: node.offsetWidth ? node.offsetWidth * zoom : rect.width, angle };
+}
 export function snapshot(): Boxes {
     const boxes: Boxes = new Map();
     document.querySelectorAll<HTMLElement>('[data-iid], [data-place]').forEach(node => {
-        if (node.dataset.iid) boxes.set(node.dataset.iid, node.getBoundingClientRect());
-        if (node.dataset.place) boxes.set(`place:${node.dataset.place}`, node.getBoundingClientRect());
+        if (node.dataset.iid) boxes.set(node.dataset.iid, measure(node));
+        if (node.dataset.place) boxes.set(`place:${node.dataset.place}`, measure(node));
     });
     return boxes;
 }
@@ -46,7 +63,7 @@ export async function animate(events: Array<GameEvent>, before: Boxes,
         ], { duration: 350, easing: 'ease-out' });
     }
     const positions = new Map(before);
-    const fly = async (card: CardView, from: DOMRect | undefined, to: DOMRect | undefined,
+    const fly = async (card: CardView, from: Box | undefined, to: Box | undefined,
         delay: number, flip: boolean, faceDown: boolean, seq: number, inPlace = false): Promise<void> => {
         if (!from || !to || !from.width || !to.width) {
             reveal(card.iid, seq); return;
@@ -63,12 +80,15 @@ export async function animate(events: Array<GameEvent>, before: Boxes,
                 { transform: 'rotateY(0)' }], { duration: 450, delay, fill: 'both' });
         }
         ghost.append(inner); layer.append(ghost);
-        const transform = (box: DOMRect): string =>
-            `translate(${box.x}px, ${box.y}px) scale(${Math.min(box.width, 100) / 100})`;
+        const turn = from.angle + ((to.angle - from.angle + 540) % 360 - 180);
+        const pose = (cx: number, cy: number, angle: number, scale: number): string =>
+            `translate(${cx}px, ${cy}px) rotate(${angle}deg) scale(${scale}) translate(-50px, -70px)`;
+        const size = (box: Box): number => Math.min(box.width, 100) / 100;
         await waitAnimation(ghost.animate([
-            { transform: transform(from) },
-            { transform: `translate(${(from.x + to.x) / 2}px, ${(from.y + to.y) / 2 - (inPlace ? 0 : 55)}px) scale(${inPlace ? Math.min(to.width, 100) / 100 : .9})` },
-            { transform: transform(to) }
+            { transform: pose(from.cx, from.cy, from.angle, size(from)) },
+            { transform: pose((from.cx + to.cx) / 2, (from.cy + to.cy) / 2 - (inPlace ? 0 : 55),
+                (from.angle + turn) / 2, inPlace ? size(to) : .9) },
+            { transform: pose(to.cx, to.cy, turn, size(to)) }
         ], { duration: 450, delay, easing: 'ease-out', fill: 'both' }));
         ghost.remove(); reveal(card.iid, seq);
     };

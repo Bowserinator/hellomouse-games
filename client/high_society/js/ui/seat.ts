@@ -3,7 +3,8 @@ import type { PlayerView, SeatInfo, StatusCard, MoneyCard } from '../types.js';
 
 export function seatElement(player: PlayerView, info: SeatInfo, index: number, active: boolean,
     mine: boolean, rotationDeg: number,
-    preview: (node: HTMLElement, card: StatusCard | MoneyCard, seat: number) => void): HTMLElement {
+    preview: (node: HTMLElement, card: StatusCard | MoneyCard, seat: number) => void,
+    over = false): HTMLElement {
     const node = document.createElement('section');
     node.className = `seat${active ? ' seat--active' : ''}${player.passed ? ' seat--passed' : ''}`;
     node.dataset.seat = String(index);
@@ -17,7 +18,8 @@ export function seatElement(player: PlayerView, info: SeatInfo, index: number, a
     const count = document.createElement('p');
     count.textContent = `Bid ${player.tableTotal}K · ${player.handCount} money cards${info.connected ? '' : ' · Offline'}${
         player.passed ? ' · Passed' : ''}`;
-    labels.append(title, count);
+    labels.append(title);
+    if (!over) labels.append(count);
     if (player.pendingFauxPas) {
         const badge = document.createElement('p');
         badge.className = 'warning';

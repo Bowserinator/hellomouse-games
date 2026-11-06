@@ -168,7 +168,7 @@ function renderLobby(): void {
     $('rules-cards').replaceChildren(variantTable(variant));
 }
 function preview(card: CardView, target: HTMLElement): void {
-    if (!card.rank) return;
+    if (!card.rank || !target.isConnected || target.style.visibility === 'hidden') return;
     const panel = $('preview');
     const description = document.createElement('p'); description.textContent = card.def?.label ?? '';
     panel.replaceChildren(createCardElement(card), description); panel.hidden = false;
@@ -185,7 +185,7 @@ function hover(node: HTMLElement, card: CardView): void {
 function renderTable(): void {
     if (!state || !sync) return;
     const key = `${state.players.length}:${sync.youAre}`;
-    const table = layout(state.players.length, { w: 230, h: 175 }, Math.max(0, sync.youAre));
+    const table = layout(Math.max(4, state.players.length), { w: 230, h: 175 }, Math.max(0, sync.youAre));
     if (key !== tableKey) {
         tableKey = key; tableSize = contentSize(table, { w: 230, h: 175 });
         $('world').style.width = `${tableSize.w}px`; $('world').style.height = `${tableSize.h}px`;
@@ -228,6 +228,8 @@ function renderTable(): void {
         seat.dataset.seat = String(i);
         seat.style.left = `${tableSize.w / 2 + table.seats[i].anchor.x * 1.08}px`;
         seat.style.top = `${tableSize.h / 2 + table.seats[i].anchor.y * 1.08}px`;
+        const angle = (table.seats[i].rotationDeg % 360 + 360) % 360;
+        seat.style.setProperty('--seat-angle', `${table.seats[i].rotationDeg}deg`);
         const title = document.createElement('h3');
         title.textContent = `${name(i)}${i === sync?.youAre ? ' (you)' : ''}${sync?.seats[i]?.ai ? ' · AI'
             : !sync?.seats[i]?.connected ? ' · offline' : ''}`;
@@ -250,6 +252,7 @@ function renderTable(): void {
         count.textContent = `${player.count} cards${player.eliminated ? ' · OUT'
             : state?.skipped.includes(i) ? ' · SKIPPED' : ''}`;
         const tokens = chips(player.tokens); tokens.dataset.chips = String(i);
+        if (angle > 90 && angle < 270) for (const label of [title, tokens, count]) label.classList.add('flip');
         seat.append(title, tokens, fan, count);
         if (state?.prompt?.options.includes(i)) {
             seat.classList.add('target');
@@ -368,6 +371,7 @@ async function processUpdates(): Promise<void> {
         while (updates.length) {
             const before = snapshot(); const previous = state;
             sync = updates.shift()!; state = sync.view ?? null;
+            $('preview').hidden = true;
             for (const id of ['game', 'hud', 'log-panel', 'camera-controls', 'scorecard']) $(id).hidden = !sync.started;
             $('lobby').hidden = sync.started;
             $('table-rematch').hidden = state?.phase !== 'gameEnd' || sync.youAre < 0;

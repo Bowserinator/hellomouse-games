@@ -6,13 +6,15 @@ import { scoreboard } from './ui/scoreboard.js';
 import { snapshot, animate } from './ui/flight.js';
 import { reveal } from './ui/reveal.js';
 import { CameraController } from './ui/camera-input.js';
-import { layout, contentSize } from './ui/polygon.js';
+import { layout, contentSize, tableRadius, SEAT_RING } from './ui/polygon.js';
 import { tableArt, tableArtExtent } from './ui/table-art.js';
 import { tableGradient } from './ui/table-gradient.js';
-import type { Sync, View, Move, StatusCard, MoneyCard, GameEvent } from './types.js';
+import { results } from './scoring.js';
+import type { Sync, View, Move, StatusCard, MoneyCard, GameEvent, Result } from './types.js';
 
 declare function createConnection(): WebSocket;
 declare function copyToClipboard(text: string): void;
+declare function beep(rate?: number): void;
 const $ = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
 interface NativeDialog extends HTMLDialogElement {
     open: boolean;
@@ -39,6 +41,7 @@ let mockSeen = 0;
 let mockTimer = 0;
 let autoPassDeadline = 0;
 let countdownTimer = 0;
+let lastTurn = -1;
 const updates: Array<{ sync: Sync; received: number }> = [];
 const log: Array<string> = [];
 const SEAT_SIZE = { w: 300, h: 220 };
@@ -160,6 +163,7 @@ function renderLobby(): void {
 }
 function preview(node: HTMLElement, card: StatusCard | MoneyCard, seat = 0): void {
     const show = (): void => {
+        if (!node.isConnected) return;
         const panel = $('preview');
         panel.replaceChildren('kind' in card ? statusCard(card) : moneyCard(card, seat)); panel.hidden = false;
         const rect = node.getBoundingClientRect();
@@ -190,12 +194,13 @@ function renderTable(): void {
     const table = layout(state.players.length, SEAT_SIZE, Math.max(0, sync.youAre));
     const key = `${state.players.length}:${sync.youAre}`;
     if (key !== tableKey) {
-        tableKey = key; tableSize = contentSize(table, SEAT_SIZE);
+        const feltRadius = tableRadius(table);
+        const extent = tableArtExtent(feltRadius);
+        tableKey = key; tableSize = contentSize(table, SEAT_SIZE, extent);
         $('world').style.width = `${tableSize.w}px`; $('world').style.height = `${tableSize.h}px`;
-        const extent = tableArtExtent(table.radius * .86);
         Object.assign($('table-art').style, { width: `${extent * 2}px`, height: `${extent * 2}px`,
             left: `${tableSize.w / 2 - extent}px`, top: `${tableSize.h / 2 - extent}px` });
-        const art = tableArt(Math.max(4, state.players.length), table.radius * .86);
+        const art = tableArt(Math.max(3, state.players.length), feltRadius);
         tableGradient(art); $('table-art').replaceChildren(art);
         $('center').style.left = `${tableSize.w / 2}px`; $('center').style.top = `${tableSize.h / 2}px`;
         if (!camera) camera = new CameraController({ frame: $('world-frame'), world: $('world'), content: () => tableSize });
@@ -210,16 +215,18 @@ function renderTable(): void {
         return node;
     }));
     $('auction-card').replaceChildren(...(state.current ? [statusCard(state.current)] : []));
-    $('highest').textContent = state.highest ? `${state.highest}K · ${name(state.highestBidder)}` : 'The bidding is open';
+    $('highest').textContent = state.phase === 'gameEnd' ? '' : state.highest ? `${state.highest}K · ${name(state.highestBidder)}` : 'The bidding is open';
     $('auction-help').textContent = state.phase === 'gameEnd' ? 'The fourth end card. The evening is over.'
         : state.phase === 'disgrace' ? 'Bid to avoid it · First to pass takes the disgrace'
             : state.phase === 'fauxPas' ? `${name(state.turn)} must discard a luxury` : '';
     $('seats').replaceChildren(...state.players.map((player, i) => {
         const placement = table.seats[i];
-        const seat = seatElement(player, sync!.seats[i], i, state!.turn === i && state!.phase !== 'gameEnd',
-            i === sync!.youAre, placement.rotationDeg, preview);
-        seat.style.left = `${tableSize.w / 2 + placement.anchor.x * .92}px`;
-        seat.style.top = `${tableSize.h / 2 + placement.anchor.y * .92}px`;
+        const over = state!.phase === 'gameEnd';
+        const shown = over ? { ...player, pendingFauxPas: false, passed: false } : player;
+        const seat = seatElement(shown, sync!.seats[i], i, state!.turn === i && !over,
+            i === sync!.youAre, placement.rotationDeg, preview, over);
+        seat.style.left = `${tableSize.w / 2 + placement.anchor.x * SEAT_RING}px`;
+        seat.style.top = `${tableSize.h / 2 + placement.anchor.y * SEAT_RING}px`;
         if (state!.autoPass?.seat === i) {
             const countdown = document.createElement('p'); countdown.dataset.autoPass = String(i);
             seat.querySelector('.seat-labels')?.append(countdown);
@@ -234,6 +241,13 @@ function renderTable(): void {
     $('spectator').textContent = 'You are watching. Only public information is shown.';
     $('table-rematch').hidden = state.phase !== 'gameEnd' || sync.youAre < 0;
     if (won && state.result) void reveal(sync, state.result, false);
+}
+function showWinModal(next: Sync, result: Result): void {
+    $('win-title').textContent = `${result.winners.map(name).join(' & ')} win${result.winners.length === 1 ? 's' : ''}!`;
+    $('results').replaceChildren(...scoreboard(next, result));
+    $('tiebreak').textContent = result.tiebreak;
+    $('win-rematch').hidden = next.youAre < 0;
+    if (!dialog('win-modal').open) dialog('win-modal').showModal();
 }
 function canAct(): boolean {
     return !!state && state.legal.canPass && !gated && socketReady();
@@ -335,6 +349,7 @@ async function processUpdates(): Promise<void> {
             const before = snapshot(camera?.current.scale ?? 1);
             const update = updates.shift()!;
             sync = update.sync; state = sync.view ?? null;
+            $('preview').hidden = true;
             clearInterval(countdownTimer);
             autoPassDeadline = state?.autoPass ? update.received + state.autoPass.remainingMs : 0;
             renderCountdown();
@@ -342,10 +357,14 @@ async function processUpdates(): Promise<void> {
             for (const id of ['game', 'hud', 'log-panel', 'camera-controls']) $(id).hidden = !sync.started;
             $('lobby').hidden = sync.started;
             if (!state) {
+                lastTurn = -1;
                 won = false; selected = []; tableKey = ''; log.length = 0; $('preview').hidden = true;
                 for (const id of ['waiting', 'spectator', 'table-rematch']) $(id).hidden = true;
                 dialog('win-modal').close(); renderLobby(); continue;
             }
+            if (!mockEngine && lastTurn !== -1 && state.turn !== lastTurn && state.phase !== 'gameEnd')
+                beep(state.turn === sync.youAre ? 2 : undefined);
+            lastTurn = state.turn;
             gated = true;
             renderTable(); renderHand(); record(state.events);
             await animate(state.events, before, sync.youAre);
@@ -354,12 +373,7 @@ async function processUpdates(): Promise<void> {
             if (state.phase === 'gameEnd' && !won && state.result) {
                 won = true;
                 await reveal(sync, state.result);
-                $('win-title').textContent = `${state.result.winners.map(name).join(' & ')} win${
-                    state.result.winners.length === 1 ? 's' : ''}!`;
-                $('results').replaceChildren(...scoreboard(sync, state.result));
-                $('tiebreak').textContent = state.result.tiebreak;
-                $('win-rematch').hidden = sync.youAre < 0;
-                if (!dialog('win-modal').open) dialog('win-modal').showModal();
+                showWinModal(sync, state.result);
             }
         }
     } finally {
@@ -435,4 +449,9 @@ $<HTMLInputElement>('username').value = remember('high_society:username') ?? '';
 if (mock !== null) {
     mockEngine = new Engine({ seats: Math.max(3, Math.min(5, Math.trunc(Number(mock)) || 4)) });
     $('connection-status').textContent = 'Offline preview'; mockSync();
+    $('mock-win').hidden = false;
+    $('mock-win').onclick = () => {
+        if (!sync || !mockEngine) return;
+        showWinModal(sync, mockEngine.result ?? results(mockEngine.status, mockEngine.hands));
+    };
 } else connect();
