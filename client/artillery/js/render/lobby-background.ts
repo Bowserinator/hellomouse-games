@@ -5,7 +5,7 @@ import { cameraFieldOfViewInDegrees, cameraPerspectiveNearPlane, cameraPerspecti
     skyCubeFaceResolution, skyPresets, wreckSmokeEmitter } from '../config.js';
 import { loadWorld } from '../loading.js';
 import { StateHash } from '../sim/math/hash.js';
-import { BiomeRule } from '../sim/world/biomes.js';
+import { WorldTheme } from '../sim/world/themes.js';
 import { VoxelWorld } from '../sim/world/voxel-world.js';
 import { WorldGenerator } from '../sim/world/world-generator.js';
 import { ChunkManager } from './chunk-manager.js';
@@ -51,7 +51,7 @@ export class LobbyBackground {
     private readonly puff: ParticleEmitterSpec = { ...wreckSmokeEmitter, count: settings.shellPuffCount,
         size: [settings.shellPuffStartSizeInVoxels, settings.shellPuffEndSizeInVoxels] };
 
-    constructor(canvas: HTMLCanvasElement, room: string, biomes: ReadonlyArray<Readonly<BiomeRule>>) {
+    constructor(canvas: HTMLCanvasElement, room: string, theme: Readonly<WorldTheme>) {
         this.seed = new StateHash().string(room).value;
         try {
             this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'low-power' });
@@ -83,10 +83,10 @@ export class LobbyBackground {
                 dusk.dispose();
             }
             this.post = new PostProcess(this.renderer, this.lighting.sky, this.lighting.preset, 'low',
-                lobbyBackgroundMapEdgeLengthInVoxels);
+                lobbyBackgroundMapEdgeLengthInVoxels, theme.liquid);
             this.resize(canvas.clientWidth || 1, canvas.clientHeight || 1);
-            this.ready = loadWorld(new WorldGenerator(this.seed, lobbyBackgroundMapEdgeLengthInVoxels, biomes),
-                biomes, this.workers, () => {}).then(world => {
+            this.ready = loadWorld(new WorldGenerator(this.seed, lobbyBackgroundMapEdgeLengthInVoxels, theme),
+                theme, this.workers, () => {}).then(world => {
                 if (this.disposed) return;
                 this.world = world;
                 this.chunks = new ChunkManager(world, this.workers, this.materials.create());

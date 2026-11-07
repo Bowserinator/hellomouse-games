@@ -30,6 +30,7 @@ import { ParticleEffects } from './particle-effects.js';
 import { PostProcess } from './post/post-process.js';
 import { ProjectileRenderer } from './projectile-renderer.js';
 import { RenderingQuality, SceneLighting } from './scene-lighting.js';
+import { themedSkyPreset } from './sky.js';
 import { TankRig } from './tank-rig.js';
 import { VoxelMaterials } from './voxel-material.js';
 import { VoxelModelBuilder } from './voxel-model-builder.js';
@@ -135,10 +136,10 @@ export class ArtilleryScene {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.camera = new CameraRig(world);
         this.lighting = new SceneLighting(this.scene, options.seed, world.mapEdgeLengthInVoxels, this.quality,
-            timeOfDayPresets[options.match.settings.timeOfDay]);
+            themedSkyPreset(timeOfDayPresets[options.match.settings.timeOfDay], options.match.theme.sky));
         try {
             this.post = new PostProcess(this.renderer, this.lighting.sky, this.lighting.preset, this.quality,
-                world.mapEdgeLengthInVoxels);
+                world.mapEdgeLengthInVoxels, options.match.theme.liquid);
         } catch (error) {
             this.lighting.dispose(); this.renderer.dispose(); this.materials.dispose();
             this.workers.dispose(); this.liquids.dispose(); throw error;

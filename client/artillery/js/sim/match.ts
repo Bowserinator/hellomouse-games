@@ -8,10 +8,10 @@ import { StateHash } from './math/hash.js';
 import { radiansPerDegree } from './math/deterministic-math.js';
 import { quantizePitch } from './math/fixed-quantize.js';
 import { Tank } from './tank.js';
-import { applyTurnWaterHazard, tickTankPhysics } from './tank-physics.js';
+import { applyTurnLiquidHazard, tickTankPhysics } from './tank-physics.js';
 import { WeaponDataFiles } from './weapon-types.js';
 import { WeaponRuntime } from './weapon-runtime.js';
-import { BiomeRule } from './world/biomes.js';
+import { WorldTheme, resolveTheme } from './world/themes.js';
 import { generateBattlefield, GeneratedBattlefield, SpawnSeat } from './world/spawn.js';
 
 type TankMotion = Pick<Tank, 'position' | 'velocity' | 'hullYawInRadians' | 'turretYawQuantized' |
@@ -22,6 +22,7 @@ export class Match {
     public readonly battlefield: GeneratedBattlefield;
     public readonly runtime: WeaponRuntime;
     public readonly settings: Readonly<MatchSettings>;
+    public readonly theme: Readonly<WorldTheme>;
     public turnIndex = 0;
     public teamIndex: number;
     public isResolving = false;
@@ -36,20 +37,21 @@ export class Match {
     private shotsBeforeResolve = 0;
 
     constructor(matchSeed: number, settings: Readonly<MatchSettings>, seats: ReadonlyArray<SpawnSeat>,
-        data: WeaponDataFiles, physicsDataHash: number, biomeRules: ReadonlyArray<Readonly<BiomeRule>>,
+        data: WeaponDataFiles, physicsDataHash: number, themes: ReadonlyArray<Readonly<WorldTheme>>,
         battlefield?: GeneratedBattlefield) {
         for (const key of matchSettingKeys)
             if (!isMatchSettingValid(key, settings[key])) throw new Error(`Invalid match setting ${key}`);
         if (seats.some(seat => seat.teamIndex >= settings.teamCount) ||
             new Set(seats.map(seat => seat.teamIndex)).size < 2) throw new Error('Match requires two populated teams');
         this.settings = Object.freeze({ ...settings });
+        this.theme = resolveTheme(matchSeed, themes, settings.islandTheme);
         if (battlefield && (battlefield.world.mapEdgeLengthInVoxels !== settings.mapEdgeLengthInVoxels ||
             battlefield.generationSeed !== new Rng(matchSeed).fork(battlefield.generationSalt).seed ||
             battlefield.spawns.length !== seats.length || seats.some(seat => !battlefield.spawns.some(spawn =>
             spawn.seatIndex === seat.seatIndex && spawn.teamIndex === seat.teamIndex))))
             throw new Error('Battlefield does not match the requested match');
         this.battlefield = battlefield || generateBattlefield(matchSeed, settings.mapEdgeLengthInVoxels,
-            biomeRules, seats);
+            this.theme, seats);
         const tanks = this.battlefield.spawns.map(spawn => {
             const tank = new Tank(spawn.seatIndex, spawn.teamIndex, spawn.position, settings.hitPointsPerTank);
             tank.turretPitchQuantized = quantizePitch(turretDefaultPitchInDegrees * radiansPerDegree);
@@ -62,7 +64,7 @@ export class Match {
         this.runtime = new WeaponRuntime(this.battlefield.world, tanks, data, matchSeed, physicsDataHash);
         this.teamIndex = Math.min(...tanks.map(tank => tank.teamIndex));
         this.runtime.damage.isFriendlyFireEnabled = settings.isFriendlyFireEnabled;
-        this.applyWaterHazard();
+        this.applyLiquidHazard();
         this.captureTurnStart();
     }
 
@@ -213,10 +215,10 @@ export class Match {
             standingSupportHeight: tank.standingSupportHeight, airbornePeakHeight: tank.airbornePeakHeight }));
     }
 
-    private applyWaterHazard(): void {
+    private applyLiquidHazard(): void {
         for (const tank of this.runtime.tanks) {
             const wasAlive = !tank.isWreck;
-            const amount = applyTurnWaterHazard(tank);
+            const amount = applyTurnLiquidHazard(tank, this.theme.liquid.damagePerTurn);
             if (amount > 0) this.runtime.events.push({ type: 'tankDamaged', tick: this.runtime.tickInTicks,
                 serial: tank.seatIndex, position: { ...tank.position }, amount, seatIndex: tank.seatIndex });
             if (wasAlive && tank.isWreck) this.runtime.events.push({ type: 'tankKilled', tick: this.runtime.tickInTicks,
@@ -226,7 +228,7 @@ export class Match {
 
     private completeResolve(): ResolveReport {
         this.runtime.finishResolve();
-        this.applyWaterHazard();
+        this.applyLiquidHazard();
         const resolvedTurnIndex = this.turnIndex++;
         const armedSeatIndices = this.runtime.tanks.filter(tank => !tank.isWreck &&
             Array.from(tank.ammunition.values()).some(uses => uses > 0)).map(tank => tank.seatIndex);
@@ -253,10 +255,10 @@ export class Match {
 }
 
 export function replayMatch(snapshot: MatchSnapshot, data: WeaponDataFiles, physicsDataHash: number,
-    biomeRules: ReadonlyArray<Readonly<BiomeRule>>): Match {
+    themes: ReadonlyArray<Readonly<WorldTheme>>): Match {
     if (snapshot.protocolVersion !== protocolVersion || snapshot.weaponDataHash !== physicsDataHash)
         throw new Error('Match version or weapon data does not match');
-    const match = new Match(snapshot.matchSeed, snapshot.settings, snapshot.seats, data, physicsDataHash, biomeRules);
+    const match = new Match(snapshot.matchSeed, snapshot.settings, snapshot.seats, data, physicsDataHash, themes);
     for (const entry of snapshot.planLog) match.resolve(entry);
     return match;
 }

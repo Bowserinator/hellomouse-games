@@ -1,4 +1,4 @@
-import { fireDefaultDamagePerSecond, fireDurationInSeconds, fireIgnitionHopDelayInSeconds,
+import { fireDefaultDamagePerSecond, fireDurationInSeconds, fireIgnitionHopDelayInSeconds, fireSplashRadiusInVoxels,
     liquidMaximumCellCount, liquidStepIntervalInTicks, simulationTicksPerSecond, tankHullHeightInVoxels,
     tankHullLengthInVoxels, tankHullWidthInVoxels } from '../config.js';
 import { Rng } from '../../../shared/ts/seeded-random.js';
@@ -158,13 +158,15 @@ export class LiquidField {
             const cellProjection = .5 * (Math.abs(cosine) + Math.abs(sine));
             const halfWidth = tankHullWidthInVoxels / 2, halfLength = tankHullLengthInVoxels / 2;
             for (const cell of this.cells.values()) {
-                if (cell.kind === 'oil' || cell.y + 1 <= tank.position.y ||
-                    cell.y >= tank.position.y + tankHullHeightInVoxels) continue;
+                if (cell.kind === 'oil') continue;
+                const reach = cell.kind === 'fire' ? fireSplashRadiusInVoxels : 0;
+                if (cell.y + 1 <= tank.position.y - reach ||
+                    cell.y >= tank.position.y + tankHullHeightInVoxels + reach) continue;
                 const deltaX = cell.x + .5 - tank.position.x, deltaZ = cell.z + .5 - tank.position.z;
-                if (Math.abs(deltaX * cosine - deltaZ * sine) < halfWidth + cellProjection &&
-                    Math.abs(deltaX * sine + deltaZ * cosine) < halfLength + cellProjection &&
-                    Math.abs(deltaX) < halfWidth * Math.abs(cosine) + halfLength * Math.abs(sine) + .5 &&
-                    Math.abs(deltaZ) < halfWidth * Math.abs(sine) + halfLength * Math.abs(cosine) + .5)
+                if (Math.abs(deltaX * cosine - deltaZ * sine) < halfWidth + cellProjection + reach &&
+                    Math.abs(deltaX * sine + deltaZ * cosine) < halfLength + cellProjection + reach &&
+                    Math.abs(deltaX) < halfWidth * Math.abs(cosine) + halfLength * Math.abs(sine) + .5 + reach &&
+                    Math.abs(deltaZ) < halfWidth * Math.abs(sine) + halfLength * Math.abs(cosine) + .5 + reach)
                     overlaps.set(cell.sourceSerial, cell);
             }
             let remainders = this.burnRemainders.get(tank.seatIndex);

@@ -29,7 +29,14 @@ export enum Material {
     LEAVES_DARK,
     PINE_NEEDLES,
     MAGIC_WALL,
-    DOME_BARRIER
+    DOME_BARRIER,
+    RED_SAND,
+    TERRACOTTA_RED,
+    TERRACOTTA_ORANGE,
+    TERRACOTTA_CREAM,
+    NETHERRACK,
+    BASALT,
+    OBSIDIAN
 }
 
 export enum MaterialFlag {
@@ -49,8 +56,9 @@ export interface MaterialDefinition {
     readonly flags: number;
 }
 
-export function underwaterMaterial(material: Material, y: number): Material {
-    return y <= worldWaterSurfaceHeightInVoxels && material === Material.DIRT ? Material.SAND : material;
+export function underwaterMaterial(material: Material, y: number, shoreSoil = Material.SAND,
+    soil = Material.DIRT): Material {
+    return y <= worldWaterSurfaceHeightInVoxels && material === soil ? shoreSoil : material;
 }
 
 const solid = MaterialFlag.SOLID;
@@ -113,7 +121,21 @@ export const materialTable: ReadonlyArray<Readonly<MaterialDefinition>> = Object
     { name: 'Magic wall', baseColour: 0xa279cc, colourVariationStrength: .06, blastResistance: .45,
         isIndestructible: false, flags: solid | MaterialFlag.CONSTRUCTED },
     { name: 'Dome barrier', baseColour: 0x71bdcf, colourVariationStrength: .04, blastResistance: .5,
-        isIndestructible: false, flags: solid | MaterialFlag.CONSTRUCTED }
+        isIndestructible: false, flags: solid | MaterialFlag.CONSTRUCTED },
+    { name: 'Red sand', baseColour: 0xc2683c, colourVariationStrength: .09, blastResistance: .02,
+        isIndestructible: false, flags: soil },
+    { name: 'Red terracotta', baseColour: 0xa4482f, colourVariationStrength: .06, blastResistance: .25,
+        isIndestructible: false, flags: solid },
+    { name: 'Orange terracotta', baseColour: 0xd07c40, colourVariationStrength: .06, blastResistance: .25,
+        isIndestructible: false, flags: solid },
+    { name: 'Cream terracotta', baseColour: 0xe4cba3, colourVariationStrength: .05, blastResistance: .25,
+        isIndestructible: false, flags: solid },
+    { name: 'Netherrack', baseColour: 0x5c2024, colourVariationStrength: .13, blastResistance: .06,
+        isIndestructible: false, flags: soil },
+    { name: 'Basalt', baseColour: 0x2c2e33, colourVariationStrength: .1, blastResistance: .4,
+        isIndestructible: false, flags: solid },
+    { name: 'Obsidian', baseColour: 0x1d1528, colourVariationStrength: .08, blastResistance: .6,
+        isIndestructible: false, flags: solid }
 ].map(definition => Object.freeze(definition)));
 
 /** How strongly a material resists blasts, from 0 (carved fully) up to 1 (never carved). */

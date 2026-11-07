@@ -1,9 +1,10 @@
 import { centerElevationBoostInVoxels, islandRadiusFraction, worldChunkEdgeLengthInVoxels,
     worldGenerationNoise, worldHeightInVoxels, worldNoiseOctaveCount,
-    worldTerrainSettings as terrain } from '../../config.js';
+    worldTerrainSettings } from '../../config.js';
 import { Rng } from '../../../../shared/ts/seeded-random.js';
 import { valueNoise } from '../../../../shared/ts/value-noise.js';
 import { sineOfRadians } from '../math/deterministic-math.js';
+import { TerrainSettings, WorldTheme } from './themes.js';
 
 export interface TerrainColumnTile {
     heights: Uint8Array;
@@ -15,9 +16,14 @@ const chunkEdge = worldChunkEdgeLengthInVoxels;
 
 export class TerrainFields {
     private readonly offsets: Array<number>;
+    public readonly settings: Readonly<TerrainSettings>;
+    private readonly regionRange: WorldTheme['regionRange'];
     private readonly tiles = new Map<number, TerrainColumnTile>();
 
-    constructor(public readonly matchSeed: number, public readonly mapEdgeLengthInVoxels: number) {
+    constructor(public readonly matchSeed: number, public readonly mapEdgeLengthInVoxels: number,
+        theme: Pick<WorldTheme, 'terrain' | 'regionRange'>) {
+        this.settings = { ...worldTerrainSettings, ...theme.terrain };
+        this.regionRange = theme.regionRange;
         const random = new Rng(matchSeed).fork(worldGenerationNoise.terrainForkLabel);
         this.offsets = Array.from({ length: worldGenerationNoise.offsetCount },
             () => random.range(0, worldGenerationNoise.offsetMaximum));
@@ -31,6 +37,7 @@ export class TerrainFields {
     }
 
     public heightAt(x: number, z: number): number {
+        const terrain = this.settings;
         const edge = this.mapEdgeLengthInVoxels;
         if (x < edge * terrain.boundaryMinimumFraction || z < edge * terrain.boundaryMinimumFraction ||
             x >= edge * terrain.boundaryMaximumFraction || z >= edge * terrain.boundaryMaximumFraction) return 0;
@@ -52,7 +59,8 @@ export class TerrainFields {
             amplitude *= terrain.hillAmplitudeMultiplier;
             frequency *= terrain.hillFrequencyMultiplier;
         }
-        const region = this.noise(x / terrain.regionScale, 0, z / terrain.regionScale, 7);
+        let region = this.noise(x / terrain.regionScale, 0, z / terrain.regionScale, 7);
+        if (this.regionRange) region = this.regionRange[0] + region * (this.regionRange[1] - this.regionRange[0]);
         const ridge = 1 - Math.abs(2 * this.noise(x / terrain.ridgeScale, 0, z / terrain.ridgeScale, 8) - 1);
         const terrace = this.noise(x / terrain.terraceScale, 0, z / terrain.terraceScale, 9) * terrain.terraceCount;
         const terraceFraction = terrace - Math.floor(terrace);
@@ -87,6 +95,7 @@ export class TerrainFields {
     }
 
     public tileAt(tileX: number, tileZ: number): TerrainColumnTile {
+        const terrain = this.settings;
         const key = tileX + Math.ceil(this.mapEdgeLengthInVoxels / chunkEdge) * tileZ;
         const cached = this.tiles.get(key);
         if (cached) return cached;

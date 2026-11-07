@@ -1,11 +1,11 @@
 import { worldHeightInVoxels } from './config.js';
 import { MeshingWorkerPool } from './render/meshing/meshing-worker-pool.js';
-import { BiomeRule } from './sim/world/biomes.js';
+import { WorldTheme } from './sim/world/themes.js';
 import { battlefieldAttempts, GeneratedBattlefield, SpawnSeat } from './sim/world/spawn.js';
 import { VoxelWorld } from './sim/world/voxel-world.js';
 import { WorldGenerator } from './sim/world/world-generator.js';
 
-export async function loadWorld(generator: WorldGenerator, biomeRules: ReadonlyArray<Readonly<BiomeRule>>,
+export async function loadWorld(generator: WorldGenerator, theme: Readonly<WorldTheme>,
     pool: MeshingWorkerPool, onProgress: (completed: number, total: number) => void,
     signal?: AbortSignal): Promise<VoxelWorld> {
     if (signal?.aborted) throw new DOMException('Loading was cancelled', 'AbortError');
@@ -17,7 +17,7 @@ export async function loadWorld(generator: WorldGenerator, biomeRules: ReadonlyA
     world.forEachChunkInBox(0, 0, 0, edge - 1, worldHeightInVoxels - 1, edge - 1, chunk => {
         jobs.push(pool.submit({ kind: 'generateChunk', chunkVersion: 0,
             matchSeed: generator.matchSeed, mapEdgeLengthInVoxels: edge,
-            chunkX: chunk.chunkX, chunkY: chunk.chunkY, chunkZ: chunk.chunkZ, biomeRules }).then(result => {
+            chunkX: chunk.chunkX, chunkY: chunk.chunkY, chunkZ: chunk.chunkZ, theme }).then(result => {
             if (signal?.aborted) throw new DOMException('Loading was cancelled', 'AbortError');
             if (result.kind !== 'generateChunk') throw new Error('Worker returned the wrong result type');
             world.installChunk(chunk.chunkX, chunk.chunkY, chunk.chunkZ, result.storage);
@@ -35,7 +35,7 @@ export interface GenerationProgress {
 }
 
 export async function loadBattlefield(matchSeed: number, mapEdgeLengthInVoxels: number,
-    biomeRules: ReadonlyArray<Readonly<BiomeRule>>, seats: ReadonlyArray<SpawnSeat>,
+    theme: Readonly<WorldTheme>, seats: ReadonlyArray<SpawnSeat>,
     onProgress: (progress: GenerationProgress) => void, signal?: AbortSignal): Promise<GeneratedBattlefield> {
     if (signal?.aborted) throw new DOMException('Loading was cancelled', 'AbortError');
     const pool = new MeshingWorkerPool();
@@ -48,11 +48,11 @@ export async function loadBattlefield(matchSeed: number, mapEdgeLengthInVoxels: 
     };
     try {
         frame = requestAnimationFrame(pump);
-        const attempts = battlefieldAttempts(matchSeed, mapEdgeLengthInVoxels, biomeRules, seats);
+        const attempts = battlefieldAttempts(matchSeed, mapEdgeLengthInVoxels, theme, seats);
         let step = attempts.next(), attempt = 0;
         while (!step.done) {
             attempt++;
-            const world = await loadWorld(step.value, biomeRules, pool, (completed, total) =>
+            const world = await loadWorld(step.value, theme, pool, (completed, total) =>
                 onProgress({ completed, total, attempt }), signal);
             if (signal?.aborted) throw new DOMException('Loading was cancelled', 'AbortError');
             step = attempts.next(world);

@@ -3004,7 +3004,7 @@
   {
     "identifier": "burst_railgun",
     "displayName": "Burst Railgun",
-    "description": "Fires railguns downwards at height of arc.",
+    "description": "Fires railguns downwards at height of arc, or in all directions on impact.",
     "massClass": 1,
     "turretIdentifier": "burst_railgun",
     "aimPreviewMode": "ballistic",
@@ -3035,7 +3035,7 @@
             "projectileIdentifier": "slug",
             "count": 10,
             "pattern": "cone",
-            "coneDegrees": 70,
+            "coneDegrees": 30,
             "pitchDegrees": -90,
             "randomSpread": true,
             "speedInVoxelsPerSecond": 140
@@ -3053,9 +3053,7 @@
             "action": "spawnProjectiles",
             "projectileIdentifier": "slug",
             "count": 10,
-            "pattern": "spread",
-            "coneDegrees": 80,
-            "pitchDegrees": -90,
+            "pattern": "sphereShell",
             "randomSpread": true,
             "speedInVoxelsPerSecond": 140
           },
@@ -3072,9 +3070,7 @@
             "action": "spawnProjectiles",
             "projectileIdentifier": "slug",
             "count": 10,
-            "pattern": "spread",
-            "coneDegrees": 80,
-            "pitchDegrees": -90,
+            "pattern": "sphereShell",
             "randomSpread": true,
             "speedInVoxelsPerSecond": 140
           },

@@ -41,6 +41,8 @@ export default class ArtilleryGame extends Game {
     private reports = new Map<number, ResolveReport>();
     private previewTimes = new Map<number, number>();
     private statistics: Array<PlayerStatistics> = [];
+    private roundsCompleted = 0;
+    private eliminatedAtTurn = new Map<number, number>();
 
     constructor() {
         super({ syncAfterMove: false });
@@ -294,6 +296,7 @@ export default class ArtilleryGame extends Game {
         this.teamIndex = Math.min(...this.seats.map(seat => seat.teamIndex));
         this.planLog = [];
         this.loaded.clear(); this.plans.clear(); this.reports.clear(); this.previewTimes.clear();
+        this.roundsCompleted = 0; this.eliminatedAtTurn.clear();
         this.alive = new Set(this.seats.map(seat => seat.seatIndex));
         this.statistics = this.seats.map(seat => ({ seatIndex: seat.seatIndex, damageDealt: 0, damageTaken: 0,
             friendlyFireDamage: 0, shotsFired: 0 }));
@@ -355,9 +358,16 @@ export default class ArtilleryGame extends Game {
         const report = majority.report;
         this.alive = new Set(report.aliveSeatIndices);
         this.statistics = report.statistics.map(entry => ({ ...entry }));
+        for (let team = 0; team < this.settings.teamCount; team++)
+            if (!this.eliminatedAtTurn.has(team) && this.seats.some(seat => seat.teamIndex === team) &&
+                !this.seats.some(seat => seat.teamIndex === team && this.alive.has(seat.seatIndex)))
+                this.eliminatedAtTurn.set(team, this.turnIndex);
         const teams = new Set(this.seats.filter(seat => this.alive.has(seat.seatIndex)).map(seat => seat.teamIndex));
         if (teams.size <= 1) {
             this.finishMatch([...teams], 'ELIMINATION'); return;
+        }
+        if (!report.hasAmmunitionRemaining && !this.settings.isInfiniteRounds) {
+            this.finishMatch(this.scoreWinners(), 'SCORE'); return;
         }
         if (!report.hasAmmunitionRemaining) {
             const totals = Array<number>(this.settings.teamCount).fill(0);
@@ -369,9 +379,36 @@ export default class ArtilleryGame extends Game {
         }
         const armedTeams = new Set(this.seats.filter(seat => report.armedSeatIndices.includes(seat.seatIndex))
             .map(seat => seat.teamIndex));
+        const previousTeam = this.teamIndex;
         do this.teamIndex = (this.teamIndex + 1) % this.settings.teamCount; while (!armedTeams.has(this.teamIndex));
+        if (this.teamIndex <= previousTeam) this.roundsCompleted++;
+        if (!this.settings.isInfiniteRounds && this.roundsCompleted >= this.settings.roundCount) {
+            this.finishMatch(this.scoreWinners(), 'SCORE'); return;
+        }
         this.turnIndex++;
         this.beginNextTurn();
+    }
+    /** Teams with the best score under the configured scoring mode. */
+    private scoreWinners(): Array<number> {
+        const teams = [...new Set(this.seats.map(seat => seat.teamIndex))];
+        const total = (team: number, value: (seatIndex: number) => number): number =>
+            this.seats.filter(seat => seat.teamIndex === team).reduce((sum, seat) => sum + value(seat.seatIndex), 0);
+        const entry = (seatIndex: number): PlayerStatistics | undefined =>
+            this.statistics.find(item => item.seatIndex === seatIndex);
+        const hitPoints = (team: number): number => total(team, seatIndex =>
+            this.settings.hitPointsPerTank - (entry(seatIndex)?.damageTaken ?? 0));
+        const score = (team: number): [number, number] => {
+            if (this.settings.scoreMode === 0)
+                return [total(team, seatIndex => Math.max(0, (entry(seatIndex)?.damageDealt ?? 0) -
+                    (entry(seatIndex)?.friendlyFireDamage ?? 0))), 0];
+            if (this.settings.scoreMode === 1) return [hitPoints(team), 0];
+            return [this.eliminatedAtTurn.get(team) ?? Infinity, hitPoints(team)];
+        };
+        const isBetter = (first: [number, number], second: [number, number]): boolean =>
+            first[0] > second[0] || first[0] === second[0] && first[1] > second[1];
+        let best = score(teams[0]);
+        for (const team of teams) if (isBetter(score(team), best)) best = score(team);
+        return teams.filter(team => !isBetter(best, score(team)));
     }
     private finishMatch(winningTeamIndices: Array<number>, reason: string): void {
         this.phase = 'ENDED';

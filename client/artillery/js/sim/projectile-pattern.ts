@@ -69,9 +69,10 @@ export function projectilePattern(action: Extract<WeaponAction, { action: 'spawn
                 break;
             }
             case 'sphereShell': {
-                const vertical = 1 - 2 * (index + .5) / action.count;
+                const vertical = action.randomSpread ? 1 - 2 * random.float() : 1 - 2 * (index + .5) / action.count;
                 const horizontal = Math.sqrt(Math.max(0, 1 - vertical * vertical));
-                const angle = index * 2.399963229728653 + sphereRotation;
+                const angle = action.randomSpread ? random.float() * fullCircleInRadians
+                    : index * goldenAngleInRadians + sphereRotation;
                 direction = createVector3(sineOfRadians(angle) * horizontal, vertical,
                     cosineOfRadians(angle) * horizontal);
                 break;

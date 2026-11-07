@@ -17,7 +17,6 @@ export const soundCatalog = {
     stormIdle: '/galaxy_tanks/sound/launch_star_idle.mp3',
     tunnel: '/galaxy_tanks/sound/dark_matter_hum.mp3',
     empty: '/galaxy_tanks/sound/ammunition_zero.mp3',
-    turnStart: '/tanks/sound/radio.ogg',
     radioBeep: '/tanks/sound/radio.ogg'
 } as const;
 

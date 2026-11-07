@@ -13,18 +13,21 @@ export interface BiomeRule {
 const biomeNumericKeys = ['minimumHeight', 'maximumHeight', 'minimumSlope', 'maximumSlope',
     'minimumMoisture', 'maximumMoisture'] as const;
 
+export function parseMaterialName(value: unknown): Material {
+    if (typeof value !== 'string' || !Object.prototype.hasOwnProperty.call(Material, value) ||
+        typeof Material[value as keyof typeof Material] !== 'number') throw new Error('Invalid material');
+    const material = Material[value as keyof typeof Material];
+    if (material === Material.AIR || material === Material.SEABED) throw new Error('Invalid material');
+    return material;
+}
+
 export function parseBiomeRules(value: unknown): ReadonlyArray<Readonly<BiomeRule>> {
     if (!Array.isArray(value) || value.length === 0) throw new Error('Biome table must be a non-empty array');
     return Object.freeze(value.map((entry: unknown) => {
         if (entry === null || typeof entry !== 'object' || Array.isArray(entry))
             throw new Error('Invalid biome rule');
         const record = entry as Record<string, unknown>;
-        const materialName = record.material;
-        if (typeof materialName !== 'string' || !Object.prototype.hasOwnProperty.call(Material, materialName) ||
-            typeof Material[materialName as keyof typeof Material] !== 'number')
-            throw new Error('Invalid biome material');
-        const material = Material[materialName as keyof typeof Material];
-        if (material === Material.AIR || material === Material.SEABED) throw new Error('Invalid biome surface');
+        const material = parseMaterialName(record.material);
         const rule: BiomeRule = { material };
         for (const key of biomeNumericKeys) {
             const bound = record[key];

@@ -342,6 +342,18 @@ legend {
     gap: $battle-roster-gap;
     overflow-y: auto;
 
+    &__team {
+        display: flex;
+        justify-content: space-between;
+        gap: $battle-roster-gap;
+        flex: none;
+        padding: $battle-roster-team-padding;
+        background: var(--team);
+        color: $battle-roster-team-color;
+        font-size: $battle-roster-team-font-size;
+        letter-spacing: $battle-roster-team-letter-spacing;
+    }
+
     &__crew {
         padding: $battle-roster-crew-padding;
         border-left: $battle-roster-crew-border-left;
@@ -421,6 +433,31 @@ legend {
     display: none;
 }
 
+#team-toast {
+    position: fixed;
+    z-index: $team-toast-z-index;
+    top: $team-toast-top;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: $team-toast-padding;
+    background: var(--team);
+    color: $team-toast-color;
+    font-size: $team-toast-font-size;
+    letter-spacing: $team-toast-letter-spacing;
+    text-align: center;
+    white-space: nowrap;
+    box-shadow: $team-toast-box-shadow;
+    pointer-events: none;
+    animation: $team-toast-animation;
+}
+
+@keyframes team-toast-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, $team-toast-hidden-offset);
+    }
+}
+
 .panel {
     background: var(--artillery-panel);
     border: $panel-border;
@@ -494,7 +531,7 @@ legend {
 .lobby-practice {
     display: flex;
     justify-content: flex-end;
-    margin-top: $lobby-columns-gap;
+    margin-top: 20px;
 }
 
 .invitation {
@@ -691,6 +728,25 @@ progress::-moz-progress-bar {
     .value-field {
         align-self: center;
     }
+}
+
+.rule-group {
+    display: flex;
+    align-items: center;
+    gap: $rule-group-gap;
+}
+
+.nudge {
+    display: flex;
+    gap: $nudge-gap;
+    margin-top: $nudge-margin-top;
+}
+
+.nudge button {
+    flex: 1;
+    min-height: $nudge-button-min-height;
+    padding: $nudge-button-padding;
+    font-size: $nudge-button-font-size;
 }
 
 .budget-label {
@@ -950,4 +1006,19 @@ td {
         scroll-behavior: auto !important;
         animation-duration: $reduced-motion-before-after-animation-duration !important;
     }
+}
+
+#match-settings {
+    input[type="number"] {
+        width: 100%;
+    }
+
+    #rule-isInfiniteRounds {
+        height: 34.3px;
+        min-height: 0;
+    }
+}
+
+.battle-roster__team {
+    font-weight: bold;
 }

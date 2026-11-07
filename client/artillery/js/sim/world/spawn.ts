@@ -6,7 +6,7 @@ import { Rng } from '../../../../shared/ts/seeded-random.js';
 import { arcTangent2, fullCircleInRadians } from '../math/deterministic-math.js';
 import { Vector3, createVector3 } from '../math/vector3.js';
 import { findSupportHeight, isTankEnvelopeClear } from '../tank-collision.js';
-import { BiomeRule } from './biomes.js';
+import { WorldTheme } from './themes.js';
 import { flattenDisc } from './terrain-edit.js';
 import { TerrainFields } from './terrain-fields.js';
 import { VoxelWorld } from './voxel-world.js';
@@ -136,7 +136,7 @@ function chooseSpawns(world: VoxelWorld, fields: TerrainFields, seats: ReadonlyA
 }
 
 export function* battlefieldAttempts(matchSeed: number, mapEdgeLengthInVoxels: number,
-    biomeRules: ReadonlyArray<Readonly<BiomeRule>>, seats: ReadonlyArray<SpawnSeat>):
+    theme: Readonly<WorldTheme>, seats: ReadonlyArray<SpawnSeat>):
     Generator<WorldGenerator, GeneratedBattlefield, VoxelWorld> {
     if (!Number.isInteger(matchSeed) || seats.length < 2 || seats.length > lobbyMaximumPlayerCount ||
         new Set(seats.map(seat => seat.seatIndex)).size !== seats.length || seats.some(seat =>
@@ -146,7 +146,7 @@ export function* battlefieldAttempts(matchSeed: number, mapEdgeLengthInVoxels: n
     const orderedSeats = seats.slice().sort((first, second) => first.seatIndex - second.seatIndex);
     for (let salt = 0; salt < worldGenerationMaximumAttempts; salt++) {
         const generationSeed = new Rng(matchSeed).fork(salt).seed;
-        const generator = new WorldGenerator(generationSeed, mapEdgeLengthInVoxels, biomeRules);
+        const generator = new WorldGenerator(generationSeed, mapEdgeLengthInVoxels, theme);
         const world = yield generator;
         if (world.mapEdgeLengthInVoxels !== mapEdgeLengthInVoxels)
             throw new Error('Generated world has the wrong size');
@@ -164,8 +164,8 @@ export function* battlefieldAttempts(matchSeed: number, mapEdgeLengthInVoxels: n
 }
 
 export function generateBattlefield(matchSeed: number, mapEdgeLengthInVoxels: number,
-    biomeRules: ReadonlyArray<Readonly<BiomeRule>>, seats: ReadonlyArray<SpawnSeat>): GeneratedBattlefield {
-    const attempts = battlefieldAttempts(matchSeed, mapEdgeLengthInVoxels, biomeRules, seats);
+    theme: Readonly<WorldTheme>, seats: ReadonlyArray<SpawnSeat>): GeneratedBattlefield {
+    const attempts = battlefieldAttempts(matchSeed, mapEdgeLengthInVoxels, theme, seats);
     let step = attempts.next();
     while (!step.done) step = attempts.next(step.value.generateWorld());
     return step.value;

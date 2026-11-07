@@ -20,9 +20,11 @@ import { Tank } from './sim/tank.js';
 import { describeWeapon } from './sim/weapon-summary.js';
 import { WeaponDataFiles } from './sim/weapon-types.js';
 import { warmUpTerrainEdits } from './sim/world/terrain-edit.js';
-import { BiomeRule } from './sim/world/biomes.js';
+import { WorldTheme, resolveTheme } from './sim/world/themes.js';
 import { MatchPhase, MatchSnapshot, MovementInput, PlayerPlan, PlayerStatistics, SeatPlan } from './types.js';
 import { ArtilleryUI, UiAction } from './ui.js';
+
+declare function beep(): void;
 
 export class ArtilleryClient {
     private readonly connection: GameConnection;
@@ -40,6 +42,8 @@ export class ArtilleryClient {
     private isPractice = false;
     private practiceImpactReached = false;
     private practiceTimeOfDay: number | undefined;
+    private practiceIslandTheme: number | undefined;
+    private practiceSeed: number | null = null;
     private fogDensity = oceanFogDensity;
     private seatIndex = -1;
     private room = location.search.slice(1).split('=')[0];
@@ -62,10 +66,12 @@ export class ArtilleryClient {
     private ambientOcclusion = true;
     private shake = true;
     private showHitboxes = false;
+    private usernameSubmitted = false;
+    private usernameRejected = false;
 
     constructor(private readonly ui: ArtilleryUI, private readonly data: WeaponDataFiles,
         private readonly effects: Readonly<Record<string, EffectProfile>>,
-        private readonly biomes: ReadonlyArray<Readonly<BiomeRule>>) {
+        private readonly themes: ReadonlyArray<Readonly<WorldTheme>>) {
         this.physicsHash = weaponDataHash(data);
         try {
             this.username = localStorage.getItem('artillery.username') || this.username;
@@ -117,6 +123,7 @@ export class ArtilleryClient {
         this.audio?.unlock();
         if (action.type === 'practice' && (this.phase === 'LOBBY' || this.phase === 'ENDED') ||
             action.type === 'practiceReset' && this.isPractice) {
+            if (action.type === 'practice') this.practiceSeed = null;
             void this.startPractice().catch(error => this.fail(error));
             return;
         }
@@ -126,14 +133,21 @@ export class ArtilleryClient {
             void this.startPractice().catch(error => this.fail(error));
             return;
         }
+        if (action.type === 'practiceTheme' && this.isPractice) {
+            if (!isMatchSettingValid('islandTheme', action.value)) return;
+            this.practiceIslandTheme = action.value as number;
+            void this.startPractice().catch(error => this.fail(error));
+            return;
+        }
         if (action.type === 'practiceExit' && this.isPractice) {
             location.reload();
             return;
         }
         if (action.type === 'send') {
             if (this.isPractice) return;
-            if (action.message.type === 'USERNAME' && typeof action.message.username === 'string')
-                this.username = action.message.username;
+            if (action.message.type === 'USERNAME' && typeof action.message.username === 'string') {
+                this.username = action.message.username; this.usernameSubmitted = true;
+            }
             this.connection.send(action.message);
         } else if (action.type === 'unlockAudio') this.audio?.unlock();
         else if (action.type === 'quality') {
@@ -226,13 +240,15 @@ export class ArtilleryClient {
         this.isPractice = true; this.seatIndex = 0; this.connection.dispose();
         this.keys.clear(); this.touchMask = 0; this.segments = []; this.lockedSeats = []; this.accumulator = 0;
         const timeOfDay = this.practiceTimeOfDay ?? this.lobby?.settings.timeOfDay ?? defaultMatchSettings.timeOfDay;
-        this.ui.notice(''); this.ui.disconnected.hidden = true; this.ui.setPractice(true, timeOfDay);
+        const islandTheme = this.practiceIslandTheme ?? this.lobby?.settings.islandTheme ??
+            defaultMatchSettings.islandTheme;
+        this.ui.notice(''); this.ui.disconnected.hidden = true; this.ui.setPractice(true, timeOfDay, islandTheme);
         const description: MatchDescription = { protocolVersion, weaponDataHash: this.physicsHash,
-            matchSeed: practiceSettings.matchSeed,
+            matchSeed: this.practiceSeed ??= crypto.getRandomValues(new Uint32Array(1))[0],
             settings: { ...defaultMatchSettings, isSandbox: true,
                 mapEdgeLengthInVoxels: this.lobby?.settings.mapEdgeLengthInVoxels ??
                     defaultMatchSettings.mapEdgeLengthInVoxels,
-                timeOfDay,
+                timeOfDay, islandTheme,
                 hitPointsPerTank: practiceSettings.hitPointsPerTank },
             seats: Array.from({ length: practiceSettings.playerCount }, (_unused, seatIndex) => ({ seatIndex,
                 teamIndex: seatIndex === 0 ? 0 : 1, username: seatIndex === 0 ? this.username : `Target${seatIndex}`,
@@ -276,6 +292,7 @@ export class ArtilleryClient {
             if (typeof message.isMissing !== 'boolean' || !this.description.seats.some(seat =>
                 seat.seatIndex === message.seatIndex)) throw new Error('Invalid seat status');
             const isMissing = message.isMissing;
+            if (isMissing && message.seatIndex !== this.seatIndex) this.alert();
             this.description = { ...this.description, seats: this.description.seats.map(seat =>
                 seat.seatIndex === message.seatIndex ? { ...seat, isMissing } : seat) };
             if (this.lobby) this.lobby = { ...this.lobby, seats: this.lobby.seats.map(seat =>
@@ -293,7 +310,7 @@ export class ArtilleryClient {
             this.phase = 'PLANNING'; this.segments = []; this.touchMask = 0; this.accumulator = 0;
             this.deadline = message.deadlineInMilliseconds;
             this.readLocks(message.lockedSeatIndices);
-            this.chooseWeapon(); this.scene?.setPlanning(true); this.refreshPlanning(); this.audio?.play('turnStart');
+            this.chooseWeapon(); this.scene?.setPlanning(true); this.refreshPlanning(); this.alert();
         } else if (message.type === 'PLAN_PREVIEW' && this.phase === 'PLANNING' && !this.loading && this.match &&
             message.turnIndex === this.match.turnIndex) {
             const tank = this.match.runtime.tanks.find(candidate => candidate.seatIndex === message.seatIndex);
@@ -309,6 +326,7 @@ export class ArtilleryClient {
         } else if (message.type === 'TURN_RESOLVE' && !this.loading && this.match && this.description) {
             validateTurnEntry(message, this.description, this.match.turnIndex);
             this.recordPreviousPlan(message.plans);
+            this.announceTeamFired(message.teamIndex, message.plans);
             this.phase = 'RESOLVING'; this.touchMask = 0; this.keys.clear(); this.accumulator = 0;
             this.scene?.captureTick(); this.match.beginResolve(message.turnIndex, message.teamIndex, message.plans);
             this.scene?.setPlanning(false); this.scene?.followOwnShots();
@@ -324,6 +342,10 @@ export class ArtilleryClient {
             this.audio?.dispose(); this.audio = null; this.ui.setMode('lobby'); this.refreshLobby();
         } else if (message.type === 'ERROR') {
             const error = String(message.message ?? message.code ?? 'Server error');
+            if (message.code === 'ALREADY_TAKEN_USERNAME') {
+                this.rejectUsername();
+                return;
+            }
             if (message.code === 'LOAD_TIMEOUT' || message.code === 'REPORT_TIMEOUT') this.fail(new Error(error));
             else this.ui.notice(error);
         } else if (message.type === 'DESYNC_DETECTED') {
@@ -349,6 +371,31 @@ export class ArtilleryClient {
             this.connection.send({ type: 'JOIN', gameID: this.room });
         } else if (message.type === 'VERSION_MISMATCH')
             this.fail(new Error('The match cannot continue safely. Reload to reconnect with current game data.'));
+    }
+
+    private rejectUsername(): void {
+        if (!this.usernameSubmitted) {
+            this.username = `User${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+            this.ui.setUsername(this.username);
+            this.connection.send({ type: 'USERNAME', username: this.username });
+        } else if (this.phase === 'LOBBY') {
+            this.usernameRejected = true; this.ui.notice('Username already taken');
+        }
+    }
+
+    private alert(): void {
+        if (this.volume > 0 && !document.hidden) beep();
+    }
+
+    private announceTeamFired(teamIndex: number, plans: ReadonlyArray<SeatPlan>): void {
+        const hasStalled = plans.some(({ seatIndex, plan }) => {
+            const tank = this.match?.runtime.tanks.find(candidate => candidate.seatIndex === seatIndex);
+            const seat = this.description?.seats.find(candidate => candidate.seatIndex === seatIndex);
+            return plan.weaponIdentifier === null && !seat?.isMissing && !!tank &&
+                Array.from(tank.ammunition.values()).some(uses => uses > 0);
+        });
+        if (hasStalled) this.alert();
+        else this.ui.teamFired(teamIndex);
     }
 
     private validStatistics(value: unknown): value is PlayerStatistics {
@@ -377,6 +424,9 @@ export class ArtilleryClient {
         for (const seat of roster) this.scene?.setUsername(seat.seatIndex, seat.username);
         const own = this.lobby.seats.find(seat => seat.seatIndex === this.seatIndex);
         if (own) {
+            if (this.usernameRejected && own.username === this.username) {
+                this.usernameRejected = false; this.ui.notice('');
+            }
             this.ui.setUsername(own.username);
             try {
                 localStorage.setItem('artillery.username', own.username);
@@ -385,7 +435,7 @@ export class ArtilleryClient {
         if (this.phase === 'LOBBY') {
             this.ui.setMode('lobby');
             if (!this.background && this.room && !this.disposed) try {
-                const background = new LobbyBackground(this.ui.canvas, this.room, this.biomes);
+                const background = new LobbyBackground(this.ui.canvas, this.room, this.themes[0]);
                 this.background = background; background.setFogDensity(this.fogDensity);
                 void background.ready.catch(error => {
                     background.dispose();
@@ -459,15 +509,19 @@ export class ArtilleryClient {
         const startedAt = Date.now();
         const loading = new AbortController(); this.loading = loading;
         const signal = loading.signal;
+        if (this.usernameRejected) {
+            this.usernameRejected = false; this.ui.notice('');
+        }
         this.phase = 'LOADING'; this.ui.setMode('loading'); this.description = description;
         this.background?.dispose(); this.background = null;
         this.scene?.dispose(); this.scene = null; this.audio?.dispose(); this.audio = null; this.match = null;
         try {
+            const theme = resolveTheme(description.matchSeed, this.themes, description.settings.islandTheme);
             const battlefield = await loadBattlefield(description.matchSeed, description.settings.mapEdgeLengthInVoxels,
-                this.biomes, description.seats, progress => this.ui.loading(0, progress.completed / progress.total,
+                theme, description.seats, progress => this.ui.loading(0, progress.completed / progress.total,
                     `Generating island · attempt ${progress.attempt}`), signal);
             const match = new Match(description.matchSeed, description.settings, description.seats, this.data,
-                this.physicsHash, this.biomes, battlefield);
+                this.physicsHash, this.themes, battlefield);
             if (this.isPractice)
                 for (const tank of match.runtime.tanks) if (tank.seatIndex !== this.seatIndex) {
                     tank.ammunition.clear();
@@ -625,7 +679,8 @@ export class ArtilleryClient {
             this.accumulator = this.phase === 'PLANNING' || this.phase === 'RESOLVING'
                 ? this.accumulator + delta * speed : 0;
             const practiceSettling = this.isPractice && this.practiceImpactReached && this.phase === 'RESOLVING' &&
-                this.match!.runtime.projectiles.length === 0 && !this.match!.runtime.hasActiveDeployables;
+                this.match!.runtime.projectiles.length === 0 && !this.match!.runtime.hasActiveDeployables &&
+                !this.match!.runtime.liquids.isActive;
             const ticks = this.phase === 'RESOLVING' &&
                 (this.keys.has(keyboardBindings.fastForward) || practiceSettling)
                 ? resolveFastForwardTicksPerFrame : Math.min(Math.floor(this.accumulator * simulationTicksPerSecond),
@@ -641,7 +696,7 @@ export class ArtilleryClient {
             this.background?.render(delta, document.hidden);
             if (this.scene && !document.hidden) {
                 if (this.description) this.ui.matchRoster(this.description.seats, this.match!.runtime.tanks,
-                    this.lockedSeats);
+                    this.lockedSeats, this.description.settings);
                 this.scene.render(Math.min(1, this.accumulator * simulationTicksPerSecond), delta);
                 const camera = this.scene.camera.camera;
                 this.audio?.setListener(camera.position, { x: camera.matrixWorld.elements[0],

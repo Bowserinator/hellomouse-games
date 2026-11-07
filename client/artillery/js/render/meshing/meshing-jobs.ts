@@ -1,5 +1,5 @@
 import { worldChunkEdgeLengthInVoxels, worldHeightInVoxels } from '../../config.js';
-import { BiomeRule } from '../../sim/world/biomes.js';
+import { WorldTheme } from '../../sim/world/themes.js';
 import { ChunkStorage, VoxelWorld } from '../../sim/world/voxel-world.js';
 import { WorldGenerator } from '../../sim/world/world-generator.js';
 import { meshChunk, MeshingInput, PackedVoxelMesh } from './greedy-mesher.js';
@@ -16,7 +16,7 @@ export type MeshingRequest = {
     chunkX: number;
     chunkY: number;
     chunkZ: number;
-    biomeRules: ReadonlyArray<Readonly<BiomeRule>>;
+    theme: Readonly<WorldTheme>;
 };
 export type MeshingJob = MeshingRequest & { jobIdentifier: number };
 export type MeshingResult = {
@@ -62,9 +62,9 @@ export class MeshingJobProcessor {
     run(job: MeshingJob): MeshingResult {
         if (job.kind === 'meshChunk') return { kind: 'meshChunk', jobIdentifier: job.jobIdentifier,
             chunkVersion: job.chunkVersion, mesh: meshChunk(job.input) };
-        const key = `${job.matchSeed}:${job.mapEdgeLengthInVoxels}:${JSON.stringify(job.biomeRules)}`;
+        const key = `${job.matchSeed}:${job.mapEdgeLengthInVoxels}:${job.theme.identifier}`;
         if (this.generator === null || key !== this.generationKey) {
-            this.generator = new WorldGenerator(job.matchSeed, job.mapEdgeLengthInVoxels, job.biomeRules);
+            this.generator = new WorldGenerator(job.matchSeed, job.mapEdgeLengthInVoxels, job.theme);
             this.generationKey = key;
         }
         return { kind: 'generateChunk', jobIdentifier: job.jobIdentifier, chunkVersion: job.chunkVersion,

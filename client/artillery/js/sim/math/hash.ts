@@ -1,6 +1,8 @@
 export const fnvOffsetBasis = 0x811c9dc5;
 export const fnvPrime = 0x01000193;
 
+const isLittleEndian = new Uint8Array(new Uint32Array([1]).buffer)[0] === 1;
+
 export class StateHash {
     private checksum = fnvOffsetBasis;
     private numberBuffer = new DataView(new ArrayBuffer(8));
@@ -30,8 +32,23 @@ export class StateHash {
         return this;
     }
 
+    /** Hashes bulk data a word at a time. */
     bytes(value: Uint8Array): this {
-        for (let offset = 0; offset < value.length; offset++) this.byte(value[offset]);
+        const wordCount = value.length >>> 2;
+        const words = isLittleEndian && value.byteOffset % 4 === 0
+            ? new Uint32Array(value.buffer, value.byteOffset, wordCount) : null;
+        let checksum = this.checksum;
+        for (let index = 0; index < wordCount; index++) {
+            const offset = index << 2;
+            let word = words ? words[index] : (value[offset] | value[offset + 1] << 8 |
+                value[offset + 2] << 16 | value[offset + 3] << 24);
+            word = Math.imul(word, 0xcc9e2d51);
+            word = Math.imul(word << 15 | word >>> 17, 0x1b873593);
+            checksum ^= word;
+            checksum = Math.imul(checksum << 13 | checksum >>> 19, 5) + 0xe6546b64 | 0;
+        }
+        this.checksum = checksum >>> 0;
+        for (let offset = wordCount << 2; offset < value.length; offset++) this.byte(value[offset]);
         return this;
     }
 

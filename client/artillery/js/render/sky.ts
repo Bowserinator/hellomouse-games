@@ -1,10 +1,31 @@
 import type * as T from 'three';
 import { Rng } from '../../../shared/ts/seeded-random.js';
 import { cloudCover } from '../../../shared/ts/value-noise.js';
-import { skyCubeFaceResolution, skyCloudSoftness, skySunAngularRadiusInDegrees, skyPresets } from '../config.js';
+import { SkyPreset, skyCubeFaceResolution, skyCloudSoftness, skySunAngularRadiusInDegrees,
+    skyPresets } from '../config.js';
+import { ThemeSky } from '../sim/world/themes.js';
 
 export function skyPreset(seed: number): typeof skyPresets[number] {
     return skyPresets[Math.floor(new Rng(seed).fork(8002).float() * skyPresets.length)];
+}
+
+/** Moves the preset's colours toward the theme's, keeping dark presets dark. */
+export function themedSkyPreset(preset: Readonly<SkyPreset>, sky: Readonly<ThemeSky>): Readonly<SkyPreset> {
+    const strength = sky.strength ?? 1, brightness = preset.lightLevel ?? 1;
+    const blend = (base: number, target: number | undefined): number => {
+        if (target === undefined) return base;
+        let result = 0;
+        for (const shift of [16, 8, 0]) {
+            const from = (base >> shift) & 255, to = Math.round(((target >> shift) & 255) * brightness);
+            result |= Math.round(from + (to - from) * strength) << shift;
+        }
+        return result;
+    };
+    return { ...preset, zenithColour: blend(preset.zenithColour, sky.zenithColour),
+        horizonColour: blend(preset.horizonColour, sky.horizonColour),
+        cloudColour: blend(preset.cloudColour, sky.cloudColour),
+        sunColour: blend(preset.sunColour, sky.sunColour),
+        ...sky.lightLevelScale === undefined ? {} : { lightLevel: brightness * sky.lightLevelScale } };
 }
 
 export function createSkyCube(seed: number, resolution = skyCubeFaceResolution,

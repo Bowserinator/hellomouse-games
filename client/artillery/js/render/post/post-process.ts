@@ -4,8 +4,9 @@ import { Rng } from '../../../../shared/ts/seeded-random.js';
 import { bloomThreshold, bloomSoftKnee, bloomIntensity, bloomBoostMaximum, bloomBoostDecayPerSecond,
     shockwaveMaximumCount, shockwaveDurationInSeconds, shockwaveThicknessFraction, ditherTextureSize,
     oceanFogDensity, oceanMaximumFogDensity, skyDriftRadiansPerSecond, renderingQualityPresets,
-    oceanRenderHeightInVoxels, oceanEdgeFadeWidthInVoxels, xrayBackgroundColour } from '../../config.js';
+    oceanRenderHeightInVoxels, oceanEdgeFadeWidthInVoxels, oceanWaterLiquid, xrayBackgroundColour } from '../../config.js';
 import { Vector3 } from '../../sim/math/vector3.js';
+import { ThemeLiquid } from '../../sim/world/themes.js';
 import { transparentEffectsLayer } from '../effects-layer.js';
 import { RenderingQuality } from '../scene-lighting.js';
 import { skyPreset } from '../sky.js';
@@ -50,7 +51,8 @@ export class PostProcess {
     private disposed = false;
 
     constructor(private readonly renderer: T.WebGLRenderer, sky: T.CubeTexture,
-        preset: ReturnType<typeof skyPreset>, private quality: RenderingQuality = 'high', mapEdgeLengthInVoxels = 0) {
+        preset: ReturnType<typeof skyPreset>, private quality: RenderingQuality = 'high', mapEdgeLengthInVoxels = 0,
+        liquid: Readonly<Omit<ThemeLiquid, 'damagePerTurn'>> = oceanWaterLiquid) {
         if (!renderer.capabilities.isWebGL2 && !renderer.extensions.has('WEBGL_depth_texture'))
             throw new Error('Depth textures are required for Artillery rendering');
         this.usesHighDynamicRange = renderer.capabilities.isWebGL2
@@ -74,6 +76,10 @@ export class PostProcess {
             uCameraWorld: { value: this.cameraWorld }, uSunDirection: { value: new THREE.Vector3(
                 preset.sunDirection.x, preset.sunDirection.y, preset.sunDirection.z).normalize() },
             uFogColour: { value: new THREE.Color(preset.horizonColour).convertSRGBToLinear() },
+            uLiquidAbsorption: { value: new THREE.Vector3(...liquid.absorption) },
+            uLiquidScatter: { value: new THREE.Vector3(...liquid.scatter) },
+            uFoamColour: { value: new THREE.Vector3(...liquid.foam) },
+            uLiquidEmissive: { value: liquid.emissive },
             uTexel: { value: new THREE.Vector2(1, 1) }, uTime: { value: 0 },
             uWaterHeight: { value: oceanRenderHeightInVoxels }, uFogDensity: { value: oceanFogDensity },
             uMapEdge: { value: mapEdgeLengthInVoxels }, uEdgeFadeWidth: { value: oceanEdgeFadeWidthInVoxels },

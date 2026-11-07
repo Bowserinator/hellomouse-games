@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------------
 export const worldChunkEdgeLengthInVoxels = 32;
 export const worldHeightInVoxels = 512;
-export const worldMapEdgeLengthOptionsInVoxels = [128, 256, 512] as const;
+export const worldMapEdgeLengthOptionsInVoxels = [256, 512, 256 * 3] as const;
 export const worldIndestructibleMaximumLayerIndex = 1;
 export const worldWaterSurfaceHeightInVoxels = 2;
 export const oceanRenderHeightInVoxels = 1.5;
@@ -43,11 +43,17 @@ export const worldGenerationNoise = {
     floatingIslandForkLabel: 2001,
     caveForkOffset: 3001,
     decorationForkLabel: 4001,
+    themeForkLabel: 6001,
     offsetCount: 16,
     offsetMaximum: 10000,
     secondAxisStreamOffset: 5,
     thirdAxisStreamOffset: 11
 } as const;
+
+export const islandThemeIdentifiers = ['grassy', 'mesa', 'desert', 'snow', 'lava'] as const;
+export const islandThemeNames = ['Grassy', 'Mesa', 'Desert', 'Snow', 'Lava'] as const;
+/** Island theme setting value that picks a theme from the match seed. */
+export const randomIslandTheme = 0;
 
 export const worldTerrainSettings = {
     boundaryMinimumFraction: .08,
@@ -238,7 +244,7 @@ export const projectileGravityInVoxelsPerSecondSquared = 30;
 export const projectileMaximumMuzzleSpeedInVoxelsPerSecond = 80;
 export const projectileFiringSpeedMultiplier = 2;
 export const practiceSettings = {
-    matchSeed: 391, playerCount: 4, mapEdgeLengthInVoxels: 256, hitPointsPerTank: 1000, targetHitPoints: 100
+    playerCount: 4, mapEdgeLengthInVoxels: 256, hitPointsPerTank: 1000, targetHitPoints: 100
 } as const;
 export const projectileReferenceMass = 1;
 export const projectileMaximumSubstepDistanceInVoxels = 1;
@@ -260,13 +266,14 @@ export const explosionDefaultIrregularityFraction = 0.12;
 export const liquidStepIntervalInTicks = 4;
 export const liquidMaximumCellCount = 4000;
 export const fireDurationInSeconds = 10;
+export const fireSplashRadiusInVoxels = 3;
 export const fireIgnitionHopDelayInSeconds = .1;
 export const fireDefaultDamagePerSecond = 2;
 
 // -----------------------------------------------------------------------------
 // Match rules
 // -----------------------------------------------------------------------------
-export const protocolVersion = 8;
+export const protocolVersion = 9;
 export const teamNames = ['Red', 'Blue', 'Green', 'Yellow'] as const;
 export const teamGlyphs = ['◆', '●', '▲', '■'] as const;
 export const teamPrimaryColours = [0xe35a58, 0x5c9de0, 0x75b968, 0xe0bc4c] as const;
@@ -292,13 +299,18 @@ export interface MatchSettings {
     planningTimeLimitInSeconds: number;
     mapEdgeLengthInVoxels: number;
     timeOfDay: number;
+    islandTheme: number;
     isSandbox: boolean;
     isFriendlyFireEnabled: boolean;
+    isInfiniteRounds: boolean;
+    roundCount: number;
+    scoreMode: number;
 }
 
 export const matchSettingKeys: ReadonlyArray<keyof MatchSettings> = [
     'teamCount', 'hitPointsPerTank', 'weaponsPerPlayer', 'movementTimePerTurnInSeconds',
-    'planningTimeLimitInSeconds', 'mapEdgeLengthInVoxels', 'timeOfDay', 'isSandbox', 'isFriendlyFireEnabled'
+    'planningTimeLimitInSeconds', 'mapEdgeLengthInVoxels', 'timeOfDay', 'islandTheme', 'isSandbox', 'isFriendlyFireEnabled',
+    'isInfiniteRounds', 'roundCount', 'scoreMode'
 ];
 
 export const defaultMatchSettings: Readonly<MatchSettings> = Object.freeze({
@@ -309,8 +321,12 @@ export const defaultMatchSettings: Readonly<MatchSettings> = Object.freeze({
     planningTimeLimitInSeconds: planTimeLimitInSeconds,
     mapEdgeLengthInVoxels: 512,
     timeOfDay: 0,
+    islandTheme: randomIslandTheme,
     isSandbox: false,
-    isFriendlyFireEnabled: true
+    isFriendlyFireEnabled: true,
+    isInfiniteRounds: true,
+    roundCount: 10,
+    scoreMode: 0
 });
 
 export const matchSettingIntegerRanges = {
@@ -319,11 +335,17 @@ export const matchSettingIntegerRanges = {
     weaponsPerPlayer: [1, 40, 1],
     movementTimePerTurnInSeconds: [2, 15, 1],
     planningTimeLimitInSeconds: [15, 600, 1],
-    timeOfDay: [0, 2, 1]
+    timeOfDay: [0, 2, 1],
+    islandTheme: [0, islandThemeIdentifiers.length, 1],
+    roundCount: [1, 100, 1],
+    scoreMode: [0, 2, 1]
 } as const;
 
+export const scoreModeNames = ['Damage dealt', 'HP remaining', 'Elimination order'] as const;
+
 export function isMatchSettingValid(key: string, value: unknown): key is keyof MatchSettings {
-    if (key === 'isSandbox' || key === 'isFriendlyFireEnabled') return typeof value === 'boolean';
+    if (key === 'isSandbox' || key === 'isFriendlyFireEnabled' || key === 'isInfiniteRounds')
+        return typeof value === 'boolean';
     if (typeof value !== 'number' || !Number.isSafeInteger(value)) return false;
     if (key === 'mapEdgeLengthInVoxels')
         return worldMapEdgeLengthOptionsInVoxels.some(option => option === value);
@@ -572,6 +594,12 @@ export const oceanFoamRadiusInVoxels = 6;
 export const oceanFoamReachDepthInVoxels = 12;
 export const oceanFoamWaveCount = 2;
 export const oceanFoamWaveSpeed = .12;
+export const oceanWaterLiquid = Object.freeze({
+    absorption: [.13, .047, .027] as const,
+    scatter: [.014, .105, .17] as const,
+    foam: [.85, .96, 1] as const,
+    emissive: 0
+});
 export const shockwaveDurationInSeconds = .8;
 export const shockwaveThicknessFraction = .12;
 export const ditherTextureSize = 64;

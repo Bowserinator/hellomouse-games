@@ -1,0 +1,292 @@
+[
+    {
+        "identifier": "grassy",
+        "weight": 9,
+        "biomes": [
+            {
+                "maximumHeight": 3,
+                "material": "WET_SAND"
+            },
+            {
+                "maximumHeight": 6,
+                "material": "SAND"
+            },
+            {
+                "minimumSlope": 1.15,
+                "material": "DARK_STONE"
+            },
+            {
+                "minimumHeight": 76,
+                "maximumSlope": 0.85,
+                "material": "SNOW"
+            },
+            {
+                "minimumHeight": 48,
+                "material": "LIGHT_STONE"
+            },
+            {
+                "maximumMoisture": 0.3,
+                "material": "DRY_GRASS"
+            },
+            {
+                "maximumMoisture": 0.44,
+                "material": "MEADOW_LIGHT"
+            },
+            {
+                "maximumMoisture": 0.6,
+                "material": "MEADOW"
+            },
+            {
+                "maximumMoisture": 0.72,
+                "material": "MEADOW_DARK"
+            },
+            {
+                "material": "FOREST_FLOOR"
+            }
+        ]
+    },
+    {
+        "identifier": "mesa",
+        "weight": 9,
+        "biomes": [
+            {
+                "maximumHeight": 3,
+                "material": "WET_SAND"
+            },
+            {
+                "maximumHeight": 6,
+                "material": "SAND"
+            },
+            {
+                "minimumSlope": 1.15,
+                "material": "TERRACOTTA_RED"
+            },
+            {
+                "minimumSlope": 0.7,
+                "material": "TERRACOTTA_ORANGE"
+            },
+            {
+                "maximumMoisture": 0.25,
+                "material": "SAND"
+            },
+            {
+                "material": "RED_SAND"
+            }
+        ],
+        "materials": {
+            "soil": "RED_SAND",
+            "shoreSoil": "SANDSTONE",
+            "soilDepth": 2,
+            "boulder": "SANDSTONE",
+            "strataBands": [
+                {
+                    "material": "TERRACOTTA_RED",
+                    "thickness": 3
+                },
+                {
+                    "material": "TERRACOTTA_CREAM",
+                    "thickness": 2
+                },
+                {
+                    "material": "TERRACOTTA_ORANGE",
+                    "thickness": 4
+                }
+            ],
+            "floatingTop": "RED_SAND",
+            "stoneDark": "TERRACOTTA_RED"
+        },
+        "terrain": {
+            "regionRange": [
+                0.4,
+                0.62
+            ],
+            "terraceCount": 6,
+            "mesaHeight": 57,
+            "terraceHeight": 14
+        },
+        "decoration": {
+            "treeProbabilityScale": 0.15,
+            "boulderProbability": 0.06
+        },
+        "sky": {
+            "horizonColour": "#e8b98a",
+            "strength": 0.3
+        }
+    },
+    {
+        "identifier": "desert",
+        "weight": 9,
+        "biomes": [
+            {
+                "maximumHeight": 3,
+                "material": "WET_SAND"
+            },
+            {
+                "minimumSlope": 1,
+                "material": "SANDSTONE"
+            },
+            {
+                "maximumMoisture": 0.2,
+                "minimumSlope": 0.5,
+                "material": "GRAVEL"
+            },
+            {
+                "material": "SAND"
+            }
+        ],
+        "materials": {
+            "soil": "SANDSTONE",
+            "shoreSoil": "SAND",
+            "boulder": "SANDSTONE",
+            "floatingTop": "SAND",
+            "stoneDark": "SANDSTONE",
+            "stoneLight": "SANDSTONE",
+            "strataBands": [
+                {
+                    "material": "SANDSTONE",
+                    "thickness": 6
+                },
+                {
+                    "material": "TERRACOTTA_CREAM",
+                    "thickness": 2
+                }
+            ]
+        },
+        "terrain": {
+            "regionRange": [
+                0.8,
+                0.95
+            ],
+            "hillAmplitude": 8,
+            "duneAmplitude": 5
+        },
+        "decoration": {
+            "treeProbabilityScale": 0.05,
+            "speciesOverride": 3,
+            "boulderProbability": 0.04
+        },
+        "sky": {
+            "horizonColour": "#f0d9a8",
+            "strength": 0.3
+        }
+    },
+    {
+        "identifier": "snow",
+        "weight": 9,
+        "biomes": [
+            {
+                "maximumHeight": 3,
+                "material": "ICE"
+            },
+            {
+                "minimumSlope": 1.5,
+                "material": "DARK_STONE"
+            },
+            {
+                "minimumHeight": 48,
+                "minimumSlope": 1.1,
+                "material": "LIGHT_STONE"
+            },
+            {
+                "material": "SNOW"
+            }
+        ],
+        "materials": {
+            "floatingTop": "SNOW"
+        },
+        "decoration": {
+            "treeProbabilityScale": 0.6,
+            "speciesOverride": 1
+        },
+        "sky": {
+            "horizonColour": "#d3e6f4",
+            "zenithColour": "#4f86c4",
+            "strength": 0.4
+        }
+    },
+    {
+        "identifier": "lava",
+        "weight": 4,
+        "biomes": [
+            {
+                "maximumHeight": 3,
+                "material": "BASALT"
+            },
+            {
+                "minimumHeight": 70,
+                "material": "OBSIDIAN"
+            },
+            {
+                "minimumSlope": 1.15,
+                "material": "BASALT"
+            },
+            {
+                "minimumSlope": 0.8,
+                "material": "SCORCHED_GROUND"
+            },
+            {
+                "maximumMoisture": 0.5,
+                "material": "ASH"
+            },
+            {
+                "material": "NETHERRACK"
+            }
+        ],
+        "materials": {
+            "soil": "ASH",
+            "shoreSoil": "BASALT",
+            "stoneLight": "BASALT",
+            "stoneDark": "OBSIDIAN",
+            "floatingTop": "ASH",
+            "boulder": "OBSIDIAN",
+            "strataBands": [
+                {
+                    "material": "BASALT",
+                    "thickness": 6
+                },
+                {
+                    "material": "OBSIDIAN",
+                    "thickness": 3
+                }
+            ]
+        },
+        "terrain": {
+            "regionRange": [
+                0.15,
+                0.75
+            ],
+            "chainHeight": 80
+        },
+        "decoration": {
+            "treeProbabilityScale": 0.4,
+            "speciesOverride": 3,
+            "boulderProbability": 0.02
+        },
+        "liquid": {
+            "damagePerTurn": 25,
+            "absorption": [
+                0.25,
+                0.6,
+                0.9
+            ],
+            "scatter": [
+                1.25,
+                0.35,
+                0.04
+            ],
+            "foam": [
+                1.6,
+                1,
+                0.35
+            ],
+            "emissive": 0.9
+        },
+        "sky": {
+            "horizonColour": "#3a1208",
+            "zenithColour": "#1a0a0a",
+            "sunColour": "#ff8a4a",
+            "strength": 0.6,
+            "lightLevelScale": 0.8
+        }
+    }
+]

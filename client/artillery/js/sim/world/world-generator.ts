@@ -3,11 +3,12 @@ import { decorationCellEdgeLengthInVoxels, terrainSandMaximumHeightInVoxels,
     worldFloatingIslandProbability, worldHeightInVoxels, worldTreeProbability, worldGenerationNoise,
     worldSeabedTransitionWidthInVoxels,
     worldCaveSettings as caves, worldFloatingIslandSettings as floating,
-    worldDecorationSettings as decoration, worldTerrainSettings as terrain } from '../../config.js';
+    worldDecorationSettings as decoration } from '../../config.js';
 import { Rng } from '../../../../shared/ts/seeded-random.js';
-import { BiomeRule, surfaceMaterial } from './biomes.js';
+import { surfaceMaterial } from './biomes.js';
 import { Material, underwaterMaterial } from './material-table.js';
 import { TerrainFields } from './terrain-fields.js';
+import { StrataBand, WorldTheme } from './themes.js';
 import { ChunkStorage, VoxelWorld, chunkVoxelCount, compactChunk } from './voxel-world.js';
 
 interface FloatingIsland {
@@ -26,10 +27,12 @@ export class WorldGenerator {
     public readonly fields: TerrainFields;
     private readonly floatingIslands: Array<FloatingIsland> = [];
     private readonly caveCells = new Map<number, boolean>();
+    private readonly strataCycleLength: number;
 
     constructor(public readonly matchSeed: number, public readonly mapEdgeLengthInVoxels: number,
-        private readonly biomeRules: ReadonlyArray<Readonly<BiomeRule>>) {
-        this.fields = new TerrainFields(matchSeed, mapEdgeLengthInVoxels);
+        private readonly theme: Readonly<WorldTheme>) {
+        this.fields = new TerrainFields(matchSeed, mapEdgeLengthInVoxels, theme);
+        this.strataCycleLength = (theme.materials.strataBands ?? []).reduce((total, band) => total + band.thickness, 0);
         const cellCount = Math.ceil(mapEdgeLengthInVoxels / chunkEdge);
         const random = new Rng(matchSeed).fork(worldGenerationNoise.floatingIslandForkLabel);
         for (let cellZ = 0; cellZ < cellCount; cellZ++)
@@ -88,6 +91,9 @@ export class WorldGenerator {
             chunkZ >= horizontalChunks || chunkY >= worldHeightInVoxels / chunkEdge)
             throw new RangeError('Generation chunk lies outside the world');
         const tile = this.fields.tileAt(chunkX, chunkZ);
+        const materials = this.theme.materials;
+        const stoneLight = materials.stoneLight ?? Material.LIGHT_STONE;
+        const stoneDark = materials.stoneDark ?? Material.DARK_STONE;
         const originX = chunkX * chunkEdge, originY = chunkY * chunkEdge, originZ = chunkZ * chunkEdge;
         const voxels = new Uint8Array(chunkVoxelCount);
         for (let localZ = 0; localZ < chunkEdge; localZ++)
@@ -104,7 +110,7 @@ export class WorldGenerator {
                     if (fraction < 1 && new Rng(this.matchSeed).fork(x + this.mapEdgeLengthInVoxels * z)
                         .float() >= coverage) continue;
                 }
-                const surface = height > 0 ? surfaceMaterial(this.biomeRules, height,
+                const surface = height > 0 ? surfaceMaterial(this.theme.biomes, height,
                     tile.slopes[index], tile.moisture[index]) : Material.AIR;
                 const localTop = Math.min(chunkEdge - 1, height - originY);
                 for (let localY = 0; localY <= localTop; localY++) {
@@ -113,12 +119,17 @@ export class WorldGenerator {
                     if (y === 0 || (height > 0 && y === 1)) material = Material.SEABED;
                     else if (this.isCave(x, y, z, height)) continue;
                     else if (y === height) material = surface;
-                    else if (y >= height - terrainSoilDepthInVoxels)
-                        material = height <= terrainSandMaximumHeightInVoxels ? Material.SANDSTONE : Material.DIRT;
-                    else if (y % terrain.strataPeriod < terrain.lightStrataThickness) material = Material.STRATA_LIGHT;
-                    else if (y % terrain.strataPeriod < terrain.darkStrataTop) material = Material.STRATA_DARK;
-                    else material = y < terrain.darkStoneTop ? Material.DARK_STONE : Material.LIGHT_STONE;
-                    voxels[localX + chunkEdge * (localZ + chunkEdge * localY)] = underwaterMaterial(material, y);
+                    else if (y >= height - (materials.soilDepth ?? terrainSoilDepthInVoxels))
+                        material = height <= terrainSandMaximumHeightInVoxels
+                            ? materials.shoreSoil ?? Material.SANDSTONE : materials.soil ?? Material.DIRT;
+                    else if (materials.strataBands) material = this.strataMaterial(materials.strataBands, y);
+                    else if (y % this.fields.settings.strataPeriod < this.fields.settings.lightStrataThickness)
+                        material = Material.STRATA_LIGHT;
+                    else if (y % this.fields.settings.strataPeriod < this.fields.settings.darkStrataTop)
+                        material = Material.STRATA_DARK;
+                    else material = y < this.fields.settings.darkStoneTop ? stoneDark : stoneLight;
+                    voxels[localX + chunkEdge * (localZ + chunkEdge * localY)] =
+                        underwaterMaterial(material, y, materials.shoreSoil, materials.soil);
                 }
             }
 
@@ -127,7 +138,17 @@ export class WorldGenerator {
         return compactChunk(voxels);
     }
 
+    private strataMaterial(bands: ReadonlyArray<Readonly<StrataBand>>, y: number): Material {
+        let offset = y % this.strataCycleLength;
+        for (const band of bands) {
+            if (offset < band.thickness) return band.material;
+            offset -= band.thickness;
+        }
+        return bands[bands.length - 1].material;
+    }
+
     private stampFloatingIslands(voxels: Uint8Array, originX: number, originY: number, originZ: number): void {
+        const materials = this.theme.materials;
         for (const island of this.floatingIslands) {
             if (island.x + island.radius < originX || island.x - island.radius >= originX + chunkEdge ||
                 island.z + island.radius < originZ || island.z - island.radius >= originZ + chunkEdge ||
@@ -147,8 +168,10 @@ export class WorldGenerator {
                     const bottom = top - Math.floor(island.depth * (1 - radius)) - stalactite;
                     for (let y = Math.max(bottom, originY); y <= Math.min(top, originY + chunkEdge - 1); y++)
                         voxels[localX + chunkEdge * (localZ + chunkEdge * (y - originY))] = underwaterMaterial(
-                            y === top ? Material.MEADOW_DARK
-                                : (y >= top - floating.soilDepth ? Material.DIRT : Material.DARK_STONE), y);
+                            y === top ? materials.floatingTop ?? Material.MEADOW_DARK
+                                : (y >= top - floating.soilDepth ? materials.soil ?? Material.DIRT
+                                    : materials.stoneDark ?? Material.DARK_STONE), y, materials.shoreSoil,
+                            materials.soil);
                 }
         }
         for (const island of this.floatingIslands)
@@ -161,6 +184,9 @@ export class WorldGenerator {
 
     private stampDecorations(voxels: Uint8Array, originX: number, originY: number, originZ: number): void {
         const padding = decoration.chunkPadding;
+        const themed = this.theme.decoration, materials = this.theme.materials;
+        const treeProbability = worldTreeProbability * (themed.treeProbabilityScale ?? 1);
+        const boulderProbability = themed.boulderProbability ?? decoration.boulderProbability;
         const cellCount = Math.ceil(this.mapEdgeLengthInVoxels / decorationCellEdge);
         const random = new Rng(this.matchSeed).fork(worldGenerationNoise.decorationForkLabel);
         for (let cellZ = Math.max(0, Math.floor((originZ - padding) / decorationCellEdge));
@@ -177,14 +203,14 @@ export class WorldGenerator {
                 const treeDraw = candidate.float();
                 if (height >= decoration.treeMinimumHeight && height <= decoration.treeMaximumHeight &&
                     slope < decoration.treeMaximumSlope && moisture > decoration.treeMinimumMoisture &&
-                    treeDraw < worldTreeProbability) {
-                    const species = height > decoration.leaflessMinimumHeight ? 3
+                    treeDraw < treeProbability) {
+                    const species = themed.speciesOverride ?? (height > decoration.leaflessMinimumHeight ? 3
                         : (height > decoration.pineMinimumHeight ? 1
-                            : (moisture > decoration.multiTrunkMinimumMoisture ? 2 : 0));
+                            : (moisture > decoration.multiTrunkMinimumMoisture ? 2 : 0)));
                     this.stampTree(voxels, originX, originY, originZ, x, height + 1, z,
                         candidate.int(decoration.treeMinimumTrunkHeight, decoration.treeMaximumTrunkHeight), species);
                 } else if (height > decoration.boulderMinimumHeight && slope < decoration.boulderMaximumSlope &&
-                    candidate.float() < decoration.boulderProbability) {
+                    candidate.float() < boulderProbability) {
                     const radius = candidate.int(decoration.boulderMinimumRadius, decoration.boulderMaximumRadius);
                     for (let localZ = 0; localZ < chunkEdge; localZ++)
                         for (let localX = 0; localX < chunkEdge; localX++) {
@@ -194,7 +220,7 @@ export class WorldGenerator {
                                 const offsetY = (y - height) * decoration.boulderVerticalScale;
                                 if (offsetX * offsetX + offsetY * offsetY + offsetZ * offsetZ <= radius * radius)
                                     voxels[localX + chunkEdge * (localZ + chunkEdge * (y - originY))] =
-                                        Material.LIGHT_STONE;
+                                        materials.boulder ?? Material.LIGHT_STONE;
                             }
                         }
                 }
@@ -262,6 +288,6 @@ export class WorldGenerator {
 }
 
 export function generateChunk(matchSeed: number, mapEdgeLengthInVoxels: number, chunkX: number,
-    chunkY: number, chunkZ: number, biomeRules: ReadonlyArray<Readonly<BiomeRule>>): ChunkStorage {
-    return new WorldGenerator(matchSeed, mapEdgeLengthInVoxels, biomeRules).generateChunk(chunkX, chunkY, chunkZ);
+    chunkY: number, chunkZ: number, theme: Readonly<WorldTheme>): ChunkStorage {
+    return new WorldGenerator(matchSeed, mapEdgeLengthInVoxels, theme).generateChunk(chunkX, chunkY, chunkZ);
 }

@@ -52,6 +52,10 @@ export const compositeFragmentShader = `${worldRayShader}
     uniform sampler2D uEffects;
     uniform vec3 uSunDirection;
     uniform vec3 uFogColour;
+    uniform vec3 uLiquidAbsorption;
+    uniform vec3 uLiquidScatter;
+    uniform vec3 uFoamColour;
+    uniform float uLiquidEmissive;
     uniform vec2 uTexel;
     uniform float uTime;
     uniform float uWaterHeight;
@@ -92,9 +96,12 @@ export const compositeFragmentShader = `${worldRayShader}
         }
         return land / 20.;
     }
+    float liquidLight() {
+        return mix(uLightLevel, 1., uLiquidEmissive);
+    }
     vec3 absorption(vec3 colour, float column) {
-        vec3 transmission = exp(-vec3(.13, .047, .027) * max(column, 0.));
-        return colour * transmission + vec3(.014, .105, .17) * uLightLevel * (1. - transmission);
+        vec3 transmission = exp(-uLiquidAbsorption * max(column, 0.));
+        return colour * transmission + uLiquidScatter * liquidLight() * (1. - transmission);
     }
     void main() {
         float depth = texture2D(uDepth, vUv).r;
@@ -139,7 +146,7 @@ export const compositeFragmentShader = `${worldRayShader}
                 float lip = step(shoreDistance, .12);
                 foam = step(.25, max(step(ripple, .22) * (1. - shoreDistance), lip)) * step(shoreDistance, .999);
             }
-            colour = mix(colour, vec3(.85, .96, 1.) * uLightLevel, foam * .8);
+            colour = mix(colour, uFoamColour * liquidLight(), foam * .8);
             hazeDistance = planeDistance;
         } else if (origin.y < uWaterHeight) {
             float column = planeDistance > 0. ? min(sceneDistance, planeDistance) : sceneDistance;

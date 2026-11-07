@@ -6,6 +6,9 @@ import { Material, MaterialFlag, materialTable } from './material-table.js';
 const chunkEdge = worldChunkEdgeLengthInVoxels;
 export const chunkVoxelCount = chunkEdge * chunkEdge * chunkEdge;
 
+const scratchVoxels = new Uint8Array(chunkVoxelCount);
+const layerChecksums = new Map<number, number>();
+
 export type ChunkStorage =
     { kind: 'EMPTY' } |
     { kind: 'UNIFORM'; material: Material } |
@@ -172,15 +175,21 @@ export class VoxelWorld {
 
     public chunkChecksum(chunk: VoxelChunk): number {
         if (!chunk.isChecksumDirty) return chunk.checksum;
-        const hash = new StateHash();
-        if (chunk.storage.kind === 'DENSE') hash.bytes(chunk.storage.voxels);
-        else
-            for (let localY = 0; localY < chunkEdge; localY++) {
-                const material = getChunkMaterial(chunk.storage, 0, localY, 0);
-                for (let column = 0; column < chunkEdge * chunkEdge; column++) hash.byte(material);
+        const storage = chunk.storage;
+        if (storage.kind === 'DENSE') chunk.checksum = new StateHash().bytes(storage.voxels).value;
+        else {
+            const material = storage.kind === 'EMPTY' ? Material.AIR : storage.material;
+            const height = storage.kind === 'LAYERED' ? storage.height : chunkEdge;
+            const key = material * (chunkEdge + 1) + height;
+            let checksum = layerChecksums.get(key);
+            if (checksum === undefined) {
+                scratchVoxels.fill(Material.AIR);
+                scratchVoxels.fill(material, 0, height * chunkEdge * chunkEdge);
+                checksum = new StateHash().bytes(scratchVoxels).value;
+                layerChecksums.set(key, checksum);
             }
-
-        chunk.checksum = hash.value;
+            chunk.checksum = checksum;
+        }
         chunk.isChecksumDirty = false;
         return chunk.checksum;
     }

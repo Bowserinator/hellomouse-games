@@ -4,7 +4,7 @@ import { simulationTicksPerSecond, tankAirborneHorizontalDrag, tankBuriedSnapMax
     tankGravityInVoxelsPerSecondSquared, tankHullLengthInVoxels,
     tankHullTurnRateInDegreesPerSecond, tankHullWidthInVoxels, tankMaximumClimbSlopeTangent,
     tankMovementSpeedInVoxelsPerSecond, tankSlopeBaselineInVoxels, tankStepDownMaximumInVoxels,
-    tankStepUpMaximumInVoxels, tankWaterDamagePerTurn, worldWaterSurfaceHeightInVoxels } from '../config.js';
+    tankStepUpMaximumInVoxels, worldWaterSurfaceHeightInVoxels } from '../config.js';
 import { MovementInput } from '../types.js';
 import { fullCircleInRadians, radiansPerDegree, sineOfRadians, cosineOfRadians } from './math/deterministic-math.js';
 import { Vector3, createVector3 } from './math/vector3.js';
@@ -141,6 +141,6 @@ export function tickTankPhysics(world: VoxelWorld, tank: Tank, inputMask: number
     }
 }
 
-export function applyTurnWaterHazard(tank: Tank): number {
-    return tank.position.y < worldWaterSurfaceHeightInVoxels ? tank.applyDamage(tankWaterDamagePerTurn, null) : 0;
+export function applyTurnLiquidHazard(tank: Tank, damagePerTurn: number): number {
+    return tank.position.y < worldWaterSurfaceHeightInVoxels ? tank.applyDamage(damagePerTurn, null) : 0;
 }

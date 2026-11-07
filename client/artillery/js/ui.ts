@@ -1,6 +1,6 @@
 import { isMatchSettingValid, lobbyMaximumPlayerCount, powerCentipercentMaximum, matchSettingIntegerRanges,
-    matchSettingKeys, MatchSettings, teamNames, teamGlyphs, teamPrimaryColours, turretPitchQuantizationSteps,
-    turretYawQuantizationSteps, timeOfDayNames,
+    matchSettingKeys, MatchSettings, scoreModeNames, teamNames, teamGlyphs, teamPrimaryColours, turretPitchQuantizationSteps,
+    turretYawQuantizationSteps, timeOfDayNames, islandThemeNames, randomIslandTheme,
     usernameMaximumLength, worldMapEdgeLengthOptionsInVoxels } from './config.js';
 import { copyInviteLink } from '../../shared/ts/copy-invite-link.js';
 import { radiansPerDegree } from './sim/math/deterministic-math.js';
@@ -14,7 +14,7 @@ export type UiAction = { type: 'send'; message: Record<string, unknown> } |
 { type: 'aim'; yaw: number; pitch: number; power: number } |
 { type: 'weapon'; identifier: string } | { type: 'cycleWeapon'; direction: number } |
 { type: 'drive'; mask: number; down: boolean } | { type: 'focusPlayer'; seatIndex: number } |
-{ type: 'quality' | 'volume' | 'fog' | 'shake' | 'ao' | 'hitboxes' | 'practiceTime';
+{ type: 'quality' | 'volume' | 'fog' | 'shake' | 'ao' | 'hitboxes' | 'practiceTime' | 'practiceTheme';
     value: string | number | boolean } |
 { type: 'lock' | 'projection' | 'xray' | 'unlockAudio' | 'practice' | 'practiceReset' | 'practiceExit' | 'recenter' | 'autoAim' };
 
@@ -28,12 +28,19 @@ function element<ElementType extends HTMLElement>(identifier: string): ElementTy
     return result;
 }
 
+function addIslandThemeOptions(select: HTMLSelectElement): void {
+    select.add(new Option('Random', String(randomIslandTheme)));
+    islandThemeNames.forEach((name, index) => select.add(new Option(name, String(index + 1))));
+}
+
 const decimalPlaces = 3;
 const powerDecimalPlaces = 2;
 const unsignedDecimalPattern = new RegExp(`^\\d*\\.?\\d{0,${decimalPlaces}}$`);
 const signedDecimalPattern = new RegExp(`^-?\\d*\\.?\\d{0,${decimalPlaces}}$`);
 const powerPattern = new RegExp(`^\\d*\\.?\\d{0,${powerDecimalPlaces}}$`);
 const centipercentPerPercent = powerCentipercentMaximum / 100;
+const powerFineStepInCentipercent = centipercentPerPercent / 20;
+const teamToastDurationInMilliseconds = 2500;
 
 function formatDecimal(value: number): string {
     return String(Number(value.toFixed(decimalPlaces)));
@@ -48,19 +55,23 @@ function parseDecimal(text: string): number | null {
 }
 
 interface AimField {
+    name: 'yaw' | 'pitch' | 'power';
     text: HTMLInputElement;
     range: HTMLInputElement;
     pattern: RegExp;
     lastValid: string;
     toStep(value: number): number;
     toText(step: number): string;
+    /** Returns the step after moving by one increment (fine) or one unit (coarse) in the displayed direction. */
+    nudge(step: number, direction: number, isFine: boolean): number;
 }
 
 const settingLabels: Record<keyof MatchSettings, string> = {
     teamCount: 'Teams', hitPointsPerTank: 'Tank HP', weaponsPerPlayer: 'Weapons per player',
     movementTimePerTurnInSeconds: 'Drive time', planningTimeLimitInSeconds: 'Planning time',
-    mapEdgeLengthInVoxels: 'Map size', timeOfDay: 'Time of day', isSandbox: 'Unlimited ammunition',
-    isFriendlyFireEnabled: 'Enable friendly fire'
+    mapEdgeLengthInVoxels: 'Map size', timeOfDay: 'Time of day', islandTheme: 'Island theme', isSandbox: 'Unlimited ammunition',
+    isFriendlyFireEnabled: 'Enable friendly fire', isInfiniteRounds: 'Rounds', roundCount: '',
+    scoreMode: 'Scoring'
 };
 
 export class ArtilleryUI {
@@ -73,10 +84,13 @@ export class ArtilleryUI {
     private readonly power = element<HTMLInputElement>('power');
     private readonly aimFields: ReadonlyArray<AimField>;
     private readonly username = element<HTMLInputElement>('username');
-    private readonly settings = new Map<keyof MatchSettings, HTMLInputElement | HTMLSelectElement>();
+    private readonly settings = new Map<keyof MatchSettings,
+        HTMLInputElement | HTMLSelectElement | HTMLButtonElement>();
     private seats: ReadonlyArray<LobbySeat> = [];
     private rosterState: string | null = null;
     private previousSolution = '';
+    private scoreMode = 0;
+    private toastTimer: ReturnType<typeof setTimeout> | undefined;
     private readonly weaponButtons = new Map<string, HTMLButtonElement>();
 
     constructor(private readonly action: (action: UiAction) => void) {
@@ -85,24 +99,55 @@ export class ArtilleryUI {
         this.username.maxLength = usernameMaximumLength;
         const maximumBearingInDegrees = 360 - 360 / turretYawQuantizationSteps;
         this.aimFields = [
-            { text: element<HTMLInputElement>('yaw-value'), range: this.yaw, pattern: unsignedDecimalPattern,
+            { name: 'yaw', text: element<HTMLInputElement>('yaw-value'), range: this.yaw, pattern: unsignedDecimalPattern,
                 lastValid: '', toStep: value => quantizeYaw((360 - Math.min(value, maximumBearingInDegrees)) * radiansPerDegree),
-                toText: step => formatDecimal(bearingInDegrees(decodeYaw(step))) },
-            { text: element<HTMLInputElement>('pitch-value'), range: this.pitch, pattern: signedDecimalPattern,
+                toText: step => formatDecimal(bearingInDegrees(decodeYaw(step))),
+                nudge(step, direction, isFine) {
+                    if (isFine) return (step - direction + turretYawQuantizationSteps) % turretYawQuantizationSteps;
+                    const bearing = bearingInDegrees(decodeYaw(step)) + direction;
+                    return this.toStep(((bearing % 360) + 360) % 360);
+                } },
+            { name: 'pitch', text: element<HTMLInputElement>('pitch-value'), range: this.pitch, pattern: signedDecimalPattern,
                 lastValid: '', toStep: value => quantizePitch(value * radiansPerDegree),
-                toText: step => formatDecimal(decodePitch(step) / radiansPerDegree) },
-            { text: element<HTMLInputElement>('power-value'), range: this.power, pattern: powerPattern,
+                toText: step => formatDecimal(decodePitch(step) / radiansPerDegree),
+                nudge(step, direction, isFine) {
+                    if (isFine) return Math.max(0, Math.min(turretPitchQuantizationSteps - 1, step + direction));
+                    return this.toStep(decodePitch(step) / radiansPerDegree + direction);
+                } },
+            { name: 'power', text: element<HTMLInputElement>('power-value'), range: this.power, pattern: powerPattern,
                 lastValid: '', toStep: value => Math.round(Math.max(0, Math.min(100, value)) * centipercentPerPercent),
-                toText: step => formatDecimal(step / centipercentPerPercent) }
+                toText: step => formatDecimal(step / centipercentPerPercent),
+                nudge(step, direction, isFine) {
+                    const amount = isFine ? powerFineStepInCentipercent : centipercentPerPercent;
+                    return Math.max(0, Math.min(powerCentipercentMaximum, Math.round(step + direction * amount)));
+                } }
         ];
+        let roundsGroup: HTMLElement | null = null;
         for (const key of matchSettingKeys) {
             const label = document.createElement('label');
             label.textContent = settingLabels[key];
-            const control = key === 'mapEdgeLengthInVoxels' || key === 'timeOfDay'
-                ? document.createElement('select') : document.createElement('input');
+            const control = key === 'mapEdgeLengthInVoxels' || key === 'timeOfDay' || key === 'islandTheme' ||
+                key === 'scoreMode'
+                ? document.createElement('select') : key === 'isInfiniteRounds'
+                    ? document.createElement('button') : document.createElement('input');
             control.setAttribute('id', `rule-${key}`);
+            if (control instanceof HTMLButtonElement) {
+                control.type = 'button';
+                control.addEventListener('click', () => {
+                    const value = control.getAttribute('aria-pressed') !== 'true';
+                    if (isMatchSettingValid(key, value)) action({ type: 'send', message: {
+                        type: 'CHANGE_SETTING', setting: key, value } });
+                });
+                roundsGroup = document.createElement('span'); roundsGroup.className = 'rule-group';
+                roundsGroup.append(control); label.append(roundsGroup);
+                this.settings.set(key, control); element('match-settings').append(label);
+                continue;
+            }
             if (control instanceof HTMLSelectElement && key === 'timeOfDay')
                 timeOfDayNames.forEach((name, index) => control.add(new Option(name, String(index))));
+            else if (control instanceof HTMLSelectElement && key === 'islandTheme') addIslandThemeOptions(control);
+            else if (control instanceof HTMLSelectElement && key === 'scoreMode')
+                scoreModeNames.forEach((name, index) => control.add(new Option(name, String(index))));
             else if (control instanceof HTMLSelectElement)
                 worldMapEdgeLengthOptionsInVoxels.forEach((size, index) =>
                     control.add(new Option(['Small', 'Medium', 'Large'][index], String(size))));
@@ -119,12 +164,21 @@ export class ArtilleryUI {
                 if (isMatchSettingValid(key, value)) action({ type: 'send', message: {
                     type: 'CHANGE_SETTING', setting: key, value } });
             });
-            this.settings.set(key, control); label.append(control); element('match-settings').append(label);
+            this.settings.set(key, control);
+            if (key === 'roundCount' && roundsGroup) {
+                roundsGroup.append(control);
+                continue;
+            }
+            label.append(control); element('match-settings').append(label);
         }
         const practiceTime = element<HTMLSelectElement>('practice-time');
         timeOfDayNames.forEach((name, index) => practiceTime.add(new Option(name, String(index))));
         practiceTime.addEventListener('change', () =>
             action({ type: 'practiceTime', value: Number(practiceTime.value) }));
+        const practiceTheme = element<HTMLSelectElement>('practice-theme');
+        addIslandThemeOptions(practiceTheme);
+        practiceTheme.addEventListener('change', () =>
+            action({ type: 'practiceTheme', value: Number(practiceTheme.value) }));
         document.addEventListener('click', event => {
             const target = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-action]') : null;
             if (!target || target.disabled) return;
@@ -155,6 +209,15 @@ export class ArtilleryUI {
             this.updateDials(); action({ type: 'aim', yaw: Number(this.yaw.value),
                 pitch: Number(this.pitch.value), power: Number(this.power.value) });
         });
+        for (const button of document.querySelectorAll<HTMLButtonElement>('[data-nudge]')) {
+            const field = this.aimFields.find(candidate => candidate.name === button.dataset.nudge)!;
+            button.addEventListener('click', () => {
+                if (field.range.disabled) return;
+                field.range.value = String(field.nudge(Number(field.range.value),
+                    Number(button.dataset.direction), button.dataset.fine === 'true'));
+                field.range.dispatchEvent(new Event('input'));
+            });
+        }
         for (const field of this.aimFields) {
             field.text.addEventListener('input', () => {
                 if (!field.pattern.test(field.text.value)) field.text.value = field.lastValid;
@@ -193,7 +256,7 @@ export class ArtilleryUI {
                 input.dispatchEvent(new Event('input')); event.preventDefault();
             };
             dial.addEventListener('pointerdown', event => {
-                if (input.disabled || event.target instanceof Element && event.target.closest('.value-field')) return;
+                if (input.disabled || event.target instanceof Element && event.target.closest('.value-field, .nudge')) return;
                 dial.setPointerCapture(event.pointerId); input.focus(); point(event);
             });
             dial.addEventListener('pointermove', event => {
@@ -248,12 +311,17 @@ export class ArtilleryUI {
     }
     lobby(seats: ReadonlyArray<LobbySeat>, settings: MatchSettings, seatIndex: number,
         hostSeatIndex: number, canStart: boolean): void {
-        this.seats = seats;
+        this.seats = seats; this.scoreMode = settings.scoreMode;
         const own = seats.find(seat => seat.seatIndex === seatIndex), host = seatIndex === hostSeatIndex;
         for (const [key, control] of this.settings) {
-            if (control instanceof HTMLInputElement && control.type === 'checkbox') control.checked = !!settings[key];
+            if (control instanceof HTMLButtonElement) {
+                control.setAttribute('aria-pressed', String(!!settings[key]));
+                control.textContent = settings[key] ? 'Inf.' : 'Fixed';
+            } else if (control instanceof HTMLInputElement && control.type === 'checkbox')
+                control.checked = !!settings[key];
             else control.value = String(settings[key]);
-            control.disabled = !host || key === 'weaponsPerPlayer' && settings.isSandbox;
+            control.disabled = !host || key === 'weaponsPerPlayer' && settings.isSandbox ||
+                (key === 'roundCount' || key === 'scoreMode') && settings.isInfiniteRounds;
         }
         const roster = element('roster'), teams = element('team-buttons');
         roster.style.setProperty('--team-count', String(settings.teamCount));
@@ -290,17 +358,40 @@ export class ArtilleryUI {
             (canStart ? 'All crews ready' : 'Every team needs a player and all crews must be ready');
         element('turn-banner').textContent = 'Assembling teams';
     }
+    private teamScore(teamIndex: number, tanks: ReadonlyArray<Tank>, settings: MatchSettings): string {
+        const crew = tanks.filter(tank => tank.teamIndex === teamIndex);
+        const mode = settings.isInfiniteRounds ? 0 : settings.scoreMode;
+        if (mode === 1) return String(Math.ceil(crew.reduce((sum, tank) => sum + Math.max(0, tank.hitPoints), 0)));
+        if (mode === 2) return `${crew.filter(tank => !tank.isWreck).length}/${crew.length} alive`;
+        return String(Math.round(crew.reduce((sum, tank) => sum + Math.max(0,
+            tank.statistics.damageDealt - tank.statistics.friendlyFireDamage), 0)));
+    }
     matchRoster(seats: ReadonlyArray<LobbySeat>, tanks: ReadonlyArray<Tank>,
-        lockedSeats: ReadonlyArray<number>): void {
+        lockedSeats: ReadonlyArray<number>, settings: MatchSettings): void {
         this.seats = seats;
-        const state = seats.map(seat => {
-            const tank = tanks.find(candidate => candidate.seatIndex === seat.seatIndex);
-            return [seat.seatIndex, seat.username, seat.teamIndex, seat.isMissing, tank?.isWreck,
-                Math.ceil(tank?.hitPoints ?? 0), lockedSeats.includes(seat.seatIndex)].join(':');
-        }).join('|');
+        const teamIndices = [...new Set(seats.map(seat => seat.teamIndex))].sort((first, second) => first - second);
+        const state = teamIndices.map(team => `${team}=${this.teamScore(team, tanks, settings)}`).join(',') + '|' +
+            seats.map(seat => {
+                const tank = tanks.find(candidate => candidate.seatIndex === seat.seatIndex);
+                return [seat.seatIndex, seat.username, seat.teamIndex, seat.isMissing, tank?.isWreck,
+                    Math.ceil(tank?.hitPoints ?? 0), lockedSeats.includes(seat.seatIndex)].join(':');
+            }).join('|');
         if (state === this.rosterState) return;
         this.rosterState = state;
-        element('match-roster').replaceChildren(...seats.map(seat => {
+        const banner = (teamIndex: number): HTMLElement => {
+            const heading = document.createElement('div'), title = document.createElement('span');
+            const score = document.createElement('span');
+            heading.className = 'battle-roster__team';
+            heading.style.setProperty('--team', `#${teamPrimaryColours[teamIndex].toString(16).padStart(6, '0')}`);
+            title.textContent = `TEAM ${teamNames[teamIndex].toUpperCase()}`;
+            score.textContent = this.teamScore(teamIndex, tanks, settings);
+            heading.append(title, score);
+            return heading;
+        };
+        const ordered = teamIndices.flatMap(team => [team, ...seats.filter(seat => seat.teamIndex === team)]);
+        element('match-roster').replaceChildren(...ordered.map(entry => {
+            if (typeof entry === 'number') return banner(entry);
+            const seat = entry;
             const tank = tanks.find(candidate => candidate.seatIndex === seat.seatIndex);
             const chip = document.createElement('button');
             chip.className = 'battle-roster__crew';
@@ -359,8 +450,8 @@ export class ArtilleryUI {
         this.yaw.value = String(tank.turretYawQuantized); this.pitch.value = String(tank.turretPitchQuantized);
         this.power.value = String(tank.powerCentipercent); this.updateDials();
         element('own-hit-points').textContent = `${this.previousSolution}${Math.ceil(tank.hitPoints)} HP`;
-        for (const control of [this.yaw, this.pitch, this.power, ...this.aimFields.map(field => field.text)])
-            control.disabled = locked || !active;
+        for (const control of [this.yaw, this.pitch, this.power, ...this.aimFields.map(field => field.text),
+            ...document.querySelectorAll<HTMLButtonElement>('[data-nudge]')]) control.disabled = locked || !active;
         const tray = element('weapon-tray');
         const buttons = weapons.filter(weapon => tank.ammunition.has(weapon.identifier)).map(weapon => {
             let button = this.weaponButtons.get(weapon.identifier);
@@ -392,10 +483,21 @@ export class ArtilleryUI {
             tray.replaceChildren(...buttons); tray.scrollTop = scroll;
         }
     }
-    setPractice(enabled: boolean, timeOfDay?: number): void {
+    teamFired(teamIndex: number): void {
+        const toast = element('team-toast');
+        toast.textContent = `${teamNames[teamIndex].toUpperCase()} TEAM HAS FIRED`;
+        toast.style.setProperty('--team', `#${teamPrimaryColours[teamIndex].toString(16).padStart(6, '0')}`);
+        toast.hidden = false;
+        clearTimeout(this.toastTimer);
+        this.toastTimer = setTimeout(() => {
+            toast.hidden = true;
+        }, teamToastDurationInMilliseconds);
+    }
+    setPractice(enabled: boolean, timeOfDay?: number, islandTheme?: number): void {
         element('practice-controls').hidden = !enabled;
         element('auto-aim-button').hidden = !enabled;
         if (timeOfDay !== undefined) element<HTMLSelectElement>('practice-time').value = String(timeOfDay);
+        if (islandTheme !== undefined) element<HTMLSelectElement>('practice-theme').value = String(islandTheme);
     }
     showReconnect(): void {
         const button = document.createElement('button');
@@ -422,6 +524,7 @@ export class ArtilleryUI {
             : 'Battle ended';
         reason = reason.toLowerCase();
         element('result-reason').textContent = reason === 'stalemate' ? 'No ammunition remains. Remaining team HP decides the result.'
+            : reason === 'score' ? `The match ended and ${scoreModeNames[this.scoreMode].toLowerCase()} decided the result.`
             : reason === 'elimination' ? 'All opposing tanks were destroyed.' : 'The battle could not continue safely.';
         const table = document.createElement('table');
         const heading = document.createElement('tr');
