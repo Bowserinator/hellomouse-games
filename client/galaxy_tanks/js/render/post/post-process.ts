@@ -1,4 +1,5 @@
 import type * as T from 'three';
+import { FullscreenPass, fullscreenVertexShader } from '../../../../shared/ts/fullscreen-pass.js';
 import { PlanetDesc } from '../../sim/mapgen/map-desc.js';
 import { Rng } from '../../sim/math/rng.js';
 import { CoreType } from '../../types.js';
@@ -8,11 +9,7 @@ const MAX_PLANETS = 8;
 const BLUR_SPREADS = [1, 2.2];
 const SUN: [number, number, number] = [-0.4, 0.8, 0.5];
 
-const VERTEX = `varying vec2 vUv;
-    void main() {
-        vUv=uv;
-        gl_Position=vec4(position.xy,0.,1.);
-    }`;
+const VERTEX = fullscreenVertexShader;
 
 const MASK_FRAGMENT = `uniform sampler2D uScene; uniform vec2 uTexel; uniform vec3 uColor; varying vec2 vUv;
     void main() {
@@ -78,9 +75,7 @@ const composeFragment = (steps: number) => `#define MAX_PLANETS ${MAX_PLANETS}
 export class PostProcess {
     private sceneTarget: T.WebGLRenderTarget;
     private glow: Array<T.WebGLRenderTarget>;
-    private screen = new THREE.Scene();
-    private camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    private quad: T.Mesh<T.PlaneGeometry, T.ShaderMaterial>;
+    private fullscreen: FullscreenPass;
     private mask: T.ShaderMaterial;
     private blur: T.ShaderMaterial;
     private compose: T.ShaderMaterial;
@@ -121,9 +116,7 @@ export class PostProcess {
             },
             vertexShader: VERTEX, fragmentShader: composeFragment(low ? 4 : 8), depthTest: false, depthWrite: false
         });
-        this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mask);
-        this.quad.frustumCulled = false;
-        this.screen.add(this.quad);
+        this.fullscreen = new FullscreenPass(this.mask);
         renderer.info.autoReset = false;
     }
     setPlanets(planets: Array<PlanetDesc>): void {
@@ -176,7 +169,7 @@ export class PostProcess {
         this.mask.dispose();
         this.blur.dispose();
         this.compose.dispose();
-        this.quad.geometry.dispose();
+        this.fullscreen.dispose();
         this.renderer.info.autoReset = true;
     }
     private blurGlow(): void {
@@ -192,8 +185,6 @@ export class PostProcess {
         }
     }
     private pass(material: T.ShaderMaterial, target: T.WebGLRenderTarget | null): void {
-        this.quad.material = material;
-        this.renderer.setRenderTarget(target);
-        this.renderer.render(this.screen, this.camera);
+        this.fullscreen.render(this.renderer, material, target);
     }
 }

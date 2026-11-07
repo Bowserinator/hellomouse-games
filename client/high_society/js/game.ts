@@ -157,8 +157,11 @@ function renderLobby(): void {
         : 'All guests are ready.';
     $('ready').textContent = sync.seats[sync.youAre]?.ready ? 'Unready' : 'Ready';
     $('ready').hidden = sync.youAre < 0;
-    $<HTMLSelectElement>('seats-option').value = String(sync.settings.seats);
-    $<HTMLSelectElement>('seats-option').disabled = !sync.isHost;
+    const { seats } = sync.settings, { isHost } = sync;
+    $('seats-option').querySelectorAll('button').forEach(button => {
+        button.setAttribute('aria-checked', String(button.dataset.seats === String(seats)));
+        button.disabled = !isHost;
+    });
     $('username-form').hidden = sync.youAre < 0;
 }
 function preview(node: HTMLElement, card: StatusCard | MoneyCard, seat = 0): void {
@@ -406,8 +409,9 @@ function mockSync(): void {
 }
 $('ready').onclick = () => send({ type: 'READY' });
 $('start-game').onclick = () => move({ action: 'START_GAME' });
-$('seats-option').onchange = () => move({ action: 'SET_OPTIONS',
-    seats: Number($<HTMLSelectElement>('seats-option').value) });
+$('seats-option').querySelectorAll('button').forEach(button => {
+    button.onclick = () => move({ action: 'SET_OPTIONS', seats: Number(button.dataset.seats) });
+});
 $('copy-invite').onclick = () => {
     copyToClipboard(location.href); $('copy-invite').textContent = 'Copied ✓';
     window.setTimeout(() => {

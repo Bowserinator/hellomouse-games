@@ -23,7 +23,7 @@
     <link rel="icon" href="/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/index.css">
     <script src="/shared/js/index.js" defer></script>
     <script src="js/game.js" type="module"></script>
@@ -38,7 +38,10 @@
     <p id="connection-status" role="status"></p>
     <main>
         <section id="lobby" aria-label="Game lobby">
-            <h1>High Society</h1>
+            <header class="lobby-title">
+                <h1>High Society</h1>
+                <p class="title-rule" aria-hidden="true"><span>◆</span></p>
+            </header>
             <section class="lobby-card">
                 <h2>The guest list</h2>
                 <ol id="players"></ol>
@@ -59,12 +62,12 @@
             <section class="lobby-card">
                 <h2>The house rules</h2>
                 <p>3–5 guests.</p>
-                <label for="seats-option">Seats at the table</label>
-                <select id="seats-option">
-                    <option value="3">3 guests</option>
-                    <option value="4" selected>4 guests</option>
-                    <option value="5">5 guests</option>
-                </select>
+                <span id="seats-label" class="field-label">Seats at the table</span>
+                <div id="seats-option" class="toggle-group" role="radiogroup" aria-labelledby="seats-label">
+                    <button type="button" role="radio" aria-checked="false" data-seats="3">3 guests</button>
+                    <button type="button" role="radio" aria-checked="true" data-seats="4">4 guests</button>
+                    <button type="button" role="radio" aria-checked="false" data-seats="5">5 guests</button>
+                </div>
                 <div class="button-row">
                     <button id="ready" type="button">Ready</button>
                     <button id="start-game" class="primary" type="button">Start game</button>

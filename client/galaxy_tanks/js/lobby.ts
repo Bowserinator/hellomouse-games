@@ -1,7 +1,7 @@
 import { Tank } from './sim/tank.js';
 import { GalaxySync } from './types.js';
 import { MAX_PLAYERS, ROUND_ARRAY, TANK_COLORS, TANK_TEXT_COLORS } from './vars.js';
-declare function copyToClipboard(text: string): boolean | string | null | undefined;
+import { copyInviteLink } from '../../shared/ts/copy-invite-link.js';
 export const el = (id: string): HTMLElement => document.getElementById(id)!;
 export class Lobby {
     private colors: Array<HTMLButtonElement> = [];
@@ -39,24 +39,7 @@ export class Lobby {
         input.value = localStorage.getItem('username') ?? '';
         input.oninput(new Event('input'));
         el('start-game').onclick = () => send({ type: 'READY' });
-        el('game-link').onclick = async () => {
-            const text = el('link').textContent ?? '';
-            let copied = false;
-            try {
-                await navigator.clipboard.writeText(text);
-                copied = true;
-            } catch {
-                try {
-                    const result = copyToClipboard(text);
-                    copied = result !== false && result !== undefined;
-                } catch {
-                    copied = false;
-                }
-            }
-            if (!copied) window.prompt('Copy invite link: Ctrl+C, Enter', text);
-            el('game-link').classList.add('flash');
-            setTimeout(() => el('game-link').classList.remove('flash'), 500);
-        };
+        el('game-link').onclick = () => copyInviteLink(el('game-link'), el('link').textContent ?? '');
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') document.querySelectorAll<HTMLElement>('.modal-darken')
                 .forEach(m => {
@@ -96,7 +79,7 @@ export class Lobby {
         el('scores').replaceChildren(...tanks.map(t => {
             const p = document.createElement('p');
             p.className = 'score';
-            p.classList.toggle('dead', t.isDead || t.missingPlayer || !connected || inLobby && !t.ready);
+            p.classList.toggle('dead', t.missingPlayer || !connected || (inLobby ? !t.ready : t.isDead));
             p.classList.toggle('missing', t.missingPlayer || !connected);
             p.classList.toggle('you', t.id === own);
             const name = document.createElement('span');
