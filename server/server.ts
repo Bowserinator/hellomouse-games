@@ -131,7 +131,8 @@ wsServer.on('request', (request: any) => {
             if (!message.ping || Number.isNaN(message.ping)) return;
             return send(client, {
                 type: 'PING',
-                ping: message.ping
+                ping: message.ping,
+                serverTime: Date.now()
             });
         }
 

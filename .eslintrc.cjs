@@ -16,6 +16,41 @@ module.exports = {
     },
     extends: ['@hellomouse/typescript'],
     ignorePatterns: ['build/**', 'scripts/**'],
+    overrides: [
+        {
+            files: ['client/artillery/**/*.ts', 'server/games/artillery.ts'],
+            rules: {
+                'id-denylist': ['error', 'hp', 'dmg', 'pos', 'vel', 'rng', 'dt', 'tmp', 'idx',
+                    'ctx', 'cfg', 'i', 'j', 'k', 'n', 'v', 'e'],
+                'id-length': ['error', { min: 3, exceptions: ['x', 'y', 'z'] }]
+            }
+        },
+        {
+            files: ['client/artillery/js/sim/**/*.ts'],
+            rules: {
+                'no-restricted-globals': ['error', 'Date', 'performance', 'window', 'document', 'navigator'],
+                'no-restricted-properties': ['error', ...[
+                    'random', 'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2', 'exp', 'expm1',
+                    'log', 'log2', 'log10', 'log1p', 'pow', 'hypot', 'cbrt', 'sinh', 'cosh', 'tanh',
+                    'asinh', 'acosh', 'atanh'
+                ].map(property => ({ object: 'Math', property }))],
+                'no-restricted-imports': ['error', { patterns: ['**/render/**', '**/ui/**', '**/audio/**'] }],
+                'no-restricted-syntax': ['error',
+                    { selector: 'BinaryExpression[operator="**"]', message: 'Use deterministic arithmetic.' },
+                    {
+                        selector: 'CallExpression[callee.property.name="sort"][arguments.length=0]',
+                        message: 'Supply a total-order comparator.'
+                    },
+                    { selector: 'ForInStatement', message: 'Use insertion-ordered Map or explicit keys.' },
+                    {
+                        selector: 'CallExpression[callee.object.name="Object"]' +
+                            '[callee.property.name=/^(keys|values|entries)$/]',
+                        message: 'Use insertion-ordered Map or explicit keys in simulation.'
+                    }
+                ]
+            }
+        }
+    ],
     rules: {
         '@typescript-eslint/indent': ['error', 4, { SwitchCase: 1 }],
         'curly': ['error', 'multi'],

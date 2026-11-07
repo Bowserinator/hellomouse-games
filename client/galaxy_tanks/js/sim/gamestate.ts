@@ -39,6 +39,8 @@ export class GameState {
     settleEnd = 0;
     now = 0;
     private lastItems = 0;
+    private powerupBag: Array<Powerup> = [];
+    private lastDrawnPowerup: Powerup | null = null;
     private meteors: Array<{ owner: number; planet: number; at: number }> = [];
     private nextId = 1;
     private rng: Rng;
@@ -493,6 +495,21 @@ export class GameState {
         if (removed.size) this.events.push({ type: GalaxySync.REMOVE_BULLETS, ids: [...removed] });
         if (bounced) this.events.push({ type: GalaxySync.SYNC_ALL_BULLETS, bullets: this.bullets });
     }
+    /** Draws from a shuffled bag of every spawnable powerup so repeats are spread out */
+    private drawPowerup(): Powerup {
+        if (!this.powerupBag.length) {
+            this.powerupBag = [...SPAWNABLE_POWERUPS];
+            for (let i = this.powerupBag.length - 1; i > 0; i--) {
+                const j = this.rng.int(0, i);
+                [this.powerupBag[i], this.powerupBag[j]] = [this.powerupBag[j], this.powerupBag[i]];
+            }
+            const last = this.powerupBag.length - 1;
+            if (this.powerupBag[last] === this.lastDrawnPowerup && last > 0)
+                [this.powerupBag[last], this.powerupBag[0]] = [this.powerupBag[0], this.powerupBag[last]];
+        }
+        this.lastDrawnPowerup = this.powerupBag.pop()!;
+        return this.lastDrawnPowerup;
+    }
     spawnItems(): void {
         for (let n = 0; n < 2 && this.powerupItems.length < MAX_POWERUP_ITEMS; n++) {
             const p = this.rng.weighted(this.world.desc.planets, pl => pl.radius ** 2);
@@ -504,7 +521,7 @@ export class GameState {
                     this.world.stars.some(s => (s.planet === p.id && angDist(d, fromTuple(s.dir)) * p.radius < 5) ||
                         (s.destPlanet === p.id && angDist(d, fromTuple(s.landDir)) * p.radius < 5)) ||
                     this.powerupItems.some(it => it.planet === p.id && angDist(it.dir, d) * p.radius < 3)) continue;
-                const item = { id: this.nextId++, planet: p.id, dir: d, powerup: this.rng.pick(SPAWNABLE_POWERUPS) };
+                const item = { id: this.nextId++, planet: p.id, dir: d, powerup: this.drawPowerup() };
                 this.powerupItems.push(item);
                 this.events.push({ type: GalaxySync.ADD_POWERUP_ITEM, item });
                 break;

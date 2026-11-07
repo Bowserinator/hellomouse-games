@@ -1,0 +1,822 @@
+{
+  "single_shot": {
+    "turretModelIdentifier": "single_shot_base",
+    "barrelModelIdentifier": "single_shot_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "big_shot": {
+    "turretModelIdentifier": "big_shot_base",
+    "barrelModelIdentifier": "big_shot_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "three_shot": {
+    "turretModelIdentifier": "three_shot_base",
+    "barrelModelIdentifier": "three_shot_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "five_shot": {
+    "turretModelIdentifier": "five_shot_base",
+    "barrelModelIdentifier": "five_shot_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "jackhammer": {
+    "turretModelIdentifier": "jackhammer_base",
+    "barrelModelIdentifier": "jackhammer_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "heatseeker": {
+    "turretModelIdentifier": "heatseeker_base",
+    "barrelModelIdentifier": "heatseeker_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "tracer": {
+    "turretModelIdentifier": "tracer_base",
+    "barrelModelIdentifier": "tracer_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      8
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "pile_driver": {
+    "turretModelIdentifier": "pile_driver_base",
+    "barrelModelIdentifier": "pile_driver_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "dirt_voider": {
+    "turretModelIdentifier": "dirt_voider_base",
+    "barrelModelIdentifier": "dirt_voider_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "spider": {
+    "turretModelIdentifier": "spider_base",
+    "barrelModelIdentifier": "spider_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "sniper": {
+    "turretModelIdentifier": "sniper_base",
+    "barrelModelIdentifier": "sniper_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      8
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "magic_wall": {
+    "turretModelIdentifier": "magic_wall_base",
+    "barrelModelIdentifier": "magic_wall_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "dirt_ball": {
+    "turretModelIdentifier": "dirt_ball_base",
+    "barrelModelIdentifier": "dirt_ball_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "napalm": {
+    "turretModelIdentifier": "napalm_base",
+    "barrelModelIdentifier": "napalm_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "hail_storm": {
+    "turretModelIdentifier": "hail_storm_base",
+    "barrelModelIdentifier": "hail_storm_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "ground_hog": {
+    "turretModelIdentifier": "ground_hog_base",
+    "barrelModelIdentifier": "ground_hog_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "worm": {
+    "turretModelIdentifier": "worm_base",
+    "barrelModelIdentifier": "worm_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "homing_worm": {
+    "turretModelIdentifier": "homing_worm_base",
+    "barrelModelIdentifier": "homing_worm_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "skipper": {
+    "turretModelIdentifier": "skipper_base",
+    "barrelModelIdentifier": "skipper_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "chain_reaction": {
+    "turretModelIdentifier": "chain_reaction_base",
+    "barrelModelIdentifier": "chain_reaction_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "tommy_gun": {
+    "turretModelIdentifier": "tommy_gun_base",
+    "barrelModelIdentifier": "tommy_gun_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "scatter_shot": {
+    "turretModelIdentifier": "scatter_shot_base",
+    "barrelModelIdentifier": "scatter_shot_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "cruiser": {
+    "turretModelIdentifier": "cruiser_base",
+    "barrelModelIdentifier": "cruiser_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "laser": {
+    "turretModelIdentifier": "laser_base",
+    "barrelModelIdentifier": "laser_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "ion_cannon": {
+    "turretModelIdentifier": "ion_cannon_base",
+    "barrelModelIdentifier": "ion_cannon_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "nuke": {
+    "turretModelIdentifier": "nuke_base",
+    "barrelModelIdentifier": "nuke_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 1.2
+  },
+  "missile_turret": {
+    "turretModelIdentifier": "missile_turret_base",
+    "barrelModelIdentifier": "missile_turret_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "volcano": {
+    "turretModelIdentifier": "volcano_base",
+    "barrelModelIdentifier": "volcano_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 1.2
+  },
+  "supernova": {
+    "turretModelIdentifier": "supernova_base",
+    "barrelModelIdentifier": "supernova_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "dome": {
+    "turretModelIdentifier": "dome_base",
+    "barrelModelIdentifier": "dome_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "fracture": {
+    "turretModelIdentifier": "fracture_base",
+    "barrelModelIdentifier": "fracture_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "flea_circus": {
+    "turretModelIdentifier": "flea_circus_base",
+    "barrelModelIdentifier": "flea_circus_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "gamma_blaster": {
+    "turretModelIdentifier": "gamma_blaster_base",
+    "barrelModelIdentifier": "gamma_blaster_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "fireball": {
+    "turretModelIdentifier": "fireball_base",
+    "barrelModelIdentifier": "fireball_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "lightning_storm": {
+    "turretModelIdentifier": "lightning_storm_base",
+    "barrelModelIdentifier": "lightning_storm_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "mass_driver": {
+    "turretModelIdentifier": "mass_driver_base",
+    "barrelModelIdentifier": "mass_driver_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      8
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "lead_balloon": {
+    "turretModelIdentifier": "lead_balloon_base",
+    "barrelModelIdentifier": "lead_balloon_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "elevator": {
+    "turretModelIdentifier": "elevator_base",
+    "barrelModelIdentifier": "elevator_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "missile_massacre": {
+    "turretModelIdentifier": "missile_massacre_base",
+    "barrelModelIdentifier": "missile_massacre_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      5
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "airstrike": {
+    "turretModelIdentifier": "airstrike_base",
+    "barrelModelIdentifier": "airstrike_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      8
+    ],
+    "recoilDistanceInVoxels": 0.5
+  },
+  "burst_railgun": {
+    "turretModelIdentifier": "burst_railgun_base",
+    "barrelModelIdentifier": "burst_railgun_barrel",
+    "turretPivot": [
+      0,
+      2,
+      0
+    ],
+    "barrelPivot": [
+      0,
+      1,
+      0
+    ],
+    "muzzleOffset": [
+      0,
+      1,
+      8
+    ],
+    "recoilDistanceInVoxels": 0.5
+  }
+}

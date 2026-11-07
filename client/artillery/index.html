@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Like 3D Worms.">
+    <meta property="og:title" content="Artillery - Hellomouse Games">
+    <meta property="og:description" content="Like 3D Worms.">
+    <meta property="og:image" content="/artillery/img/thumbnail.jpg">
+    <title>Artillery — Hellomouse Games</title>
+    <link rel="preload" href="fonts/Monocraft.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/shared/css/index.css">
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+    <script src="/shared/js/index.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+    <script src="./js/game.js" type="module"></script>
+    <canvas id="board" aria-label="Artillery battlefield"></canvas>
+    <div id="name-tags" aria-live="off"></div>
+    <header class="navbar">
+        <a class="brand" href="/" target="_blank">HELLOMOUSE<span> / ARTILLERY</span></a>
+        <div id="turn-banner" role="status">Assembling teams</div>
+        <button id="menu-toggle" aria-controls="nav-actions" aria-expanded="false" aria-label="Open menu">☰</button>
+        <nav id="nav-actions" aria-label="Game menu">
+            <span id="ping">Connecting…</span>
+            <button data-action="help">Help</button>
+            <button data-action="preferences">Settings</button>
+        </nav>
+    </header>
+    <div id="turn-timer" role="progressbar" aria-label="Planning time remaining" aria-valuemin="0" aria-valuemax="100"><i></i></div>
+    <div id="view-controls" class="view-controls" aria-label="Battlefield view" hidden>
+        <button data-action="projection" aria-pressed="false" aria-label="Toggle orthographic view" title="Toggle orthographic view"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6 12 2 20 6V18L12 22 4 18ZM4 6 12 10 20 6M12 10V22"/></svg><span>View</span></button>
+        <button data-action="recenter" title="Center on your tank">Recenter</button>
+        <button data-action="xray" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/></svg><span>X-ray</span></button>
+    </div>
+    <div id="practice-controls" class="view-controls practice-controls" aria-label="Practice controls" hidden>
+        <select id="practice-time" aria-label="Time of day"></select>
+        <button data-action="practiceReset">Reset targets</button>
+        <button data-action="practiceExit">Back to lobby</button>
+    </div>
+    <div id="match-roster" class="battle-roster" role="group" aria-label="Battle crews" hidden></div>
+    <div id="disconnect-banner" role="alert" hidden></div>
+    <p id="notice" role="status" aria-live="polite"></p>
+    <main id="lobby" class="panel">
+        <h1>ARTILLERY</h1>
+        <div class="lobby-columns">
+            <section aria-labelledby="crew-heading">
+                <form id="username-form">
+                    <label for="username">Callsign <small id="username-count">0 / 16</small></label>
+                    <div class="inline"><input id="username" maxlength="16" pattern="[A-Za-z0-9_]+" autocomplete="nickname" spellcheck="false" required><button style="min-height: 33.9px">Save</button></div>
+                </form>
+                <fieldset><legend>Your team</legend><div id="team-buttons" class="team-buttons"></div></fieldset>
+                <ul id="roster" aria-label="Players"></ul>
+                <button id="ready-button" class="primary" data-action="ready">Ready</button>
+                <p id="ready-help" class="muted">Waiting for players</p>
+                <div class="invitation inline">
+                    <input id="room-link" class="room-link" aria-label="Room invitation" readonly value="">
+                    <button id="invite-link" class="game-link" title="Copy invitation link">Copy</button>
+                </div>
+            </section>
+            <section aria-labelledby="rules-heading"><h2 id="rules-heading">Battle rules</h2><div id="match-settings"></div><p class="muted">Only the host changes battle rules.</p></section>
+        </div>
+        <div class="lobby-practice"><button data-action="practice">Solo weapon practice</button></div>
+    </main>
+    <section id="loading" class="panel loading" aria-labelledby="loading-heading" hidden>
+        <div class="eyebrow">PREPARING THE BATTLEFIELD</div><h1 id="loading-heading">Building an island</h1>
+        <ol id="loading-stages"><li>Generating chunks</li><li>Meshing chunks</li><li>Dealing loadouts</li><li>Compiling shaders</li></ol>
+        <progress id="loading-progress" max="1" value="0" aria-label="Loading progress"></progress>
+        <p id="loading-detail" role="status"></p>
+    </section>
+    <section id="planning" class="panel planning" aria-label="Your firing plan" hidden>
+        <div class="planning-heading"><h2>Your plan</h2><span id="own-hit-points"></span></div>
+        <div class="aim-controls">
+            <div class="dial" id="yaw-dial" role="group" aria-label="Bearing"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40"/><path d="M50 9v8 M91 50h-8 M50 91v-8 M9 50h8"/><text x="50" y="9" text-anchor="middle">N</text><text x="96" y="54" text-anchor="middle">E</text><text x="50" y="99" text-anchor="middle">S</text><text x="4" y="54" text-anchor="middle">W</text><line class="needle" x1="50" y1="50" x2="50" y2="16"/></svg><span class="dial-label">Bearing</span><span class="value-field"><input id="yaw-value" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" value="0" aria-label="Bearing in degrees">°</span><input id="yaw" type="range" min="0" max="4095" value="0" aria-label="Turret bearing" aria-valuetext="0 degrees"></div>
+            <div class="dial" id="pitch-dial" role="group" aria-label="Elevation"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M79.1 90.4A60 60 0 0 0 25.2 20.2"/><line class="needle" x1="20" y1="80" x2="80" y2="80"/></svg><span class="dial-label">Elevation</span><span class="value-field"><input id="pitch-value" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" value="45" aria-label="Elevation in degrees">°</span><input id="pitch" type="range" min="0" max="4095" value="0" aria-label="Barrel elevation" aria-valuetext="45 degrees"></div>
+            <div class="power"><input id="power" type="range" min="0" max="10000" value="5000"><label for="power">Power</label><span class="value-field"><input id="power-value" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" value="50" aria-label="Power in percent">%</span></div>
+        </div>
+        <label class="budget-label">Drive budget <progress id="movement-budget" max="1" value="1"></progress></label>
+        <div id="weapon-tray" class="weapon-tray" role="group" aria-label="Your ammunition"></div>
+        <p id="weapon-description" class="muted"></p>
+        <div class="inline"><span id="lock-status" role="status"></span><button id="auto-aim-button" data-action="autoAim" hidden>Auto aim</button><button id="lock-button" class="primary lock-button" data-action="lock">FIRE</button></div>
+    </section>
+    <dialog id="preferences-dialog" aria-labelledby="preferences-heading">
+        <h2 id="preferences-heading">Settings</h2>
+        <label>Quality <select id="quality"><option value="low">Low</option><option value="medium">Medium</option><option value="high" selected>High</option></select></label>
+        <label>Volume <input id="volume" type="range" min="0" max="100" value="50"></label>
+        <label>Fog <input id="fog" type="range" min="0" max="100" value="20"></label>
+        <label><input id="ambient-occlusion" type="checkbox" checked> Vertex ambient occlusion</label>
+        <label><input id="camera-shake" type="checkbox" checked> Camera shake</label>
+        <label><input id="show-hitboxes" type="checkbox"> Debug: show hitboxes</label>
+        <form method="dialog"><button class="primary">Done</button></form>
+    </dialog>
+    <dialog id="help-dialog" aria-labelledby="help-heading">
+        <h2 id="help-heading">Field manual</h2>
+        <p>All members of the team submit a firing plan where you can drive, choose ammo and shoot. When everyone on your team locks or time is up, all moves are played simultaneously. Game ends when all players run out of ammo or all enemies are eliminated. Note: water damages you.</p>
+        <dl><dt>W / S</dt><dd>Drive forward / backward</dd><dt>A / D</dt><dd>Turn left / right</dd><dt>Drag / right-drag</dt><dd>Orbit / pan (Shift-drag also pans)</dd><dt>Mouse wheel</dt><dd>Zoom</dd><dt>O / X</dt><dd>Projection / x-ray</dd><dt>Enter</dt><dd>Fire (lock plan) or cancel (unlock plan)</dd><dt>Hold Space</dt><dd>Fast-forward resolution without skipping simulation ticks</dd></dl>
+        <form method="dialog"><button class="primary">Understood</button></form>
+    </dialog>
+    <dialog id="results-dialog" aria-labelledby="results-heading"><h2 id="results-heading">Battle complete</h2><p id="result-reason"></p><div id="results"></div><form method="dialog"><button class="primary">Back to lobby</button></form></dialog>
+</body>
+</html>

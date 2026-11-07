@@ -1,0 +1,42 @@
+[
+    {
+        "maximumHeight": 3,
+        "material": "WET_SAND"
+    },
+    {
+        "maximumHeight": 6,
+        "material": "SAND"
+    },
+    {
+        "minimumSlope": 1.15,
+        "material": "DARK_STONE"
+    },
+    {
+        "minimumHeight": 76,
+        "maximumSlope": 0.85,
+        "material": "SNOW"
+    },
+    {
+        "minimumHeight": 48,
+        "material": "LIGHT_STONE"
+    },
+    {
+        "maximumMoisture": 0.3,
+        "material": "DRY_GRASS"
+    },
+    {
+        "maximumMoisture": 0.44,
+        "material": "MEADOW_LIGHT"
+    },
+    {
+        "maximumMoisture": 0.6,
+        "material": "MEADOW"
+    },
+    {
+        "maximumMoisture": 0.72,
+        "material": "MEADOW_DARK"
+    },
+    {
+        "material": "FOREST_FLOOR"
+    }
+]

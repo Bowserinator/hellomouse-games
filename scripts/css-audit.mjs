@@ -29,7 +29,8 @@ const clientFiles = walk(clientDir, '.ts').concat(walk(clientDir, '.html'));
 const client = clientFiles.map(file => readFileSync(file, 'utf8')).join('\n');
 
 const classes = new Set();
-for (const match of scss.matchAll(/\.([a-zA-Z][\w-]*)/g)) classes.add(match[1]);
+const selectors = scss.replace(/@include\s+[\w-]+\.[\w-]+/g, '@include');
+for (const match of selectors.matchAll(/\.([a-zA-Z][\w-]*)/g)) classes.add(match[1]);
 const deadClasses = [...classes].filter(name => !client.includes(name)).sort();
 
 const declared = new Set();

@@ -11,7 +11,8 @@
     "scss": "npm-run-all scssCompile copyfiles",
     "copyfiles": "copyfiles -e \"**/*.ts\" \"./client/**\" ./build/",
     "minify": "minify-all-js ./build",
-    "buildAll": "npm-run-all build scss copyfiles minify"
+    "artilleryCssAudit": "node scripts/css-audit.mjs scss/artillery/css client/artillery",
+    "buildAll": "npm-run-all build scss artilleryCssAudit copyfiles minify"
   },
   "devDependencies": {
     "@babel/core": "^7.17.10",

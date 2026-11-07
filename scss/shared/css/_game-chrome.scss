@@ -1,0 +1,124 @@
+$foreground: #eee !default;
+$muted: #bbb !default;
+$surface: #111 !default;
+$button-surface: #444 !default;
+$button-hover: #666 !default;
+$border-color: #000 !default;
+$border-width: 2px !default;
+$selection-border-width: 3px !default;
+$overlay-background: rgba(0, 0, 0, 0.4) !default;
+$link-background: rgba(0, 0, 0, 0.02) !default;
+$link-border-color: #777 !default;
+$error-background: #ff5f52 !default;
+$overlay-layer: 500 !default;
+$error-layer: 999 !default;
+$spacing-small: 6px !default;
+$spacing-medium: 12px !default;
+$spacing-large: 20px !default;
+$button-height: 54px !default;
+$button-font-size: 15pt !default;
+$link-font-size: 12pt !default;
+$modal-width: 600px !default;
+$modal-maximum-size: 90% !default;
+$flash-duration: 0.3s !default;
+
+@mixin ping {
+    position: fixed;
+    z-index: $overlay-layer;
+    top: 0;
+    left: 0;
+    padding: $spacing-small;
+    background: $overlay-background;
+    color: $foreground;
+    user-select: none;
+}
+
+@mixin disconnect-banner {
+    position: fixed;
+    z-index: $error-layer;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: $spacing-medium;
+    background: $error-background;
+    color: $foreground;
+    text-align: center;
+}
+
+@mixin modal {
+    position: relative;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: $modal-width;
+    max-width: $modal-maximum-size;
+    max-height: $modal-maximum-size;
+    padding: $spacing-large;
+    overflow-y: auto;
+    box-sizing: border-box;
+    background: $surface;
+    color: $foreground;
+    border: $border-width solid $border-color;
+}
+
+@mixin text-button {
+    display: inline-block;
+    width: auto;
+    min-height: $button-height;
+    padding: $spacing-small $spacing-medium;
+    font-size: $button-font-size;
+    background: $button-surface;
+    color: $foreground;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        background: $button-hover;
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        filter: brightness(60%);
+    }
+}
+
+@mixin selectable-button {
+    border: $selection-border-width solid transparent;
+
+    &.selected,
+    &[aria-pressed='true'] {
+        border-color: $foreground;
+    }
+}
+
+@mixin game-link {
+    font-size: $link-font-size;
+    margin-bottom: 0;
+    border-bottom: $border-width solid $link-border-color;
+    white-space: nowrap;
+    color: $foreground;
+    background: $link-background;
+    padding: $spacing-medium;
+    overflow-x: auto;
+    cursor: pointer;
+    user-select: none;
+
+    & > small {
+        color: $muted;
+    }
+
+    &.flash {
+        animation: game-link-flash $flash-duration ease-in-out;
+    }
+}
+
+@mixin animations {
+    @keyframes game-link-flash {
+        from {
+            background-color: $overlay-background;
+        }
+
+        to {
+            background-color: $link-background;
+        }
+    }
+}

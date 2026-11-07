@@ -1,0 +1,953 @@
+@use 'variables' as *;
+@use '../../shared/css/game-chrome' as chrome with (
+    $foreground: $ink,
+    $surface: $surface,
+    $button-surface: $button-surface,
+    $button-hover: $button-hover,
+    $border-color: $border-color,
+    $button-height: $button-height,
+    $button-font-size: $button-font-size
+);
+
+:root {
+    @each $name, $value in $runtime-properties {
+        --artillery-#{$name}: #{$value};
+    }
+}
+
+@font-face {
+    font-family: $font-name;
+    src: url($font-file) format('truetype');
+    font-display: swap;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+    * {
+        scrollbar-width: auto;
+        scrollbar-color: $scrollbar-thumb $scrollbar-track;
+    }
+}
+
+::-webkit-scrollbar {
+    width: $scrollbar-size;
+    height: $scrollbar-size;
+    background: $scrollbar-track;
+}
+
+::-webkit-scrollbar-track {
+    background: $scrollbar-track;
+    box-shadow: inset $scrollbar-thumb-border-width $scrollbar-thumb-border-width 0 $scrollbar-track-shadow;
+}
+
+::-webkit-scrollbar-thumb {
+    background: $scrollbar-thumb;
+    border: $scrollbar-thumb-border-width solid;
+    border-color: $scrollbar-thumb-highlight $scrollbar-thumb-shadow $scrollbar-thumb-shadow
+        $scrollbar-thumb-highlight;
+    border-radius: 0;
+
+    &:hover {
+        background: $scrollbar-thumb-hover;
+    }
+}
+
+::-webkit-scrollbar-corner {
+    background: $scrollbar-track;
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+    background: $html-body-background;
+    color: var(--artillery-ink);
+}
+
+body,
+button,
+input,
+select {
+    font-family: var(--artillery-font-family);
+    font-size: $body-button-input-select-font-size;
+    line-height: $default-line-height;
+}
+
+button,
+input,
+select {
+    border-radius: $button-input-select-border-radius;
+}
+
+button {
+    @include chrome.text-button;
+    border: $button-border;
+}
+
+button[aria-pressed='true'] {
+    border-color: var(--artillery-accent);
+    background: $button-aria-pressed-true-background;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+    outline: $button-focus-visible-input-focus-visible-select-focus-visible-a-focus-visible-outline;
+    outline-offset: $button-focus-visible-input-focus-visible-select-focus-visible-a-focus-visible-outline-offset;
+}
+
+input,
+select {
+    background: $input-select-background;
+    color: var(--artillery-ink);
+    padding: $input-select-padding;
+    border: $input-select-border;
+    min-width: 0;
+}
+
+input:disabled,
+select:disabled {
+    opacity: $input-disabled-select-disabled-opacity;
+}
+
+input[type='checkbox'] {
+    appearance: auto;
+    accent-color: var(--artillery-accent);
+    width: $input-type-checkbox-width;
+    height: $input-type-checkbox-height;
+    padding: 0;
+    margin: 0;
+    flex: none;
+}
+
+input[type='range'] {
+    accent-color: var(--artillery-accent);
+    padding: 0;
+    cursor: pointer;
+    width: 100%;
+}
+
+input[type='number'] {
+    max-width: $input-type-number-max-width;
+}
+
+label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $label-gap;
+    margin: $label-margin;
+}
+
+small,
+.muted {
+    color: var(--artillery-muted);
+    font-size: $small-muted-font-size;
+    line-height: $small-muted-line-height;
+}
+
+h1 {
+    color: var(--artillery-accent);
+    font-size: $h1-font-size;
+    letter-spacing: $h1-letter-spacing;
+    margin: $h1-margin;
+}
+
+h2 {
+    font-size: $h2-font-size;
+    margin: $h2-margin;
+    color: var(--artillery-accent);
+}
+
+p {
+    line-height: $p-line-height;
+}
+
+fieldset {
+    border: 0;
+    margin: $fieldset-margin;
+    padding: 0;
+}
+
+legend {
+    margin-bottom: $legend-margin-bottom;
+}
+
+.primary {
+    background: $primary-background;
+    color: $primary-color;
+    border-color: var(--artillery-accent);
+}
+
+.lock-button {
+    background: $lock-button-background;
+    color: $lock-button-color;
+    border-color: $lock-button-border-color;
+
+    &:hover:not(:disabled) {
+        background: $lock-button-hover-background;
+    }
+}
+
+.inline {
+    display: flex;
+    align-items: center;
+    gap: $inline-gap;
+}
+
+.inline > input {
+    flex: 1;
+}
+
+.eyebrow {
+    color: var(--artillery-muted);
+    font-size: $eyebrow-font-size;
+    letter-spacing: $eyebrow-letter-spacing;
+}
+
+#board {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+}
+
+.navbar {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: $navbar-z-index;
+    min-height: $navbar-min-height;
+    display: flex;
+    align-items: center;
+    gap: $navbar-gap;
+    padding: $navbar-padding;
+    background: $navbar-background;
+    border-bottom: $navbar-border-bottom;
+
+    .brand {
+        color: var(--artillery-accent);
+        text-decoration: none;
+        white-space: nowrap;
+        font-size: $navbar-brand-font-size;
+    }
+
+    .brand span {
+        color: var(--artillery-muted);
+    }
+
+    #turn-banner {
+        margin: auto;
+        font-size: $navbar-turn-banner-font-size;
+    }
+
+    nav {
+        display: flex;
+        align-items: center;
+        gap: $navbar-nav-gap;
+    }
+
+    nav button {
+        font-size: $navbar-nav-button-font-size;
+        padding: $navbar-nav-button-padding;
+        min-height: $navbar-nav-button-min-height;
+    }
+
+    #ping {
+        color: var(--artillery-muted);
+        font-size: $navbar-ping-font-size;
+        margin-right: $navbar-ping-margin-right;
+    }
+}
+
+#menu-toggle {
+    display: none;
+}
+
+#turn-timer {
+    position: fixed;
+    z-index: $turn-timer-z-index;
+    top: $turn-timer-top;
+    left: 0;
+    right: 0;
+    height: $turn-timer-height;
+    background: $turn-timer-background;
+}
+
+#turn-timer i {
+    display: block;
+    height: 100%;
+    background: var(--artillery-accent);
+    transform-origin: left;
+    transform: scaleX(var(--remaining, 0));
+}
+
+.view-controls.practice-controls {
+    left: $view-controls-practice-controls-left;
+    right: auto;
+    max-width: $view-controls-practice-controls-max-width;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.view-controls {
+    position: fixed;
+    z-index: $view-controls-z-index;
+    top: $view-controls-top;
+    right: $view-controls-right;
+    display: flex;
+    gap: $view-controls-gap;
+
+    button {
+        display: flex;
+        align-items: center;
+        gap: $view-controls-button-gap;
+    }
+
+    svg {
+        width: $view-controls-svg-width;
+        height: $view-controls-svg-height;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: $view-controls-svg-stroke-width;
+    }
+
+    rect {
+        stroke-dasharray: $view-controls-rect-stroke-dasharray;
+    }
+
+    button[aria-pressed='true'] rect {
+        stroke-dasharray: none;
+    }
+}
+
+.battle-roster {
+    position: fixed;
+    z-index: $battle-roster-z-index;
+    top: $battle-roster-top;
+    right: $battle-roster-right;
+    width: $battle-roster-width;
+    max-height: $battle-roster-max-height;
+    display: flex;
+    flex-direction: column;
+    gap: $battle-roster-gap;
+    overflow-y: auto;
+
+    &__crew {
+        padding: $battle-roster-crew-padding;
+        border-left: $battle-roster-crew-border-left;
+        background: var(--artillery-panel);
+        font-size: $battle-roster-crew-font-size;
+        white-space: normal;
+        display: flex;
+        align-items: stretch;
+        flex-direction: column;
+        gap: 0;
+        flex: none;
+        text-align: left;
+        overflow-wrap: anywhere;
+
+        &--wreck {
+            background: $battle-roster-crew--wreck-background;
+            opacity: $battle-roster-crew--wreck-opacity;
+        }
+
+        &--missing {
+            border-left-style: dashed;
+            color: var(--artillery-muted);
+        }
+    }
+}
+
+.battle-roster__health {
+    color: var(--artillery-muted);
+    margin-top: $battle-roster-crew-small-margin-top;
+}
+
+.battle-roster__name {
+    min-width: 0;
+}
+
+.battle-roster__bar {
+    display: block;
+    height: $health-bar-height;
+    margin-top: $battle-roster-crew-small-margin-top;
+    background: $health-bar-background;
+
+    &::before {
+        content: '';
+        display: block;
+        width: var(--health);
+        height: 100%;
+        background: $health-bar-high;
+    }
+
+    &--medium::before {
+        background: $health-bar-medium;
+    }
+
+    &--low::before {
+        background: $health-bar-low;
+    }
+}
+
+#disconnect-banner {
+    @include chrome.disconnect-banner;
+}
+
+#notice {
+    position: fixed;
+    z-index: $notice-z-index;
+    top: $notice-top;
+    left: $notice-left;
+    transform: translateX(-50%);
+    padding: $notice-padding;
+    max-width: $notice-max-width;
+    background: var(--artillery-panel);
+    border: $notice-border;
+    text-align: center;
+}
+
+#notice:empty {
+    display: none;
+}
+
+.panel {
+    background: var(--artillery-panel);
+    border: $panel-border;
+    box-shadow: $panel-box-shadow;
+    padding: $panel-padding;
+}
+
+#lobby {
+    position: relative;
+    margin: $lobby-margin;
+    max-width: none;
+    z-index: $lobby-z-index;
+}
+
+.lobby-columns {
+    display: grid;
+    grid-template-columns: $lobby-columns-grid-template-columns;
+    gap: $lobby-columns-gap;
+}
+
+.team-buttons {
+    display: grid;
+    grid-template-columns: $team-buttons-grid-template-columns;
+    gap: $team-buttons-gap;
+}
+
+.team-buttons button {
+    font-size: $team-buttons-button-font-size;
+    min-height: $team-buttons-button-min-height;
+    padding: $team-buttons-button-padding;
+}
+
+#roster {
+    display: grid;
+    grid-template-columns: $roster-grid-template-columns;
+    gap: $roster-gap;
+    list-style: none;
+    padding: 0;
+    margin: $roster-margin;
+
+    .roster__heading {
+        border-left: 0;
+        font-weight: $roster-roster-heading-font-weight;
+    }
+
+    .roster__slot--own {
+        box-shadow: $roster-roster-slot--own-box-shadow;
+    }
+}
+
+#roster li {
+    border-left: $roster-li-border-left;
+    padding: $roster-li-padding;
+    margin: $roster-li-margin;
+    background: $roster-li-background;
+    overflow-wrap: anywhere;
+}
+
+#roster small {
+    display: block;
+}
+
+#username-count {
+    margin-left: auto;
+}
+
+#ready-button {
+    width: 100%;
+}
+
+.lobby-practice {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: $lobby-columns-gap;
+}
+
+.invitation {
+    margin-top: $invitation-margin-top;
+    align-items: stretch;
+
+    .room-link {
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+        cursor: copy;
+    }
+
+    .game-link {
+        display: flex;
+        align-items: center;
+        width: auto;
+        flex: none;
+        min-height: 0;
+        padding: $input-select-padding;
+        border: $input-select-border;
+        font-size: $body-button-input-select-font-size;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+}
+
+.game-link {
+    @include chrome.game-link;
+    white-space: normal;
+    font-size: $game-link-font-size;
+    width: 100%;
+}
+
+@include chrome.animations;
+
+.loading {
+    position: fixed;
+    z-index: $loading-z-index;
+    top: $loading-top;
+    left: $loading-left;
+    transform: translate(-50%, -50%);
+    width: $loading-width;
+}
+
+#loading-stages {
+    padding-left: $loading-stages-padding-left;
+    color: var(--artillery-muted);
+    line-height: $loading-stages-line-height;
+}
+
+#loading-stages .active {
+    color: var(--artillery-accent);
+}
+
+#loading-stages .complete {
+    color: $loading-stages-complete-color;
+}
+
+progress {
+    appearance: none;
+    border: $progress-border;
+    width: 100%;
+    height: $progress-height;
+    background: $progress-background;
+}
+
+progress::-webkit-progress-bar {
+    background: $progress--webkit-progress-bar-background;
+}
+
+progress::-webkit-progress-value {
+    background: var(--artillery-accent);
+}
+
+progress::-moz-progress-bar {
+    background: var(--artillery-accent);
+}
+
+.planning {
+    position: fixed;
+    z-index: $planning-z-index;
+    bottom: $planning-bottom;
+    left: $planning-left;
+    width: $planning-width;
+    padding: $planning-padding;
+}
+
+.planning-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.planning-heading span {
+    color: var(--artillery-muted);
+    font-size: $planning-heading-span-font-size;
+}
+
+.aim-controls {
+    display: flex;
+    align-items: flex-start;
+    gap: $aim-controls-gap;
+}
+
+.dial {
+    position: relative;
+    display: block;
+    width: $dial-width;
+    flex-shrink: 0;
+    text-align: center;
+    touch-action: none;
+    font-size: $dial-font-size;
+}
+
+.dial svg {
+    width: 100%;
+    height: $dial-svg-height;
+    display: block;
+    fill: none;
+    stroke: var(--artillery-muted);
+    stroke-width: $dial-svg-stroke-width;
+    cursor: crosshair;
+}
+
+.dial text {
+    fill: var(--artillery-muted);
+    stroke: none;
+    font-size: $dial-text-font-size;
+}
+
+.dial .needle {
+    stroke: var(--artillery-accent);
+    stroke-width: $dial-needle-stroke-width;
+    transform: rotate(var(--angle, 0rad));
+    transform-origin: $dial-needle-transform-origin;
+}
+
+#pitch-dial .needle {
+    transform-origin: $pitch-dial-needle-transform-origin;
+}
+
+.dial-label,
+.power label {
+    display: block;
+    margin: 0;
+    text-align: center;
+}
+
+.value-field {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: $value-field-gap;
+    margin-top: $value-field-margin-top;
+    font-size: $value-field-font-size;
+    color: var(--artillery-accent);
+}
+
+.value-field input {
+    width: $value-field-input-width;
+    padding: $value-field-input-padding;
+    font-size: $value-field-font-size;
+    text-align: right;
+}
+
+.dial input[type='range'] {
+    position: absolute;
+    opacity: 0;
+    inset: $dial-input-inset;
+    pointer-events: none;
+}
+
+.dial:focus-within svg {
+    outline: $dial-focus-within-svg-outline;
+    outline-offset: $dial-focus-within-svg-outline-offset;
+}
+
+.power {
+    display: flex;
+    flex: 1;
+    min-width: $power-min-width;
+    flex-direction: column;
+    align-items: stretch;
+    font-size: $power-font-size;
+}
+
+.power {
+    input[type='range'] {
+        height: $dial-svg-height;
+        margin: 0;
+    }
+
+    .value-field {
+        align-self: center;
+    }
+}
+
+.budget-label {
+    color: var(--artillery-muted);
+    font-size: $budget-label-font-size;
+}
+
+.budget-label progress {
+    flex: 1;
+}
+
+.weapon-tray {
+    display: grid;
+    grid-template-columns: repeat($weapon-tray-columns, minmax(0, 1fr));
+    align-content: start;
+    height: $weapon-tray-height;
+    gap: $weapon-tray-gap;
+    overflow-y: auto;
+    padding: $weapon-tray-padding;
+}
+
+.weapon-tray button {
+    position: relative;
+    min-width: 0;
+    flex: none;
+    border-radius: 0;
+    font-size: $weapon-tray-button-font-size;
+    padding: $weapon-tray-button-padding;
+    display: flex;
+    align-items: center;
+    gap: $weapon-tray-button-gap;
+    text-align: left;
+
+    span {
+        flex: 1;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        font-size: 12px;
+    }
+}
+
+.weapon-tray img {
+    width: $weapon-tray-img-width;
+    height: $weapon-tray-img-height;
+    object-fit: contain;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    flex: none;
+}
+
+.weapon-tray small {
+    color: var(--artillery-accent);
+    margin-left: auto;
+    white-space: nowrap;
+    font-size: 16px;
+    margin-right: $weapon-tray-ammo-margin-right;
+}
+
+#weapon-description {
+    min-height: $weapon-description-min-height;
+    font-size: $weapon-description-font-size;
+}
+
+#lock-status {
+    flex: 1;
+    color: var(--artillery-muted);
+    font-size: $lock-status-font-size;
+    overflow-wrap: anywhere;
+}
+
+#name-tags {
+    position: fixed;
+    inset: 0;
+    z-index: $name-tags-z-index;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.artillery-name-tag {
+    position: absolute;
+    padding: $artillery-name-tag-padding;
+    background: $artillery-name-tag-background;
+    border-left: $artillery-name-tag-border-left;
+    transform-origin: center bottom;
+    font-size: $artillery-name-tag-font-size;
+    white-space: nowrap;
+}
+
+.artillery-projectile-tag {
+    position: absolute;
+    padding: $artillery-name-tag-padding;
+    background: $artillery-name-tag-background;
+    color: var(--artillery-ink);
+    font-size: $artillery-projectile-tag-font-size;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.artillery-name-tag--wreck {
+    color: $artillery-name-tag--wreck-color;
+    background: $artillery-name-tag--wreck-background;
+}
+
+.artillery-name-tag__health {
+    height: $artillery-name-tag-health-height;
+    margin-top: $artillery-name-tag-health-margin-top;
+    background: $artillery-name-tag-health-background;
+}
+
+.artillery-name-tag__fill {
+    height: 100%;
+    background: var(--team-colour);
+}
+
+dialog {
+    background: var(--artillery-panel);
+    color: var(--artillery-ink);
+    border: $dialog-border;
+    max-width: $dialog-max-width;
+    max-height: $dialog-max-height;
+    padding: $dialog-padding;
+    overflow: auto;
+    box-shadow: $dialog-box-shadow;
+}
+
+dialog::backdrop {
+    background: $dialog-backdrop-background;
+}
+
+dialog label {
+    min-width: $dialog-label-min-width;
+}
+
+dialog form {
+    margin-top: $dialog-form-margin-top;
+    text-align: right;
+}
+
+dl {
+    display: grid;
+    grid-template-columns: $dl-grid-template-columns;
+    gap: $dl-gap;
+    line-height: $dl-line-height;
+}
+
+dt {
+    color: var(--artillery-accent);
+}
+
+dd {
+    margin: 0;
+    color: var(--artillery-muted);
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: $table-font-size;
+}
+
+th,
+td {
+    padding: $th-td-padding;
+    text-align: left;
+    border-bottom: $th-td-border-bottom;
+}
+
+@media (max-width: $breakpoint-compact) {
+    .navbar .brand span {
+        display: none;
+    }
+
+    .navbar {
+        gap: $compact-navbar-gap;
+    }
+}
+
+@media (max-width: $breakpoint-mobile) {
+    .navbar {
+        padding: $mobile-navbar-padding;
+    }
+
+    .navbar .brand {
+        font-size: $mobile-navbar-brand-font-size;
+    }
+
+    .navbar #turn-banner {
+        font-size: $mobile-navbar-turn-banner-font-size;
+    }
+
+    #menu-toggle {
+        display: block;
+        margin-left: auto;
+        min-height: $mobile-menu-toggle-min-height;
+    }
+
+    .navbar nav {
+        display: none;
+        position: absolute;
+        right: $mobile-navbar-nav-right;
+        top: $mobile-navbar-nav-top;
+        flex-direction: column;
+        align-items: stretch;
+        background: var(--artillery-panel);
+        border: $mobile-navbar-nav-border;
+        padding: $mobile-navbar-nav-padding;
+    }
+
+    .navbar nav.expanded {
+        display: flex;
+    }
+
+    #lobby {
+        margin: $mobile-lobby-margin;
+        padding: $mobile-lobby-padding;
+    }
+
+    .lobby-columns {
+        grid-template-columns: 1fr;
+        gap: $mobile-lobby-columns-gap;
+    }
+
+    .planning {
+        padding: $mobile-planning-padding;
+        bottom: $mobile-planning-bottom;
+        left: $mobile-planning-left;
+        width: $mobile-planning-width;
+        max-height: $mobile-planning-max-height;
+        overflow-y: auto;
+    }
+
+    .aim-controls {
+        gap: $mobile-aim-controls-gap;
+    }
+
+    .dial {
+        width: $mobile-dial-width;
+    }
+
+    .dial svg {
+        height: $mobile-dial-svg-height;
+    }
+
+    .power input[type='range'] {
+        height: $mobile-dial-svg-height;
+    }
+
+    dl {
+        grid-template-columns: $mobile-dl-grid-template-columns;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: $reduced-motion-before-after-animation-duration !important;
+    }
+}

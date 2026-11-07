@@ -1,0 +1,9095 @@
+{
+  "trail_smoke": {
+    "kind": "trail",
+    "colour": "#969080",
+    "durationSeconds": 4,
+    "particleCount": 2,
+    "glowIntensity": 1.5,
+    "shakeStrength": 0,
+    "emitters": [
+      {
+        "pool": "smoke",
+        "count": 2,
+        "shape": "shell",
+        "speed": [
+          0.1,
+          0.8
+        ],
+        "lifetime": [
+          0.3,
+          0.8
+        ],
+        "size": [
+          0.4,
+          1.5
+        ],
+        "colours": [
+          "#969080",
+          "#302820"
+        ],
+        "drag": 2,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      }
+    ],
+    "soundIdentifiers": []
+  },
+  "trail_orange": {
+    "kind": "trail",
+    "colour": "#ff7020",
+    "durationSeconds": 4,
+    "particleCount": 2,
+    "glowIntensity": 1.5,
+    "shakeStrength": 0,
+    "emitters": [
+      {
+        "pool": "smoke",
+        "count": 2,
+        "shape": "shell",
+        "speed": [
+          0.1,
+          0.8
+        ],
+        "lifetime": [
+          0.3,
+          0.8
+        ],
+        "size": [
+          0.4,
+          1.5
+        ],
+        "colours": [
+          "#ff7020",
+          "#302820"
+        ],
+        "drag": 2,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      }
+    ],
+    "soundIdentifiers": []
+  },
+  "trail_red": {
+    "kind": "trail",
+    "colour": "#ff2020",
+    "durationSeconds": 4,
+    "particleCount": 2,
+    "glowIntensity": 1.5,
+    "shakeStrength": 0,
+    "emitters": [
+      {
+        "pool": "smoke",
+        "count": 2,
+        "shape": "shell",
+        "speed": [
+          0.1,
+          0.8
+        ],
+        "lifetime": [
+          0.3,
+          0.8
+        ],
+        "size": [
+          0.4,
+          1.5
+        ],
+        "colours": [
+          "#ff2020",
+          "#302820"
+        ],
+        "drag": 2,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      }
+    ],
+    "soundIdentifiers": []
+  },
+  "trail_ice": {
+    "kind": "trail",
+    "colour": "#a0e8ff",
+    "durationSeconds": 4,
+    "particleCount": 2,
+    "glowIntensity": 1.5,
+    "shakeStrength": 0,
+    "emitters": [
+      {
+        "pool": "smoke",
+        "count": 2,
+        "shape": "shell",
+        "speed": [
+          0.1,
+          0.8
+        ],
+        "lifetime": [
+          0.3,
+          0.8
+        ],
+        "size": [
+          0.4,
+          1.5
+        ],
+        "colours": [
+          "#a0e8ff",
+          "#302820"
+        ],
+        "drag": 2,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      }
+    ],
+    "soundIdentifiers": []
+  },
+  "trail_worm": {
+    "kind": "trail",
+    "colour": "#8c6c38",
+    "durationSeconds": 4,
+    "particleCount": 2,
+    "glowIntensity": 1.5,
+    "shakeStrength": 0,
+    "emitters": [
+      {
+        "pool": "smoke",
+        "count": 2,
+        "shape": "shell",
+        "speed": [
+          0.1,
+          0.8
+        ],
+        "lifetime": [
+          0.3,
+          0.8
+        ],
+        "size": [
+          0.4,
+          1.5
+        ],
+        "colours": [
+          "#8c6c38",
+          "#302820"
+        ],
+        "drag": 2,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      }
+    ],
+    "soundIdentifiers": [],
+    "loopSoundIdentifier": "tunnel"
+  },
+  "trail_fire": {
+    "kind": "trail",
+    "colour": "#ffb020",
+    "durationSeconds": 4,
+    "particleCount": 2,
+    "glowIntensity": 1.5,
+    "shakeStrength": 0,
+    "emitters": [
+      {
+        "pool": "fire",
+        "count": 2,
+        "shape": "shell",
+        "speed": [
+          0.1,
+          0.8
+        ],
+        "lifetime": [
+          0.3,
+          0.8
+        ],
+        "size": [
+          0.4,
+          1.5
+        ],
+        "colours": [
+          "#ffb020",
+          "#302820"
+        ],
+        "drag": 2,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 3
+      }
+    ],
+    "soundIdentifiers": [],
+    "loopSoundIdentifier": "burning"
+  },
+  "trail_missile": {
+    "kind": "trail",
+    "colour": "#dedac8",
+    "durationSeconds": 4,
+    "particleCount": 2,
+    "glowIntensity": 1.5,
+    "shakeStrength": 0,
+    "emitters": [
+      {
+        "pool": "smoke",
+        "count": 2,
+        "shape": "shell",
+        "speed": [
+          0.1,
+          0.8
+        ],
+        "lifetime": [
+          0.3,
+          0.8
+        ],
+        "size": [
+          0.4,
+          1.5
+        ],
+        "colours": [
+          "#dedac8",
+          "#302820"
+        ],
+        "drag": 2,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      }
+    ],
+    "soundIdentifiers": []
+  },
+  "trail_tracer": {
+    "kind": "trail",
+    "colour": "#ffed88",
+    "durationSeconds": 4,
+    "particleCount": 2,
+    "glowIntensity": 1.5,
+    "shakeStrength": 0,
+    "emitters": [
+      {
+        "pool": "smoke",
+        "count": 2,
+        "shape": "shell",
+        "speed": [
+          0.1,
+          0.8
+        ],
+        "lifetime": [
+          0.3,
+          0.8
+        ],
+        "size": [
+          0.4,
+          1.5
+        ],
+        "colours": [
+          "#ffed88",
+          "#302820"
+        ],
+        "drag": 2,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      }
+    ],
+    "soundIdentifiers": []
+  },
+  "none": {
+    "kind": "none",
+    "colour": "#000000",
+    "durationSeconds": 0,
+    "particleCount": 0,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [],
+    "soundIdentifiers": []
+  },
+  "single_shot": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "big_shot": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "mediumExplosion"
+    ]
+  },
+  "three_shot": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "five_shot": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "jackhammer": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "heatseeker": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "tracer": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "pile_driver": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "mediumExplosion"
+    ]
+  },
+  "dirt_voider": {
+    "kind": "implosion",
+    "colour": "#200020",
+    "durationSeconds": 1,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#200020",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "spider": {
+    "kind": "beam",
+    "colour": "#ff1030",
+    "durationSeconds": 0.2,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ff1030",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "beam"
+    ]
+  },
+  "sniper": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "magic_wall": {
+    "kind": "construction",
+    "colour": "#7040ff",
+    "durationSeconds": 0.5,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#7040ff",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "materialise",
+      "clink"
+    ]
+  },
+  "dirt_ball": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "napalm": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 320,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 0
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 0
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 0.25
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 0.25
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 0.5
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 0.5
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 0.75
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 0.75
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 1
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 1
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 1.25
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 1.25
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 1.5
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 1.5
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 1.75
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 1.75
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 2
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 2
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 2.25
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 2.25
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 2.5
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 2.5
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 2.75
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 2.75
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 3
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 3
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 3.25
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 3.25
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 3.5
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 3.5
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 3.75
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 3.75
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 4
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 4.25
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 4.25
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 4.5
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 4.5
+      },
+      {
+        "pool": "fire",
+        "count": 12,
+        "shape": "cone",
+        "speed": [
+          2,
+          5
+        ],
+        "lifetime": [
+          0.3,
+          0.7
+        ],
+        "size": [
+          1.4,
+          0.2
+        ],
+        "colours": [
+          "#ff8a18",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 4.75
+      },
+      {
+        "pool": "smoke",
+        "count": 4,
+        "shape": "cone",
+        "speed": [
+          1,
+          3
+        ],
+        "lifetime": [
+          1,
+          2
+        ],
+        "size": [
+          0.6,
+          2.5
+        ],
+        "colours": [
+          "#62574b",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 15,
+        "delaySeconds": 4.75
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "hail_storm": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "ground_hog": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "worm": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "homing_worm": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "homing_worm_hit": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "skipper": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "skipper_scuff": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "chain_reaction": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "mediumExplosion"
+    ]
+  },
+  "tommy_gun": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "scatter_shot": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "scatter_bullet": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "cruiser": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "laser": {
+    "kind": "beam",
+    "colour": "#d0f0ff",
+    "durationSeconds": 0.35,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#d0f0ff",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": []
+  },
+  "laser_charge": {
+    "kind": "charge",
+    "colour": "#80d0ff",
+    "durationSeconds": 0.5,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#80d0ff",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": []
+  },
+  "ion_cannon": {
+    "kind": "pillar",
+    "colour": "#c0d8ff",
+    "durationSeconds": 0.4,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#c0d8ff",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": []
+  },
+  "ion_beacon": {
+    "kind": "beacon",
+    "colour": "#60c0ff",
+    "durationSeconds": 1.2,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#60c0ff",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": []
+  },
+  "nuke": {
+    "kind": "mushroom",
+    "colour": "#fff4ca",
+    "durationSeconds": 10,
+    "particleCount": 3314,
+    "glowIntensity": 6,
+    "shakeStrength": 0.6,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 160,
+        "shape": "shell",
+        "speed": [
+          6,
+          40
+        ],
+        "lifetime": [
+          0.9,
+          3
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          2,
+          14
+        ],
+        "lifetime": [
+          0.5,
+          1.1
+        ],
+        "size": [
+          14,
+          2
+        ],
+        "colours": [
+          "#fff6bc",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": 0,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 12
+      },
+      {
+        "pool": "sparks",
+        "count": 128,
+        "shape": "shell",
+        "speed": [
+          14,
+          50
+        ],
+        "lifetime": [
+          0.4,
+          1.6
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5
+      },
+      {
+        "pool": "smoke",
+        "count": 80,
+        "shape": "shell",
+        "speed": [
+          4,
+          14
+        ],
+        "lifetime": [
+          3,
+          6
+        ],
+        "size": [
+          3,
+          9
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 150,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1.8,
+          3.2
+        ],
+        "size": [
+          10,
+          4
+        ],
+        "colours": [
+          "#ffb347",
+          "#5a1c08"
+        ],
+        "drag": 1,
+        "gravityScale": -0.15,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 6,
+        "radius": [
+          2,
+          6
+        ],
+        "offset": [
+          0,
+          6,
+          0
+        ],
+        "delaySeconds": 0.15
+      },
+      {
+        "pool": "smoke",
+        "count": 90,
+        "shape": "cone",
+        "speed": [
+          4.5,
+          8
+        ],
+        "lifetime": [
+          11,
+          15
+        ],
+        "size": [
+          4,
+          9
+        ],
+        "colours": [
+          "#c8bba0",
+          "#4a4036"
+        ],
+        "drag": 0.4,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 6,
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "delaySeconds": 0.1
+      },
+      {
+        "pool": "fire",
+        "count": 40,
+        "shape": "cone",
+        "speed": [
+          8,
+          14
+        ],
+        "lifetime": [
+          1.5,
+          2.5
+        ],
+        "size": [
+          5,
+          2
+        ],
+        "colours": [
+          "#ffa040",
+          "#401408"
+        ],
+        "drag": 0.6,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 8,
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "delaySeconds": 0.1
+      },
+      {
+        "pool": "smoke",
+        "count": 90,
+        "shape": "cone",
+        "speed": [
+          4.5,
+          8
+        ],
+        "lifetime": [
+          11,
+          15
+        ],
+        "size": [
+          4,
+          9
+        ],
+        "colours": [
+          "#c8bba0",
+          "#4a4036"
+        ],
+        "drag": 0.4,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 6,
+        "offset": [
+          0,
+          6,
+          0
+        ],
+        "delaySeconds": 0.24
+      },
+      {
+        "pool": "fire",
+        "count": 40,
+        "shape": "cone",
+        "speed": [
+          8,
+          14
+        ],
+        "lifetime": [
+          1.5,
+          2.5
+        ],
+        "size": [
+          5,
+          2
+        ],
+        "colours": [
+          "#ffa040",
+          "#401408"
+        ],
+        "drag": 0.6,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 8,
+        "offset": [
+          0,
+          6,
+          0
+        ],
+        "delaySeconds": 0.24
+      },
+      {
+        "pool": "smoke",
+        "count": 90,
+        "shape": "cone",
+        "speed": [
+          4.5,
+          8
+        ],
+        "lifetime": [
+          11,
+          15
+        ],
+        "size": [
+          4,
+          9
+        ],
+        "colours": [
+          "#c8bba0",
+          "#4a4036"
+        ],
+        "drag": 0.4,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 6,
+        "offset": [
+          0,
+          12,
+          0
+        ],
+        "delaySeconds": 0.38
+      },
+      {
+        "pool": "fire",
+        "count": 40,
+        "shape": "cone",
+        "speed": [
+          8,
+          14
+        ],
+        "lifetime": [
+          1.5,
+          2.5
+        ],
+        "size": [
+          5,
+          2
+        ],
+        "colours": [
+          "#ffa040",
+          "#401408"
+        ],
+        "drag": 0.6,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 8,
+        "offset": [
+          0,
+          12,
+          0
+        ],
+        "delaySeconds": 0.38
+      },
+      {
+        "pool": "smoke",
+        "count": 90,
+        "shape": "cone",
+        "speed": [
+          4.5,
+          8
+        ],
+        "lifetime": [
+          11,
+          15
+        ],
+        "size": [
+          4,
+          9
+        ],
+        "colours": [
+          "#c8bba0",
+          "#4a4036"
+        ],
+        "drag": 0.4,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 6,
+        "offset": [
+          0,
+          18,
+          0
+        ],
+        "delaySeconds": 0.52
+      },
+      {
+        "pool": "smoke",
+        "count": 90,
+        "shape": "cone",
+        "speed": [
+          4.5,
+          8
+        ],
+        "lifetime": [
+          11,
+          15
+        ],
+        "size": [
+          4,
+          9
+        ],
+        "colours": [
+          "#c8bba0",
+          "#4a4036"
+        ],
+        "drag": 0.4,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 6,
+        "offset": [
+          0,
+          24,
+          0
+        ],
+        "delaySeconds": 0.66
+      },
+      {
+        "pool": "smoke",
+        "count": 90,
+        "shape": "cone",
+        "speed": [
+          4.5,
+          8
+        ],
+        "lifetime": [
+          11,
+          15
+        ],
+        "size": [
+          4,
+          9
+        ],
+        "colours": [
+          "#c8bba0",
+          "#4a4036"
+        ],
+        "drag": 0.4,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 6,
+        "offset": [
+          0,
+          30,
+          0
+        ],
+        "delaySeconds": 0.8
+      },
+      {
+        "pool": "smoke",
+        "count": 260,
+        "shape": "ring",
+        "speed": [
+          0,
+          1.5
+        ],
+        "lifetime": [
+          9,
+          13
+        ],
+        "size": [
+          8,
+          15
+        ],
+        "colours": [
+          "#d6c9ad",
+          "#4a4036"
+        ],
+        "drag": 0.5,
+        "gravityScale": -0.01,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "radius": [
+          10,
+          18
+        ],
+        "radialSpeed": [
+          3.9,
+          10.4
+        ],
+        "offset": [
+          0,
+          50,
+          0
+        ],
+        "delaySeconds": 1.6
+      },
+      {
+        "pool": "smoke",
+        "count": 200,
+        "shape": "ring",
+        "speed": [
+          0,
+          1
+        ],
+        "lifetime": [
+          10,
+          14
+        ],
+        "size": [
+          9,
+          16
+        ],
+        "colours": [
+          "#8d8068",
+          "#2c261f"
+        ],
+        "drag": 0.5,
+        "gravityScale": -0.01,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "radius": [
+          14,
+          22
+        ],
+        "radialSpeed": [
+          2.6,
+          6.5
+        ],
+        "offset": [
+          0,
+          46,
+          0
+        ],
+        "delaySeconds": 1.8
+      },
+      {
+        "pool": "smoke",
+        "count": 200,
+        "shape": "shell",
+        "speed": [
+          0.65,
+          3.9
+        ],
+        "lifetime": [
+          9,
+          13
+        ],
+        "size": [
+          9,
+          16
+        ],
+        "colours": [
+          "#e4d6b8",
+          "#4a4036"
+        ],
+        "drag": 0.5,
+        "gravityScale": -0.01,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "radius": [
+          8,
+          14
+        ],
+        "offset": [
+          0,
+          54,
+          0
+        ],
+        "delaySeconds": 1.7
+      },
+      {
+        "pool": "fire",
+        "count": 120,
+        "shape": "shell",
+        "speed": [
+          0,
+          3
+        ],
+        "lifetime": [
+          2.5,
+          4.5
+        ],
+        "size": [
+          10,
+          5
+        ],
+        "colours": [
+          "#ff9a3c",
+          "#40180a"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4,
+        "radius": [
+          6,
+          12
+        ],
+        "offset": [
+          0,
+          50,
+          0
+        ],
+        "delaySeconds": 1.7
+      },
+      {
+        "pool": "smoke",
+        "count": 200,
+        "shape": "ring",
+        "speed": [
+          0,
+          0.5
+        ],
+        "lifetime": [
+          4,
+          8
+        ],
+        "size": [
+          4,
+          10
+        ],
+        "colours": [
+          "#9c907c",
+          "#302820"
+        ],
+        "drag": 0.5,
+        "gravityScale": 0,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "radius": [
+          2,
+          5
+        ],
+        "radialSpeed": [
+          18,
+          30
+        ],
+        "offset": [
+          0,
+          1,
+          0
+        ],
+        "delaySeconds": 0.1
+      },
+      {
+        "pool": "smoke",
+        "count": 120,
+        "shape": "ring",
+        "speed": [
+          0,
+          0.5
+        ],
+        "lifetime": [
+          5,
+          9
+        ],
+        "size": [
+          4,
+          10
+        ],
+        "colours": [
+          "#9c907c",
+          "#302820"
+        ],
+        "drag": 0.5,
+        "gravityScale": 0,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "radius": [
+          2,
+          5
+        ],
+        "radialSpeed": [
+          10,
+          18
+        ],
+        "offset": [
+          0,
+          1,
+          0
+        ],
+        "delaySeconds": 0.6
+      },
+      {
+        "pool": "sparks",
+        "count": 120,
+        "shape": "cone",
+        "speed": [
+          20,
+          60
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffcf70",
+          "#302820"
+        ],
+        "drag": 0.5,
+        "gravityScale": 0.3,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 6,
+        "coneAngleInDegrees": 50,
+        "delaySeconds": 0.2
+      },
+      {
+        "pool": "fire",
+        "count": 140,
+        "shape": "shell",
+        "speed": [
+          0,
+          22
+        ],
+        "lifetime": [
+          0.4,
+          1.0
+        ],
+        "size": [
+          22,
+          6
+        ],
+        "colours": [
+          "#ffffff",
+          "#ff8a2a"
+        ],
+        "drag": 2,
+        "gravityScale": 0,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 20,
+        "radius": [
+          0,
+          10
+        ],
+        "offset": [
+          0,
+          4,
+          0
+        ]
+      },
+      {
+        "pool": "fire",
+        "count": 120,
+        "shape": "ring",
+        "speed": [
+          0,
+          0.5
+        ],
+        "lifetime": [
+          0.6,
+          1.2
+        ],
+        "size": [
+          6,
+          2
+        ],
+        "colours": [
+          "#ffd890",
+          "#402010"
+        ],
+        "drag": 0.6,
+        "gravityScale": 0,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 8,
+        "radius": [
+          3,
+          6
+        ],
+        "radialSpeed": [
+          25,
+          40
+        ],
+        "offset": [
+          0,
+          1,
+          0
+        ],
+        "delaySeconds": 0.05
+      },
+      {
+        "pool": "fire",
+        "count": 120,
+        "shape": "cone",
+        "speed": [
+          14,
+          22
+        ],
+        "lifetime": [
+          1.2,
+          2.4
+        ],
+        "size": [
+          6,
+          3
+        ],
+        "colours": [
+          "#ffd27a",
+          "#5a1c08"
+        ],
+        "drag": 0.6,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 7,
+        "coneAngleInDegrees": 5,
+        "offset": [
+          0,
+          10,
+          0
+        ],
+        "delaySeconds": 0.15
+      },
+      {
+        "pool": "fire",
+        "count": 160,
+        "shape": "ring",
+        "speed": [
+          0,
+          0.5
+        ],
+        "lifetime": [
+          2,
+          3.5
+        ],
+        "size": [
+          9,
+          5
+        ],
+        "colours": [
+          "#ffb040",
+          "#3a1406"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "radius": [
+          8,
+          16
+        ],
+        "radialSpeed": [
+          5.2,
+          11.7
+        ],
+        "offset": [
+          0,
+          48,
+          0
+        ],
+        "delaySeconds": 1.6
+      },
+      {
+        "pool": "debris",
+        "count": 120,
+        "shape": "shell",
+        "speed": [
+          10,
+          35
+        ],
+        "lifetime": [
+          2,
+          4
+        ],
+        "size": [
+          0.6,
+          0.15
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1.2,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "offset": [
+          0,
+          20,
+          0
+        ],
+        "delaySeconds": 0.5
+      },
+      {
+        "pool": "sparks",
+        "count": 160,
+        "shape": "cone",
+        "speed": [
+          25,
+          70
+        ],
+        "lifetime": [
+          1,
+          2.5
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffe6a0",
+          "#302820"
+        ],
+        "drag": 0.5,
+        "gravityScale": 0.4,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 7,
+        "coneAngleInDegrees": 70,
+        "delaySeconds": 0.1
+      }
+    ],
+    "soundIdentifiers": [
+      "largeExplosion"
+    ]
+  },
+  "missile_turret": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "volcano": {
+    "kind": "eruption",
+    "colour": "#ff5020",
+    "durationSeconds": 2.8,
+    "particleCount": 700,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "fire",
+        "count": 36,
+        "shape": "cone",
+        "speed": [
+          18,
+          32
+        ],
+        "lifetime": [
+          0.6,
+          1.5
+        ],
+        "size": [
+          1.5,
+          0.2
+        ],
+        "colours": [
+          "#ff5b10",
+          "#302820"
+        ],
+        "drag": 0.3,
+        "gravityScale": 0.6,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 25,
+        "delaySeconds": 0
+      },
+      {
+        "pool": "smoke",
+        "count": 14,
+        "shape": "cone",
+        "speed": [
+          10,
+          18
+        ],
+        "lifetime": [
+          2,
+          4
+        ],
+        "size": [
+          1,
+          6
+        ],
+        "colours": [
+          "#595148",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 0
+      },
+      {
+        "pool": "fire",
+        "count": 36,
+        "shape": "cone",
+        "speed": [
+          18,
+          32
+        ],
+        "lifetime": [
+          0.6,
+          1.5
+        ],
+        "size": [
+          1.5,
+          0.2
+        ],
+        "colours": [
+          "#ff5b10",
+          "#302820"
+        ],
+        "drag": 0.3,
+        "gravityScale": 0.6,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 25,
+        "delaySeconds": 0.2
+      },
+      {
+        "pool": "smoke",
+        "count": 14,
+        "shape": "cone",
+        "speed": [
+          10,
+          18
+        ],
+        "lifetime": [
+          2,
+          4
+        ],
+        "size": [
+          1,
+          6
+        ],
+        "colours": [
+          "#595148",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 0.2
+      },
+      {
+        "pool": "fire",
+        "count": 36,
+        "shape": "cone",
+        "speed": [
+          18,
+          32
+        ],
+        "lifetime": [
+          0.6,
+          1.5
+        ],
+        "size": [
+          1.5,
+          0.2
+        ],
+        "colours": [
+          "#ff5b10",
+          "#302820"
+        ],
+        "drag": 0.3,
+        "gravityScale": 0.6,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 25,
+        "delaySeconds": 0.4
+      },
+      {
+        "pool": "smoke",
+        "count": 14,
+        "shape": "cone",
+        "speed": [
+          10,
+          18
+        ],
+        "lifetime": [
+          2,
+          4
+        ],
+        "size": [
+          1,
+          6
+        ],
+        "colours": [
+          "#595148",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 0.4
+      },
+      {
+        "pool": "fire",
+        "count": 36,
+        "shape": "cone",
+        "speed": [
+          18,
+          32
+        ],
+        "lifetime": [
+          0.6,
+          1.5
+        ],
+        "size": [
+          1.5,
+          0.2
+        ],
+        "colours": [
+          "#ff5b10",
+          "#302820"
+        ],
+        "drag": 0.3,
+        "gravityScale": 0.6,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 25,
+        "delaySeconds": 0.6000000000000001
+      },
+      {
+        "pool": "smoke",
+        "count": 14,
+        "shape": "cone",
+        "speed": [
+          10,
+          18
+        ],
+        "lifetime": [
+          2,
+          4
+        ],
+        "size": [
+          1,
+          6
+        ],
+        "colours": [
+          "#595148",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 0.6000000000000001
+      },
+      {
+        "pool": "fire",
+        "count": 36,
+        "shape": "cone",
+        "speed": [
+          18,
+          32
+        ],
+        "lifetime": [
+          0.6,
+          1.5
+        ],
+        "size": [
+          1.5,
+          0.2
+        ],
+        "colours": [
+          "#ff5b10",
+          "#302820"
+        ],
+        "drag": 0.3,
+        "gravityScale": 0.6,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 25,
+        "delaySeconds": 0.8
+      },
+      {
+        "pool": "smoke",
+        "count": 14,
+        "shape": "cone",
+        "speed": [
+          10,
+          18
+        ],
+        "lifetime": [
+          2,
+          4
+        ],
+        "size": [
+          1,
+          6
+        ],
+        "colours": [
+          "#595148",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 0.8
+      },
+      {
+        "pool": "fire",
+        "count": 36,
+        "shape": "cone",
+        "speed": [
+          18,
+          32
+        ],
+        "lifetime": [
+          0.6,
+          1.5
+        ],
+        "size": [
+          1.5,
+          0.2
+        ],
+        "colours": [
+          "#ff5b10",
+          "#302820"
+        ],
+        "drag": 0.3,
+        "gravityScale": 0.6,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 25,
+        "delaySeconds": 1
+      },
+      {
+        "pool": "smoke",
+        "count": 14,
+        "shape": "cone",
+        "speed": [
+          10,
+          18
+        ],
+        "lifetime": [
+          2,
+          4
+        ],
+        "size": [
+          1,
+          6
+        ],
+        "colours": [
+          "#595148",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 1
+      },
+      {
+        "pool": "fire",
+        "count": 36,
+        "shape": "cone",
+        "speed": [
+          18,
+          32
+        ],
+        "lifetime": [
+          0.6,
+          1.5
+        ],
+        "size": [
+          1.5,
+          0.2
+        ],
+        "colours": [
+          "#ff5b10",
+          "#302820"
+        ],
+        "drag": 0.3,
+        "gravityScale": 0.6,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 25,
+        "delaySeconds": 1.2000000000000002
+      },
+      {
+        "pool": "smoke",
+        "count": 14,
+        "shape": "cone",
+        "speed": [
+          10,
+          18
+        ],
+        "lifetime": [
+          2,
+          4
+        ],
+        "size": [
+          1,
+          6
+        ],
+        "colours": [
+          "#595148",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 1.2000000000000002
+      },
+      {
+        "pool": "fire",
+        "count": 36,
+        "shape": "cone",
+        "speed": [
+          18,
+          32
+        ],
+        "lifetime": [
+          0.6,
+          1.5
+        ],
+        "size": [
+          1.5,
+          0.2
+        ],
+        "colours": [
+          "#ff5b10",
+          "#302820"
+        ],
+        "drag": 0.3,
+        "gravityScale": 0.6,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 25,
+        "delaySeconds": 1.4000000000000001
+      },
+      {
+        "pool": "smoke",
+        "count": 14,
+        "shape": "cone",
+        "speed": [
+          10,
+          18
+        ],
+        "lifetime": [
+          2,
+          4
+        ],
+        "size": [
+          1,
+          6
+        ],
+        "colours": [
+          "#595148",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 1.4000000000000001
+      },
+      {
+        "pool": "fire",
+        "count": 36,
+        "shape": "cone",
+        "speed": [
+          18,
+          32
+        ],
+        "lifetime": [
+          0.6,
+          1.5
+        ],
+        "size": [
+          1.5,
+          0.2
+        ],
+        "colours": [
+          "#ff5b10",
+          "#302820"
+        ],
+        "drag": 0.3,
+        "gravityScale": 0.6,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 25,
+        "delaySeconds": 1.6
+      },
+      {
+        "pool": "smoke",
+        "count": 14,
+        "shape": "cone",
+        "speed": [
+          10,
+          18
+        ],
+        "lifetime": [
+          2,
+          4
+        ],
+        "size": [
+          1,
+          6
+        ],
+        "colours": [
+          "#595148",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 1.6
+      },
+      {
+        "pool": "fire",
+        "count": 36,
+        "shape": "cone",
+        "speed": [
+          18,
+          32
+        ],
+        "lifetime": [
+          0.6,
+          1.5
+        ],
+        "size": [
+          1.5,
+          0.2
+        ],
+        "colours": [
+          "#ff5b10",
+          "#302820"
+        ],
+        "drag": 0.3,
+        "gravityScale": 0.6,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 25,
+        "delaySeconds": 1.8
+      },
+      {
+        "pool": "smoke",
+        "count": 14,
+        "shape": "cone",
+        "speed": [
+          10,
+          18
+        ],
+        "lifetime": [
+          2,
+          4
+        ],
+        "size": [
+          1,
+          6
+        ],
+        "colours": [
+          "#595148",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 1.8
+      },
+      {
+        "pool": "fire",
+        "count": 36,
+        "shape": "cone",
+        "speed": [
+          18,
+          32
+        ],
+        "lifetime": [
+          0.6,
+          1.5
+        ],
+        "size": [
+          1.5,
+          0.2
+        ],
+        "colours": [
+          "#ff5b10",
+          "#302820"
+        ],
+        "drag": 0.3,
+        "gravityScale": 0.6,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 25,
+        "delaySeconds": 2.0
+      },
+      {
+        "pool": "smoke",
+        "count": 14,
+        "shape": "cone",
+        "speed": [
+          10,
+          18
+        ],
+        "lifetime": [
+          2,
+          4
+        ],
+        "size": [
+          1,
+          6
+        ],
+        "colours": [
+          "#595148",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 2.0
+      },
+      {
+        "pool": "fire",
+        "count": 36,
+        "shape": "cone",
+        "speed": [
+          18,
+          32
+        ],
+        "lifetime": [
+          0.6,
+          1.5
+        ],
+        "size": [
+          1.5,
+          0.2
+        ],
+        "colours": [
+          "#ff5b10",
+          "#302820"
+        ],
+        "drag": 0.3,
+        "gravityScale": 0.6,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 25,
+        "delaySeconds": 2.2
+      },
+      {
+        "pool": "smoke",
+        "count": 14,
+        "shape": "cone",
+        "speed": [
+          10,
+          18
+        ],
+        "lifetime": [
+          2,
+          4
+        ],
+        "size": [
+          1,
+          6
+        ],
+        "colours": [
+          "#595148",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 2.2
+      },
+      {
+        "pool": "fire",
+        "count": 36,
+        "shape": "cone",
+        "speed": [
+          18,
+          32
+        ],
+        "lifetime": [
+          0.6,
+          1.5
+        ],
+        "size": [
+          1.5,
+          0.2
+        ],
+        "colours": [
+          "#ff5b10",
+          "#302820"
+        ],
+        "drag": 0.3,
+        "gravityScale": 0.6,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 25,
+        "delaySeconds": 2.4
+      },
+      {
+        "pool": "smoke",
+        "count": 14,
+        "shape": "cone",
+        "speed": [
+          10,
+          18
+        ],
+        "lifetime": [
+          2,
+          4
+        ],
+        "size": [
+          1,
+          6
+        ],
+        "colours": [
+          "#595148",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 2.4
+      },
+      {
+        "pool": "fire",
+        "count": 36,
+        "shape": "cone",
+        "speed": [
+          18,
+          32
+        ],
+        "lifetime": [
+          0.6,
+          1.5
+        ],
+        "size": [
+          1.5,
+          0.2
+        ],
+        "colours": [
+          "#ff5b10",
+          "#302820"
+        ],
+        "drag": 0.3,
+        "gravityScale": 0.6,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 5,
+        "coneAngleInDegrees": 25,
+        "delaySeconds": 2.6
+      },
+      {
+        "pool": "smoke",
+        "count": 14,
+        "shape": "cone",
+        "speed": [
+          10,
+          18
+        ],
+        "lifetime": [
+          2,
+          4
+        ],
+        "size": [
+          1,
+          6
+        ],
+        "colours": [
+          "#595148",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "coneAngleInDegrees": 20,
+        "delaySeconds": 2.6
+      }
+    ],
+    "soundIdentifiers": [
+      "largeExplosion"
+    ],
+    "loopSoundIdentifier": "burning"
+  },
+  "supernova": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "mediumExplosion"
+    ]
+  },
+  "supernova_bullet": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "dome": {
+    "kind": "construction",
+    "colour": "#50c8ff",
+    "durationSeconds": 0.5,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#50c8ff",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "materialise",
+      "clink"
+    ]
+  },
+  "fracture": {
+    "kind": "tremor",
+    "colour": "#c0a070",
+    "durationSeconds": 2,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#c0a070",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "mediumExplosion"
+    ]
+  },
+  "flea_circus": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "gamma_blaster": {
+    "kind": "beam",
+    "colour": "#a0ffb0",
+    "durationSeconds": 0.15,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#a0ffb0",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "beam"
+    ]
+  },
+  "fireball": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "mediumExplosion"
+    ]
+  },
+  "lightning_storm": {
+    "kind": "lightning",
+    "colour": "#c8d0ff",
+    "durationSeconds": 2,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#c8d0ff",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "normalFire"
+    ],
+    "loopSoundIdentifier": "stormIdle"
+  },
+  "mass_driver": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "largeExplosion"
+    ]
+  },
+  "mass_driver_rod": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "largeExplosion"
+    ]
+  },
+  "lead_balloon": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "mediumExplosion"
+    ]
+  },
+  "elevator": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "missile_massacre": {
+    "kind": "explosion",
+    "colour": "#ffb040",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "mass_driver_beep": {
+    "kind": "none",
+    "colour": "#000000",
+    "durationSeconds": 0,
+    "particleCount": 0,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [],
+    "soundIdentifiers": [
+      "beacon"
+    ]
+  },
+  "ion_cannon_fire": {
+    "kind": "none",
+    "colour": "#000000",
+    "durationSeconds": 0,
+    "particleCount": 0,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [],
+    "soundIdentifiers": [
+      "beam"
+    ]
+  },
+  "trail_railgun": {
+    "kind": "streak",
+    "colour": "#ff8a1f",
+    "durationSeconds": 0.35,
+    "particleCount": 9,
+    "glowIntensity": 5,
+    "shakeStrength": 0,
+    "streakWidthInVoxels": 0.7,
+    "emitters": [
+      {
+        "pool": "sparks",
+        "count": 3,
+        "shape": "shell",
+        "speed": [
+          4,
+          14
+        ],
+        "lifetime": [
+          0.12,
+          0.3
+        ],
+        "size": [
+          0.25,
+          0.03
+        ],
+        "colours": [
+          "#ffd9a0",
+          "#ff6a10"
+        ],
+        "drag": 0.8,
+        "gravityScale": 0,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 6
+      },
+      {
+        "pool": "fire",
+        "count": 6,
+        "shape": "ring",
+        "speed": [
+          0,
+          0.5
+        ],
+        "lifetime": [
+          0.18,
+          0.3
+        ],
+        "size": [
+          1.1,
+          0.05
+        ],
+        "colours": [
+          "#b45cff",
+          "#3a0a7a"
+        ],
+        "drag": 2.5,
+        "gravityScale": 0,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 6,
+        "radius": [
+          0.4,
+          0.8
+        ],
+        "radialSpeed": [
+          14,
+          22
+        ]
+      }
+    ],
+    "soundIdentifiers": []
+  },
+  "burst_railgun_burst": {
+    "kind": "none",
+    "colour": "#b45cff",
+    "durationSeconds": 0,
+    "particleCount": 0,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "ring",
+        "speed": [
+          0,
+          0
+        ],
+        "lifetime": [
+          0.35,
+          0.6
+        ],
+        "size": [
+          3,
+          0.2
+        ],
+        "colours": [
+          "#c77dff",
+          "#3a0a7a"
+        ],
+        "drag": 1.5,
+        "gravityScale": 0,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 8,
+        "radius": [
+          0.5,
+          1
+        ],
+        "radialSpeed": [
+          30,
+          45
+        ]
+      },
+      {
+        "pool": "sparks",
+        "count": 40,
+        "shape": "shell",
+        "speed": [
+          10,
+          30
+        ],
+        "lifetime": [
+          0.2,
+          0.6
+        ],
+        "size": [
+          0.2,
+          0.02
+        ],
+        "colours": [
+          "#ffd9a0",
+          "#ff6a10"
+        ],
+        "drag": 0.8,
+        "gravityScale": 0,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 6
+      }
+    ],
+    "soundIdentifiers": [
+      "precisionFire"
+    ]
+  },
+  "burst_railgun": {
+    "kind": "explosion",
+    "colour": "#c77dff",
+    "durationSeconds": 0.6,
+    "particleCount": 240,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [
+      {
+        "pool": "debris",
+        "count": 96,
+        "shape": "shell",
+        "speed": [
+          4,
+          25
+        ],
+        "lifetime": [
+          0.7,
+          2
+        ],
+        "size": [
+          0.55,
+          0.1
+        ],
+        "colours": [
+          "#9b8160",
+          "#302820"
+        ],
+        "drag": 1,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "fire",
+        "count": 48,
+        "shape": "shell",
+        "speed": [
+          2,
+          12
+        ],
+        "lifetime": [
+          0.15,
+          0.45
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffb040",
+          "#302820"
+        ],
+        "drag": 3,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "smoke",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          1,
+          6
+        ],
+        "lifetime": [
+          1,
+          3
+        ],
+        "size": [
+          1,
+          5
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      },
+      {
+        "pool": "sparks",
+        "count": 64,
+        "shape": "shell",
+        "speed": [
+          12,
+          35
+        ],
+        "lifetime": [
+          0.15,
+          0.7
+        ],
+        "size": [
+          0.15,
+          0.02
+        ],
+        "colours": [
+          "#ffdf8a",
+          "#302820"
+        ],
+        "drag": 0.8,
+        "gravityScale": 1,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 4
+      },
+      {
+        "pool": "fire",
+        "count": 24,
+        "shape": "ring",
+        "speed": [
+          0,
+          0
+        ],
+        "lifetime": [
+          0.3,
+          0.5
+        ],
+        "size": [
+          2.5,
+          0.2
+        ],
+        "colours": [
+          "#c77dff",
+          "#3a0a7a"
+        ],
+        "drag": 1.5,
+        "gravityScale": 0,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 8,
+        "radius": [
+          0.5,
+          1
+        ],
+        "radialSpeed": [
+          24,
+          36
+        ]
+      }
+    ],
+    "soundIdentifiers": [
+      "smallExplosion"
+    ]
+  },
+  "airstrike_beep": {
+    "kind": "none",
+    "colour": "#000000",
+    "durationSeconds": 0,
+    "particleCount": 0,
+    "glowIntensity": 4,
+    "shakeStrength": 0.3,
+    "emitters": [],
+    "soundIdentifiers": [
+      "radioBeep"
+    ]
+  },
+  "airstrike_line": {
+    "kind": "line",
+    "colour": "#ff7a2a",
+    "durationSeconds": 25,
+    "particleCount": 0,
+    "glowIntensity": 3,
+    "shakeStrength": 0,
+    "emitters": [],
+    "soundIdentifiers": []
+  }
+}

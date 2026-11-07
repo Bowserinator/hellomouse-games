@@ -1,0 +1,3214 @@
+[
+  {
+    "identifier": "single_shot",
+    "displayName": "Single Shot",
+    "description": "Good ol' reliable.",
+    "massClass": 1,
+    "turretIdentifier": "single_shot",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "single_shot",
+            "damageProfileIdentifier": "single_shot",
+            "effectProfileIdentifier": "single_shot"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "single_shot",
+            "damageProfileIdentifier": "single_shot",
+            "effectProfileIdentifier": "single_shot"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "big_shot",
+    "displayName": "Big Shot",
+    "description": "Like one shot but bigger.",
+    "massClass": 1,
+    "turretIdentifier": "big_shot",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_big",
+        "trailEffectIdentifier": "trail_orange",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "big_shot",
+            "damageProfileIdentifier": "big_shot",
+            "effectProfileIdentifier": "big_shot"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "big_shot",
+            "damageProfileIdentifier": "big_shot",
+            "effectProfileIdentifier": "big_shot"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "three_shot",
+    "displayName": "3 Shot",
+    "description": "Fan out three shots at once.",
+    "massClass": 1,
+    "turretIdentifier": "three_shot",
+    "aimPreviewMode": "fan",
+    "onFire": [
+      {
+        "action": "spawnProjectiles",
+        "projectileIdentifier": "main",
+        "count": 3,
+        "pattern": "spread",
+        "yawSpreadDegrees": 8
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "three_shot",
+            "damageProfileIdentifier": "three_shot",
+            "effectProfileIdentifier": "three_shot"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "three_shot",
+            "damageProfileIdentifier": "three_shot",
+            "effectProfileIdentifier": "three_shot"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "scatterFire"
+  },
+  {
+    "identifier": "five_shot",
+    "displayName": "5 Shot",
+    "description": "Fan out 5 shots at once.",
+    "massClass": 1,
+    "turretIdentifier": "five_shot",
+    "aimPreviewMode": "fan",
+    "onFire": [
+      {
+        "action": "spawnProjectiles",
+        "projectileIdentifier": "main",
+        "count": 5,
+        "pattern": "spread",
+        "yawSpreadDegrees": 16
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "five_shot",
+            "damageProfileIdentifier": "five_shot",
+            "effectProfileIdentifier": "five_shot"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "five_shot",
+            "damageProfileIdentifier": "five_shot",
+            "effectProfileIdentifier": "five_shot"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "scatterFire"
+  },
+  {
+    "identifier": "jackhammer",
+    "displayName": "Jackhammer",
+    "description": "Drills up and down several times.",
+    "massClass": 1,
+    "turretIdentifier": "jackhammer",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "drill",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "jackhammer",
+            "damageProfileIdentifier": "jackhammer",
+            "effectProfileIdentifier": "jackhammer"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "jackhammer",
+            "damageProfileIdentifier": "jackhammer",
+            "effectProfileIdentifier": "jackhammer"
+          }
+        ],
+        "tankContact": "pass",
+        "terrainContact": "bounce",
+        "bounce": {
+          "maximumCount": 5,
+          "restitution": 0,
+          "verticalSpeedInVoxelsPerSecond": 19,
+          "horizontalSpeedScale": 0,
+          "bouncesOffTanks": true
+        }
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "heatseeker",
+    "displayName": "Heatseeker",
+    "description": "Locks onto nearby enemies with line-of-sight.",
+    "massClass": 1,
+    "turretIdentifier": "heatseeker",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "missile",
+        "trailEffectIdentifier": "trail_red",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "heatseeker",
+            "damageProfileIdentifier": "heatseeker",
+            "effectProfileIdentifier": "heatseeker"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "heatseeker",
+            "damageProfileIdentifier": "heatseeker",
+            "effectProfileIdentifier": "heatseeker"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "guidance": {
+          "target": "nearest",
+          "acquisitionRangeInVoxels": 200,
+          "speedInVoxelsPerSecond": 70,
+          "requireLineOfSight": true
+        }
+      }
+    },
+    "fireSoundIdentifier": "radioBeep"
+  },
+  {
+    "identifier": "tracer",
+    "displayName": "Tracer",
+    "description": "Shoot a grid of firing markers.",
+    "massClass": 1,
+    "turretIdentifier": "tracer",
+    "aimPreviewMode": "fan",
+    "onFire": [
+      {
+        "action": "spawnProjectiles",
+        "projectileIdentifier": "main",
+        "count": 9,
+        "pattern": "spread",
+        "yawSpreadDegrees": 10,
+        "pitchSpreadDegrees": 10,
+        "gridColumns": 3
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "bullet",
+        "trailEffectIdentifier": "trail_tracer",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "tracer"
+          },
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "marker",
+              "modelIdentifier": "tracer_marker",
+              "persistTurns": 4,
+              "effectProfileIdentifier": "none"
+            }
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "tracer"
+          },
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "marker",
+              "modelIdentifier": "tracer_marker",
+              "persistTurns": 4,
+              "effectProfileIdentifier": "none"
+            }
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "pile_driver",
+    "displayName": "Pile Driver",
+    "description": "Chain of explosions drilling downwards.",
+    "massClass": 1,
+    "turretIdentifier": "pile_driver",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "drill",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "repeat",
+            "count": 5,
+            "intervalSeconds": 0.25,
+            "offsetPerIteration": [
+              0,
+              -10,
+              0
+            ],
+            "actions": [
+              {
+                "action": "explode",
+                "terrainProfileIdentifier": "pile_driver",
+                "damageProfileIdentifier": "pile_driver",
+                "effectProfileIdentifier": "pile_driver"
+              }
+            ]
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "repeat",
+            "count": 5,
+            "intervalSeconds": 0.25,
+            "offsetPerIteration": [
+              0,
+              -10,
+              0
+            ],
+            "actions": [
+              {
+                "action": "explode",
+                "terrainProfileIdentifier": "pile_driver",
+                "damageProfileIdentifier": "pile_driver",
+                "effectProfileIdentifier": "pile_driver"
+              }
+            ]
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "dirt_voider",
+    "displayName": "Dirt Voider",
+    "description": "Deletes terrain, no damage.",
+    "massClass": 1,
+    "turretIdentifier": "dirt_voider",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "dirt_voider",
+            "damageProfileIdentifier": "dirt_voider",
+            "effectProfileIdentifier": "dirt_voider"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "dirt_voider",
+            "damageProfileIdentifier": "dirt_voider",
+            "effectProfileIdentifier": "dirt_voider"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "spider",
+    "displayName": "Spider",
+    "description": "Fires 8 lasers around where it lands.",
+    "massClass": 1,
+    "turretIdentifier": "spider",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "canister",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "spider",
+              "modelIdentifier": "spider",
+              "delaySeconds": 0,
+              "shotCount": 8,
+              "rangeInVoxels": 70,
+              "damageProfileIdentifier": "spider",
+              "terrainProfileIdentifier": "spider_ray",
+              "effectProfileIdentifier": "spider"
+            }
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "spider",
+              "modelIdentifier": "spider",
+              "delaySeconds": 0,
+              "shotCount": 8,
+              "rangeInVoxels": 70,
+              "damageProfileIdentifier": "spider",
+              "terrainProfileIdentifier": "spider_ray",
+              "effectProfileIdentifier": "spider"
+            }
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "sniper",
+    "displayName": "Sniper",
+    "description": "May your aim be true.",
+    "massClass": 1,
+    "turretIdentifier": "sniper",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "bullet",
+        "trailEffectIdentifier": "trail_tracer",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "sniper",
+            "damageProfileIdentifier": "sniper",
+            "effectProfileIdentifier": "sniper"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "sniper",
+            "damageProfileIdentifier": "sniper",
+            "effectProfileIdentifier": "sniper"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "gravityScale": 1,
+        "speedScale": 1
+      }
+    },
+    "fireSoundIdentifier": "precisionFire"
+  },
+  {
+    "identifier": "magic_wall",
+    "displayName": "Magic Wall",
+    "description": "Spawns a wall.",
+    "massClass": 1,
+    "turretIdentifier": "magic_wall",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "wall",
+              "widthInVoxels": 21,
+              "heightInVoxels": 30,
+              "thicknessInVoxels": 2,
+              "embeddedDepthInVoxels": 2,
+              "durationSeconds": 0.5,
+              "materialIdentifier": "MAGIC_WALL",
+              "effectProfileIdentifier": "magic_wall"
+            }
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "wall",
+              "widthInVoxels": 21,
+              "heightInVoxels": 30,
+              "thicknessInVoxels": 2,
+              "embeddedDepthInVoxels": 2,
+              "durationSeconds": 0.5,
+              "materialIdentifier": "MAGIC_WALL",
+              "effectProfileIdentifier": "magic_wall"
+            }
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "materialise"
+  },
+  {
+    "identifier": "dirt_ball",
+    "displayName": "Dirt Ball",
+    "description": "Spawns a dirt sphere.",
+    "massClass": 1,
+    "turretIdentifier": "dirt_ball",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "dirt_ball"
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 2
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.05,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 4
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.1,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 6
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.15000000000000002,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 8
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.2,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 10
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.25,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 12
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.30000000000000004,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 14
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.35000000000000003,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 16
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.4,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 18
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.45,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 20
+                }
+              }
+            ]
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "dirt_ball"
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 2
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.05,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 4
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.1,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 6
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.15000000000000002,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 8
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.2,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 10
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.25,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 12
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.30000000000000004,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 14
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.35000000000000003,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 16
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.4,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 18
+                }
+              }
+            ]
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 0.45,
+            "actions": [
+              {
+                "action": "applyTerrain",
+                "terrainProfileIdentifier": "dirt_ball",
+                "terrainOverrides": {
+                  "radiusInVoxels": 20
+                }
+              }
+            ]
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "napalm",
+    "displayName": "Napalm",
+    "description": "Fires burning oil.",
+    "massClass": 1,
+    "turretIdentifier": "napalm",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      },
+      {
+        "action": "schedule",
+        "delaySeconds": 0.9,
+        "actions": [
+          {
+            "action": "launchProjectile",
+            "projectileIdentifier": "ember"
+          }
+        ]
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "oil_glob",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "createLiquid",
+            "kind": "oil",
+            "cellCount": 120,
+            "spreadBudget": 0,
+            "igniteAfterSeconds": 1.5,
+            "damageProfileIdentifier": "burn_napalm"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "createLiquid",
+            "kind": "oil",
+            "cellCount": 120,
+            "spreadBudget": 0,
+            "igniteAfterSeconds": 1.5,
+            "damageProfileIdentifier": "burn_napalm"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      },
+      "ember": {
+        "modelIdentifier": "ember",
+        "onTerrainImpact": [
+          {
+            "action": "igniteLiquidNear",
+            "radiusInVoxels": 3
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "hail_storm",
+    "displayName": "Hail Storm",
+    "description": "Spawns bouncy hail pellets.",
+    "massClass": 1,
+    "turretIdentifier": "hail_storm",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "spawnProjectiles",
+            "projectileIdentifier": "pellet",
+            "count": 21,
+            "pattern": "cone",
+            "coneDegrees": 10,
+            "speedInVoxelsPerSecond": 30,
+            "randomSpread": true
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "spawnProjectiles",
+            "projectileIdentifier": "pellet",
+            "count": 21,
+            "pattern": "cone",
+            "coneDegrees": 10,
+            "speedInVoxelsPerSecond": 30,
+            "randomSpread": true
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onApex": [
+          {
+            "action": "spawnProjectiles",
+            "projectileIdentifier": "pellet",
+            "count": 21,
+            "pattern": "cone",
+            "coneDegrees": 10,
+            "speedInVoxelsPerSecond": 30,
+            "randomSpread": true
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      },
+      "pellet": {
+        "modelIdentifier": "ice_pellet",
+        "trailEffectIdentifier": "trail_ice",
+        "terrainContact": "bounce",
+        "bounce": {
+          "maximumCount": 3,
+          "restitution": 0.275
+        },
+        "onTerrainImpact": [
+          {
+            "action": "applyTerrain",
+            "terrainProfileIdentifier": "hail_storm"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "applyDamage",
+            "damageProfileIdentifier": "hail_storm"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "ground_hog",
+    "displayName": "Ground Hog",
+    "description": "Tunnels and detonates when exiting.",
+    "massClass": 1.05,
+    "turretIdentifier": "ground_hog",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "drill",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "setProjectileMode",
+            "terrainContact": "tunnel",
+            "lifetimeSeconds": 6,
+            "gravityScale": 0,
+            "speedInVoxelsPerSecond": 25
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "ground_hog",
+            "damageProfileIdentifier": "ground_hog",
+            "effectProfileIdentifier": "ground_hog"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "terrainContact": "tunnel",
+        "onExpire": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "ground_hog",
+            "damageProfileIdentifier": "ground_hog",
+            "effectProfileIdentifier": "ground_hog"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "worm",
+    "displayName": "Worm",
+    "description": "Tunnels and detonates on exit.",
+    "massClass": 1.05,
+    "turretIdentifier": "worm",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "worm",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "setProjectileMode",
+            "terrainContact": "tunnel",
+            "lifetimeSeconds": 6,
+            "gravityScale": -1,
+            "speedInVoxelsPerSecond": 25
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "worm",
+            "damageProfileIdentifier": "worm",
+            "effectProfileIdentifier": "worm"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "terrainContact": "tunnel",
+        "onExpire": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "worm",
+            "damageProfileIdentifier": "worm",
+            "effectProfileIdentifier": "worm"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "homing_worm",
+    "displayName": "Homing Worm",
+    "description": "Tunnels and detonates on exit.",
+    "massClass": 1.05,
+    "turretIdentifier": "homing_worm",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "worm_eyes",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "setProjectileMode",
+            "terrainContact": "tunnel",
+            "lifetimeSeconds": 6,
+            "gravityScale": -1,
+            "speedInVoxelsPerSecond": 25
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "homing_worm_hit",
+            "damageProfileIdentifier": "homing_worm_hit",
+            "effectProfileIdentifier": "homing_worm_hit"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "terrainContact": "tunnel",
+        "onExpire": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "homing_worm",
+            "damageProfileIdentifier": "homing_worm",
+            "effectProfileIdentifier": "homing_worm"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "guidance": {
+          "target": "above",
+          "acquisitionRangeInVoxels": 60,
+          "speedInVoxelsPerSecond": 60,
+          "onlyWhileInTerrain": true
+        }
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "skipper",
+    "displayName": "Skipper",
+    "description": "Bounces before exploding.",
+    "massClass": 1,
+    "turretIdentifier": "skipper",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "flat_shell",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "skipper",
+            "damageProfileIdentifier": "skipper",
+            "effectProfileIdentifier": "skipper"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "terrainContact": "bounce",
+        "bounce": {
+          "maximumCount": 3,
+          "restitution": 0.7
+        },
+        "onBounce": [
+          {
+            "action": "applyTerrain",
+            "terrainProfileIdentifier": "skipper_scuff"
+          }
+        ],
+        "onExpire": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "skipper",
+            "damageProfileIdentifier": "skipper",
+            "effectProfileIdentifier": "skipper"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "chain_reaction",
+    "displayName": "Chain Reaction",
+    "description": "Chain of explosions around impact.",
+    "massClass": 1,
+    "turretIdentifier": "chain_reaction",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "spawnProjectiles",
+            "projectileIdentifier": "charge",
+            "count": 9,
+            "pattern": "randomArea",
+            "radiusInVoxels": 20,
+            "intervalSeconds": 0.12,
+            "speedInVoxelsPerSecond": 0
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "spawnProjectiles",
+            "projectileIdentifier": "charge",
+            "count": 9,
+            "pattern": "randomArea",
+            "radiusInVoxels": 20,
+            "intervalSeconds": 0.12,
+            "speedInVoxelsPerSecond": 0
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      },
+      "charge": {
+        "modelIdentifier": "bullet",
+        "gravityScale": 0,
+        "onLaunch": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "chain_reaction",
+            "damageProfileIdentifier": "chain_reaction",
+            "effectProfileIdentifier": "chain_reaction"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "tommy_gun",
+    "displayName": "Tommy Gun",
+    "description": "Pew pew pew!",
+    "massClass": 1,
+    "turretIdentifier": "tommy_gun",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "spawnProjectiles",
+        "projectileIdentifier": "main",
+        "count": 30,
+        "pattern": "spread",
+        "yawSpreadDegrees": 2.4,
+        "pitchSpreadDegrees": 2.4,
+        "randomSpread": true,
+        "intervalSeconds": 0.07
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "bullet",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "tommy_gun",
+            "damageProfileIdentifier": "tommy_gun",
+            "effectProfileIdentifier": "tommy_gun"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "tommy_gun",
+            "damageProfileIdentifier": "tommy_gun",
+            "effectProfileIdentifier": "tommy_gun"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "scatterFire"
+  },
+  {
+    "identifier": "scatter_shot",
+    "displayName": "Scatter Shot",
+    "description": "Spawns a fountain of shots where it lands.",
+    "massClass": 1,
+    "turretIdentifier": "scatter_shot",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "scatter_shot",
+            "damageProfileIdentifier": "scatter_shot",
+            "effectProfileIdentifier": "scatter_shot"
+          },
+          {
+            "action": "spawnProjectiles",
+            "projectileIdentifier": "bullet",
+            "count": 10,
+            "pattern": "fountain",
+            "pitchDegrees": 80,
+            "speedInVoxelsPerSecond": 30
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "scatter_shot",
+            "damageProfileIdentifier": "scatter_shot",
+            "effectProfileIdentifier": "scatter_shot"
+          },
+          {
+            "action": "spawnProjectiles",
+            "projectileIdentifier": "bullet",
+            "count": 10,
+            "pattern": "fountain",
+            "pitchDegrees": 80,
+            "speedInVoxelsPerSecond": 30,
+            "offset": [
+              0,
+              5,
+              0
+            ]
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      },
+      "bullet": {
+        "modelIdentifier": "bullet",
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "scatter_bullet",
+            "damageProfileIdentifier": "scatter_bullet",
+            "effectProfileIdentifier": "scatter_bullet"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "scatter_bullet",
+            "damageProfileIdentifier": "scatter_bullet",
+            "effectProfileIdentifier": "scatter_bullet"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "scatterFire"
+  },
+  {
+    "identifier": "cruiser",
+    "displayName": "Cruiser",
+    "description": "Rolls over terrain then explodes.",
+    "massClass": 1,
+    "turretIdentifier": "cruiser",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "spiked_ball",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "setProjectileMode",
+            "terrainContact": "roll",
+            "lifetimeSeconds": 2.4,
+            "speedInVoxelsPerSecond": 22
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "cruiser",
+            "damageProfileIdentifier": "cruiser",
+            "effectProfileIdentifier": "cruiser"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "terrainContact": "roll",
+        "onExpire": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "cruiser",
+            "damageProfileIdentifier": "cruiser",
+            "effectProfileIdentifier": "cruiser"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "laser",
+    "displayName": "Laser",
+    "description": "DEADLY LAZER!",
+    "massClass": null,
+    "turretIdentifier": "laser",
+    "aimPreviewMode": "straight",
+    "onFire": [
+      {
+        "action": "playEffect",
+        "effectProfileIdentifier": "laser_charge",
+        "durationSeconds": 0.5
+      },
+      {
+        "action": "schedule",
+        "delaySeconds": 0.5,
+        "actions": [
+          {
+            "action": "fireRay",
+            "lengthInVoxels": 512,
+            "radiusInVoxels": 2,
+            "damageProfileIdentifier": "laser",
+            "terrainProfileIdentifier": "laser",
+            "effectProfileIdentifier": "laser",
+            "passesThroughTerrain": true
+          }
+        ]
+      }
+    ],
+    "projectiles": {},
+    "fireSoundIdentifier": "beam"
+  },
+  {
+    "identifier": "ion_cannon",
+    "displayName": "Ion Cannon",
+    "description": "Death beam from space.",
+    "massClass": 1,
+    "turretIdentifier": "ion_cannon",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "marker",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "ion_beacon",
+            "durationSeconds": 8
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 1.2,
+            "actions": [
+              {
+                "action": "playEffect",
+                "effectProfileIdentifier": "ion_cannon_fire"
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 0.0,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 6,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 0.3,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 7,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 0.6,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 8,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 0.9,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 9,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 1.2,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 10,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 1.5,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 11,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 1.8,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 12,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 2.1,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 13,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 2.4,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 14.5,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 2.7,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 16,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "ion_beacon",
+            "durationSeconds": 1.2
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 1.2,
+            "actions": [
+              {
+                "action": "playEffect",
+                "effectProfileIdentifier": "ion_cannon_fire"
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 0.0,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 6,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 0.3,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 7,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 0.6,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 8,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 0.9,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 9,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 1.2,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 10,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 1.5,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 11,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 1.8,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 12,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 2.1,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 13,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 2.4,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 14.5,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "schedule",
+                "delaySeconds": 2.7,
+                "actions": [
+                  {
+                    "action": "repeat",
+                    "count": 3,
+                    "intervalSeconds": 0.1,
+                    "actions": [
+                      {
+                        "action": "fireRay",
+                        "lengthInVoxels": 512,
+                        "radiusInVoxels": 16,
+                        "damageProfileIdentifier": "ion_cannon_tick",
+                        "terrainProfileIdentifier": "ion_cannon",
+                        "effectProfileIdentifier": "ion_cannon",
+                        "passesThroughTerrain": true,
+                        "origin": "sky",
+                        "target": "down"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "beacon"
+  },
+  {
+    "identifier": "nuke",
+    "displayName": "Nuke",
+    "description": "Nuke, but doesn't damage tanks that much...",
+    "massClass": 1,
+    "turretIdentifier": "nuke",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "nuke_missile",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "nuke",
+            "damageProfileIdentifier": "nuke",
+            "effectProfileIdentifier": "nuke"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "nuke",
+            "damageProfileIdentifier": "nuke",
+            "effectProfileIdentifier": "nuke"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "precisionFire"
+  },
+  {
+    "identifier": "missile_turret",
+    "displayName": "Missile Turret",
+    "description": "Portable missile turret.",
+    "massClass": 1,
+    "turretIdentifier": "missile_turret",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "canister",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "turret",
+              "modelIdentifier": "deployed_turret",
+              "projectileIdentifier": "missile",
+              "shotCount": 8,
+              "intervalSeconds": 0.7,
+              "effectProfileIdentifier": "missile_turret",
+              "onFinish": [
+                {
+                  "action": "explode",
+                  "terrainProfileIdentifier": "missile_turret",
+                  "damageProfileIdentifier": "missile_turret",
+                  "effectProfileIdentifier": "missile_turret"
+                }
+              ]
+            }
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "turret",
+              "modelIdentifier": "deployed_turret",
+              "projectileIdentifier": "missile",
+              "shotCount": 8,
+              "intervalSeconds": 0.7,
+              "effectProfileIdentifier": "missile_turret",
+              "onFinish": [
+                {
+                  "action": "explode",
+                  "terrainProfileIdentifier": "missile_turret",
+                  "damageProfileIdentifier": "missile_turret",
+                  "effectProfileIdentifier": "missile_turret"
+                }
+              ]
+            }
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      },
+      "missile": {
+        "modelIdentifier": "missile",
+        "gravityScale": 0,
+        "speedInVoxelsPerSecond": 70,
+        "trailEffectIdentifier": "trail_missile",
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "missile_turret",
+            "damageProfileIdentifier": "missile_turret",
+            "effectProfileIdentifier": "missile_turret"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "missile_turret",
+            "damageProfileIdentifier": "missile_turret",
+            "effectProfileIdentifier": "missile_turret"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "volcano",
+    "displayName": "Volcano",
+    "description": "Spawns a torrent of lava.",
+    "massClass": 1,
+    "turretIdentifier": "volcano",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "volcano",
+            "damageProfileIdentifier": "volcano",
+            "effectProfileIdentifier": "volcano"
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 2.4,
+            "actions": [
+              {
+                "action": "repeat",
+                "count": 120,
+                "intervalSeconds": 0.1,
+                "actions": [
+                  {
+                    "action": "createLiquid",
+                    "kind": "lava",
+                    "cellCount": 3,
+                    "spreadBudget": 24,
+                    "damageProfileIdentifier": "burn_standard",
+                    "durationSeconds": 5,
+                    "offset": [
+                      0,
+                      6,
+                      0
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "volcano",
+            "damageProfileIdentifier": "volcano",
+            "effectProfileIdentifier": "volcano"
+          },
+          {
+            "action": "schedule",
+            "delaySeconds": 2.4,
+            "actions": [
+              {
+                "action": "repeat",
+                "count": 120,
+                "intervalSeconds": 0.1,
+                "actions": [
+                  {
+                    "action": "createLiquid",
+                    "kind": "lava",
+                    "cellCount": 3,
+                    "spreadBudget": 24,
+                    "damageProfileIdentifier": "burn_standard",
+                    "durationSeconds": 5,
+                    "offset": [
+                      0,
+                      6,
+                      0
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "supernova",
+    "displayName": "Supernova",
+    "description": "Bursts along direction of travel.",
+    "massClass": 1,
+    "turretIdentifier": "supernova",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "spawnProjectiles",
+            "projectileIdentifier": "bullet",
+            "count": 40,
+            "pattern": "cone",
+            "speedInVoxelsPerSecond": 35,
+            "coneDegrees": 30
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "spawnProjectiles",
+            "projectileIdentifier": "bullet",
+            "count": 40,
+            "pattern": "cone",
+            "speedInVoxelsPerSecond": 35,
+            "coneDegrees": 30
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onApex": [
+          {
+            "action": "spawnProjectiles",
+            "projectileIdentifier": "bullet",
+            "count": 40,
+            "pattern": "cone",
+            "speedInVoxelsPerSecond": 35,
+            "coneDegrees": 30
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      },
+      "bullet": {
+        "modelIdentifier": "bullet",
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "supernova_bullet",
+            "damageProfileIdentifier": "supernova_bullet",
+            "effectProfileIdentifier": "supernova_bullet"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "supernova_bullet",
+            "damageProfileIdentifier": "supernova_bullet",
+            "effectProfileIdentifier": "supernova_bullet"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "dome",
+    "displayName": "Dome",
+    "description": "Spawn a dome around yourself.",
+    "massClass": null,
+    "turretIdentifier": "dome",
+    "aimPreviewMode": "self",
+    "onFire": [
+      {
+        "action": "deployEntity",
+        "definition": {
+          "kind": "dome",
+          "radiusInVoxels": 10,
+          "thicknessInVoxels": 2,
+          "durationSeconds": 0.5,
+          "materialIdentifier": "DOME_BARRIER",
+          "effectProfileIdentifier": "dome"
+        }
+      }
+    ],
+    "projectiles": {},
+    "fireSoundIdentifier": "materialise"
+  },
+  {
+    "identifier": "fracture",
+    "displayName": "Fracture",
+    "description": "Creates a ravine where it lands.",
+    "massClass": 1,
+    "turretIdentifier": "fracture",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "ravine",
+              "lengthInVoxels": 70,
+              "widthInVoxels": 14,
+              "heightInVoxels": 512,
+              "speedInVoxelsPerSecond": 45,
+              "effectProfileIdentifier": "fracture"
+            }
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "ravine",
+              "lengthInVoxels": 70,
+              "widthInVoxels": 14,
+              "heightInVoxels": 512,
+              "speedInVoxelsPerSecond": 45,
+              "effectProfileIdentifier": "fracture"
+            }
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "flea_circus",
+    "displayName": "Flea Circus",
+    "description": "Fleas, fleas everywhere!",
+    "massClass": 1,
+    "turretIdentifier": "flea_circus",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "canister",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "spawnProjectiles",
+            "projectileIdentifier": "flea",
+            "count": 24,
+            "pattern": "fountain",
+            "pitchDegrees": 65,
+            "speedInVoxelsPerSecond": 14,
+            "randomSpread": true,
+            "intervalSeconds": 0.05
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "applyDamage",
+            "damageProfileIdentifier": "flea_circus"
+          },
+          {
+            "action": "spawnProjectiles",
+            "projectileIdentifier": "flea",
+            "count": 24,
+            "pattern": "fountain",
+            "pitchDegrees": 65,
+            "speedInVoxelsPerSecond": 14,
+            "randomSpread": true,
+            "offset": [
+              0,
+              5,
+              0
+            ],
+            "intervalSeconds": 0.05
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      },
+      "flea": {
+        "modelIdentifier": "flea",
+        "massClass": 1,
+        "lifetimeSeconds": 7,
+        "terrainContact": "bounce",
+        "tankContact": "pass",
+        "hitOncePerBounce": true,
+        "bounce": {
+          "maximumCount": 64,
+          "restitution": 0,
+          "verticalSpeedInVoxelsPerSecond": 12,
+          "horizontalSpeedInVoxelsPerSecond": 7,
+          "randomHeading": true,
+          "nearestTankHeadingBias": 0.5
+        },
+        "onTankImpact": [
+          {
+            "action": "applyDamage",
+            "damageProfileIdentifier": "flea_bite"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "gamma_blaster",
+    "displayName": "Gamma Blaster",
+    "description": "Straight line terrain-penetrating beams.",
+    "massClass": 0.93,
+    "turretIdentifier": "gamma_blaster",
+    "aimPreviewMode": "straight",
+    "onFire": [
+      {
+        "action": "repeat",
+        "count": 24,
+        "intervalSeconds": 0.03,
+        "actions": [
+          {
+            "action": "fireRay",
+            "lengthInVoxels": 512,
+            "radiusInVoxels": 0,
+            "damageProfileIdentifier": "gamma_blaster",
+            "effectProfileIdentifier": "gamma_blaster",
+            "passesThroughTerrain": true,
+            "randomConeDegrees": 1
+          }
+        ]
+      }
+    ],
+    "projectiles": {},
+    "fireSoundIdentifier": "beam"
+  },
+  {
+    "identifier": "fireball",
+    "displayName": "Fireball",
+    "description": "It's a fireball.",
+    "massClass": 1,
+    "turretIdentifier": "fireball",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "fireball",
+        "trailEffectIdentifier": "trail_fire",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "fireball",
+            "damageProfileIdentifier": "fireball",
+            "effectProfileIdentifier": "fireball"
+          },
+          {
+            "action": "createLiquid",
+            "kind": "fire",
+            "cellCount": 10,
+            "durationSeconds": 2,
+            "damageProfileIdentifier": "burn_standard"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "fireball",
+            "damageProfileIdentifier": "fireball",
+            "effectProfileIdentifier": "fireball"
+          },
+          {
+            "action": "createLiquid",
+            "kind": "fire",
+            "cellCount": 10,
+            "durationSeconds": 2,
+            "damageProfileIdentifier": "burn_standard"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "gravityScale": 1
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "lightning_storm",
+    "displayName": "Lightning Storm",
+    "description": "Summon the wrath of Zeus.",
+    "massClass": 1,
+    "turretIdentifier": "lightning_storm",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "marker",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "repeat",
+            "count": 10,
+            "intervalSeconds": 0.3,
+            "actions": [
+              {
+                "action": "deployEntity",
+                "definition": {
+                  "kind": "storm",
+                  "delaySeconds": 1.2,
+                  "intervalSeconds": 0.25,
+                  "rangeInVoxels": 22,
+                  "terrainProfileIdentifier": "lightning_storm",
+                  "damageProfileIdentifier": "lightning_storm",
+                  "effectProfileIdentifier": "lightning_storm"
+                }
+              }
+            ]
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "repeat",
+            "count": 10,
+            "intervalSeconds": 0.3,
+            "actions": [
+              {
+                "action": "deployEntity",
+                "definition": {
+                  "kind": "storm",
+                  "delaySeconds": 1.2,
+                  "intervalSeconds": 0.25,
+                  "rangeInVoxels": 22,
+                  "terrainProfileIdentifier": "lightning_storm",
+                  "damageProfileIdentifier": "lightning_storm",
+                  "effectProfileIdentifier": "lightning_storm"
+                }
+              }
+            ]
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "mass_driver",
+    "displayName": "Rods from God",
+    "description": "Tonitrus spear package imminent...",
+    "massClass": 1,
+    "turretIdentifier": "mass_driver",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "marker",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "schedule",
+            "delaySeconds": 0.3,
+            "actions": [
+              {
+                "action": "repeat",
+                "count": 3,
+                "intervalSeconds": 0.4,
+                "actions": [
+                  {
+                    "action": "playEffect",
+                    "effectProfileIdentifier": "mass_driver_beep"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "action": "launchProjectile",
+            "projectileIdentifier": "rod",
+            "origin": "sky",
+            "target": "down",
+            "speedInVoxelsPerSecond": 160
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "schedule",
+            "delaySeconds": 0.3,
+            "actions": [
+              {
+                "action": "repeat",
+                "count": 3,
+                "intervalSeconds": 0.4,
+                "actions": [
+                  {
+                    "action": "playEffect",
+                    "effectProfileIdentifier": "mass_driver_beep"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "action": "launchProjectile",
+            "projectileIdentifier": "rod",
+            "origin": "sky",
+            "target": "down",
+            "speedInVoxelsPerSecond": 160
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "gravityScale": 1,
+        "speedScale": 1
+      },
+      "rod": {
+        "modelIdentifier": "rod",
+        "gravityScale": 0,
+        "speedInVoxelsPerSecond": 160,
+        "trailEffectIdentifier": "trail_fire",
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "mass_driver_rod",
+            "damageProfileIdentifier": "mass_driver_rod",
+            "effectProfileIdentifier": "mass_driver_rod"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "mass_driver_rod",
+            "damageProfileIdentifier": "mass_driver_rod",
+            "effectProfileIdentifier": "mass_driver_rod"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "mediumExplosion"
+  },
+  {
+    "identifier": "lead_balloon",
+    "displayName": "Lead Balloon",
+    "description": "Very heavy, but does a lot of damage.",
+    "massClass": 2,
+    "turretIdentifier": "lead_balloon",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "balloon",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "lead_balloon",
+            "damageProfileIdentifier": "lead_balloon",
+            "effectProfileIdentifier": "lead_balloon"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "lead_balloon",
+            "damageProfileIdentifier": "lead_balloon",
+            "effectProfileIdentifier": "lead_balloon"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "precisionFire"
+  },
+  {
+    "identifier": "elevator",
+    "displayName": "Elevator",
+    "description": "Lifts the ground under your tank.",
+    "massClass": null,
+    "turretIdentifier": "elevator",
+    "aimPreviewMode": "self",
+    "onFire": [
+      {
+        "action": "liftColumn",
+        "radiusInVoxels": 9,
+        "thicknessInVoxels": 8,
+        "liftInVoxels": 32,
+        "speedInVoxelsPerSecond": 16
+      }
+    ],
+    "projectiles": {},
+    "fireSoundIdentifier": "materialise"
+  },
+  {
+    "identifier": "missile_massacre",
+    "displayName": "Missile Massacre",
+    "description": "Missile. Missile. Missile.",
+    "massClass": 1,
+    "turretIdentifier": "missile_massacre",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "spawnProjectiles",
+        "projectileIdentifier": "main",
+        "count": 24,
+        "pattern": "spread",
+        "yawSpreadDegrees": 120,
+        "intervalSeconds": 0.05,
+        "speedInVoxelsPerSecond": 45
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "missile",
+        "trailEffectIdentifier": "trail_missile",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "missile_massacre",
+            "damageProfileIdentifier": "missile_massacre",
+            "effectProfileIdentifier": "missile_massacre"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "missile_massacre",
+            "damageProfileIdentifier": "missile_massacre",
+            "effectProfileIdentifier": "missile_massacre"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "gravityScale": 0,
+        "speedInVoxelsPerSecond": 45,
+        "guidance": {
+          "target": "nearest",
+          "acquisitionRangeInVoxels": 4096,
+          "speedInVoxelsPerSecond": 45,
+          "turnRateInDegreesPerSecond": 140,
+          "delaySeconds": 1
+        }
+      }
+    },
+    "fireSoundIdentifier": "radioBeep"
+  },
+  {
+    "identifier": "burst_railgun",
+    "displayName": "Burst Railgun",
+    "description": "Fires railguns downwards at height of arc.",
+    "massClass": 1,
+    "turretIdentifier": "burst_railgun",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onApex": [
+          {
+            "action": "setProjectileMode",
+            "lifetimeSeconds": 0.1
+          }
+        ],
+        "onExpire": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "burst_railgun_burst"
+          },
+          {
+            "action": "spawnProjectiles",
+            "projectileIdentifier": "slug",
+            "count": 10,
+            "pattern": "cone",
+            "coneDegrees": 70,
+            "pitchDegrees": -90,
+            "randomSpread": true,
+            "speedInVoxelsPerSecond": 140
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTerrainImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "burst_railgun_burst"
+          },
+          {
+            "action": "spawnProjectiles",
+            "projectileIdentifier": "slug",
+            "count": 10,
+            "pattern": "spread",
+            "coneDegrees": 80,
+            "pitchDegrees": -90,
+            "randomSpread": true,
+            "speedInVoxelsPerSecond": 140
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "burst_railgun_burst"
+          },
+          {
+            "action": "spawnProjectiles",
+            "projectileIdentifier": "slug",
+            "count": 10,
+            "pattern": "spread",
+            "coneDegrees": 80,
+            "pitchDegrees": -90,
+            "randomSpread": true,
+            "speedInVoxelsPerSecond": 140
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      },
+      "slug": {
+        "modelIdentifier": "rail_slug",
+        "trailEffectIdentifier": "trail_railgun",
+        "gravityScale": 0,
+        "lifetimeSeconds": 4,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "burst_railgun",
+            "damageProfileIdentifier": "burst_railgun",
+            "effectProfileIdentifier": "burst_railgun"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "burst_railgun",
+            "damageProfileIdentifier": "burst_railgun",
+            "effectProfileIdentifier": "burst_railgun"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "precisionFire"
+  },
+  {
+    "identifier": "airstrike",
+    "displayName": "Airstrike",
+    "description": "Why do we only have unguided munitions?",
+    "massClass": 1,
+    "turretIdentifier": "airstrike",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "marker",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "airstrike_beep"
+          },
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "airstrike",
+              "modelIdentifier": "bomber",
+              "effectProfileIdentifier": "airstrike_line",
+              "delaySeconds": 1,
+              "intervalSeconds": 0.3333,
+              "shotCount": 48,
+              "projectileIdentifier": "bomb",
+              "heightInVoxels": 200,
+              "speedInVoxelsPerSecond": 90,
+              "dropSpeedInVoxelsPerSecond": 15
+            }
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "airstrike_beep"
+          },
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "airstrike",
+              "modelIdentifier": "bomber",
+              "effectProfileIdentifier": "airstrike_line",
+              "delaySeconds": 1,
+              "intervalSeconds": 0.3333,
+              "shotCount": 48,
+              "projectileIdentifier": "bomb",
+              "heightInVoxels": 200,
+              "speedInVoxelsPerSecond": 90,
+              "dropSpeedInVoxelsPerSecond": 15
+            }
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      },
+      "bomb": {
+        "modelIdentifier": "shell_big",
+        "trailEffectIdentifier": "trail_orange",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "big_shot",
+            "damageProfileIdentifier": "big_shot",
+            "effectProfileIdentifier": "big_shot"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "big_shot",
+            "damageProfileIdentifier": "big_shot",
+            "effectProfileIdentifier": "big_shot"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "radioBeep"
+  }
+]

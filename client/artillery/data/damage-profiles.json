@@ -1,0 +1,393 @@
+{
+  "none": {},
+  "single_shot": {
+    "directHitDamage": 20,
+    "splashDamage": 20,
+    "splashRadiusInVoxels": 7,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "big_shot": {
+    "directHitDamage": 15,
+    "splashDamage": 15,
+    "splashRadiusInVoxels": 15,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "three_shot": {
+    "directHitDamage": 8,
+    "splashDamage": 8,
+    "splashRadiusInVoxels": 7,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "five_shot": {
+    "directHitDamage": 4,
+    "splashDamage": 4,
+    "splashRadiusInVoxels": 7,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "jackhammer": {
+    "directHitDamage": 8,
+    "splashDamage": 5,
+    "splashRadiusInVoxels": 4,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "heatseeker": {
+    "directHitDamage": 12,
+    "splashDamage": 12,
+    "splashRadiusInVoxels": 5,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "tracer": {
+    "directHitDamage": 0,
+    "splashDamage": 0,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 0,
+    "knockbackUpwardBias": 0.35
+  },
+  "pile_driver": {
+    "directHitDamage": 4,
+    "splashDamage": 4,
+    "splashRadiusInVoxels": 7.5,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "dirt_voider": {
+    "directHitDamage": 0,
+    "splashDamage": 0,
+    "splashRadiusInVoxels": 20,
+    "falloff": "constant",
+    "knockbackImpulse": 0,
+    "knockbackUpwardBias": 0.35
+  },
+  "spider": {
+    "directHitDamage": 8,
+    "splashDamage": 8,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "sniper": {
+    "directHitDamage": 100,
+    "splashDamage": 100,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "magic_wall": {
+    "directHitDamage": 0,
+    "splashDamage": 0,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 0,
+    "knockbackUpwardBias": 0.35
+  },
+  "dirt_ball": {
+    "directHitDamage": 0,
+    "splashDamage": 0,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 0,
+    "knockbackUpwardBias": 0.35
+  },
+  "napalm": {
+    "directHitDamage": 0,
+    "splashDamage": 2,
+    "splashRadiusInVoxels": 3,
+    "falloff": "constant",
+    "knockbackImpulse": 0,
+    "knockbackUpwardBias": 0.35
+  },
+  "burn_standard": {
+    "damageOverTime": {
+      "amountPerSecond": 3,
+      "durationSeconds": 5,
+      "stacking": "perSource"
+    }
+  },
+  "burn_napalm": {
+    "damageOverTime": {
+      "amountPerSecond": 1,
+      "durationSeconds": 5,
+      "stacking": "perSource"
+    }
+  },
+  "hail_storm": {
+    "directHitDamage": 8,
+    "splashDamage": 8,
+    "splashRadiusInVoxels": 1,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "ground_hog": {
+    "directHitDamage": 22,
+    "splashDamage": 22,
+    "splashRadiusInVoxels": 8,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "worm": {
+    "directHitDamage": 25,
+    "splashDamage": 25,
+    "splashRadiusInVoxels": 8,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "homing_worm": {
+    "directHitDamage": 18,
+    "splashDamage": 18,
+    "splashRadiusInVoxels": 6,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "homing_worm_hit": {
+    "directHitDamage": 30,
+    "splashDamage": 30,
+    "splashRadiusInVoxels": 5,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "skipper": {
+    "directHitDamage": 12,
+    "splashDamage": 12,
+    "splashRadiusInVoxels": 7,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "skipper_scuff": {
+    "directHitDamage": 0,
+    "splashDamage": 0,
+    "splashRadiusInVoxels": 1,
+    "falloff": "constant",
+    "knockbackImpulse": 0,
+    "knockbackUpwardBias": 0.35
+  },
+  "chain_reaction": {
+    "directHitDamage": 8,
+    "splashDamage": 8,
+    "splashRadiusInVoxels": 6,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "tommy_gun": {
+    "directHitDamage": 3,
+    "splashDamage": 3,
+    "splashRadiusInVoxels": 2,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "scatter_shot": {
+    "directHitDamage": 20,
+    "splashDamage": 20,
+    "splashRadiusInVoxels": 3,
+    "falloff": "constant",
+    "knockbackImpulse": 0,
+    "knockbackUpwardBias": 0.35
+  },
+  "scatter_bullet": {
+    "directHitDamage": 7,
+    "splashDamage": 7,
+    "splashRadiusInVoxels": 4,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "cruiser": {
+    "directHitDamage": 20,
+    "splashDamage": 20,
+    "splashRadiusInVoxels": 9,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "laser": {
+    "directHitDamage": 30,
+    "splashDamage": 30,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "ion_cannon": {
+    "directHitDamage": 10,
+    "splashDamage": 10,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "nuke": {
+    "directHitDamage": 10,
+    "splashDamage": 10,
+    "splashRadiusInVoxels": 60,
+    "falloff": "constant",
+    "knockbackImpulse": 550,
+    "knockbackUpwardBias": 0.35
+  },
+  "missile_turret": {
+    "directHitDamage": 9,
+    "splashDamage": 9,
+    "splashRadiusInVoxels": 5,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "volcano": {
+    "directHitDamage": 0,
+    "splashDamage": 0,
+    "splashRadiusInVoxels": 4,
+    "falloff": "constant",
+    "knockbackImpulse": 0,
+    "knockbackUpwardBias": 0.35
+  },
+  "supernova": {
+    "directHitDamage": 0,
+    "splashDamage": 0,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 0,
+    "knockbackUpwardBias": 0.35
+  },
+  "supernova_bullet": {
+    "directHitDamage": 6,
+    "splashDamage": 6,
+    "splashRadiusInVoxels": 4,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "dome": {
+    "directHitDamage": 0,
+    "splashDamage": 0,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 0,
+    "knockbackUpwardBias": 0.35
+  },
+  "fracture": {
+    "directHitDamage": 0,
+    "splashDamage": 0,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 0,
+    "knockbackUpwardBias": 0.35
+  },
+  "flea_circus": {
+    "directHitDamage": 20,
+    "splashDamage": 20,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "flea_bite": {
+    "directHitDamage": 2,
+    "splashDamage": 2,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 10,
+    "knockbackUpwardBias": 0.35
+  },
+  "gamma_blaster": {
+    "directHitDamage": 3,
+    "splashDamage": 3,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "fireball": {
+    "directHitDamage": 20,
+    "splashDamage": 12,
+    "splashRadiusInVoxels": 10,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "lightning_storm": {
+    "directHitDamage": 30,
+    "splashDamage": 30,
+    "splashRadiusInVoxels": 3,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "mass_driver": {
+    "directHitDamage": 0,
+    "splashDamage": 0,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 0,
+    "knockbackUpwardBias": 0.35
+  },
+  "mass_driver_rod": {
+    "directHitDamage": 40,
+    "splashDamage": 24,
+    "splashRadiusInVoxels": 22,
+    "falloff": "constant",
+    "knockbackImpulse": 300,
+    "knockbackUpwardBias": 0.35
+  },
+  "lead_balloon": {
+    "directHitDamage": 55,
+    "splashDamage": 14,
+    "splashRadiusInVoxels": 12,
+    "falloff": "quadratic",
+    "knockbackImpulse": 260,
+    "knockbackUpwardBias": 0.35
+  },
+  "elevator": {
+    "directHitDamage": 0,
+    "splashDamage": 0,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 0,
+    "knockbackUpwardBias": 0.35
+  },
+  "missile_massacre": {
+    "directHitDamage": 3,
+    "splashDamage": 3,
+    "splashRadiusInVoxels": 3,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  },
+  "ion_cannon_tick": {
+    "directHitDamage": 1,
+    "splashDamage": 1,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 10,
+    "knockbackUpwardBias": 0.35
+  },
+  "burst_railgun": {
+    "directHitDamage": 14,
+    "splashDamage": 10,
+    "splashRadiusInVoxels": 4,
+    "falloff": "constant",
+    "knockbackImpulse": 100,
+    "knockbackUpwardBias": 0.35
+  }
+}

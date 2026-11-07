@@ -1,0 +1,391 @@
+{
+  "none": {
+    "operations": []
+  },
+  "single_shot": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 7,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "big_shot": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 15,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "three_shot": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 7,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "five_shot": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 7,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "jackhammer": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 4,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "heatseeker": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 5,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "tracer": {
+    "operations": []
+  },
+  "pile_driver": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 7.5,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "dirt_voider": {
+    "operations": [
+      {
+        "operation": "carveSphere",
+        "radiusInVoxels": 20
+      }
+    ]
+  },
+  "spider": {
+    "operations": []
+  },
+  "spider_ray": {
+    "operations": [
+      {
+        "operation": "carveLineAlongRay",
+        "radiusInVoxels": 1,
+        "lengthInVoxels": 70
+      }
+    ]
+  },
+  "sniper": {
+    "operations": []
+  },
+  "magic_wall": {
+    "operations": []
+  },
+  "dirt_ball": {
+    "operations": [
+      {
+        "operation": "addSphere",
+        "radiusInVoxels": 20,
+        "materialIdentifier": "DIRT"
+      }
+    ]
+  },
+  "napalm": {
+    "operations": []
+  },
+  "hail_storm": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 1,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "ground_hog": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 8,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "worm": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 8,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "homing_worm": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 6,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "homing_worm_hit": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 5,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "skipper": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 7,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "skipper_scuff": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 1,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "chain_reaction": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 6,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "tommy_gun": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 2,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "scatter_shot": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 3,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "scatter_bullet": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 8,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "cruiser": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 9,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "laser": {
+    "operations": [
+      {
+        "operation": "carveLineAlongRay",
+        "radiusInVoxels": 6,
+        "lengthInVoxels": 160
+      }
+    ]
+  },
+  "ion_cannon": {
+    "operations": [
+      {
+        "operation": "carveCylinder",
+        "radiusInVoxels": 10,
+        "heightInVoxels": 1024
+      }
+    ]
+  },
+  "nuke": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 50,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35,
+        "rayCount": 14,
+        "rayLengthInVoxels": 28,
+        "rayAngularSharpness": 10,
+        "rippleRingCount": 4,
+        "rippleSpacingInVoxels": 7
+      }
+    ],
+    "durationSeconds": 1.2
+  },
+  "missile_turret": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 5,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "volcano": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 4,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "supernova": {
+    "operations": []
+  },
+  "supernova_bullet": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 4,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "dome": {
+    "operations": []
+  },
+  "fracture": {
+    "operations": []
+  },
+  "flea_circus": {
+    "operations": []
+  },
+  "gamma_blaster": {
+    "operations": []
+  },
+  "fireball": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 10,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      },
+      {
+        "operation": "scorch",
+        "radiusInVoxels": 10,
+        "materialIdentifier": "SCORCHED_GROUND"
+      }
+    ]
+  },
+  "lightning_storm": {
+    "operations": [
+      {
+        "operation": "scorch",
+        "radiusInVoxels": 3,
+        "materialIdentifier": "SCORCHED_GROUND"
+      }
+    ]
+  },
+  "mass_driver": {
+    "operations": []
+  },
+  "mass_driver_rod": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 22,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35,
+        "rayCount": 10,
+        "rayLengthInVoxels": 22,
+        "rayAngularSharpness": 12,
+        "rippleRingCount": 3,
+        "rippleSpacingInVoxels": 5
+      }
+    ],
+    "durationSeconds": 0.5
+  },
+  "lead_balloon": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 24,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "elevator": {
+    "operations": []
+  },
+  "missile_massacre": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 3,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  },
+  "burst_railgun": {
+    "operations": [
+      {
+        "operation": "carveShapedBlast",
+        "radiusInVoxels": 4,
+        "irregularityFraction": 0.12,
+        "noiseFrequency": 0.35
+      }
+    ]
+  }
+}
