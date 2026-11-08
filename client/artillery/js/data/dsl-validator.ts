@@ -61,8 +61,8 @@ const positive = number(.001, 4096), nonnegative = number(0, 4096), seconds = nu
 const count = number(1, weaponMaximumSpawnsPerFire, true), angle = number(-360, 360);
 const material: Rule = (value, path) => {
     if (typeof value !== 'string' || !Object.prototype.hasOwnProperty.call(Material, value) ||
-        typeof Material[value as keyof typeof Material] !== 'number' || value === 'AIR' || value === 'SEABED')
-        invalid(path, 'Invalid editable material');
+        typeof Material[value as keyof typeof Material] !== 'number' || value === 'AIR' || value === 'SEABED' ||
+        value === 'LAVABED') invalid(path, 'Invalid editable material');
 };
 
 function array(rule: Rule, minimum = 0, maximum = weaponMaximumSpawnsPerFire): Rule {
@@ -195,7 +195,8 @@ actionRule('spawnProjectiles', { projectileIdentifier: identifier, count,
     pattern: choice('single', 'spread', 'cone', 'ring', 'fountain', 'sphereShell', 'randomArea', 'line') }, {
     yawSpreadDegrees: number(0, 360), pitchSpreadDegrees: number(0, 180), pitchDegrees: angle,
     coneDegrees: number(0, 360), gridColumns: count,
-    radiusInVoxels: nonnegative, speedInVoxelsPerSecond: nonnegative, intervalSeconds: seconds, randomSpread: boolean
+    radiusInVoxels: nonnegative, speedInVoxelsPerSecond: nonnegative, intervalSeconds: seconds, randomSpread: boolean,
+    aimAtProjectedImpact: boolean
 });
 actionRule('explode', { terrainProfileIdentifier: identifier, damageProfileIdentifier: identifier,
     effectProfileIdentifier: identifier }, { terrainOverrides: object({}, terrainFields), damageOverrides: damage });
@@ -211,7 +212,8 @@ actionRule('setProjectileVelocity', {}, { velocity: vector, speedInVoxelsPerSeco
 actionRule('fireRay', { lengthInVoxels: positive, radiusInVoxels: nonnegative, damageProfileIdentifier: identifier,
     effectProfileIdentifier: identifier, passesThroughTerrain: boolean }, { terrainProfileIdentifier: identifier,
     target: choice('aim', 'nearestTank', 'allLivingTanks', 'down'), targetRangeInVoxels: positive,
-    randomConeDegrees: number(0, 180), origin: choice('context', 'sky'), stopsAtFirstTank: boolean });
+    randomConeDegrees: number(0, 180), origin: choice('context', 'sky'), stopsAtFirstTank: boolean,
+    damagesOwner: boolean });
 actionRule('createLiquid', { kind: choice('oil', 'lava', 'fire'), cellCount: number(1, 4000, true) }, {
     durationSeconds: seconds, spreadBudget: number(0, 4000, true), igniteAfterSeconds: seconds,
     damageProfileIdentifier: identifier

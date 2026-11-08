@@ -36,7 +36,8 @@ export enum Material {
     TERRACOTTA_CREAM,
     NETHERRACK,
     BASALT,
-    OBSIDIAN
+    OBSIDIAN,
+    LAVABED
 }
 
 export enum MaterialFlag {
@@ -135,7 +136,9 @@ export const materialTable: ReadonlyArray<Readonly<MaterialDefinition>> = Object
     { name: 'Basalt', baseColour: 0x2c2e33, colourVariationStrength: .1, blastResistance: .4,
         isIndestructible: false, flags: solid },
     { name: 'Obsidian', baseColour: 0x1d1528, colourVariationStrength: .08, blastResistance: .6,
-        isIndestructible: false, flags: solid }
+        isIndestructible: false, flags: solid },
+    { name: 'Lava seabed', baseColour: 0xd2d2d2, colourVariationStrength: .05, blastResistance: .5,
+        isIndestructible: true, flags: solid }
 ].map(definition => Object.freeze(definition)));
 
 /** How strongly a material resists blasts, from 0 (carved fully) up to 1 (never carved). */

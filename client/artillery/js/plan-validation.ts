@@ -17,7 +17,8 @@ export function isPlanningPreview(value: unknown, mapEdgeLengthInVoxels: number)
 }
 
 export function isPlayerPlan(value: unknown, movementBudgetInTicks: number,
-    maximumDurationInTicks = matchSettingIntegerRanges.planningTimeLimitInSeconds[1] * simulationTicksPerSecond):
+    maximumDurationInTicks = Math.max(matchSettingIntegerRanges.movePlanningTimeLimitInSeconds[1],
+        matchSettingIntegerRanges.firePlanningTimeLimitInSeconds[1]) * simulationTicksPerSecond):
 value is PlayerPlan {
     if (!value || typeof value !== 'object' || Array.isArray(value) ||
         !Number.isSafeInteger(movementBudgetInTicks) || movementBudgetInTicks < 0 ||

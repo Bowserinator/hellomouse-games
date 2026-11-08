@@ -21,7 +21,7 @@ import { describeWeapon } from './sim/weapon-summary.js';
 import { WeaponDataFiles } from './sim/weapon-types.js';
 import { warmUpTerrainEdits } from './sim/world/terrain-edit.js';
 import { WorldTheme, resolveTheme } from './sim/world/themes.js';
-import { MatchPhase, MatchSnapshot, MovementInput, PlayerPlan, PlayerStatistics, SeatPlan } from './types.js';
+import { MatchPhase, MatchSnapshot, MovementInput, PlayerPlan, PlayerStatistics, SeatPlan, TurnKind } from './types.js';
 import { ArtilleryUI, UiAction } from './ui.js';
 
 declare function beep(): void;
@@ -40,6 +40,7 @@ export class ArtilleryClient {
     private loading: AbortController | null = null;
     private phase: MatchPhase = 'LOBBY';
     private isPractice = false;
+    private isOffline = false;
     private practiceImpactReached = false;
     private practiceTimeOfDay: number | undefined;
     private practiceIslandTheme: number | undefined;
@@ -53,6 +54,7 @@ export class ArtilleryClient {
     private lockedSeats: Array<number> = [];
     private previousPlan: PlayerPlan | null = null;
     private deadline = 0;
+    private lastCountdownBeep = -1;
     private clockOffset = 0;
     private touchMask = 0;
     private accumulator = 0;
@@ -90,6 +92,7 @@ export class ArtilleryClient {
                     this.ui.disconnected.hidden = true;
                     return;
                 }
+                if (!this.lobby && !this.match) this.isOffline = true;
                 this.keys.clear(); this.touchMask = 0; this.loading?.abort(); this.audio?.stop();
                 this.background?.dispose(); this.background = null;
                 this.phase = 'ENDED'; this.refreshPlanning();
@@ -121,6 +124,7 @@ export class ArtilleryClient {
     action(action: UiAction): void {
         if (this.disposed) return;
         this.audio?.unlock();
+        if (action.type === 'practice' && !this.canPractice()) return;
         if (action.type === 'practice' && (this.phase === 'LOBBY' || this.phase === 'ENDED') ||
             action.type === 'practiceReset' && this.isPractice) {
             if (action.type === 'practice') this.practiceSeed = null;
@@ -177,7 +181,7 @@ export class ArtilleryClient {
             if (this.isPractice) {
                 this.previousPlan = this.plan();
                 this.practiceImpactReached = false;
-                this.match!.beginResolve(this.match!.turnIndex, this.match!.teamIndex,
+                this.match!.beginResolve(this.match!.turnIndex, this.match!.turnKind,
                     [{ seatIndex: this.seatIndex, plan: this.plan() }]);
                 this.phase = 'RESOLVING'; this.keys.clear(); this.touchMask = 0; this.accumulator = 0;
                 this.scene?.setPlanning(false); this.scene?.followOwnShots(); this.refreshPlanning();
@@ -193,7 +197,7 @@ export class ArtilleryClient {
             }
         } else if (action.type === 'drive')
             this.touchMask = action.down ? this.touchMask | action.mask : this.touchMask & ~action.mask;
-        else if (this.canEdit) {
+        else if (this.canAim) {
             const tank = this.ownTank!;
             if (action.type === 'aim') {
                 tank.turretYawQuantized = action.yaw;
@@ -229,11 +233,22 @@ export class ArtilleryClient {
         return this.match?.runtime.tanks.find(tank => tank.seatIndex === this.seatIndex);
     }
     private get canPlan(): boolean {
-        return this.phase === 'PLANNING' && !!this.ownTank && !this.ownTank.isWreck &&
-            this.ownTank.teamIndex === this.match?.teamIndex;
+        return this.phase === 'PLANNING' && !!this.ownTank && !this.ownTank.isWreck;
     }
     private get canEdit(): boolean {
         return this.canPlan && !this.lockedSeats.includes(this.seatIndex);
+    }
+    /** Driving is planned in the moving turn, aiming and weapon choice in the firing turn. */
+    private get canMove(): boolean {
+        return this.canEdit && this.match?.turnKind !== 'FIRING';
+    }
+    private get canAim(): boolean {
+        return this.canEdit && this.match?.turnKind !== 'MOVING';
+    }
+    private get planLimitInSeconds(): number {
+        const settings = this.match!.settings;
+        return this.match!.turnKind === 'MOVING' ? settings.movePlanningTimeLimitInSeconds
+            : settings.firePlanningTimeLimitInSeconds;
     }
 
     private async startPractice(): Promise<void> {
@@ -259,7 +274,8 @@ export class ArtilleryClient {
 
     private beginPracticeTurn(): void {
         this.phase = 'PLANNING'; this.segments = []; this.lockedSeats = []; this.accumulator = 0;
-        this.deadline = Date.now() + this.clockOffset + this.match!.settings.planningTimeLimitInSeconds * 1000;
+        this.lastCountdownBeep = -1;
+        this.deadline = Date.now() + this.clockOffset + this.planLimitInSeconds * 1000;
         this.chooseWeapon(); this.scene?.setPlanning(true); this.refreshPlanning();
     }
 
@@ -304,17 +320,18 @@ export class ArtilleryClient {
             validateMatchSnapshot(message.snapshot);
             void this.load(message.snapshot, message.snapshot).catch(error => this.fail(error));
         } else if (message.type === 'TURN_BEGIN' && !this.loading && this.match) {
-            if (message.turnIndex !== this.match.turnIndex || message.teamIndex !== this.match.teamIndex ||
+            if (message.turnIndex !== this.match.turnIndex || message.kind !== this.match.turnKind ||
                 typeof message.deadlineInMilliseconds !== 'number' || !Number.isFinite(message.deadlineInMilliseconds))
                 throw new Error('Planning turn does not match the local replay');
             this.phase = 'PLANNING'; this.segments = []; this.touchMask = 0; this.accumulator = 0;
+            this.lastCountdownBeep = -1;
             this.deadline = message.deadlineInMilliseconds;
             this.readLocks(message.lockedSeatIndices);
             this.chooseWeapon(); this.scene?.setPlanning(true); this.refreshPlanning(); this.alert();
         } else if (message.type === 'PLAN_PREVIEW' && this.phase === 'PLANNING' && !this.loading && this.match &&
             message.turnIndex === this.match.turnIndex) {
             const tank = this.match.runtime.tanks.find(candidate => candidate.seatIndex === message.seatIndex);
-            if (!tank || tank.isWreck || tank.seatIndex === this.seatIndex || tank.teamIndex !== this.match.teamIndex ||
+            if (!tank || tank.isWreck || tank.seatIndex === this.seatIndex ||
                 tank.teamIndex !== this.ownTank?.teamIndex ||
                 !isPlanningPreview(message, this.match.settings.mapEdgeLengthInVoxels) ||
                 message.weaponIdentifier !== null && !this.data.weapons.some(weapon =>
@@ -325,10 +342,10 @@ export class ArtilleryClient {
             this.readLocks(message.lockedSeatIndices); this.refreshPlanning();
         } else if (message.type === 'TURN_RESOLVE' && !this.loading && this.match && this.description) {
             validateTurnEntry(message, this.description, this.match.turnIndex);
-            this.recordPreviousPlan(message.plans);
-            this.announceTeamFired(message.teamIndex, message.plans);
+            this.recordPreviousPlan(message.kind, message.plans);
+            this.announceTurn(message.kind, message.plans);
             this.phase = 'RESOLVING'; this.touchMask = 0; this.keys.clear(); this.accumulator = 0;
-            this.scene?.captureTick(); this.match.beginResolve(message.turnIndex, message.teamIndex, message.plans);
+            this.scene?.captureTick(); this.match.beginResolve(message.turnIndex, message.kind, message.plans);
             this.scene?.setPlanning(false); this.scene?.followOwnShots();
             this.refreshPlanning(); this.finishHiddenResolve();
         } else if (message.type === 'MATCH_END') {
@@ -387,7 +404,10 @@ export class ArtilleryClient {
         if (this.volume > 0 && !document.hidden) beep();
     }
 
-    private announceTeamFired(teamIndex: number, plans: ReadonlyArray<SeatPlan>): void {
+    private announceTurn(kind: TurnKind, plans: ReadonlyArray<SeatPlan>): void {
+        if (kind === 'MOVING') {
+            this.ui.announce('TANKS MOVING'); return;
+        }
         const hasStalled = plans.some(({ seatIndex, plan }) => {
             const tank = this.match?.runtime.tanks.find(candidate => candidate.seatIndex === seatIndex);
             const seat = this.description?.seats.find(candidate => candidate.seatIndex === seatIndex);
@@ -395,7 +415,7 @@ export class ArtilleryClient {
                 Array.from(tank.ammunition.values()).some(uses => uses > 0);
         });
         if (hasStalled) this.alert();
-        else this.ui.teamFired(teamIndex);
+        else this.ui.announce('FIRE!');
     }
 
     private validStatistics(value: unknown): value is PlayerStatistics {
@@ -410,6 +430,22 @@ export class ArtilleryClient {
         if (!Array.isArray(value) || !value.every(index => Number.isSafeInteger(index) &&
             this.description?.seats.some(seat => seat.seatIndex === index))) throw new Error('Invalid locked seats');
         this.lockedSeats = [...new Set<number>(value)];
+    }
+
+    /** Crews still deciding their plan this turn. */
+    private planningSeats(): Array<number> {
+        if (this.phase !== 'PLANNING' || !this.description) return [];
+        return this.description.seats.filter(seat => !seat.isMissing && !this.lockedSeats.includes(seat.seatIndex) &&
+            (!this.isPractice || seat.seatIndex === this.seatIndex) &&
+            !this.match?.runtime.tanks.find(tank => tank.seatIndex === seat.seatIndex)?.isWreck)
+            .map(seat => seat.seatIndex);
+    }
+
+    /** Solo practice is for the host while alone in the room, or whenever the server cannot be reached. */
+    private canPractice(): boolean {
+        if (this.isOffline) return true;
+        if (!this.lobby || this.lobby.hostSeatIndex !== this.seatIndex) return false;
+        return this.lobby.seats.every(seat => seat.seatIndex === this.seatIndex || seat.isMissing);
     }
 
     private refreshLobby(): void {
@@ -451,12 +487,12 @@ export class ArtilleryClient {
     private refreshPlanning(): void {
         if (!this.match) return;
         this.ui.setPreviousSolution(this.previousPlan);
-        this.ui.planning(this.match.teamIndex, this.canPlan, this.lockedSeats.includes(this.seatIndex), this.ownTank,
-            this.data.weapons, this.selected, this.lockedSeats, this.phase,
+        this.ui.planning(this.match.turnKind, this.canPlan, this.lockedSeats.includes(this.seatIndex), this.ownTank,
+            this.data.weapons, this.selected, this.phase,
             weapon => describeWeapon(weapon, this.data));
         const budget = this.match.settings.movementTimePerTurnInSeconds * simulationTicksPerSecond;
         this.ui.budget(1 - (this.ownTank?.movementTicksUsed ?? 0) / budget);
-        this.scene?.setMoveArrowEnabled(this.canEdit);
+        this.scene?.setMoveArrowEnabled(this.canMove);
     }
 
     private autoAim(tank: Tank): void {
@@ -488,7 +524,8 @@ export class ArtilleryClient {
         if (this.selected) this.match!.runtime.selectWeapon(this.seatIndex, this.selected);
     }
 
-    private recordPreviousPlan(plans: ReadonlyArray<SeatPlan>): void {
+    private recordPreviousPlan(kind: TurnKind, plans: ReadonlyArray<SeatPlan>): void {
+        if (kind === 'MOVING') return;
         const own = plans.find(entry => entry.seatIndex === this.seatIndex);
         if (own && own.plan.weaponIdentifier !== null) this.previousPlan = own.plan;
     }
@@ -522,6 +559,7 @@ export class ArtilleryClient {
                     `Generating island · attempt ${progress.attempt}`), signal);
             const match = new Match(description.matchSeed, description.settings, description.seats, this.data,
                 this.physicsHash, this.themes, battlefield);
+            if (this.isPractice) match.useCombinedTurns();
             if (this.isPractice)
                 for (const tank of match.runtime.tanks) if (tank.seatIndex !== this.seatIndex) {
                     tank.ammunition.clear();
@@ -530,7 +568,7 @@ export class ArtilleryClient {
             for (const entry of snapshot?.planLog ?? []) {
                 if (signal.aborted) return;
                 match.resolve(entry); match.runtime.events.length = 0;
-                this.recordPreviousPlan(entry.plans);
+                this.recordPreviousPlan(entry.kind, entry.plans);
                 this.ui.loading(0, 1, `Replaying turn ${entry.turnIndex + 1}`);
                 await this.nextFrame();
             }
@@ -544,6 +582,7 @@ export class ArtilleryClient {
                     if (!document.hidden) this.audio?.event(event);
                 },
                 onFire: (seatIndex, identifier) => {
+                    if (seatIndex === this.seatIndex) this.alert();
                     const tank = match.runtime.tanks.find(candidate => candidate.seatIndex === seatIndex);
                     const weapon = this.data.weapons.find(candidate => candidate.identifier === identifier);
                     if (tank && weapon && !document.hidden) this.audio?.fire(weapon, tank.position);
@@ -578,6 +617,7 @@ export class ArtilleryClient {
             this.phase = snapshot?.phase ?? 'LOADING'; this.accumulator = 0; this.ui.setMode('match');
             if (snapshot?.phase === 'PLANNING') {
                 this.phase = 'PLANNING';
+                this.lastCountdownBeep = -1;
                 this.deadline = startedAt + this.clockOffset + snapshot.planMillisecondsRemaining;
                 this.segments = []; this.lockedSeats = []; this.scene.setPlanning(true); this.refreshPlanning();
             }
@@ -627,7 +667,7 @@ export class ArtilleryClient {
             if (report) {
                 this.sendReport(); this.refreshPlanning();
             }
-        } else if (this.canEdit) {
+        } else if (this.canMove) {
             let mask = this.touchMask;
             for (const [binding, bit] of [[keyboardBindings.forward, MovementInput.FORWARD],
                 [keyboardBindings.backward, MovementInput.BACKWARD], [keyboardBindings.left, MovementInput.LEFT],
@@ -637,7 +677,7 @@ export class ArtilleryClient {
                 mask &= MovementInput.LEFT | MovementInput.RIGHT;
             this.scene?.captureTick();
             if (mask && this.segments.reduce((total, [duration]) => total + duration, 0) <
-                match.settings.planningTimeLimitInSeconds * simulationTicksPerSecond &&
+                match.settings.movePlanningTimeLimitInSeconds * simulationTicksPerSecond &&
                 match.previewMovement(this.seatIndex, mask)) {
                 const previous = this.segments[this.segments.length - 1];
                 if (previous && previous[1] === mask) previous[0]++;
@@ -696,7 +736,7 @@ export class ArtilleryClient {
             this.background?.render(delta, document.hidden);
             if (this.scene && !document.hidden) {
                 if (this.description) this.ui.matchRoster(this.description.seats, this.match!.runtime.tanks,
-                    this.lockedSeats, this.description.settings);
+                    this.lockedSeats, this.planningSeats(), this.description.settings);
                 this.scene.render(Math.min(1, this.accumulator * simulationTicksPerSecond), delta);
                 const camera = this.scene.camera.camera;
                 this.audio?.setListener(camera.position, { x: camera.matrixWorld.elements[0],
@@ -704,8 +744,14 @@ export class ArtilleryClient {
                 this.audio?.update(this.match!.runtime, delta);
             }
             if (this.phase === 'PLANNING' && this.match) {
-                this.ui.timer((this.deadline - Date.now() - this.clockOffset) /
-                    (this.match.settings.planningTimeLimitInSeconds * 1000));
+                const millisecondsRemaining = this.deadline - Date.now() - this.clockOffset;
+                this.ui.timer(millisecondsRemaining / (this.planLimitInSeconds * 1000));
+                const secondsRemaining = Math.ceil(millisecondsRemaining / 1000);
+                if (this.canEdit && secondsRemaining > 0 && secondsRemaining <= 10 &&
+                    secondsRemaining !== this.lastCountdownBeep) {
+                    this.lastCountdownBeep = secondsRemaining;
+                    this.alert();
+                }
                 const tank = this.ownTank;
                 if (!this.isPractice && this.canEdit && tank &&
                     time - this.lastPreviewTime >= 1000 / planningPreviewUpdatesPerSecond) {

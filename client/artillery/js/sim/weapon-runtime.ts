@@ -16,6 +16,7 @@ import { Vector3, addVectors, createVector3, crossProduct, distanceBetweenVector
     normalizeVector, scaleVector, vectorLength } from './math/vector3.js';
 import { CollisionModel, rotateModelVector } from './model-collision.js';
 import { Projectile } from './projectile.js';
+import { predictProjectileImpact } from './projectile-prediction.js';
 import { ProjectileHook, ProjectileTarget, stepProjectile } from './projectile-step.js';
 import { Tank } from './tank.js';
 import { tickTankPhysics } from './tank-physics.js';
@@ -205,6 +206,7 @@ export class WeaponRuntime {
                     definitionIdentifier: action.projectileIdentifier, definition,
                     position: this.origin(aim, action.origin), velocity,
                     randomSeed: this.random.fork(this.turnIndex).fork(serial).seed, actionDepth: context.actionDepth,
+                    isPrimary: context.sourceSerial === context.fireSerial,
                     yawOffsetInRadians: ((aim.yawInRadians - decodeYaw(source!.turretYawQuantized) + Math.PI) %
                         fullCircleInRadians + fullCircleInRadians) % fullCircleInRadians - Math.PI,
                     pitchOffsetInRadians: aim.pitchInRadians - decodePitch(source!.turretPitchQuantized) });
@@ -319,13 +321,17 @@ export class WeaponRuntime {
                     addVectors(direction, direction, scaleVector(right, right, radial * cosineOfRadians(azimuth)));
                     addVectors(direction, direction, scaleVector(upward, upward, radial * sineOfRadians(azimuth)));
                 }
+                const targets = action.damagesOwner === false
+                    ? this.collisionTargets().filter(target =>
+                        target.tank.seatIndex !== context.ownerSeatIndex)
+                    : this.collisionTargets();
                 const result = fireWeaponRay(this.world, { origin: this.origin(context, action.origin), direction,
                     lengthInVoxels: action.lengthInVoxels, radiusInVoxels: action.radiusInVoxels,
                     passesThroughTerrain: action.passesThroughTerrain, stopsAtFirstTank: action.stopsAtFirstTank,
                     damageProfile: this.data.damageProfiles[action.damageProfileIdentifier],
                     terrainProfile: action.terrainProfileIdentifier
                         ? this.data.terrainProfiles[action.terrainProfileIdentifier] : undefined,
-                    randomSeed: context.random.fork(context.sourceSerial).seed }, this.collisionTargets(), source,
+                    randomSeed: context.random.fork(context.sourceSerial).seed }, targets, source,
                 this.damage);
                 if (result.terrainEdit) this.terrain(context, result.terrainEdit);
                 this.emit(context, 'beam', { position: this.origin(context, action.origin), endpoint: result.endpoint,
@@ -369,7 +375,11 @@ export class WeaponRuntime {
         const actions = Array.isArray(specification) ? specification
             : (specification as { actions: ReadonlyArray<ImmediateWeaponAction> }).actions;
         const stored = this.projectileContexts.get(projectile.serial)!;
-        this.actions.run(actions, { ...stored, sourceSerial: projectile.serial, projectile,
+        const projectedImpact = hook === 'onExpire' && actions.some(action =>
+            action.action === 'spawnProjectiles' && action.aimAtProjectedImpact)
+            ? predictProjectileImpact(this.world, projectile, this.collisionTargets(),
+                this.maximumTerrainReachInVoxels) : undefined;
+        this.actions.run(actions, { ...stored, sourceSerial: projectile.serial, projectile, projectedImpact,
             position: projectile.position, targetSeatIndex, random: projectile.random,
             actionDepth: projectile.actionDepth,
             yawInRadians: arcTangent2(projectile.velocity.x, projectile.velocity.z),

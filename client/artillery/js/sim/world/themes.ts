@@ -19,6 +19,7 @@ export interface ThemeMaterials {
     stoneDark?: Material;
     floatingTop?: Material;
     boulder?: Material;
+    seabed?: Material;
     soilDepth?: number;
     strataBands?: ReadonlyArray<Readonly<StrataBand>>;
 }
@@ -88,6 +89,7 @@ function parseMaterials(value: unknown): ThemeMaterials {
     const materials: ThemeMaterials = {};
     for (const key of ['soil', 'shoreSoil', 'stoneLight', 'stoneDark', 'floatingTop', 'boulder'] as const)
         if (input[key] !== undefined) materials[key] = parseMaterialName(input[key]);
+    if (input.seabed !== undefined) materials.seabed = parseMaterialName(input.seabed, true);
     if (input.soilDepth !== undefined) materials.soilDepth = number(input.soilDepth, 0, 16, 'Invalid soil depth');
     if (input.strataBands !== undefined) {
         if (!Array.isArray(input.strataBands) || input.strataBands.length === 0)

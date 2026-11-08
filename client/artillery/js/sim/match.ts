@@ -2,7 +2,7 @@ import { Rng } from '../../../shared/ts/seeded-random.js';
 import { isMatchSettingValid, matchSettingKeys, MatchSettings, protocolVersion,
     resolveMaximumDurationInSeconds, simulationTicksPerSecond, turretDefaultPitchInDegrees } from '../config.js';
 import { isPlayerPlan } from '../plan-validation.js';
-import { MatchSnapshot, ResolveReport, SeatPlan, TurnLogEntry } from '../types.js';
+import { MatchSnapshot, ResolveReport, SeatPlan, TurnKind, TurnLogEntry } from '../types.js';
 import { dealWeapons } from './loadout-dealer.js';
 import { StateHash } from './math/hash.js';
 import { radiansPerDegree } from './math/deterministic-math.js';
@@ -24,7 +24,8 @@ export class Match {
     public readonly settings: Readonly<MatchSettings>;
     public readonly theme: Readonly<WorldTheme>;
     public turnIndex = 0;
-    public teamIndex: number;
+    /** What the current turn is planning; rounds alternate between moving and firing. */
+    public turnKind: TurnKind = 'MOVING';
     public isResolving = false;
     public lastReport: ResolveReport | null = null;
     private turnStarts: Array<TankMotion> = [];
@@ -34,6 +35,7 @@ export class Match {
     private movementDuration = 0;
     private elapsedResolveTicks = 0;
     private hasFired = false;
+    private resolvingKind: TurnKind = 'MOVING';
     private shotsBeforeResolve = 0;
 
     constructor(matchSeed: number, settings: Readonly<MatchSettings>, seats: ReadonlyArray<SpawnSeat>,
@@ -62,30 +64,34 @@ export class Match {
         for (const tank of tanks)
             for (const [identifier, uses] of loadouts.get(tank.seatIndex)!) tank.ammunition.set(identifier, uses);
         this.runtime = new WeaponRuntime(this.battlefield.world, tanks, data, matchSeed, physicsDataHash);
-        this.teamIndex = Math.min(...tanks.map(tank => tank.teamIndex));
         this.runtime.damage.isFriendlyFireEnabled = settings.isFriendlyFireEnabled;
         this.applyLiquidHazard();
         this.captureTurnStart();
     }
 
+    /** Makes every turn plan movement and firing together, without the moving/firing alternation. */
+    public useCombinedTurns(): void {
+        this.turnKind = 'COMBINED';
+    }
+
     public previewMovement(seatIndex: number, inputMask: number): boolean {
         const tank = this.runtime.tanks.find(candidate => candidate.seatIndex === seatIndex);
-        if (this.isResolving || !tank || tank.isWreck || tank.teamIndex !== this.teamIndex ||
+        if (this.isResolving || this.turnKind === 'FIRING' || !tank || tank.isWreck ||
             !Number.isSafeInteger(inputMask) || inputMask < 0 || inputMask > 15) return false;
         const before = tank.movementTicksUsed, previousYaw = tank.hullYawInRadians;
         tickTankPhysics(this.battlefield.world, tank, inputMask, this.movementBudget, this.runtime.tanks);
         return tank.movementTicksUsed !== before || tank.hullYawInRadians !== previousYaw;
     }
 
-    public beginResolve(turnIndex: number, teamIndex: number, plans: ReadonlyArray<SeatPlan>): void {
-        if (this.isResolving || turnIndex !== this.turnIndex || teamIndex !== this.teamIndex)
+    public beginResolve(turnIndex: number, kind: TurnKind, plans: ReadonlyArray<SeatPlan>): void {
+        if (this.isResolving || turnIndex !== this.turnIndex || kind !== this.turnKind)
             throw new Error('Resolve does not match the current turn');
+        const maximumTicks = kind === 'FIRING' ? 0 : this.settings.movePlanningTimeLimitInSeconds * simulationTicksPerSecond;
         const seen = new Set<number>();
         for (const entry of plans) {
             const tank = this.runtime.tanks.find(candidate => candidate.seatIndex === entry.seatIndex);
-            if (!tank || tank.isWreck || tank.teamIndex !== this.teamIndex || seen.has(entry.seatIndex) ||
-                !isPlayerPlan(entry.plan, this.movementBudget,
-                    this.settings.planningTimeLimitInSeconds * simulationTicksPerSecond)) throw new Error('Invalid seat plan');
+            if (!tank || tank.isWreck || seen.has(entry.seatIndex) ||
+                !isPlayerPlan(entry.plan, this.movementBudget, maximumTicks)) throw new Error('Invalid seat plan');
             seen.add(entry.seatIndex);
         }
         this.plans = plans.map(entry => ({ seatIndex: entry.seatIndex, plan: { ...entry.plan,
@@ -103,6 +109,7 @@ export class Match {
             this.runtime.selectedWeapons.set(seatIndex, identifier);
         for (const entry of this.plans) {
             const tank = this.runtime.tanks.find(candidate => candidate.seatIndex === entry.seatIndex)!;
+            if (kind === 'MOVING') continue;
             tank.turretYawQuantized = entry.plan.turretYawQuantized;
             tank.turretPitchQuantized = entry.plan.turretPitchQuantized;
             tank.powerCentipercent = entry.plan.powerCentipercent;
@@ -117,6 +124,7 @@ export class Match {
         this.movementTick = 0;
         this.elapsedResolveTicks = 0;
         this.hasFired = false;
+        this.resolvingKind = kind;
         this.isResolving = true;
         this.lastReport = null;
     }
@@ -137,8 +145,9 @@ export class Match {
             }
             this.movementTick++;
         } else if (!this.hasFired) {
-            for (const entry of this.plans)
-                if (entry.plan.weaponIdentifier) this.runtime.fire(entry.seatIndex, entry.plan.weaponIdentifier);
+            if (this.resolvingKind !== 'MOVING')
+                for (const entry of this.plans)
+                    if (entry.plan.weaponIdentifier) this.runtime.fire(entry.seatIndex, entry.plan.weaponIdentifier);
             this.hasFired = true;
         }
         this.runtime.step(inputs, this.movementBudget);
@@ -150,7 +159,7 @@ export class Match {
     }
 
     public resolve(entry: TurnLogEntry): ResolveReport {
-        this.beginResolve(entry.turnIndex, entry.teamIndex, entry.plans);
+        this.beginResolve(entry.turnIndex, entry.kind, entry.plans);
         while (this.isResolving) this.stepResolve();
         return this.lastReport!;
     }
@@ -158,7 +167,7 @@ export class Match {
     public appendHash(hash: StateHash): void {
         this.runtime.appendHash(hash);
         hash.unsignedInteger(this.turnIndex);
-        hash.unsignedInteger(this.teamIndex);
+        hash.string(this.turnKind);
         hash.unsignedInteger(this.movementTick);
         hash.unsignedInteger(this.movementDuration);
         hash.unsignedInteger(this.elapsedResolveTicks);
@@ -228,18 +237,11 @@ export class Match {
 
     private completeResolve(): ResolveReport {
         this.runtime.finishResolve();
-        this.applyLiquidHazard();
+        if (this.resolvingKind !== 'MOVING') this.applyLiquidHazard();
         const resolvedTurnIndex = this.turnIndex++;
         const armedSeatIndices = this.runtime.tanks.filter(tank => !tank.isWreck &&
             Array.from(tank.ammunition.values()).some(uses => uses > 0)).map(tank => tank.seatIndex);
-        for (let offset = 1; offset <= this.settings.teamCount; offset++) {
-            const nextTeam = (this.teamIndex + offset) % this.settings.teamCount;
-            if (this.runtime.tanks.some(tank => tank.teamIndex === nextTeam &&
-                armedSeatIndices.includes(tank.seatIndex))) {
-                this.teamIndex = nextTeam;
-                break;
-            }
-        }
+        if (this.turnKind !== 'COMBINED') this.turnKind = this.turnKind === 'MOVING' ? 'FIRING' : 'MOVING';
         this.isResolving = false;
         this.captureTurnStart();
         const hash = new StateHash();

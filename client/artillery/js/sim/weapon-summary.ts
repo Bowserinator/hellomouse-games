@@ -66,6 +66,37 @@ function weaponDamage(weapon: WeaponDefinition, data: WeaponDataFiles): Damage {
     return visit(weapon.onFire);
 }
 
+const sumOf = (values: ReadonlyArray<number>): number => values.reduce((total, value) => total + value, 0);
+
+/** Total mass of all fired payloads whose mass class is not exactly one. */
+function weaponPayloadMass(weapon: WeaponDefinition): number {
+    const active = new Set<string>();
+    const projectileMass = (identifier: string): number => {
+        const definition = weapon.projectiles[identifier];
+        if (!definition || active.has(identifier)) return 0;
+        active.add(identifier);
+        const mass = definition.massClass ?? weapon.massClass;
+        const own = mass !== null && mass !== 1 ? mass : 0;
+        const nested = sumOf(Object.values(definition).map(visit));
+        active.delete(identifier);
+        return own + nested;
+    };
+    const visit = (value: unknown): number => {
+        if (!value || typeof value !== 'object') return 0;
+        if (Array.isArray(value)) return sumOf(value.map(visit));
+        const record = value as Record<string, unknown>;
+        if (typeof record.action !== 'string') return sumOf(Object.values(record).map(visit));
+        const action = record as unknown as WeaponAction;
+        if (action.action === 'launchProjectile') return projectileMass(action.projectileIdentifier);
+        if (action.action === 'spawnProjectiles') return projectileMass(action.projectileIdentifier) * action.count;
+        if (action.action === 'repeat') return visit(action.actions) * action.count;
+        if (action.action === 'schedule') return visit(action.actions);
+        if (action.action === 'deployEntity') return sumOf(Object.values(action.definition).map(visit));
+        return 0;
+    };
+    return visit(weapon.onFire);
+}
+
 /** The most damage a single hit from the weapon can do to a tank. */
 export function weaponTankDamage(weapon: WeaponDefinition, data: WeaponDataFiles): number {
     return weaponDamage(weapon, data).perHit;
@@ -77,5 +108,6 @@ export function describeWeapon(weapon: WeaponDefinition, data: WeaponDataFiles):
     const hits = perHit > 0 ? Math.round(total / perHit) : 1;
     const isUniform = hits > 1 && hits <= maximumListedHits && Math.abs(hits * perHit - total) < 1e-6;
     const text = isUniform ? `${hits}x ${round(perHit)}, ${round(total)} damage` : `${round(perHit)} damage`;
-    return `${weapon.description} (${text})`;
+    const weight = weaponPayloadMass(weapon);
+    return `${weapon.description} (${text}${weight > 0 ? `, weight ${round(weight)}` : ''})`;
 }

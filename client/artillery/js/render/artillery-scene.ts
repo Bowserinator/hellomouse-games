@@ -30,6 +30,7 @@ import { ParticleEffects } from './particle-effects.js';
 import { PostProcess } from './post/post-process.js';
 import { ProjectileRenderer } from './projectile-renderer.js';
 import { RenderingQuality, SceneLighting } from './scene-lighting.js';
+import { ShotTrails } from './shot-trails.js';
 import { themedSkyPreset } from './sky.js';
 import { TankRig } from './tank-rig.js';
 import { VoxelMaterials } from './voxel-material.js';
@@ -78,6 +79,7 @@ export class ArtilleryScene {
     private readonly terrain: ChunkManager;
     private readonly projectiles: ProjectileRenderer;
     private readonly beams: BeamEffects;
+    private readonly trails: ShotTrails;
     private readonly damageNumbers: DamageNumbers;
     private readonly liquids = new LiquidRenderer();
     private readonly aim: AimPreview;
@@ -174,11 +176,12 @@ export class ArtilleryScene {
             this.scene.add(rig.group);
         }
         this.projectiles = new ProjectileRenderer(this.models, this.materials, paints);
+        this.trails = new ShotTrails(colours);
         this.names = new NameTags(world, options.tagContainer, options.seats, colours);
         this.xray = new XrayGrid(colours);
         const viewerColour = colours.get(options.viewerSeatIndex);
         this.arrow = viewerColour === undefined ? null : new HeadingArrow(viewerColour);
-        this.scene.add(this.terrain.group, this.particles.group, this.beams.mesh, this.damageNumbers.group,
+        this.scene.add(this.terrain.group, this.particles.group, this.beams.mesh, this.trails.mesh, this.damageNumbers.group,
             this.projectiles.group,
             this.liquids.mesh, this.aim.group, this.xray.group, this.hitboxes.group);
         if (this.arrow) this.scene.add(this.arrow.group);
@@ -251,6 +254,8 @@ export class ArtilleryScene {
                 else damageHits.set(key, { position: event.position, amount: event.amount, count: 1 });
             }
             if (event.type === 'lineEnd') this.beams.clearTagged(event.serial);
+            if (event.type === 'projectileRemoved' && event.seatIndex !== undefined)
+                this.trails.end(event.serial, event.position, event.seatIndex);
             if ((event.type === 'beam' || event.type === 'line') && profile) this.beams.play(event, profile);
             else if (profile) this.particles.play(profile, profile.kind === 'mushroom' ? this.craterFloor(event)
                 : event.position, this.upward, this.removedSamples.get(event.serial));
@@ -285,6 +290,7 @@ export class ArtilleryScene {
                 view.shotsFired = view.tank.statistics.shotsFired;
             }
 
+        this.trails.record(runtime.projectiles);
         for (const projectile of runtime.projectiles) {
             const identifier = projectile.definition.trailEffectIdentifier;
             if (!projectile.isAlive || !identifier || !this.options.effects[identifier]) continue;
@@ -331,7 +337,7 @@ export class ArtilleryScene {
         const view = this.views.find(candidate => candidate.tank.seatIndex === seatIndex);
         const viewer = this.views.find(candidate => candidate.tank.seatIndex === this.options.viewerSeatIndex);
         if (!this.planning || !view || !viewer || view === viewer || view.tank.isWreck ||
-            view.tank.teamIndex !== viewer.tank.teamIndex || view.tank.teamIndex !== this.options.match.teamIndex ||
+            view.tank.teamIndex !== viewer.tank.teamIndex ||
             pose.length !== 6 || !pose.every(Number.isFinite) || !Number.isInteger(powerCentipercent) ||
             powerCentipercent < 0 || powerCentipercent > powerCentipercentMaximum || pose.slice(3).some((value, index) =>
             !Number.isInteger(value) || value < 0 || value >= (index === 2 ? turretPitchQuantizationSteps
@@ -455,7 +461,7 @@ export class ArtilleryScene {
         this.explosionPosition = null;
         this.projectiles.update(runtime.projectiles, runtime.deployables, interpolation);
         this.liquids.update(runtime.liquids.cells); this.particles.update(delta, this.options.match.battlefield.world);
-        this.beams.update(delta);
+        this.beams.update(delta); this.trails.update(delta);
         this.damageNumbers.update(delta, this.camera.camera.position);
         this.names.update(this.displayTanks, this.camera.camera, this.width, this.height, delta);
         this.names.updateProjectiles(runtime.projectiles, runtime.deployables, this.camera.camera, this.width, this.height);
@@ -475,7 +481,7 @@ export class ArtilleryScene {
             canvas.releasePointerCapture(this.pointerId);
         this.terrain.dispose(); this.workers.dispose();
         for (const view of this.views) view.rig.dispose();
-        this.projectiles.dispose(); this.particles.dispose(); this.beams.dispose(); this.damageNumbers.dispose();
+        this.projectiles.dispose(); this.particles.dispose(); this.beams.dispose(); this.trails.dispose(); this.damageNumbers.dispose();
         this.liquids.dispose();
         this.aim.dispose(); this.names.dispose(); this.xray.dispose(); this.post.dispose();
         this.hitboxes.dispose(); this.arrow?.dispose();
@@ -530,7 +536,7 @@ export class ArtilleryScene {
     private updateAim(): void {
         const match = this.options.match;
         const viewer = this.views.find(view => view.tank.seatIndex === this.options.viewerSeatIndex);
-        this.aim.group.visible = this.planning && !match.isResolving && viewer?.tank.teamIndex === match.teamIndex;
+        this.aim.group.visible = this.planning && !match.isResolving && match.turnKind !== 'MOVING' && !!viewer;
         if (!this.aim.group.visible || !viewer) return;
         const previousCount = this.aimInputs.length;
         this.aimInputs.length = 0;

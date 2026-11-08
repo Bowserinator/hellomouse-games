@@ -9,7 +9,7 @@ import { defaultMatchSettings, isMatchSettingValid, loadTimeoutInSeconds, lobbyM
 import type { MatchSettings } from '../../client/artillery/js/config.js';
 import { ArtillerySync } from '../../client/artillery/js/types.js';
 import type { LobbySeat, MatchPhase, MatchSnapshot, PlayerPlan, PlayerStatistics, ResolveReport,
-    TurnLogEntry } from '../../client/artillery/js/types.js';
+    TurnKind, TurnLogEntry } from '../../client/artillery/js/types.js';
 import { isPlanningPreview, isPlayerPlan } from '../../client/artillery/js/plan-validation.js';
 import { validateWeaponData } from '../../client/artillery/js/data/dsl-validator.js';
 import { weaponDataHash } from '../../client/artillery/js/data/weapon-data-hash.js';
@@ -26,7 +26,7 @@ export default class ArtilleryGame extends Game {
     public seats: Array<ServerSeat> = [];
     public planLog: Array<TurnLogEntry> = [];
     public turnIndex = 0;
-    public teamIndex = 0;
+    public turnKind: TurnKind = 'MOVING';
     public deadlineInMilliseconds = 0;
     public lastMatchResult: Record<string, unknown> | null = null;
     public interval: ReturnType<typeof setInterval> | null = null;
@@ -249,11 +249,11 @@ export default class ArtilleryGame extends Game {
             this.checkPhaseProgress();
             return;
         }
-        if (this.phase !== 'PLANNING' || seat.teamIndex !== this.teamIndex || !this.alive.has(seatIndex)) return;
+        if (this.phase !== 'PLANNING' || !this.alive.has(seatIndex)) return;
         if (message.type === ArtillerySync.PLAN_UNLOCK) this.plans.delete(seatIndex);
         else if (message.type === ArtillerySync.PLAN_LOCK && !this.plans.has(seatIndex) &&
             isPlayerPlan(message.plan, this.settings.movementTimePerTurnInSeconds * simulationTicksPerSecond,
-                this.settings.planningTimeLimitInSeconds * simulationTicksPerSecond))
+                this.turnKind === 'FIRING' ? 0 : this.settings.movePlanningTimeLimitInSeconds * simulationTicksPerSecond))
             this.plans.set(seatIndex, { ...message.plan, movementSegments:
                 message.plan.movementSegments.map(([duration, mask]): [number, number] => [duration, mask]) });
         else if (message.type === ArtillerySync.PLAN_PREVIEW && !this.plans.has(seatIndex)) {
@@ -293,7 +293,7 @@ export default class ArtilleryGame extends Game {
         this.matchSeed = crypto.randomBytes(4).readUInt32LE(0);
         this.phase = 'LOADING';
         this.turnIndex = 0;
-        this.teamIndex = Math.min(...this.seats.map(seat => seat.teamIndex));
+        this.turnKind = 'MOVING';
         this.planLog = [];
         this.loaded.clear(); this.plans.clear(); this.reports.clear(); this.previewTimes.clear();
         this.roundsCompleted = 0; this.eliminatedAtTurn.clear();
@@ -306,15 +306,15 @@ export default class ArtilleryGame extends Game {
             matchSeed: this.matchSeed, settings: this.settings, seats: this.publicSeats() });
     }
     private lockedSeats(): Array<number> {
-        return this.seats.filter(seat => seat.teamIndex === this.teamIndex && this.alive.has(seat.seatIndex) &&
+        return this.seats.filter(seat => this.alive.has(seat.seatIndex) &&
             (seat.isMissing || !this.loaded.has(seat.seatIndex) || this.plans.has(seat.seatIndex)))
             .map(seat => seat.seatIndex);
     }
     private checkPhaseProgress(): void {
         if (this.phase === 'LOADING' && this.seats.every(seat => seat.isMissing || this.loaded.has(seat.seatIndex)))
             this.beginNextTurn();
-        else if (this.phase === 'PLANNING' && this.seats.filter(seat => seat.teamIndex === this.teamIndex &&
-            this.alive.has(seat.seatIndex)).every(seat => this.lockedSeats().includes(seat.seatIndex)))
+        else if (this.phase === 'PLANNING' && this.seats.filter(seat => this.alive.has(seat.seatIndex))
+            .every(seat => this.lockedSeats().includes(seat.seatIndex)))
             this.resolveCurrentTurn();
         else if (this.phase === 'RESOLVING' && this.connectedSeats().every(index => this.reports.has(index)))
             this.finishReports();
@@ -322,16 +322,18 @@ export default class ArtilleryGame extends Game {
     private beginNextTurn(): void {
         this.phase = 'PLANNING';
         this.plans.clear(); this.reports.clear(); this.previewTimes.clear();
-        this.deadlineInMilliseconds = Date.now() + this.settings.planningTimeLimitInSeconds * 1000;
-        this.broadcast({ type: ArtillerySync.TURN_BEGIN, turnIndex: this.turnIndex, teamIndex: this.teamIndex,
+        const planSeconds = this.turnKind === 'MOVING' ? this.settings.movePlanningTimeLimitInSeconds
+            : this.settings.firePlanningTimeLimitInSeconds;
+        this.deadlineInMilliseconds = Date.now() + planSeconds * 1000;
+        this.broadcast({ type: ArtillerySync.TURN_BEGIN, turnIndex: this.turnIndex, kind: this.turnKind,
             deadlineInMilliseconds: this.deadlineInMilliseconds, lockedSeatIndices: this.lockedSeats() });
         this.checkPhaseProgress();
     }
     private resolveCurrentTurn(): void {
         const empty: PlayerPlan = { movementSegments: [], turretYawQuantized: 0, turretPitchQuantized: 0,
             powerCentipercent: 0, weaponIdentifier: null };
-        const entry: TurnLogEntry = { turnIndex: this.turnIndex, teamIndex: this.teamIndex,
-            plans: this.seats.filter(seat => seat.teamIndex === this.teamIndex && this.alive.has(seat.seatIndex))
+        const entry: TurnLogEntry = { turnIndex: this.turnIndex, kind: this.turnKind,
+            plans: this.seats.filter(seat => this.alive.has(seat.seatIndex))
                 .map(seat => ({ seatIndex: seat.seatIndex, plan: this.plans.get(seat.seatIndex) ?? empty })) };
         this.planLog.push(entry);
         this.phase = 'RESOLVING';
@@ -366,6 +368,11 @@ export default class ArtilleryGame extends Game {
         if (teams.size <= 1) {
             this.finishMatch([...teams], 'ELIMINATION'); return;
         }
+        if (this.turnKind === 'MOVING') {
+            this.turnKind = 'FIRING'; this.turnIndex++;
+            this.beginNextTurn();
+            return;
+        }
         if (!report.hasAmmunitionRemaining && !this.settings.isInfiniteRounds) {
             this.finishMatch(this.scoreWinners(), 'SCORE'); return;
         }
@@ -377,15 +384,11 @@ export default class ArtilleryGame extends Game {
             this.finishMatch([...teams].filter(team => totals[team] === best), 'STALEMATE');
             return;
         }
-        const armedTeams = new Set(this.seats.filter(seat => report.armedSeatIndices.includes(seat.seatIndex))
-            .map(seat => seat.teamIndex));
-        const previousTeam = this.teamIndex;
-        do this.teamIndex = (this.teamIndex + 1) % this.settings.teamCount; while (!armedTeams.has(this.teamIndex));
-        if (this.teamIndex <= previousTeam) this.roundsCompleted++;
+        this.roundsCompleted++;
         if (!this.settings.isInfiniteRounds && this.roundsCompleted >= this.settings.roundCount) {
             this.finishMatch(this.scoreWinners(), 'SCORE'); return;
         }
-        this.turnIndex++;
+        this.turnKind = 'MOVING'; this.turnIndex++;
         this.beginNextTurn();
     }
     /** Teams with the best score under the configured scoring mode. */
@@ -439,7 +442,7 @@ export default class ArtilleryGame extends Game {
         this.snapshotVersions.set(client, this.snapshotVersion());
         const snapshot: MatchSnapshot = { protocolVersion, weaponDataHash: this.physicsHash, matchSeed: this.matchSeed,
             settings: { ...this.settings }, seats: this.publicSeats(), planLog: this.planLog, phase: this.phase,
-            turnIndex: this.turnIndex, teamIndex: this.teamIndex,
+            turnIndex: this.turnIndex, kind: this.turnKind,
             planMillisecondsRemaining: Math.max(0, this.deadlineInMilliseconds - Date.now()) };
         this.send(client, { type: ArtillerySync.MATCH_SNAPSHOT, snapshot });
     }

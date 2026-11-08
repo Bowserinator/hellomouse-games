@@ -3,6 +3,8 @@
 // -----------------------------------------------------------------------------
 export const worldChunkEdgeLengthInVoxels = 32;
 export const worldHeightInVoxels = 512;
+/** Multiplier applied to the height of all generated terrain above the minimum height. */
+export const terrainHeightScale = 1.2;
 export const worldMapEdgeLengthOptionsInVoxels = [256, 512, 256 * 3] as const;
 export const worldIndestructibleMaximumLayerIndex = 1;
 export const worldWaterSurfaceHeightInVoxels = 2;
@@ -273,7 +275,7 @@ export const fireDefaultDamagePerSecond = 2;
 // -----------------------------------------------------------------------------
 // Match rules
 // -----------------------------------------------------------------------------
-export const protocolVersion = 9;
+export const protocolVersion = 10;
 export const teamNames = ['Red', 'Blue', 'Green', 'Yellow'] as const;
 export const teamGlyphs = ['◆', '●', '▲', '■'] as const;
 export const teamPrimaryColours = [0xe35a58, 0x5c9de0, 0x75b968, 0xe0bc4c] as const;
@@ -289,14 +291,16 @@ export const headingArrowHeadRadiusInVoxels = .75;
 export const hitboxOpacity = .9;
 export const weaponUsesPerDealtWeapon = 1;
 export const stalemateRotationsWithoutShots = 2;
-export const planTimeLimitInSeconds = 600;
+export const defaultMovePlanTimeLimitInSeconds = 30;
+export const defaultFirePlanTimeLimitInSeconds = 90;
 
 export interface MatchSettings {
     teamCount: number;
     hitPointsPerTank: number;
     weaponsPerPlayer: number;
     movementTimePerTurnInSeconds: number;
-    planningTimeLimitInSeconds: number;
+    movePlanningTimeLimitInSeconds: number;
+    firePlanningTimeLimitInSeconds: number;
     mapEdgeLengthInVoxels: number;
     timeOfDay: number;
     islandTheme: number;
@@ -309,7 +313,7 @@ export interface MatchSettings {
 
 export const matchSettingKeys: ReadonlyArray<keyof MatchSettings> = [
     'teamCount', 'hitPointsPerTank', 'weaponsPerPlayer', 'movementTimePerTurnInSeconds',
-    'planningTimeLimitInSeconds', 'mapEdgeLengthInVoxels', 'timeOfDay', 'islandTheme', 'isSandbox', 'isFriendlyFireEnabled',
+    'movePlanningTimeLimitInSeconds', 'firePlanningTimeLimitInSeconds', 'mapEdgeLengthInVoxels', 'timeOfDay', 'islandTheme', 'isSandbox', 'isFriendlyFireEnabled',
     'isInfiniteRounds', 'roundCount', 'scoreMode'
 ];
 
@@ -318,7 +322,8 @@ export const defaultMatchSettings: Readonly<MatchSettings> = Object.freeze({
     hitPointsPerTank: tankDefaultHitPoints,
     weaponsPerPlayer: 20,
     movementTimePerTurnInSeconds: tankMovementTimeBudgetPerTurnInSeconds,
-    planningTimeLimitInSeconds: planTimeLimitInSeconds,
+    movePlanningTimeLimitInSeconds: defaultMovePlanTimeLimitInSeconds,
+    firePlanningTimeLimitInSeconds: defaultFirePlanTimeLimitInSeconds,
     mapEdgeLengthInVoxels: 512,
     timeOfDay: 0,
     islandTheme: randomIslandTheme,
@@ -334,7 +339,8 @@ export const matchSettingIntegerRanges = {
     hitPointsPerTank: [50, 1000, 50],
     weaponsPerPlayer: [1, 40, 1],
     movementTimePerTurnInSeconds: [2, 15, 1],
-    planningTimeLimitInSeconds: [15, 600, 1],
+    movePlanningTimeLimitInSeconds: [5, 600, 1],
+    firePlanningTimeLimitInSeconds: [15, 600, 1],
     timeOfDay: [0, 2, 1],
     islandTheme: [0, islandThemeIdentifiers.length, 1],
     roundCount: [1, 100, 1],
@@ -357,7 +363,7 @@ export function isMatchSettingValid(key: string, value: unknown): key is keyof M
 // -----------------------------------------------------------------------------
 // Lobby limits
 // -----------------------------------------------------------------------------
-export const lobbyMaximumPlayerCount = 8;
+export const lobbyMaximumPlayerCount = 16;
 export const lobbyMinimumPlayerCount = 2;
 export const lobbyMaximumRoomCount = 10;
 export const usernameMaximumLength = 16;
@@ -528,7 +534,7 @@ export const skyCloudThreshold = .5;
 export const skyCloudSoftness = .15;
 export const skySunAngularRadiusInDegrees = .9;
 export const sunlightDirection = Object.freeze({ x: -.5, y: .85, z: .3 });
-export const sunlightIntensity = 1.05;
+export const sunlightIntensity = 0.75;
 export const skyAmbientIntensity = .65;
 export const sunlightShadowBias = -.0003;
 export interface SkyPreset {
@@ -616,6 +622,9 @@ export const beamMinimumThicknessInVoxels = .12;
 export const beamGlowIntensity = 4;
 export const beamPillarExtensionInVoxels = 16384;
 export const beamPillarHoldFraction = .67;
+export const shotTrailLifetimeInSeconds = 5;
+export const shotTrailMaximumSegmentCount = 32768;
+export const shotTrailGlowIntensity = 4;
 export const lightningSegmentCount = 8;
 export const lightningJitterFraction = .04;
 export const lightningBranchLengthFraction = .22;

@@ -14,6 +14,7 @@ export interface ProjectileLaunch {
     velocity: Vector3;
     randomSeed: number;
     actionDepth: number;
+    isPrimary?: boolean;
     yawOffsetInRadians?: number;
     pitchOffsetInRadians?: number;
 }
@@ -28,6 +29,8 @@ export class Projectile {
     public readonly velocity: Vector3;
     public readonly random: Rng;
     public readonly actionDepth: number;
+    /** True for projectiles launched directly by a player's shot rather than spawned by another projectile or deployable. */
+    public readonly isPrimary: boolean;
     public readonly yawOffsetInRadians: number;
     public readonly pitchOffsetInRadians: number;
     public readonly tankHitBounce = new Map<number, number>();
@@ -58,6 +61,7 @@ export class Projectile {
         this.velocity = createVector3(launch.velocity.x, launch.velocity.y, launch.velocity.z);
         this.random = new Rng(launch.randomSeed);
         this.actionDepth = launch.actionDepth;
+        this.isPrimary = launch.isPrimary ?? false;
         this.yawOffsetInRadians = launch.yawOffsetInRadians ?? 0;
         this.pitchOffsetInRadians = launch.pitchOffsetInRadians ?? 0;
         this.setMode({ lifetimeSeconds: resolveMaximumDurationInSeconds, ...launch.definition });

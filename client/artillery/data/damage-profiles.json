@@ -247,8 +247,8 @@
     "knockbackUpwardBias": 0.35
   },
   "missile_turret": {
-    "directHitDamage": 9,
-    "splashDamage": 9,
+    "directHitDamage": 4,
+    "splashDamage": 4,
     "splashRadiusInVoxels": 5,
     "falloff": "constant",
     "knockbackImpulse": 100,

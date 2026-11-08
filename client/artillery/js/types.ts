@@ -22,6 +22,9 @@ export enum ArtillerySync {
     RECONNECT_TOKEN = 'RECONNECT_TOKEN'
 }
 
+/** What players plan during a turn: tank movement, or aiming and firing. */
+export type TurnKind = 'MOVING' | 'FIRING' | 'COMBINED';
+
 export type MatchPhase = 'LOBBY' | 'LOADING' | 'PLANNING' | 'RESOLVING' | 'ENDED';
 
 export enum MovementInput {
@@ -78,7 +81,7 @@ export interface ResolveReport {
 
 export interface TurnLogEntry {
     turnIndex: number;
-    teamIndex: number;
+    kind: TurnKind;
     plans: Array<SeatPlan>;
 }
 
@@ -91,7 +94,7 @@ export interface MatchSnapshot {
     planLog: Array<TurnLogEntry>;
     phase: MatchPhase;
     turnIndex: number;
-    teamIndex: number;
+    kind: TurnKind;
     planMillisecondsRemaining: number;
 }
 

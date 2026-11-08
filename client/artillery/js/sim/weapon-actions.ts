@@ -20,6 +20,7 @@ export interface WeaponActionContext {
     projectile: Projectile | null;
     targetSeatIndex: number | null;
     actionDepth: number;
+    projectedImpact?: Vector3 | null;
 }
 
 export type ImmediateWeaponAction = Exclude<WeaponAction,
@@ -80,8 +81,16 @@ export class WeaponActionRunner {
                     }
                     break;
                 case 'spawnProjectiles': {
-                    const pattern = projectilePattern(action, current.yawInRadians, current.pitchInRadians,
-                        current.random);
+                    const impact = action.aimAtProjectedImpact ? current.projectedImpact : null;
+                    let yaw = current.yawInRadians, pitch = current.pitchInRadians;
+                    if (impact) {
+                        const offsetX = impact.x - current.position.x, offsetZ = impact.z - current.position.z;
+                        yaw = arcTangent2(offsetX, offsetZ);
+                        pitch = arcTangent2(impact.y - current.position.y,
+                            Math.sqrt(offsetX * offsetX + offsetZ * offsetZ));
+                    }
+                    const pattern = projectilePattern(impact ? { ...action, pitchDegrees: undefined } : action,
+                        yaw, pitch, current.random);
                     for (let launchIndex = 0; launchIndex < pattern.length; launchIndex++) {
                         const launch = pattern[launchIndex];
                         const spawned = { ...current, actionDepth: current.actionDepth + 1,

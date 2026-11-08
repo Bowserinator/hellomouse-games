@@ -13,11 +13,12 @@ export interface BiomeRule {
 const biomeNumericKeys = ['minimumHeight', 'maximumHeight', 'minimumSlope', 'maximumSlope',
     'minimumMoisture', 'maximumMoisture'] as const;
 
-export function parseMaterialName(value: unknown): Material {
+export function parseMaterialName(value: unknown, allowProtected = false): Material {
     if (typeof value !== 'string' || !Object.prototype.hasOwnProperty.call(Material, value) ||
         typeof Material[value as keyof typeof Material] !== 'number') throw new Error('Invalid material');
     const material = Material[value as keyof typeof Material];
-    if (material === Material.AIR || material === Material.SEABED) throw new Error('Invalid material');
+    if (material === Material.AIR || !allowProtected &&
+        (material === Material.SEABED || material === Material.LAVABED)) throw new Error('Invalid material');
     return material;
 }
 

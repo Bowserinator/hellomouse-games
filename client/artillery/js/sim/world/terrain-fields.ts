@@ -1,5 +1,5 @@
 import { centerElevationBoostInVoxels, islandRadiusFraction, worldChunkEdgeLengthInVoxels,
-    worldGenerationNoise, worldHeightInVoxels, worldNoiseOctaveCount,
+    worldGenerationNoise, terrainHeightScale, worldHeightInVoxels, worldNoiseOctaveCount,
     worldTerrainSettings } from '../../config.js';
 import { Rng } from '../../../../shared/ts/seeded-random.js';
 import { valueNoise } from '../../../../shared/ts/value-noise.js';
@@ -89,7 +89,7 @@ export class TerrainFields {
         const coastalWeight = Math.max(0, 1 - coastDistance / terrain.coastalDuneWidth);
         detail = detail * (1 - coastalWeight) + dunes * coastalWeight;
         const elevation = terrain.minimumHeight +
-            mask * (centerElevationBoostInVoxels * Math.max(0, 1 - radius) + detail);
+            mask * (centerElevationBoostInVoxels * Math.max(0, 1 - radius) + detail) * terrainHeightScale;
         return Math.max(terrain.minimumHeight, Math.min(worldHeightInVoxels - terrain.ceilingPadding,
             Math.floor(elevation)));
     }

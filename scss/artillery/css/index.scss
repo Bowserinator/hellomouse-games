@@ -207,6 +207,10 @@ legend {
     flex: 1;
 }
 
+.inline > .lock-button {
+    margin-left: auto;
+}
+
 .eyebrow {
     color: var(--artillery-muted);
     font-size: $eyebrow-font-size;
@@ -381,12 +385,48 @@ legend {
 }
 
 .battle-roster__health {
+    display: flex;
+    justify-content: space-between;
     color: var(--artillery-muted);
     margin-top: $battle-roster-crew-small-margin-top;
 }
 
+.battle-roster__planning {
+    font-style: italic;
+
+    span {
+        animation: planning-dot $planning-dots-duration steps(1, end) infinite;
+
+        &:nth-child(2) {
+            animation-name: planning-dot-second;
+        }
+
+        &:nth-child(3) {
+            animation-name: planning-dot-third;
+        }
+    }
+}
+
+@keyframes planning-dot {
+    0%, 100% { opacity: 1; }
+}
+
+@keyframes planning-dot-second {
+    0% { opacity: 0; }
+    33.4% { opacity: 1; }
+}
+
+@keyframes planning-dot-third {
+    0% { opacity: 0; }
+    66.7% { opacity: 1; }
+}
+
 .battle-roster__name {
     min-width: 0;
+
+    &--planning {
+        font-style: italic;
+    }
 }
 
 .battle-roster__bar {
@@ -647,6 +687,12 @@ progress::-moz-progress-bar {
     font-size: $dial-font-size;
 }
 
+.aim-hint {
+    margin: $aim-hint-margin-top 0 0;
+    font-size: $aim-hint-font-size;
+    text-align: center;
+}
+
 .dial svg {
     width: 100%;
     height: $dial-svg-height;
@@ -672,6 +718,11 @@ progress::-moz-progress-bar {
 
 #pitch-dial .needle {
     transform-origin: $pitch-dial-needle-transform-origin;
+}
+
+.dial .needle-tip {
+    fill: var(--artillery-accent);
+    stroke: none;
 }
 
 .dial-label,
@@ -703,11 +754,6 @@ progress::-moz-progress-bar {
     opacity: 0;
     inset: $dial-input-inset;
     pointer-events: none;
-}
-
-.dial:focus-within svg {
-    outline: $dial-focus-within-svg-outline;
-    outline-offset: $dial-focus-within-svg-outline-offset;
 }
 
 .power {
@@ -766,6 +812,7 @@ progress::-moz-progress-bar {
     gap: $weapon-tray-gap;
     overflow-y: auto;
     padding: $weapon-tray-padding;
+    margin-top: 10px;
 }
 
 .weapon-tray button {
@@ -808,13 +855,6 @@ progress::-moz-progress-bar {
 #weapon-description {
     min-height: $weapon-description-min-height;
     font-size: $weapon-description-font-size;
-}
-
-#lock-status {
-    flex: 1;
-    color: var(--artillery-muted);
-    font-size: $lock-status-font-size;
-    overflow-wrap: anywhere;
 }
 
 #name-tags {
@@ -1009,6 +1049,8 @@ td {
 }
 
 #match-settings {
+    max-height: 80vh;
+
     input[type="number"] {
         width: 100%;
     }
@@ -1016,6 +1058,10 @@ td {
     #rule-isInfiniteRounds {
         height: 34.3px;
         min-height: 0;
+    }
+
+    label {
+        margin: 4px 0;
     }
 }
 

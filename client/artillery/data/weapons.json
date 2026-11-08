@@ -1010,7 +1010,8 @@
             "count": 21,
             "pattern": "cone",
             "coneDegrees": 10,
-            "speedInVoxelsPerSecond": 30,
+            "pitchDegrees": 30,
+            "speedInVoxelsPerSecond": 12,
             "randomSpread": true
           },
           {
@@ -1023,23 +1024,15 @@
             "projectileIdentifier": "pellet",
             "count": 21,
             "pattern": "cone",
-            "coneDegrees": 10,
-            "speedInVoxelsPerSecond": 30,
-            "randomSpread": true
-          },
-          {
-            "action": "destroySelf"
-          }
-        ],
-        "onApex": [
-          {
-            "action": "spawnProjectiles",
-            "projectileIdentifier": "pellet",
-            "count": 21,
-            "pattern": "cone",
-            "coneDegrees": 10,
-            "speedInVoxelsPerSecond": 30,
-            "randomSpread": true
+            "coneDegrees": 30,
+            "pitchDegrees": 90,
+            "speedInVoxelsPerSecond": 12,
+            "randomSpread": true,
+            "offset": [
+              0,
+              5,
+              0
+            ]
           },
           {
             "action": "destroySelf"
@@ -1579,7 +1572,8 @@
             "damageProfileIdentifier": "laser",
             "terrainProfileIdentifier": "laser",
             "effectProfileIdentifier": "laser",
-            "passesThroughTerrain": true
+            "passesThroughTerrain": true,
+            "damagesOwner": false
           }
         ]
       }
@@ -3004,7 +2998,7 @@
   {
     "identifier": "burst_railgun",
     "displayName": "Burst Railgun",
-    "description": "Fires railguns downwards at height of arc, or in all directions on impact.",
+    "description": "Crimson One approved!",
     "massClass": 1,
     "turretIdentifier": "burst_railgun",
     "aimPreviewMode": "ballistic",
@@ -3035,6 +3029,7 @@
             "projectileIdentifier": "slug",
             "count": 10,
             "pattern": "cone",
+            "aimAtProjectedImpact": true,
             "coneDegrees": 30,
             "pitchDegrees": -90,
             "randomSpread": true,

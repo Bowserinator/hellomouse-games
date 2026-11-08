@@ -1,7 +1,7 @@
 import { isMatchSettingValid, lobbyMaximumPlayerCount, lobbyMinimumPlayerCount, matchSettingKeys,
     MatchSettings, simulationTicksPerSecond, usernameMaximumLength } from './config.js';
 import { isPlayerPlan } from './plan-validation.js';
-import { MatchSnapshot, TurnLogEntry } from './types.js';
+import { MatchSnapshot, TurnKind, TurnLogEntry } from './types.js';
 
 export type MatchDescription = Pick<MatchSnapshot,
 'protocolVersion' | 'weaponDataHash' | 'matchSeed' | 'settings' | 'seats'>;
@@ -57,17 +57,24 @@ export function validateLobbyState(value: unknown): asserts value is LobbyState 
             : lobby.hostSeatIndex !== -1)) throw new Error('Invalid lobby authority');
 }
 
+/** Turns alternate between moving and firing, starting with moving. */
+export function expectedTurnKind(turnIndex: number): TurnKind {
+    return turnIndex % 2 === 0 ? 'MOVING' : 'FIRING';
+}
+
 export function validateTurnEntry(value: unknown, description: MatchDescription,
     expectedTurnIndex: number): asserts value is TurnLogEntry {
-    if (!record(value) || value.turnIndex !== expectedTurnIndex ||
-        !integer(value.teamIndex, 0, description.settings.teamCount - 1) || !Array.isArray(value.plans) ||
-        value.plans.length > description.seats.length) throw new Error('Invalid turn entry');
+    if (!record(value) || value.turnIndex !== expectedTurnIndex || value.kind !== expectedTurnKind(expectedTurnIndex) ||
+        !Array.isArray(value.plans) || value.plans.length > description.seats.length)
+        throw new Error('Invalid turn entry');
+    const maximumTicks = value.kind === 'FIRING' ? 0
+        : description.settings.movePlanningTimeLimitInSeconds * simulationTicksPerSecond;
     const indices = new Set<number>();
     for (const entry of value.plans) {
         if (!record(entry) || !integer(entry.seatIndex, 0, lobbyMaximumPlayerCount - 1) ||
-            indices.has(entry.seatIndex) || !description.seats.some(seat =>
-            seat.seatIndex === entry.seatIndex && seat.teamIndex === value.teamIndex) ||
-            !isPlayerPlan(entry.plan, description.settings.movementTimePerTurnInSeconds * simulationTicksPerSecond))
+            indices.has(entry.seatIndex) || !description.seats.some(seat => seat.seatIndex === entry.seatIndex) ||
+            !isPlayerPlan(entry.plan, description.settings.movementTimePerTurnInSeconds * simulationTicksPerSecond,
+                maximumTicks))
             throw new Error('Invalid turn plan');
         indices.add(entry.seatIndex);
     }
@@ -78,7 +85,7 @@ export function validateMatchSnapshot(value: unknown): asserts value is MatchSna
     const snapshot = value as MatchDescription & Partial<MatchSnapshot>;
     if (!['LOADING', 'PLANNING', 'RESOLVING'].includes(snapshot.phase ?? '') ||
         !integer(snapshot.turnIndex, 0, Number.MAX_SAFE_INTEGER) ||
-        !integer(snapshot.teamIndex, 0, snapshot.settings.teamCount - 1) ||
+        snapshot.kind !== expectedTurnKind(snapshot.turnIndex) ||
         typeof snapshot.planMillisecondsRemaining !== 'number' ||
         !Number.isFinite(snapshot.planMillisecondsRemaining) || snapshot.planMillisecondsRemaining < 0 ||
         !Array.isArray(snapshot.planLog) ||
@@ -86,7 +93,4 @@ export function validateMatchSnapshot(value: unknown): asserts value is MatchSna
         snapshot.phase === 'LOADING' && snapshot.turnIndex !== 0)
         throw new Error('Invalid match snapshot');
     snapshot.planLog.forEach((entry, turnIndex) => validateTurnEntry(entry, snapshot, turnIndex));
-    if (snapshot.phase === 'RESOLVING' &&
-        snapshot.planLog[snapshot.planLog.length - 1].teamIndex !== snapshot.teamIndex)
-        throw new Error('Snapshot active team does not match its resolving turn');
 }

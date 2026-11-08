@@ -116,7 +116,7 @@ export class WorldGenerator {
                 for (let localY = 0; localY <= localTop; localY++) {
                     const y = originY + localY;
                     let material: Material;
-                    if (y === 0 || (height > 0 && y === 1)) material = Material.SEABED;
+                    if (y === 0 || (height > 0 && y === 1)) material = materials.seabed ?? Material.SEABED;
                     else if (this.isCave(x, y, z, height)) continue;
                     else if (y === height) material = surface;
                     else if (y >= height - (materials.soilDepth ?? terrainSoilDepthInVoxels))

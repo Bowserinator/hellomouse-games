@@ -27,12 +27,7 @@ cd build/client
 python -m SimpleHTTPServer
 ```
 
-
 For more info see `INSTALL.md` in `docs/INSTALL.md`
-
-## Artillery
-
-Team artillery battles for 2–8 players on destructible voxel islands. See [the Artillery guide](docs/ARTILLERY.md) for controls, reconnect behaviour and development files.
 
 ## Adding a New Game
 

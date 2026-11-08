@@ -7,7 +7,7 @@ import { radiansPerDegree } from './sim/math/deterministic-math.js';
 import { decodePitch, decodeYaw, quantizePitch, quantizeYaw } from './sim/math/fixed-quantize.js';
 import { Tank } from './sim/tank.js';
 import { WeaponDefinition } from './sim/weapon-types.js';
-import { LobbySeat, MatchPhase, PlayerPlan, PlayerStatistics } from './types.js';
+import { LobbySeat, MatchPhase, PlayerPlan, PlayerStatistics, TurnKind } from './types.js';
 
 export { teamNames } from './config.js';
 export type UiAction = { type: 'send'; message: Record<string, unknown> } |
@@ -41,6 +41,7 @@ const powerPattern = new RegExp(`^\\d*\\.?\\d{0,${powerDecimalPlaces}}$`);
 const centipercentPerPercent = powerCentipercentMaximum / 100;
 const powerFineStepInCentipercent = centipercentPerPercent / 20;
 const teamToastDurationInMilliseconds = 2500;
+const snapStep = 22.5 * radiansPerDegree;
 
 function formatDecimal(value: number): string {
     return String(Number(value.toFixed(decimalPlaces)));
@@ -68,7 +69,8 @@ interface AimField {
 
 const settingLabels: Record<keyof MatchSettings, string> = {
     teamCount: 'Teams', hitPointsPerTank: 'Tank HP', weaponsPerPlayer: 'Weapons per player',
-    movementTimePerTurnInSeconds: 'Drive time', planningTimeLimitInSeconds: 'Planning time',
+    movementTimePerTurnInSeconds: 'Drive time (s)', movePlanningTimeLimitInSeconds: 'Move plan time (s)',
+    firePlanningTimeLimitInSeconds: 'Fire plan time (s)',
     mapEdgeLengthInVoxels: 'Map size', timeOfDay: 'Time of day', islandTheme: 'Island theme', isSandbox: 'Unlimited ammunition',
     isFriendlyFireEnabled: 'Enable friendly fire', isInfiniteRounds: 'Rounds', roundCount: '',
     scoreMode: 'Scoring'
@@ -251,8 +253,9 @@ export class ArtilleryUI {
                 if (!bounds) return;
                 const x = event.clientX - bounds.left - bounds.width * (identifier === 'yaw' ? .5 : .2);
                 const y = bounds.top + bounds.height * (identifier === 'yaw' ? .5 : .8) - event.clientY;
-                input.value = String(identifier === 'yaw' ? quantizeYaw(-Math.atan2(x, y))
-                    : quantizePitch(Math.atan2(y, x)));
+                const snap = (angle: number): number => event.shiftKey ? Math.round(angle / snapStep) * snapStep : angle;
+                input.value = String(identifier === 'yaw' ? quantizeYaw(snap(-Math.atan2(x, y)))
+                    : quantizePitch(snap(Math.atan2(y, x))));
                 input.dispatchEvent(new Event('input')); event.preventDefault();
             };
             dial.addEventListener('pointerdown', event => {
@@ -356,6 +359,8 @@ export class ArtilleryUI {
         ready.disabled = !own || host && !canStart;
         element('ready-help').textContent = `${seats.length} / ${lobbyMaximumPlayerCount} players · ` +
             (canStart ? 'All crews ready' : 'Every team needs a player and all crews must be ready');
+        const alone = seats.every(seat => seat.seatIndex === seatIndex || seat.isMissing);
+        element<HTMLButtonElement>('practice-button').disabled = !own || !host || !alone;
         element('turn-banner').textContent = 'Assembling teams';
     }
     private teamScore(teamIndex: number, tanks: ReadonlyArray<Tank>, settings: MatchSettings): string {
@@ -367,14 +372,15 @@ export class ArtilleryUI {
             tank.statistics.damageDealt - tank.statistics.friendlyFireDamage), 0)));
     }
     matchRoster(seats: ReadonlyArray<LobbySeat>, tanks: ReadonlyArray<Tank>,
-        lockedSeats: ReadonlyArray<number>, settings: MatchSettings): void {
+        lockedSeats: ReadonlyArray<number>, planningSeats: ReadonlyArray<number>, settings: MatchSettings): void {
         this.seats = seats;
         const teamIndices = [...new Set(seats.map(seat => seat.teamIndex))].sort((first, second) => first - second);
         const state = teamIndices.map(team => `${team}=${this.teamScore(team, tanks, settings)}`).join(',') + '|' +
             seats.map(seat => {
                 const tank = tanks.find(candidate => candidate.seatIndex === seat.seatIndex);
                 return [seat.seatIndex, seat.username, seat.teamIndex, seat.isMissing, tank?.isWreck,
-                    Math.ceil(tank?.hitPoints ?? 0), lockedSeats.includes(seat.seatIndex)].join(':');
+                    Math.ceil(tank?.hitPoints ?? 0), lockedSeats.includes(seat.seatIndex),
+                    planningSeats.includes(seat.seatIndex)].join(':');
             }).join('|');
         if (state === this.rosterState) return;
         this.rosterState = state;
@@ -401,6 +407,8 @@ export class ArtilleryUI {
             chip.setAttribute('aria-label', `View ${seat.username}, ${teamNames[seat.teamIndex]}`);
             const name = document.createElement('span');
             name.className = 'battle-roster__name';
+            const isPlanning = planningSeats.includes(seat.seatIndex);
+            name.classList.toggle('battle-roster__name--planning', isPlanning);
             name.textContent = seat.username + (lockedSeats.includes(seat.seatIndex) ? ' ✓' : '') +
                 (seat.isMissing ? ' — missing' : '');
             const health = document.createElement('span'), bar = document.createElement('span');
@@ -409,6 +417,7 @@ export class ArtilleryUI {
             const fraction = hitPoints / maximum;
             health.className = 'battle-roster__health';
             health.textContent = `${Math.ceil(hitPoints)} HP`;
+            if (isPlanning) health.append(this.planningIndicator());
             bar.className = 'battle-roster__bar';
             bar.classList.toggle('battle-roster__bar--low', fraction <= .25);
             bar.classList.toggle('battle-roster__bar--medium', fraction > .25 && fraction <= .5);
@@ -422,6 +431,17 @@ export class ArtilleryUI {
             return chip;
         }));
     }
+    private planningIndicator(): HTMLElement {
+        const indicator = document.createElement('span');
+        indicator.className = 'battle-roster__planning';
+        indicator.append('Planning');
+        for (let index = 0; index < 3; index++) {
+            const dot = document.createElement('span');
+            dot.textContent = '.';
+            indicator.append(dot);
+        }
+        return indicator;
+    }
     /** Shows the player's most recently fired aim next to their hit points, or nothing when there is none. */
     setPreviousSolution(plan: PlayerPlan | null): void {
         if (plan === null) {
@@ -433,25 +453,29 @@ export class ArtilleryUI {
         const power = formatDecimal(plan.powerCentipercent / centipercentPerPercent);
         this.previousSolution = `Prev: ${bearing}°, ${elevation}°, ${power}% · `;
     }
-    planning(teamIndex: number, active: boolean, locked: boolean, tank: Tank | undefined,
-        weapons: ReadonlyArray<WeaponDefinition>, selected: string | null, lockedSeats: ReadonlyArray<number>,
+    planning(kind: TurnKind, active: boolean, locked: boolean, tank: Tank | undefined,
+        weapons: ReadonlyArray<WeaponDefinition>, selected: string | null,
         phase: MatchPhase = 'PLANNING',
         describe: (weapon: WeaponDefinition) => string = weapon => weapon.description): void {
         element('planning').hidden = !active || !tank || tank.isWreck;
-        let status = active ? '— plan your shot' : '— planning';
-        if (phase === 'RESOLVING') status = '— shots away';
-        else if (phase !== 'PLANNING') status = '— waiting for crews';
-        element('turn-banner').textContent = `${teamNames[teamIndex]} ${status}`;
-        element('lock-status').textContent = this.seats.filter(seat => seat.teamIndex === teamIndex).map(seat =>
-            `${lockedSeats.includes(seat.seatIndex) ? '✓' : '○'} ${seat.username}`).join('  ');
-        element('lock-button').textContent = locked ? 'Cancel' : 'FIRE';
-        element<HTMLButtonElement>('auto-aim-button').disabled = locked || !active;
+        const moving = kind === 'MOVING', firing = kind === 'FIRING';
+        const aimable = active && !locked && !moving;
+        const name = moving ? 'Movement' : firing ? 'Firing' : 'Practice';
+        let banner = active ? moving ? 'Plan movement: drive your tank'
+            : firing ? 'Plan firing: set angle and power' : 'Practice — plan your shot' : `${name} — planning`;
+        if (phase === 'RESOLVING') banner = `${name} — ${moving ? 'tanks moving' : 'shots away'}`;
+        else if (phase !== 'PLANNING') banner = `${name} — waiting for crews`;
+        element('turn-banner').textContent = banner;
+        element('planning-heading').textContent = moving ? 'Plan Movement' : firing ? 'Plan Firing' : 'Your plan';
+        element('lock-button').textContent = locked ? 'Cancel' : moving ? 'DONE DRIVING' : 'FIRE';
+        element('movement-budget').closest('label')!.hidden = firing;
+        element<HTMLButtonElement>('auto-aim-button').disabled = !aimable;
         if (!tank) return;
         this.yaw.value = String(tank.turretYawQuantized); this.pitch.value = String(tank.turretPitchQuantized);
         this.power.value = String(tank.powerCentipercent); this.updateDials();
         element('own-hit-points').textContent = `${this.previousSolution}${Math.ceil(tank.hitPoints)} HP`;
         for (const control of [this.yaw, this.pitch, this.power, ...this.aimFields.map(field => field.text),
-            ...document.querySelectorAll<HTMLButtonElement>('[data-nudge]')]) control.disabled = locked || !active;
+            ...document.querySelectorAll<HTMLButtonElement>('[data-nudge]')]) control.disabled = !aimable;
         const tray = element('weapon-tray');
         const buttons = weapons.filter(weapon => tank.ammunition.has(weapon.identifier)).map(weapon => {
             let button = this.weaponButtons.get(weapon.identifier);
@@ -474,7 +498,7 @@ export class ArtilleryUI {
             ammo.textContent = count === Infinity ? '∞' : `×${count}`;
             button.setAttribute('aria-pressed', String(selected === weapon.identifier));
             button.setAttribute('aria-label', `${weapon.displayName}, ${ammo.textContent}`);
-            button.disabled = locked || !active || count === 0;
+            button.disabled = !aimable || count === 0;
             return button;
         });
         if (tray.children.length !== buttons.length ||
@@ -483,14 +507,16 @@ export class ArtilleryUI {
             tray.replaceChildren(...buttons); tray.scrollTop = scroll;
         }
     }
-    teamFired(teamIndex: number): void {
+    announce(text: string): void {
         const toast = element('team-toast');
-        toast.textContent = `${teamNames[teamIndex].toUpperCase()} TEAM HAS FIRED`;
-        toast.style.setProperty('--team', `#${teamPrimaryColours[teamIndex].toString(16).padStart(6, '0')}`);
+        toast.textContent = text;
+        toast.style.setProperty('--team', '#ffffff');
         toast.hidden = false;
+        element('turn-banner').style.visibility = 'hidden';
         clearTimeout(this.toastTimer);
         this.toastTimer = setTimeout(() => {
             toast.hidden = true;
+            element('turn-banner').style.visibility = '';
         }, teamToastDurationInMilliseconds);
     }
     setPractice(enabled: boolean, timeOfDay?: number, islandTheme?: number): void {

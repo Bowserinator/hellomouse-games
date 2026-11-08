@@ -68,6 +68,7 @@ interface SpawnAction extends OffsetAction {
     speedInVoxelsPerSecond?: number;
     intervalSeconds?: number;
     randomSpread?: boolean;
+    aimAtProjectedImpact?: boolean;
 }
 
 interface TimedActions extends OffsetAction {
@@ -113,6 +114,7 @@ interface RayAction extends OffsetAction {
     terrainProfileIdentifier?: string;
     passesThroughTerrain: boolean;
     stopsAtFirstTank?: boolean;
+    damagesOwner?: boolean;
     target?: 'aim' | 'nearestTank' | 'allLivingTanks' | 'down';
     targetRangeInVoxels?: number;
     randomConeDegrees?: number;
