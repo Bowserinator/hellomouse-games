@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Adversarial cookie-clicker-like game, for 2-4 players.">
+    <meta name="author" content="Bowserinator">
+    <meta name="theme-color" content="#3f51b5">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Hellomouse Games">
+    <meta property="og:title" content="Unlimited Growth - Hellomouse Games">
+    <meta property="og:description" content="Adversarial cookie-clicker-like game, for 2-4 players.">
+    <meta property="og:image" content="https://games.hellomouse.net/phone_wars/img/thumbnail.png">
+    <meta property="og:image:width" content="560">
+    <meta property="og:image:height" content="300">
+    <meta property="og:image:alt" content="Unlimited Growth incremental game">
+    <meta property="og:url" content="https://games.hellomouse.net/phone_wars/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Unlimited Growth - Hellomouse Games">
+    <meta name="twitter:description" content="Adversarial cookie-clicker-like game, for 2-4 players.">
+    <meta name="twitter:image" content="https://games.hellomouse.net/phone_wars/img/thumbnail.png">
+    <title>Unlimited Growth</title>
+    <link rel="icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="css/index.css">
+    <script src="/shared/js/index.js" defer></script>
+    <script src="js/game.js" type="module"></script>
+</head>
+<body>
+    <p id="disconnect-banner" role="alert" hidden></p>
+    <main id="lobby">
+        <header class="lobby-title">
+            <h1>Unlimited Growth</h1>
+            <a href="/" target="_blank" rel="noopener">More games ↗</a>
+        </header>
+        <section class="lobby-card">
+            <h2>Lobby</h2>
+            <ol id="players"></ol>
+            <form id="username-form">
+                <label for="username">Your name</label>
+                <div class="input-row">
+                    <input id="username" maxlength="16" pattern="[A-Za-z0-9_]+" required autocomplete="nickname">
+                    <button type="submit">Set name</button>
+                </div>
+            </form>
+            <label for="invite">Invite your friends</label>
+            <div class="input-row" id="invite-row">
+                <input id="invite" readonly>
+                <button id="copy-invite" type="button">Copy invite</button>
+            </div>
+            <span id="company-label" class="field-label">Company</span>
+            <div id="company-picker" class="chip-group" role="radiogroup" aria-labelledby="company-label"></div>
+            <div class="button-row">
+                <button id="ready" type="button">Ready</button>
+                <button id="start-game" class="primary" type="button">Start game</button>
+            </div>
+            <p id="start-help" role="status"></p>
+            <button id="new-room" type="button" hidden>Room unavailable — start a new room</button>
+        </section>
+        <section class="lobby-card">
+            <h2>Match settings</h2>
+            <span id="target-label" class="field-label">Phone target</span>
+            <div id="target-option" class="toggle-group" role="radiogroup" aria-labelledby="target-label"></div>
+            <p id="estimate"></p>
+            <span id="mode-label" class="field-label">Match mode</span>
+            <div id="mode-option" class="toggle-group" role="radiogroup" aria-labelledby="mode-label">
+                <button type="button" role="radio" aria-checked="true" data-value="standard">Standard</button>
+                <button type="button" role="radio" aria-checked="false" data-value="peaceful">Peaceful</button>
+            </div>
+            <span id="hints-label" class="field-label">Tutorial hints</span>
+            <div id="hints-option" class="toggle-group" role="radiogroup" aria-labelledby="hints-label">
+                <button type="button" role="radio" aria-checked="false" data-value="on">On</button>
+                <button type="button" role="radio" aria-checked="true" data-value="off">Off</button>
+            </div>
+            <span id="money-label" class="field-label">Money multiplier</span>
+            <div id="money-option" class="toggle-group" role="radiogroup" aria-labelledby="money-label"></div>
+        </section>
+    </main>
+
+    <main id="game" hidden>
+        <div class="game-shell">
+            <section id="screen-production" class="game-screen is-selected" data-screen="production" aria-label="Production">
+                <header class="appbar">
+                    <img id="company-icon" class="company-icon" alt="">
+                    <h2 id="company-name"></h2>
+                    <span id="match-timer" class="appbar-end"></span>
+                </header>
+                <div class="screen-content">
+                    <p id="hint" class="hint" hidden></p>
+                    <div class="hero">
+                        <p class="hero-count"><b id="phones-count">0</b> / <span id="phones-target"></span> phones</p>
+                        <div id="progress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                            <span id="progress-fill"></span>
+                        </div>
+                        <p id="rank-badge" class="badge"></p>
+                    </div>
+                    <div class="assemble">
+                        <span class="material-icons phone-icon" aria-hidden="true">smartphone</span>
+                        <button id="assemble" class="button primary big" type="button">Assemble phone</button>
+                        <div id="floaters" aria-hidden="true"></div>
+                    </div>
+                    <div class="stat-grid">
+                        <div class="stat"><b id="stat-pps"></b><small id="stat-normal"></small></div>
+                        <div class="stat"><b id="stat-cash"></b><small id="stat-price"></small></div>
+                        <div class="stat"><b id="stat-research"></b><small>RP</small></div>
+                        <div class="stat">
+                            <b id="stat-influence"></b><small>Influence</small>
+                            <div class="progress thin"><span id="influence-fill"></span></div>
+                        </div>
+                    </div>
+                    <div id="status-chips" class="chip-row"></div>
+                    <ol id="leaderboard" aria-label="Leaderboard"></ol>
+                    <ol id="event-feed" aria-label="Recent events"></ol>
+                </div>
+            </section>
+
+            <section id="screen-economy" class="game-screen" data-screen="economy" aria-label="Economy">
+                <header class="appbar"><span class="material-icons" aria-hidden="true">trending_up</span><h2>Economy</h2><span id="economy-balance" class="appbar-end"></span></header>
+                <div class="screen-content">
+                    <p id="economy-tier" class="tier-label"></p>
+                    <div id="economy-cards" class="upgrade-grid"></div>
+                    <p id="economy-next" class="lock-note"></p>
+                    <ul id="machine-list"></ul>
+                    <details id="economy-earlier"><summary>Earlier tiers</summary><div class="earlier-list"></div></details>
+                </div>
+            </section>
+
+            <section id="screen-defense" class="game-screen" data-screen="defense" aria-label="Defense">
+                <header class="appbar"><span class="material-icons" aria-hidden="true">security</span><h2>Defense</h2><span id="defense-balance" class="appbar-end"></span></header>
+                <div class="screen-content">
+                    <p id="defense-tier" class="tier-label"></p>
+                    <div id="defense-cards" class="upgrade-grid"></div>
+                    <p id="defense-next" class="lock-note"></p>
+                    <div id="defense-status" class="chip-row"></div>
+                    <ul id="defense-abilities" class="ability-list"></ul>
+                    <details id="defense-earlier"><summary>Earlier tiers</summary><div class="earlier-list"></div></details>
+                </div>
+            </section>
+
+            <section id="screen-offense" class="game-screen" data-screen="offense" aria-label="Offense">
+                <header class="appbar"><span class="material-icons" aria-hidden="true">flash_on</span><h2>Offense</h2><span id="offense-balance" class="appbar-end"></span></header>
+                <div class="screen-content">
+                    <p id="target-prompt" class="field-title">Pick user to target</p>
+                    <div id="target-chips" class="chip-row" role="radiogroup" aria-labelledby="target-prompt"></div>
+                    <p id="target-stats-label" class="field-title"></p>
+                    <div id="target-panel"></div>
+                    <p id="offense-tier" class="tier-label"></p>
+                    <div id="offense-cards" class="upgrade-grid"></div>
+                    <p id="offense-next" class="lock-note"></p>
+                    <ul id="offense-abilities" class="ability-list"></ul>
+                    <details id="offense-earlier"><summary>Earlier tiers</summary><div class="earlier-list"></div></details>
+                </div>
+            </section>
+        </div>
+        <nav id="screen-tabs" aria-label="Screens">
+            <button type="button" data-tab="production" class="is-selected"><span class="material-icons" aria-hidden="true">smartphone</span>Production</button>
+            <button type="button" data-tab="economy"><span class="material-icons" aria-hidden="true">trending_up</span>Economy</button>
+            <button type="button" data-tab="defense"><span class="material-icons" aria-hidden="true">security</span>Defense</button>
+            <button type="button" data-tab="offense"><span class="material-icons" aria-hidden="true">flash_on</span>Offense</button>
+        </nav>
+    </main>
+
+    <div id="toast" role="status" hidden>
+        <span id="toast-text"></span>
+        <button id="toast-action" type="button" hidden>Defense</button>
+    </div>
+    <p id="notice" role="alert" hidden></p>
+    <button id="back-to-lobby" type="button" hidden>Back to lobby</button>
+    <dialog id="details" aria-labelledby="details-title">
+        <div class="details-head"><span id="details-icon" class="material-icons" aria-hidden="true"></span><h2 id="details-title"></h2></div>
+        <p id="details-text"></p>
+        <p id="details-cost"></p>
+        <p id="details-status"></p>
+        <div class="button-row">
+            <button id="details-close" type="button">Close</button>
+            <button id="details-buy" class="primary" type="button">Buy</button>
+        </div>
+    </dialog>
+    <dialog id="win-modal" aria-labelledby="win-title">
+        <h2 id="win-title"></h2>
+        <ol id="results"></ol>
+        <div class="button-row">
+            <button id="win-close" type="button">View screens</button>
+            <button id="win-rematch" class="primary" type="button">Back to lobby</button>
+        </div>
+    </dialog>
+</body>
+</html>
