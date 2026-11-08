@@ -3201,5 +3201,53 @@
       }
     },
     "fireSoundIdentifier": "radioBeep"
+  },
+  {
+    "identifier": "black_hole",
+    "displayName": "Black Hole",
+    "description": "Gravitationally affects nearby bullets.",
+    "massClass": 1,
+    "turretIdentifier": "big_shot",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "black_hole",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "big_shot",
+            "damageProfileIdentifier": "big_shot",
+            "effectProfileIdentifier": "big_shot"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "big_shot",
+            "damageProfileIdentifier": "big_shot",
+            "effectProfileIdentifier": "big_shot"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "gravityWell": {
+          "radiusInVoxels": 40,
+          "accelerationInVoxelsPerSecondSquared": 400
+        }
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
   }
 ]

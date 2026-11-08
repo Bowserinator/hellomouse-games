@@ -190,6 +190,12 @@ export interface BounceDefinition {
     bouncesOffTanks?: boolean;
 }
 
+export interface GravityWellDefinition {
+    radiusInVoxels: number;
+    /** Pull on other projectiles at the centre, fading to nothing at the edge of the radius. */
+    accelerationInVoxelsPerSecondSquared: number;
+}
+
 export interface ProjectileDefinition extends ProjectileMode {
     modelIdentifier: string;
     trailEffectIdentifier?: string;
@@ -198,6 +204,7 @@ export interface ProjectileDefinition extends ProjectileMode {
     tankContact?: 'explode' | 'pass';
     bounce?: BounceDefinition;
     guidance?: GuidanceDefinition;
+    gravityWell?: GravityWellDefinition;
     hitOncePerBounce?: boolean;
     onLaunch?: ReadonlyArray<WeaponAction>;
     onFlightTick?: { everyTicks: number; actions: ReadonlyArray<WeaponAction> };

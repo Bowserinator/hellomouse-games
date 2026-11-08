@@ -234,6 +234,7 @@ const projectile = object({ modelIdentifier: identifier }, { ...modeFields, trai
     guidance: object({ target: choice('nearest', 'above'), acquisitionRangeInVoxels: positive,
         speedInVoxelsPerSecond: positive }, { turnRateInDegreesPerSecond: number(0, 3600), delaySeconds: seconds,
         requireLineOfSight: boolean, onlyWhileInTerrain: boolean }),
+    gravityWell: object({ radiusInVoxels: positive, accelerationInVoxelsPerSecondSquared: positive }),
     hitOncePerBounce: boolean, onLaunch: actions, onFlightTick: object({ everyTicks: number(1, 1800, true), actions }),
     onApex: actions, onTerrainImpact: actions, onTankImpact: actions, onBounce: actions,
     onTimer: object({ afterSeconds: seconds, actions }), onExpire: actions

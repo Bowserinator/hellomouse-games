@@ -1,5 +1,5 @@
-import { airstrikeLineHoverInVoxels, airstrikeLineSegmentLengthInVoxels, projectileFiringSpeedMultiplier,
-    tankSettledHeightToleranceInVoxels, worldHeightInVoxels, worldIndestructibleMaximumLayerIndex,
+import { airstrikeLineHoverInVoxels, airstrikeLineSegmentLengthInVoxels, gravityWellMinimumDistanceInVoxels,
+    projectileFiringSpeedMultiplier, simulationTicksPerSecond, tankSettledHeightToleranceInVoxels, worldHeightInVoxels, worldIndestructibleMaximumLayerIndex,
     worldWaterSurfaceHeightInVoxels } from '../config.js';
 import { SimulationEvent } from '../types.js';
 import { maximumTerrainReach } from '../data/terrain-reach.js';
@@ -388,9 +388,31 @@ export class WeaponRuntime {
         `${projectile.weaponIdentifier}.${projectile.definitionIdentifier}.${hook}`);
     }
 
+    /** Pulls every nearby projectile toward each projectile that carries a gravity well. */
+    private applyGravityWells(): void {
+        const tickDuration = 1 / simulationTicksPerSecond;
+        for (const well of this.projectiles) {
+            const field = well.definition.gravityWell;
+            if (!field || !well.isAlive) continue;
+            for (const other of this.projectiles) {
+                if (other === well || !other.isAlive || other.isStuck || other.isRolling) continue;
+                const offsetX = well.position.x - other.position.x, offsetY = well.position.y - other.position.y;
+                const offsetZ = well.position.z - other.position.z;
+                const distance = Math.sqrt(offsetX * offsetX + offsetY * offsetY + offsetZ * offsetZ);
+                if (distance >= field.radiusInVoxels || distance === 0) continue;
+                const pull = field.accelerationInVoxelsPerSecondSquared * (1 - distance / field.radiusInVoxels) *
+                    tickDuration / Math.max(distance, gravityWellMinimumDistanceInVoxels);
+                other.velocity.x += offsetX * pull;
+                other.velocity.y += offsetY * pull;
+                other.velocity.z += offsetZ * pull;
+            }
+        }
+    }
+
     public step(movementInputs: ReadonlyMap<number, number> = new Map(), movementBudgetInTicks = 0): void {
         this.actions.advanceTo(this.tickInTicks);
         const targets = this.collisionTargets();
+        this.applyGravityWells();
         for (const projectile of [...this.projectiles]) stepProjectile(this.world, projectile, targets,
             (current, hook, context) => this.hook(current, hook, context.targetSeatIndex ?? null),
             this.maximumTerrainReachInVoxels);

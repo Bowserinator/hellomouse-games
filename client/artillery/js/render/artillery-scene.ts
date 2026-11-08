@@ -459,7 +459,7 @@ export class ArtilleryScene {
         this.terrain.update(this.camera.camera.position, renderingQualityPresets[this.quality].drawDistance,
             this.explosionPosition);
         this.explosionPosition = null;
-        this.projectiles.update(runtime.projectiles, runtime.deployables, interpolation);
+        this.projectiles.update(runtime.projectiles, runtime.deployables, interpolation, this.elapsedSeconds);
         this.liquids.update(runtime.liquids.cells); this.particles.update(delta, this.options.match.battlefield.world);
         this.beams.update(delta); this.trails.update(delta);
         this.damageNumbers.update(delta, this.camera.camera.position);

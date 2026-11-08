@@ -1,8 +1,11 @@
 import type * as T from 'three';
-import { lobbyMaximumPlayerCount, weaponMaximumSpawnsPerFire } from '../config.js';
+import { accretionDiskGlowIntensity, accretionDiskParticleSizeInVoxels, accretionDiskRingParticleCounts,
+    accretionDiskRingRadiiInVoxels, accretionDiskSpinRadiansPerSecond, accretionDiskTiltInRadians,
+    lobbyMaximumPlayerCount, weaponMaximumSpawnsPerFire } from '../config.js';
 import { Deployable } from '../sim/deployable.js';
 import { Vector3 } from '../sim/math/vector3.js';
 import { Projectile } from '../sim/projectile.js';
+import { additiveEffectBlending, transparentEffectsLayer } from './effects-layer.js';
 import { VoxelMaterials } from './voxel-material.js';
 import { VoxelModelBuilder } from './voxel-model-builder.js';
 
@@ -13,6 +16,8 @@ interface ModelBatch {
     material: T.MeshLambertMaterial;
 }
 
+const diskParticlesPerWell = accretionDiskRingParticleCounts.reduce((total, count) => total + count, 0);
+
 export class ProjectileRenderer {
     readonly group = new THREE.Group();
     private readonly batches = new Map<string, ModelBatch>();
@@ -21,10 +26,25 @@ export class ProjectileRenderer {
     private readonly transform = new THREE.Object3D();
     private readonly pivot = new THREE.Matrix4();
     private readonly position = new THREE.Vector3();
+    private readonly disk: T.InstancedMesh;
+    private readonly diskColour = new THREE.Color();
+    private diskCount = 0;
     private disposed = false;
 
     constructor(private readonly models: VoxelModelBuilder, private readonly materials: VoxelMaterials,
-        private readonly seatColours: ReadonlyMap<number, readonly [number, number]>) {}
+        private readonly seatColours: ReadonlyMap<number, readonly [number, number]>) {
+        const capacity = lobbyMaximumPlayerCount * diskParticlesPerWell;
+        const material = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, toneMapped: false,
+            ...additiveEffectBlending() });
+        this.disk = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), material, capacity);
+        this.disk.layers.set(transparentEffectsLayer);
+        this.disk.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        this.disk.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 3), 3);
+        this.disk.instanceColor.setUsage(THREE.DynamicDrawUsage);
+        this.disk.frustumCulled = false;
+        this.disk.count = 0;
+        this.group.add(this.disk);
+    }
 
     capture(projectiles: ReadonlyArray<Projectile>): void {
         if (this.disposed) return;
@@ -49,11 +69,12 @@ export class ProjectileRenderer {
     }
 
     update(projectiles: ReadonlyArray<Projectile>, deployables: ReadonlyArray<Deployable>,
-        interpolation: number): void {
+        interpolation: number, elapsedSeconds = 0): void {
         if (this.disposed) return;
         if (!Number.isFinite(interpolation) || interpolation < 0 || interpolation > 1)
             throw new Error('Invalid projectile interpolation');
         for (const batch of this.batches.values()) batch.mesh.count = 0;
+        this.diskCount = 0;
         for (const projectile of projectiles) {
             if (!projectile.isAlive) continue;
             const previous = this.previous.get(projectile.serial)?.position;
@@ -62,11 +83,19 @@ export class ProjectileRenderer {
             const yaw = Math.atan2(projectile.velocity.x, projectile.velocity.z);
             const pitch = Math.atan2(projectile.velocity.y, Math.hypot(projectile.velocity.x, projectile.velocity.z));
             this.place(projectile.definition.modelIdentifier, this.position, yaw, pitch, projectile.ownerSeatIndex);
+            if (projectile.definition.gravityWell) this.placeDisk(this.position, elapsedSeconds);
         }
         for (const deployable of deployables)
             if (deployable.isAlive && deployable.definition.modelIdentifier)
                 this.place(deployable.definition.modelIdentifier, deployable.visualPosition(interpolation),
                     deployable.context.yawInRadians, 0, deployable.context.ownerSeatIndex);
+        this.disk.count = this.diskCount; this.disk.visible = this.diskCount > 0;
+        if (this.diskCount > 0) {
+            this.disk.instanceMatrix.updateRange.count = this.diskCount * 16;
+            this.disk.instanceMatrix.needsUpdate = true;
+            this.disk.instanceColor!.updateRange.count = this.diskCount * 3;
+            this.disk.instanceColor!.needsUpdate = true;
+        }
         for (const batch of this.batches.values()) {
             batch.mesh.visible = batch.mesh.count > 0;
             if (!batch.mesh.visible) continue;
@@ -88,6 +117,35 @@ export class ProjectileRenderer {
         }
         this.batches.clear();
         this.previous.clear();
+        this.disk.dispose();
+        this.disk.geometry.dispose();
+        (this.disk.material as T.MeshBasicMaterial).dispose();
+    }
+
+    /** Places the spinning, tilted accretion disk of a black hole, inner rings turning fastest. */
+    private placeDisk(center: T.Vector3, elapsedSeconds: number): void {
+        const tilt = Math.cos(accretionDiskTiltInRadians), lift = Math.sin(accretionDiskTiltInRadians);
+        accretionDiskRingRadiiInVoxels.forEach((radius, ring) => {
+            const spin = accretionDiskSpinRadiansPerSecond / Math.pow(radius, 1.5);
+            const heat = 1 - ring / accretionDiskRingRadiiInVoxels.length;
+            for (let index = 0; index < accretionDiskRingParticleCounts[ring]; index++) {
+                if (this.diskCount >= this.disk.instanceMatrix.count) return;
+                const angle = index / accretionDiskRingParticleCounts[ring] * Math.PI * 2 + elapsedSeconds * spin;
+                const across = Math.cos(angle) * radius, along = Math.sin(angle) * radius;
+                this.transform.position.set(center.x + across, center.y + along * lift, center.z + along * tilt);
+                this.transform.rotation.set(0, 0, 0);
+                this.transform.scale.setScalar(accretionDiskParticleSizeInVoxels);
+                this.transform.updateMatrix();
+                this.disk.setMatrixAt(this.diskCount, this.transform.matrix);
+                // The side turning toward the viewer is brighter and hotter than the receding side.
+                const brightness = .65 + .35 * Math.sin(angle);
+                this.diskColour.setRGB(1, .35 + .6 * heat, .08 + .75 * heat * heat).convertSRGBToLinear()
+                    .multiplyScalar(accretionDiskGlowIntensity * brightness);
+                this.disk.setColorAt(this.diskCount, this.diskColour);
+                this.diskCount++;
+            }
+        });
+        this.transform.scale.setScalar(1);
     }
 
     private place(identifier: string, position: Vector3, yaw: number, pitch: number, seatIndex: number): void {

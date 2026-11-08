@@ -245,6 +245,7 @@ export const modelMaximumPrimitiveCount = 128;
 export const projectileGravityInVoxelsPerSecondSquared = 30;
 export const projectileMaximumMuzzleSpeedInVoxelsPerSecond = 80;
 export const projectileFiringSpeedMultiplier = 2;
+export const gravityWellMinimumDistanceInVoxels = 4;
 export const practiceSettings = {
     playerCount: 4, mapEdgeLengthInVoxels: 256, hitPointsPerTank: 1000, targetHitPoints: 100
 } as const;
@@ -575,7 +576,7 @@ export const timeOfDayPresets: ReadonlyArray<Readonly<SkyPreset>> = [
         starDensity: .003, lightLevel: .08 }
 ];
 export const modelPaintColours: Readonly<Record<string, number>> = Object.freeze({
-    blue: 0x507ed0, brown: 0x795037, cyan: 0x59d5dd, dark: 0x252c35, glass: 0x8ebdca,
+    black: 0x050508, blue: 0x507ed0, brown: 0x795037, cyan: 0x59d5dd, dark: 0x252c35, glass: 0x8ebdca,
     gold: 0xd9b54d, green: 0x6caa54, grey: 0x858d97, ice: 0xb9e7f0, lime: 0xa2db5c,
     metal: 0xadb7c2, oil: 0x302839, orange: 0xf09235, pink: 0xdc75a8, purple: 0x8f5fd0, red: 0xc95348,
     string: 0xc5b9a1, track: 0x343a43, white: 0xeeeeea, yellow: 0xf5d451
@@ -625,6 +626,12 @@ export const beamPillarHoldFraction = .67;
 export const shotTrailLifetimeInSeconds = 5;
 export const shotTrailMaximumSegmentCount = 32768;
 export const shotTrailGlowIntensity = 4;
+export const accretionDiskRingRadiiInVoxels = [1.7, 2.4, 3.1] as const;
+export const accretionDiskRingParticleCounts = [8, 12, 16] as const;
+export const accretionDiskParticleSizeInVoxels = .45;
+export const accretionDiskTiltInRadians = .45;
+export const accretionDiskSpinRadiansPerSecond = 9;
+export const accretionDiskGlowIntensity = 2.5;
 export const lightningSegmentCount = 8;
 export const lightningJitterFraction = .04;
 export const lightningBranchLengthFraction = .22;
