@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="Xiang Hex - Hellomouse Games">
+    <meta name="author" content="Bowserinator">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Social meta -->
+    <meta property="og:title" content="Xiang Hex - Hellomouse Games">
+    <meta property="og:description" content="Chinese chess on a hexagonal board, for two players.">
+    <meta property="og:image" content="/xiang_hex/img/thumbnail.jpg">
+
+    <title>Xiang Hex</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;600&family=Noto+Serif+TC:wght@900&family=ZCOOL+XiaoWei&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/shared/css/index.css">
+    <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body>
+    <div class="side-by-side">
+        <div>
+            <div class="title-row">
+                <h1 class="game-title"><span class="brush">六角象棋</span> / XIANG HEX</h1>
+            </div>
+            <div class="misc-links">
+                <a href="/">Other Games</a> |
+                <a href="#" id="new-game">New Game</a>
+            </div>
+            <canvas id="board"></canvas>
+        </div>
+        <!-- Hack to fill remaining space -->
+        <div style="min-width: 0; flex-grow: 1;">
+            <div class="js-tab-container right-container">
+                <div class="js-tabs">
+                    <div>Game</div>
+                    <div>Rules & Controls</div>
+                    <div>About</div>
+                </div>
+                <div>
+                    <div class="players">
+                        <div class="piece red" id="turn-piece"></div>
+                        <div class="player red" id="turn">
+                            IT IS REDS TURN
+                        </div>
+                    </div>
+
+                    <div class="players-split">
+                        <div class="players missing" id="player0">
+                            <div class="piece red"></div>
+                            <span class="player red">RED PLAYER</span>
+                        </div>
+                        <div class="players missing" id="player1">
+                            <div class="piece black"></div>
+                            <span class="player black">BLACK PLAYER</span>
+                        </div>
+                    </div>
+
+                    <!-- Cancel .players padding -->
+                    <div class="players" style="padding-left: 0">
+                        YOU ARE
+                        <span class="player red" id="youare">RED PLAYER</span>
+                    </div>
+
+                    <hr><br>
+
+                    <div id="disabled-reason">⚠️ Game has not started</div>
+
+                    <br>
+                    <button id="resign" disabled>Resign</button>
+
+                    <br><br><br>
+
+                    <h2>Invite Link</h2>
+
+                    <p>
+                        Use the invite link below to invite a friend or spectator! Players are
+                        assigned on a first-come first-serve basis.
+                    </p>
+
+                    <p class="game-link" id="game-link">
+                        <small>Click to copy</small><br>
+                        <span id="link">Loading...</span>
+                    </p>
+                    <br>
+                </div>
+                <!-- End game tab -->
+                <div>
+                    <h2>Rules</h2>
+                    <p>
+                        Xiang Hex is Chinese chess (Xiangqi) on a hexagonal board of nine files. Red
+                        moves first and wins by checkmating the Black General.<sup>[1]</sup>
+                    </p>
+                    <ul>
+                        <li><b>General (帥 將):</b> steps to a neighbouring cell inside its palace.
+                            The two Generals may never face each other along a file with nothing
+                            between them.
+                        </li>
+                        <li><b>Mandarin (仕 士):</b> steps diagonally, across a corner, inside its
+                            palace.
+                        </li>
+                        <li><b>Elephant (相 象):</b> moves two diagonal steps in the same direction
+                            and never crosses the river. It is blocked if the first diagonal cell is
+                            occupied.
+                        </li>
+                        <li><b>Horse (傌 馬):</b> steps to a neighbouring cell, then one diagonal step
+                            further outward. It is blocked if the first cell is occupied.
+                        </li>
+                        <li><b>Chariot (俥 車):</b> slides any distance towards a neighbouring cell
+                            and captures the first enemy it meets.
+                        </li>
+                        <li><b>Cannon (炮 砲):</b> slides like a Chariot, but captures only by leaping
+                            over exactly one piece of either side.
+                        </li>
+                        <li><b>Soldier (兵 卒):</b> steps one cell forward. Once it is on the river
+                            or beyond, it may also step to either forward neighbouring cell.
+                        </li>
+                    </ul>
+                    <p>
+                        The river is the five darker cells across the middle. The palaces are the
+                        seven cells marked at each end. You may not make a move that leaves your
+                        General open to capture.
+                    </p>
+                    <p>
+                        A player with no legal move loses, and so does a player whose move repeats
+                        an earlier position. If neither side has a piece that can cross the river,
+                        the game is drawn.
+                    </p>
+
+                    <a href="https://www.chessvariants.com/rules/xianghex">[1] Game invented by L. Lynn
+                        Smith, from the Chess Variant Pages</a>
+
+                    <br><br>
+                    <h2>Controls</h2>
+                    <ul>
+                        <li>Click one of your pieces, then click a marked cell to move it there. The
+                            move is sent right away. Rings mark pieces you can capture.
+                        </li>
+                        <li>Press Escape or click the piece again to cancel.</li>
+                        <li>The gold tint marks the cells of the last move.</li>
+                    </ul>
+                </div>
+                <!-- End rules tab -->
+                <div>
+                    <h2>About</h2>
+                    <p>
+                        This web game made by Bowserinator.
+                    </p>
+
+                    <p>
+                        Xiang Hex (六角象棋) is a variant of Xiangqi, Chinese chess, played on an
+                        elongated hexagonal field of 79 cells, designed by L. Lynn Smith.
+                    </p>
+                </div>
+                <!-- End about tab -->
+            </div>
+        </div>
+        <!-- End side by side right part -->
+    </div>
+
+    <div style="display: none" id="modals">
+        <div class="modal-darken"></div>
+        <div class="modal">
+            <h1 id="winner">X WINS!</h1>
+            <p id="winner-reason"></p>
+            <button id="play-again">Play Again</button>
+        </div>
+    </div>
+
+    <script src="/shared/js/index.js"></script>
+    <script type="module" src="./js/game.js"></script>
+</body>
+
+</html>
