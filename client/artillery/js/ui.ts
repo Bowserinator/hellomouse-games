@@ -468,6 +468,8 @@ export class ArtilleryUI {
         element('turn-banner').textContent = banner;
         element('planning-heading').textContent = moving ? 'Plan Movement' : firing ? 'Plan Firing' : 'Your plan';
         element('lock-button').textContent = locked ? 'Cancel' : moving ? 'DONE DRIVING' : 'FIRE';
+        element('lock-button').classList.toggle('primary', !locked);
+        element('lock-button').classList.toggle('is-cancel', locked);
         element('movement-budget').closest('label')!.hidden = firing;
         element<HTMLButtonElement>('auto-aim-button').disabled = !aimable;
         if (!tank) return;
@@ -549,9 +551,11 @@ export class ArtilleryUI {
         element('results-heading').textContent = winners.length ? `${winners.map(index => teamNames[index]).join(' + ')} wins`
             : 'Battle ended';
         reason = reason.toLowerCase();
-        element('result-reason').textContent = reason === 'stalemate' ? 'No ammunition remains. Remaining team HP decides the result.'
+        const reasonText = reason === 'stalemate' ? ''
             : reason === 'score' ? `The match ended and ${scoreModeNames[this.scoreMode].toLowerCase()} decided the result.`
             : reason === 'elimination' ? 'All opposing tanks were destroyed.' : 'The battle could not continue safely.';
+        element('result-reason').textContent = reasonText;
+        element('result-reason').hidden = !reasonText;
         const table = document.createElement('table');
         const heading = document.createElement('tr');
         for (const title of ['Crew', 'Damage', 'Taken', 'Friendly fire', 'Shots']) {

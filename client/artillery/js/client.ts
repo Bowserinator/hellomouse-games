@@ -55,6 +55,7 @@ export class ArtilleryClient {
     private previousPlan: PlayerPlan | null = null;
     private deadline = 0;
     private lastCountdownBeep = -1;
+    private autoSubmittedTurn = -1;
     private clockOffset = 0;
     private touchMask = 0;
     private accumulator = 0;
@@ -342,12 +343,15 @@ export class ArtilleryClient {
             this.readLocks(message.lockedSeatIndices); this.refreshPlanning();
         } else if (message.type === 'TURN_RESOLVE' && !this.loading && this.match && this.description) {
             validateTurnEntry(message, this.description, this.match.turnIndex);
+            const isIdleMove = message.kind === 'MOVING' && message.plans.every(entry =>
+                entry.plan.movementSegments.every(([duration]) => duration === 0));
             this.recordPreviousPlan(message.kind, message.plans);
-            this.announceTurn(message.kind, message.plans);
+            if (!isIdleMove) this.announceTurn(message.kind, message.plans);
             this.phase = 'RESOLVING'; this.touchMask = 0; this.keys.clear(); this.accumulator = 0;
             this.scene?.captureTick(); this.match.beginResolve(message.turnIndex, message.kind, message.plans);
             this.scene?.setPlanning(false); this.scene?.followOwnShots();
-            this.refreshPlanning(); this.finishHiddenResolve();
+            this.refreshPlanning();
+            if (isIdleMove) this.completeResolve(); else this.finishHiddenResolve();
         } else if (message.type === 'MATCH_END') {
             this.phase = 'LOBBY'; this.loading?.abort(); this.loading = null;
             if (!Array.isArray(message.winningTeamIndices) || !message.winningTeamIndices.every(index =>
@@ -705,7 +709,12 @@ export class ArtilleryClient {
     }
 
     private finishHiddenResolve(): void {
-        if (!document.hidden || this.phase !== 'RESOLVING' || !this.match) return;
+        if (document.hidden) this.completeResolve();
+    }
+
+    /** Runs the current resolve to its end without playing it back, then reports the result. */
+    private completeResolve(): void {
+        if (this.phase !== 'RESOLVING' || !this.match) return;
         while (this.match.isResolving) this.match.stepResolve();
         this.match.runtime.events.length = 0; this.scene?.captureTick(); this.sendReport();
     }
@@ -751,6 +760,11 @@ export class ArtilleryClient {
                     secondsRemaining !== this.lastCountdownBeep) {
                     this.lastCountdownBeep = secondsRemaining;
                     this.alert();
+                }
+                if (!this.isPractice && this.canEdit && millisecondsRemaining <= 0 &&
+                    this.autoSubmittedTurn !== this.match.turnIndex) {
+                    this.autoSubmittedTurn = this.match.turnIndex;
+                    this.action({ type: 'lock' });
                 }
                 const tank = this.ownTank;
                 if (!this.isPractice && this.canEdit && tank &&

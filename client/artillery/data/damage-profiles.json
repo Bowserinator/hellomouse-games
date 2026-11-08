@@ -327,8 +327,8 @@
     "knockbackUpwardBias": 0.35
   },
   "lightning_storm": {
-    "directHitDamage": 30,
-    "splashDamage": 30,
+    "directHitDamage": 2,
+    "splashDamage": 2,
     "splashRadiusInVoxels": 3,
     "falloff": "constant",
     "knockbackImpulse": 100,

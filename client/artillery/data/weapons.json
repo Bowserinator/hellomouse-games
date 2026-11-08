@@ -2459,7 +2459,7 @@
         "action": "deployEntity",
         "definition": {
           "kind": "dome",
-          "radiusInVoxels": 10,
+          "radiusInVoxels": 20,
           "thicknessInVoxels": 2,
           "durationSeconds": 0.5,
           "materialIdentifier": "DOME_BARRIER",

@@ -4,8 +4,8 @@ import Game from '../game.js';
 import Client from '../client.js';
 import { defaultMatchSettings, isMatchSettingValid, loadTimeoutInSeconds, lobbyMaximumPlayerCount,
     lobbyMinimumPlayerCount, planningPreviewUpdatesPerSecond, protocolVersion,
-    reconnectAuthenticationTimeoutInSeconds, resolveReportTimeoutInSeconds, serverDeadlineCheckIntervalInMilliseconds,
-    simulationTicksPerSecond } from '../../client/artillery/js/config.js';
+    planAutoSubmitGraceInMilliseconds, reconnectAuthenticationTimeoutInSeconds, resolveReportTimeoutInSeconds,
+    serverDeadlineCheckIntervalInMilliseconds, simulationTicksPerSecond } from '../../client/artillery/js/config.js';
 import type { MatchSettings } from '../../client/artillery/js/config.js';
 import { ArtillerySync } from '../../client/artillery/js/types.js';
 import type { LobbySeat, MatchPhase, MatchSnapshot, PlayerPlan, PlayerStatistics, ResolveReport,
@@ -202,10 +202,8 @@ export default class ArtilleryGame extends Game {
             if (message.type === ArtillerySync.CHANGE_SETTING && seatIndex === this.hostSeat() &&
                 typeof message.setting === 'string' && isMatchSettingValid(message.setting, message.value)) {
                 Object.assign(this.settings, { [message.setting]: message.value });
-                for (const entry of this.seats) {
+                for (const entry of this.seats)
                     if (entry.teamIndex >= this.settings.teamCount) entry.teamIndex = this.smallestTeam();
-                    this.players[entry.seatIndex]!.ready = false;
-                }
             }
             this.syncLobby();
             return;
@@ -373,16 +371,8 @@ export default class ArtilleryGame extends Game {
             this.beginNextTurn();
             return;
         }
-        if (!report.hasAmmunitionRemaining && !this.settings.isInfiniteRounds) {
-            this.finishMatch(this.scoreWinners(), 'SCORE'); return;
-        }
         if (!report.hasAmmunitionRemaining) {
-            const totals = Array<number>(this.settings.teamCount).fill(0);
-            for (const seat of this.seats) totals[seat.teamIndex] += this.settings.hitPointsPerTank -
-                this.statistics.find(entry => entry.seatIndex === seat.seatIndex)!.damageTaken;
-            const best = Math.max(...totals);
-            this.finishMatch([...teams].filter(team => totals[team] === best), 'STALEMATE');
-            return;
+            this.finishMatch(this.scoreWinners(), this.settings.isInfiniteRounds ? 'STALEMATE' : 'SCORE'); return;
         }
         this.roundsCompleted++;
         if (!this.settings.isInfiniteRounds && this.roundsCompleted >= this.settings.roundCount) {
@@ -391,7 +381,7 @@ export default class ArtilleryGame extends Game {
         this.turnKind = 'MOVING'; this.turnIndex++;
         this.beginNextTurn();
     }
-    /** Teams with the best score under the configured scoring mode. */
+    /** Teams with the best score under the configured scoring mode, or damage dealt when rounds are infinite. */
     private scoreWinners(): Array<number> {
         const teams = [...new Set(this.seats.map(seat => seat.teamIndex))];
         const total = (team: number, value: (seatIndex: number) => number): number =>
@@ -400,11 +390,12 @@ export default class ArtilleryGame extends Game {
             this.statistics.find(item => item.seatIndex === seatIndex);
         const hitPoints = (team: number): number => total(team, seatIndex =>
             this.settings.hitPointsPerTank - (entry(seatIndex)?.damageTaken ?? 0));
+        const scoreMode = this.settings.isInfiniteRounds ? 0 : this.settings.scoreMode;
         const score = (team: number): [number, number] => {
-            if (this.settings.scoreMode === 0)
+            if (scoreMode === 0)
                 return [total(team, seatIndex => Math.max(0, (entry(seatIndex)?.damageDealt ?? 0) -
                     (entry(seatIndex)?.friendlyFireDamage ?? 0))), 0];
-            if (this.settings.scoreMode === 1) return [hitPoints(team), 0];
+            if (scoreMode === 1) return [hitPoints(team), 0];
             return [this.eliminatedAtTurn.get(team) ?? Infinity, hitPoints(team)];
         };
         const isBetter = (first: [number, number], second: [number, number]): boolean =>
@@ -449,6 +440,7 @@ export default class ArtilleryGame extends Game {
     public tick(now = Date.now()): void {
         for (const [client, deadline] of this.pendingJoins) if (now >= deadline) this.rejectPending(client);
         if (now < this.deadlineInMilliseconds) return;
+        if (this.phase === 'PLANNING' && now < this.deadlineInMilliseconds + planAutoSubmitGraceInMilliseconds) return;
         if (this.phase === 'LOADING') {
             for (const seat of this.seats) if (!this.loaded.has(seat.seatIndex)) {
                 const client = this.players[seat.seatIndex];

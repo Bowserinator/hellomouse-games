@@ -1,5 +1,5 @@
 import { Rng } from '../../../shared/ts/seeded-random.js';
-import { weaponDeckShuffleForkLabel, weaponRoundShuffleForkLabel } from '../config.js';
+import { defaultWeaponIdentifier, weaponDeckShuffleForkLabel, weaponRoundShuffleForkLabel } from '../config.js';
 
 export function dealWeapons(weaponIdentifiers: ReadonlyArray<string>, seatIndices: ReadonlyArray<number>,
     weaponsPerPlayer: number, matchRandom: Rng, sandbox = false): Map<number, Map<string, number>> {
@@ -9,14 +9,19 @@ export function dealWeapons(weaponIdentifiers: ReadonlyArray<string>, seatIndice
         !seatIndices.length || new Set(seatIndices).size !== seatIndices.length ||
         seatIndices.some(seat => !Number.isInteger(seat) || seat < 0))
         throw new RangeError('Invalid weapon pool, seat list or loadout size');
-    const pool = weaponIdentifiers.slice().sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
+    const hasDefault = weaponIdentifiers.includes(defaultWeaponIdentifier);
+    const defaultCount = hasDefault ? 1 : 0;
+    const pool = weaponIdentifiers.filter(identifier => identifier !== defaultWeaponIdentifier)
+        .sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
     const seats = seatIndices.slice().sort((left, right) => left - right);
-    const result = new Map<number, Map<string, number>>(seats.map(seat => [seat, new Map<string, number>()]));
+    const result = new Map<number, Map<string, number>>(seats.map(seat => [seat,
+        new Map<string, number>(hasDefault ? [[defaultWeaponIdentifier, Infinity]] : [])]));
     if (sandbox) {
         for (const ammunition of result.values())
             for (const identifier of pool) ammunition.set(identifier, Infinity);
         return result;
     }
+    if (!pool.length) return result;
     const shuffled = <Value>(items: ReadonlyArray<Value>, random: Rng): Array<Value> => {
         const values = items.slice();
         for (let index = values.length - 1; index > 0; index--) {
@@ -31,7 +36,7 @@ export function dealWeapons(weaponIdentifiers: ReadonlyArray<string>, seatIndice
     for (let round = 0; round < weaponsPerPlayer; round++)
         for (const seat of shuffled(seats, roundRandom.fork(round))) {
             const ammunition = result.get(seat) as Map<string, number>;
-            const acceptable = (identifier: string): boolean => ammunition.size === pool.length ||
+            const acceptable = (identifier: string): boolean => ammunition.size - defaultCount === pool.length ||
                 !ammunition.has(identifier);
             let card = deck.findIndex(acceptable);
             if (card < 0) {

@@ -187,7 +187,7 @@ legend {
     border-color: var(--artillery-accent);
 }
 
-.lock-button {
+.lock-button:not(.is-cancel) {
     background: $lock-button-background;
     color: $lock-button-color;
     border-color: $lock-button-border-color;
