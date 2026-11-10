@@ -4,7 +4,8 @@ import { explosionDefaultIrregularityFraction, terrainRemovedVoxelSampleLimit,
 import { RemovedVoxelSample } from '../../types.js';
 import { Rng } from '../../../../shared/ts/seeded-random.js';
 import { valueNoise } from '../../../../shared/ts/value-noise.js';
-import { exponentialApproximation, naturalLogarithmApproximation } from '../math/deterministic-math.js';
+import { cosineOfRadians, exponentialApproximation, naturalLogarithmApproximation, radiansPerDegree,
+    sineOfRadians } from '../math/deterministic-math.js';
 import { Vector3, createVector3, normalizeVector } from '../math/vector3.js';
 import { Material, MaterialFlag, blastResistanceOf, materialTable, underwaterMaterial } from './material-table.js';
 import { visitVoxelsAlongRay } from './voxel-raycast.js';
@@ -436,6 +437,27 @@ export function addHollowDome(world: VoxelWorld, center: Vector3, radius: number
             const distance = Math.sqrt(offsetX * offsetX + offsetY * offsetY + offsetZ * offsetZ);
             return offsetY < 0 || distance < radius - thickness ? Infinity : distance / radius;
         }, material, undefined, { center, radius });
+    return edit.result;
+}
+
+/** Builds a hollow cone, narrowest at its base, whose wall rises from the ground beneath the centre. */
+export function addFunnel(world: VoxelWorld, center: Vector3, spoutRadius: number, height: number,
+    thickness: number, spreadDegrees: number, material = Material.DIRT): TerrainEditResult {
+    const edit = new TerrainEdit(world);
+    if (!(spoutRadius > 0) || !(height > 0) || !(thickness > 0) || !Number.isFinite(spreadDegrees)) return edit.result;
+    const halfSpread = spreadDegrees * radiansPerDegree / 2;
+    const slope = sineOfRadians(halfSpread) / cosineOfRadians(halfSpread);
+    const ground = world.highestSolidY(Math.floor(center.x), Math.floor(center.z)) + 1;
+    const baseY = Math.floor(Math.min(center.y, ground));
+    const reach = spoutRadius + height * slope + thickness;
+    edit.region(createVector3(center.x - reach, baseY, center.z - reach),
+        createVector3(center.x + reach, baseY + height, center.z + reach), (x, y, z) => {
+            const offsetX = x - center.x, offsetZ = z - center.z;
+            const distance = Math.sqrt(offsetX * offsetX + offsetZ * offsetZ);
+            const inner = spoutRadius + (y - baseY) * slope;
+            return y < baseY || y >= baseY + height || distance <= inner || distance > inner + thickness
+                ? Infinity : 0;
+        }, material);
     return edit.result;
 }
 

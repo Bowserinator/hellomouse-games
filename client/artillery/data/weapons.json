@@ -2627,7 +2627,8 @@
             "damageProfileIdentifier": "gamma_blaster",
             "effectProfileIdentifier": "gamma_blaster",
             "passesThroughTerrain": true,
-            "randomConeDegrees": 1
+            "randomConeDegrees": 1,
+            "bendTowardTankRangeInVoxels": 8
           }
         ]
       }
@@ -3249,5 +3250,508 @@
       }
     },
     "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "barcode_scanner",
+    "displayName": "Barcode Scanner",
+    "description": "Scans your enemies!",
+    "massClass": 1,
+    "turretIdentifier": "burst_railgun",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onApex": [
+          {
+            "action": "setProjectileMode",
+            "lifetimeSeconds": 0.1
+          }
+        ],
+        "onExpire": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "barcode_scanner_burst"
+          },
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "scanner",
+              "widthInVoxels": 20,
+              "lengthInVoxels": 20,
+              "spacingInVoxels": 2,
+              "radiusInVoxels": 1.5,
+              "durationSeconds": 1.5,
+              "damageProfileIdentifier": "barcode_scanner",
+              "effectProfileIdentifier": "barcode_scanner",
+              "heightInVoxels": 3
+            },
+            "atProjectedImpact": true
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTerrainImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "barcode_scanner_burst"
+          },
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "scanner",
+              "widthInVoxels": 20,
+              "lengthInVoxels": 20,
+              "spacingInVoxels": 2,
+              "radiusInVoxels": 1.5,
+              "durationSeconds": 1.5,
+              "damageProfileIdentifier": "barcode_scanner",
+              "effectProfileIdentifier": "barcode_scanner",
+              "heightInVoxels": 3
+            },
+            "offset": [
+              0,
+              10,
+              0
+            ]
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "barcode_scanner_burst"
+          },
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "scanner",
+              "widthInVoxels": 20,
+              "lengthInVoxels": 20,
+              "spacingInVoxels": 2,
+              "radiusInVoxels": 1.5,
+              "durationSeconds": 1.5,
+              "damageProfileIdentifier": "barcode_scanner",
+              "effectProfileIdentifier": "barcode_scanner",
+              "heightInVoxels": 3
+            },
+            "offset": [
+              0,
+              10,
+              0
+            ]
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "beacon"
+  },
+  {
+    "identifier": "funnel",
+    "displayName": "Funnel",
+    "description": "Raises a funnel of dirt where it lands.",
+    "massClass": 1,
+    "turretIdentifier": "dirt_ball",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "dirt_ball"
+          },
+          {
+            "action": "applyTerrain",
+            "terrainProfileIdentifier": "funnel"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "dirt_ball"
+          },
+          {
+            "action": "applyTerrain",
+            "terrainProfileIdentifier": "funnel",
+            "centerOnTargetTank": true
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "booster",
+    "displayName": "Booster",
+    "description": "Launches your tank where you aim.",
+    "massClass": null,
+    "turretIdentifier": "elevator",
+    "aimPreviewMode": "direction",
+    "onFire": [
+      {
+        "action": "playEffect",
+        "effectProfileIdentifier": "booster"
+      },
+      {
+        "action": "boostOwner",
+        "speedInVoxelsPerSecond": 45,
+        "upwardBias": 0.35
+      }
+    ],
+    "projectiles": {},
+    "fireSoundIdentifier": "hop"
+  },
+  {
+    "identifier": "tornado",
+    "displayName": "Tornado",
+    "description": "Woooosh!",
+    "massClass": 1,
+    "turretIdentifier": "cruiser",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "tornado",
+              "modelIdentifier": "tornado",
+              "radiusInVoxels": 6,
+              "liftInVoxels": 14,
+              "speedInVoxelsPerSecond": 18.7,
+              "durationSeconds": 3,
+              "intervalSeconds": 0.2,
+              "damageProfileIdentifier": "tornado",
+              "effectProfileIdentifier": "tornado",
+              "widthInVoxels": 5,
+              "thicknessInVoxels": 1
+            }
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "deployEntity",
+            "definition": {
+              "kind": "tornado",
+              "modelIdentifier": "tornado",
+              "radiusInVoxels": 6,
+              "liftInVoxels": 14,
+              "speedInVoxelsPerSecond": 18.7,
+              "durationSeconds": 3,
+              "intervalSeconds": 0.2,
+              "damageProfileIdentifier": "tornado",
+              "effectProfileIdentifier": "tornado",
+              "widthInVoxels": 5,
+              "thicknessInVoxels": 1
+            }
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "lucky_shot",
+    "displayName": "Lucky Shot",
+    "description": "The missile that never misses",
+    "massClass": 1,
+    "turretIdentifier": "heatseeker",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "digger"
+      },
+      {
+        "action": "schedule",
+        "delaySeconds": 0.4,
+        "actions": [
+          {
+            "action": "launchProjectile",
+            "projectileIdentifier": "missile"
+          }
+        ]
+      }
+    ],
+    "projectiles": {
+      "digger": {
+        "modelIdentifier": "bullet",
+        "trailEffectIdentifier": "trail_orange",
+        "lifetimeSeconds": 8,
+        "terrainContact": "pass",
+        "onFlightTick": {
+          "everyTicks": 1,
+          "actions": [
+            {
+              "action": "applyTerrain",
+              "terrainProfileIdentifier": "lucky_shot"
+            }
+          ]
+        }
+      },
+      "missile": {
+        "modelIdentifier": "missile",
+        "trailEffectIdentifier": "trail_red",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "heatseeker",
+            "damageProfileIdentifier": "heatseeker",
+            "effectProfileIdentifier": "heatseeker"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "heatseeker",
+            "damageProfileIdentifier": "heatseeker",
+            "effectProfileIdentifier": "heatseeker"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "guidance": {
+          "target": "nearest",
+          "acquisitionRangeInVoxels": 200,
+          "speedInVoxelsPerSecond": 70,
+          "requireLineOfSight": true
+        }
+      }
+    },
+    "fireSoundIdentifier": "radioBeep"
+  },
+  {
+    "identifier": "auto_aimer",
+    "displayName": "Auto Aimer",
+    "description": "Auto targets you to the nearest tank.",
+    "massClass": 1,
+    "turretIdentifier": "tracer",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main",
+        "target": "autoAim"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "bullet",
+        "trailEffectIdentifier": "trail_tracer",
+        "lifetimeSeconds": 15,
+        "onTerrainImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "tracer"
+          },
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "launch_star_sound"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "tracer"
+          },
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "launch_star_sound"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "boomerang",
+    "displayName": "Boomerang",
+    "description": "Don't miss, because it comes back!",
+    "massClass": 1,
+    "turretIdentifier": "cruiser",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "boomerang",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "terrainContact": "roll",
+        "onTerrainImpact": [
+          {
+            "action": "setProjectileMode",
+            "terrainContact": "roll",
+            "lifetimeSeconds": 4.8,
+            "speedInVoxelsPerSecond": 26.4
+          },
+          {
+            "action": "setProjectileVelocity",
+            "horizontalSpeedScale": -1
+          }
+        ],
+        "onTankImpact": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "cruiser",
+            "damageProfileIdentifier": "cruiser",
+            "effectProfileIdentifier": "cruiser"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onExpire": [
+          {
+            "action": "explode",
+            "terrainProfileIdentifier": "cruiser",
+            "damageProfileIdentifier": "cruiser",
+            "effectProfileIdentifier": "cruiser"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "repair_kit",
+    "displayName": "Repair Kit",
+    "description": "Repairs the tank it hits.",
+    "massClass": 1,
+    "turretIdentifier": "single_shot",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "repair_kit",
+        "trailEffectIdentifier": "trail_smoke",
+        "lifetimeSeconds": 15,
+        "onTankImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "repair_kit"
+          },
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "launch_star_sound"
+          },
+          {
+            "action": "repairTank",
+            "hitPoints": 20
+          },
+          {
+            "action": "destroySelf"
+          }
+        ],
+        "onTerrainImpact": [
+          {
+            "action": "playEffect",
+            "effectProfileIdentifier": "launch_star_sound"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "normalFire"
+  },
+  {
+    "identifier": "teleporter",
+    "displayName": "Teleporter",
+    "description": "Teleports you to where it lands.",
+    "massClass": 1,
+    "turretIdentifier": "dome",
+    "aimPreviewMode": "ballistic",
+    "onFire": [
+      {
+        "action": "launchProjectile",
+        "projectileIdentifier": "main"
+      }
+    ],
+    "projectiles": {
+      "main": {
+        "modelIdentifier": "shell_small",
+        "trailEffectIdentifier": "trail_ice",
+        "lifetimeSeconds": 15,
+        "tankContact": "pass",
+        "onTerrainImpact": [
+          {
+            "action": "teleportOwner",
+            "effectProfileIdentifier": "teleporter"
+          },
+          {
+            "action": "destroySelf"
+          }
+        ]
+      }
+    },
+    "fireSoundIdentifier": "materialise"
   }
 ]

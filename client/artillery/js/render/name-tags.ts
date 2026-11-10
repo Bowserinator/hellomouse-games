@@ -1,6 +1,7 @@
 import type * as T from 'three';
 import {
-    nameTagHeadClearanceInVoxels, nameTagMaximumDistanceInVoxels, nameTagMaximumScale,
+    autoAimedLabel, autoAimerWeaponIdentifier, nameTagHeadClearanceInVoxels,
+    nameTagMaximumDistanceInVoxels, nameTagMaximumScale,
     nameTagMinimumScale, nameTagOccludedOpacity, nameTagOcclusionCheckIntervalInFrames,
     nameTagOpacityEasePerSecond, nameTagScaleDistanceInVoxels, tankHullHeightInVoxels
 } from '../config.js';
@@ -96,14 +97,18 @@ export class NameTags {
     updateProjectiles(projectiles: ReadonlyArray<Projectile>, deployables: ReadonlyArray<Deployable>,
         camera: T.Camera, width: number, height: number): void {
         if (this.disposed) return;
-        const labelled: Array<{ serial: number; position: Vector3; yawOffset: number; pitchOffset: number }> = [];
+        const labelled: Array<{ serial: number; weaponIdentifier: string; position: Vector3; yawOffset: number;
+            pitchOffset: number }> = [];
         for (const projectile of projectiles)
-            if (projectile.isAlive && projectile.weaponIdentifier === 'tracer')
-                labelled.push({ serial: projectile.serial, position: projectile.position,
+            if (projectile.isAlive && projectile.weaponIdentifier === 'tracer' ||
+                projectile.isAlive && projectile.weaponIdentifier === autoAimerWeaponIdentifier)
+                labelled.push({ serial: projectile.serial, weaponIdentifier: projectile.weaponIdentifier,
+                    position: projectile.position,
                     yawOffset: projectile.yawOffsetInRadians, pitchOffset: projectile.pitchOffsetInRadians });
         for (const deployable of deployables)
             if (deployable.isPersistent && deployable.weaponIdentifier === 'tracer')
-                labelled.push({ serial: deployable.serial, position: deployable.context.position,
+                labelled.push({ serial: deployable.serial, weaponIdentifier: deployable.weaponIdentifier,
+                    position: deployable.context.position,
                     yawOffset: deployable.yawOffsetInRadians, pitchOffset: deployable.pitchOffsetInRadians });
         for (const [serial, element] of this.projectileTags)
             if (!labelled.some(entry => entry.serial === serial)) {
@@ -114,12 +119,15 @@ export class NameTags {
             if (!element) {
                 element = this.container.ownerDocument.createElement('div');
                 element.className = 'artillery-projectile-tag';
-                const angles = [-entry.yawOffset, entry.pitchOffset].map(value => {
-                    const degrees = Math.round(value / radiansPerDegree * 10) / 10;
-                    return `${degrees > 0 ? '+' : ''}${degrees}°`;
-                });
-                element.textContent = `${angles[0]} / ${angles[1]}`;
-                element.setAttribute('aria-label', `Bearing offset ${angles[0]}, elevation offset ${angles[1]}`);
+                if (entry.weaponIdentifier === autoAimerWeaponIdentifier) element.textContent = autoAimedLabel;
+                else {
+                    const angles = [-entry.yawOffset, entry.pitchOffset].map(value => {
+                        const degrees = Math.round(value / radiansPerDegree * 10) / 10;
+                        return `${degrees > 0 ? '+' : ''}${degrees}°`;
+                    });
+                    element.textContent = `${angles[0]} / ${angles[1]}`;
+                    element.setAttribute('aria-label', `Bearing offset ${angles[0]}, elevation offset ${angles[1]}`);
+                }
                 this.container.append(element); this.projectileTags.set(entry.serial, element);
             }
             this.head.set(entry.position.x, entry.position.y + nameTagHeadClearanceInVoxels, entry.position.z);

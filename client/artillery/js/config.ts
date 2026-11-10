@@ -259,6 +259,19 @@ export const weaponRoundShuffleForkLabel = 7001;
 export const weaponRayContactSearchIterations = 32;
 export const airstrikeLineSegmentLengthInVoxels = 8;
 export const airstrikeLineHoverInVoxels = 1.5;
+/** Damage profile that neither hurts nor pushes tanks, for effects that only need to be seen or to edit terrain. */
+export const harmlessDamageProfileIdentifier = 'harmless';
+export const autoAimerWeaponIdentifier = 'auto_aimer';
+export const autoAimedLabel = 'Auto-aimed!';
+export const tornadoLiftSpeedInVoxelsPerSecond = 24;
+export const tornadoSwirlSpeedInVoxelsPerSecond = 14;
+export const tornadoPullPerSecond = 4;
+export const tornadoSpinInRadiansPerSecond = 4;
+export const tornadoOpacity = .5;
+export const tornadoFadeOutSeconds = .6;
+export const tornadoAscentInVoxels = 40;
+/** How far a boosted tank is raised so it clears the ground it is launched from. */
+export const boosterLiftoffInVoxels = 3;
 
 // -----------------------------------------------------------------------------
 // Explosion defaults

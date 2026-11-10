@@ -1,14 +1,14 @@
 export type Lane = 'economy' | 'defense' | 'offense';
 export type MatchMode = 'standard' | 'peaceful';
 export type MachineCategory = 'bench' | 'line' | 'contract' | 'automated' | 'mega' | 'nano' | 'research';
-export type AttackCategory = 'supply' | 'cyber' | 'power' | 'workforce' | 'marketing' | 'legal' | 'recon';
+export type AttackCategory = 'supply' | 'cyber' | 'power' | 'workforce' | 'marketing' | 'legal';
 export type EffectType =
     | 'add_manual_click' | 'multiply_production' | 'multiply_auto_production'
     | 'multiply_machine_category' | 'multiply_sale_price' | 'multiply_research_rate'
     | 'add_mitigation' | 'reduce_attack_duration' | 'reduce_attack_severity'
-    | 'unlock_ability' | 'hide_recon_details' | 'whiff_chance'
+    | 'unlock_ability' | 'reduce_theft' | 'whiff_chance'
     | 'multiply_while_sabotaged' | 'modify_attack_duration'
-    | 'activate_slow' | 'activate_revenue_slow' | 'activate_recon'
+    | 'activate_slow' | 'activate_revenue_slow' | 'steal_phones'
     | 'cleanse_debuffs' | 'temporary_mitigation' | 'block_next_attack';
 
 export interface Cost {
@@ -112,11 +112,6 @@ export interface Hit {
     kind: 'pps' | 'revenue';
 }
 
-export interface Intel {
-    seat: number;
-    until: number;
-}
-
 export interface PlayerState {
     seat: number;
     companyId: string;
@@ -137,11 +132,10 @@ export interface PlayerState {
     shields: Array<Shield>;
     hits: Array<Hit>;
     immuneUntil: number;
-    intel: Array<Intel>;
 }
 
 export type EventType = 'project' | 'machine' | 'attack' | 'defend' | 'shipment' | 'win';
-export type Outcome = 'landed' | 'blocked' | 'whiff' | 'immune' | 'weaker' | 'recon' | 'failed';
+export type Outcome = 'landed' | 'blocked' | 'whiff' | 'immune' | 'weaker' | 'stolen' | 'failed';
 
 export interface GameEvent {
     id: number;
@@ -197,12 +191,6 @@ export interface Context {
     leaderPhones: number;
 }
 
-export interface IntelView {
-    mitigation: number;
-    tiers: Array<number>;
-    abilities: Array<{ id: string; readyAt: number }>;
-}
-
 export interface PublicPlayer {
     seat: number;
     companyId: string;
@@ -212,9 +200,8 @@ export interface PublicPlayer {
     shielded: boolean;
     immune: boolean;
     pressure: number;
-    private: boolean;
-    mitigation: number | null;
-    intel: IntelView | null;
+    mitigation: number;
+    theftFactor: number;
 }
 
 export interface View {

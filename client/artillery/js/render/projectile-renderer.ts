@@ -1,7 +1,8 @@
 import type * as T from 'three';
 import { accretionDiskGlowIntensity, accretionDiskParticleSizeInVoxels, accretionDiskRingParticleCounts,
     accretionDiskRingRadiiInVoxels, accretionDiskSpinRadiansPerSecond, accretionDiskTiltInRadians,
-    lobbyMaximumPlayerCount, weaponMaximumSpawnsPerFire } from '../config.js';
+    lobbyMaximumPlayerCount, tornadoAscentInVoxels, tornadoOpacity, tornadoSpinInRadiansPerSecond,
+    weaponMaximumSpawnsPerFire } from '../config.js';
 import { Deployable } from '../sim/deployable.js';
 import { Vector3 } from '../sim/math/vector3.js';
 import { Projectile } from '../sim/projectile.js';
@@ -85,10 +86,21 @@ export class ProjectileRenderer {
             this.place(projectile.definition.modelIdentifier, this.position, yaw, pitch, projectile.ownerSeatIndex);
             if (projectile.definition.gravityWell) this.placeDisk(this.position, elapsedSeconds);
         }
-        for (const deployable of deployables)
-            if (deployable.isAlive && deployable.definition.modelIdentifier)
-                this.place(deployable.definition.modelIdentifier, deployable.visualPosition(interpolation),
-                    deployable.context.yawInRadians, 0, deployable.context.ownerSeatIndex);
+        let tornadoSlot = 0;
+        for (const deployable of deployables) {
+            if (!deployable.isAlive || !deployable.definition.modelIdentifier) continue;
+            const position = deployable.visualPosition(interpolation);
+            if (deployable.definition.kind !== 'tornado') {
+                this.place(deployable.definition.modelIdentifier, position, deployable.context.yawInRadians, 0,
+                    deployable.context.ownerSeatIndex);
+                continue;
+            }
+            const fade = deployable.fadeProgress(interpolation);
+            this.position.set(position.x, position.y + fade * tornadoAscentInVoxels, position.z);
+            this.place(deployable.definition.modelIdentifier, this.position,
+                elapsedSeconds * tornadoSpinInRadiansPerSecond, 0, deployable.context.ownerSeatIndex,
+                { slot: tornadoSlot++, opacity: tornadoOpacity * (1 - fade) });
+        }
         this.disk.count = this.diskCount; this.disk.visible = this.diskCount > 0;
         if (this.diskCount > 0) {
             this.disk.instanceMatrix.updateRange.count = this.diskCount * 16;
@@ -148,25 +160,33 @@ export class ProjectileRenderer {
         this.transform.scale.setScalar(1);
     }
 
-    private place(identifier: string, position: Vector3, yaw: number, pitch: number, seatIndex: number): void {
-        let batch = this.batches.get(identifier);
+    /** A translucent model gets a batch of its own, so that each one can fade independently. */
+    private place(identifier: string, position: Vector3, yaw: number, pitch: number, seatIndex: number,
+        translucent?: { slot: number; opacity: number }): void {
+        const key = translucent ? `${identifier}:${translucent.slot}` : identifier;
+        let batch = this.batches.get(key);
         if (!batch) {
-            const capacity = lobbyMaximumPlayerCount * weaponMaximumSpawnsPerFire;
+            const capacity = translucent ? 1 : lobbyMaximumPlayerCount * weaponMaximumSpawnsPerFire;
             const geometry = this.models.geometry(identifier).clone();
             const colours = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 2), 2);
             colours.setUsage(THREE.DynamicDrawUsage);
             geometry.setAttribute('voxelInstanceColours', colours);
             const material = this.materials.create(false);
             material.defines = { ...material.defines, VOXEL_INSTANCE_COLOURS: 1 };
+            if (translucent) {
+                material.transparent = true;
+                material.depthWrite = false;
+            }
             const mesh = new THREE.InstancedMesh(geometry, material, capacity);
             mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
             mesh.frustumCulled = false;
-            mesh.castShadow = mesh.receiveShadow = true;
+            mesh.castShadow = mesh.receiveShadow = !translucent;
             mesh.count = 0;
             batch = { mesh, colours, geometry, material };
-            this.batches.set(identifier, batch);
+            this.batches.set(key, batch);
             this.group.add(mesh);
         }
+        if (translucent) batch.material.opacity = translucent.opacity;
         const index = batch.mesh.count;
         if (index >= batch.mesh.instanceMatrix.count) throw new Error('Projectile render capacity exceeded');
         const pivot = this.models.specification(identifier).pivot;

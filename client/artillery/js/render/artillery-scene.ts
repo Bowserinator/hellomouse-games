@@ -253,6 +253,8 @@ export class ArtilleryScene {
                 if (hit) hit.count++;
                 else damageHits.set(key, { position: event.position, amount: event.amount, count: 1 });
             }
+            if (event.type === 'tankRepaired' && event.amount)
+                this.damageNumbers.spawn(event.position, event.amount, 1, true);
             if (event.type === 'lineEnd') this.beams.clearTagged(event.serial);
             if (event.type === 'projectileRemoved' && event.seatIndex !== undefined)
                 this.trails.end(event.serial, event.position, event.seatIndex);

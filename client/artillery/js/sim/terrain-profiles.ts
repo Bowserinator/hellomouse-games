@@ -3,7 +3,7 @@ import { exponentialApproximation, naturalLogarithmApproximation } from './math/
 import { Vector3, createVector3, normalizeVector } from './math/vector3.js';
 import { TerrainOverrides, TerrainProfile } from './weapon-types.js';
 import { Material } from './world/material-table.js';
-import { BlastShell, ShapedBlast, TerrainEditResult, addHollowDome, addSphere, carveCapsule, carveCylinder,
+import { BlastShell, ShapedBlast, TerrainEditResult, addFunnel, addHollowDome, addSphere, carveCapsule, carveCylinder,
     carveLineAlongRay, carveRavine, carveShapedBlast, carveSphere, liftColumn,
     scorchSurface } from './world/terrain-edit.js';
 import { VoxelChunk, VoxelWorld } from './world/voxel-world.js';
@@ -39,6 +39,8 @@ export function applyTerrainProfile(world: VoxelWorld, profile: TerrainProfile, 
                 operation.heightInVoxels!, seed + operationIndex);
             case 'addHollowDome': return addHollowDome(world, center, operation.radiusInVoxels!,
                 operation.thicknessInVoxels!, material);
+            case 'addFunnel': return addFunnel(world, center, operation.radiusInVoxels!, operation.heightInVoxels!,
+                operation.thicknessInVoxels!, operation.spreadDegrees!, material);
             case 'liftColumn':
                 center.y -= operation.thicknessInVoxels!;
                 return liftColumn(world, center, operation.radiusInVoxels!, Math.round(operation.heightInVoxels!),

@@ -11,6 +11,7 @@ const scatterHeightInVoxels = 4;
 const heightInVoxels = 2.4;
 const distanceScaleStartInVoxels = 90;
 const textureWidth = 352, textureHeight = 96;
+const repairFillColour = '#60ff90';
 
 interface FloatingNumber {
     sprite: T.Sprite;
@@ -18,7 +19,7 @@ interface FloatingNumber {
     isAlive: boolean;
 }
 
-/** White numbers with a black outline that float up around a tank when it takes damage. */
+/** Numbers with a black outline that float up around a tank when it takes damage or is repaired. */
 export class DamageNumbers {
     readonly group = new THREE.Group();
     private readonly numbers: Array<FloatingNumber>;
@@ -40,15 +41,16 @@ export class DamageNumbers {
         });
     }
 
-    /** A hitCount above one is shown as a combined "5x 1" label. */
-    spawn(tankPosition: Vector3, amount: number, hitCount = 1): void {
+    /** A hitCount above one is shown as a combined "5x 1" label; repairs are shown as a green negative number. */
+    spawn(tankPosition: Vector3, amount: number, hitCount = 1, isRepair = false): void {
         if (this.disposed || !(amount > 0)) return;
         const entry = this.numbers[this.nextIndex++ % this.numbers.length];
         const angle = this.random.float() * Math.PI * 2;
         const radius = (.4 + this.random.float() * .6) * scatterRadiusInVoxels;
         const material = entry.sprite.material as T.SpriteMaterial;
         const text = String(Math.max(1, Math.round(amount)));
-        material.map = this.texture(hitCount > 1 ? `${hitCount}x ${text}` : text);
+        material.map = isRepair ? this.texture(`-${text}`, repairFillColour)
+            : this.texture(hitCount > 1 ? `${hitCount}x ${text}` : text);
         material.opacity = 1;
         material.needsUpdate = true;
         entry.sprite.position.set(tankPosition.x + Math.cos(angle) * radius,
@@ -84,8 +86,9 @@ export class DamageNumbers {
         this.textures.clear();
     }
 
-    private texture(text: string): T.CanvasTexture {
-        let texture = this.textures.get(text);
+    private texture(text: string, fill = '#ffffff'): T.CanvasTexture {
+        const key = `${fill}${text}`;
+        let texture = this.textures.get(key);
         if (texture) return texture;
         const canvas = document.createElement('canvas');
         canvas.width = textureWidth; canvas.height = textureHeight;
@@ -93,11 +96,11 @@ export class DamageNumbers {
         context.font = `bold ${textureHeight * .7}px sans-serif`;
         context.textAlign = 'center'; context.textBaseline = 'middle';
         context.lineJoin = 'round'; context.lineWidth = textureHeight * .16;
-        context.strokeStyle = '#000000'; context.fillStyle = '#ffffff';
+        context.strokeStyle = '#000000'; context.fillStyle = fill;
         context.strokeText(text, textureWidth / 2, textureHeight / 2);
         context.fillText(text, textureWidth / 2, textureHeight / 2);
         texture = new THREE.CanvasTexture(canvas);
-        this.textures.set(text, texture);
+        this.textures.set(key, texture);
         return texture;
     }
 }

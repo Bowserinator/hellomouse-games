@@ -3,7 +3,7 @@ import { companyIcon } from './company-icon.js';
 import { GAME_CONFIG, companyTheme, tierMilestone } from './config.js';
 import {
     abilityById, abilityCost, abilityStatus, canAfford, computeRates, machinePrice, machineUnlockAt, maxQuantity,
-    ownedInTier, previewPpsGain, projectCost, projectLock, quantityCost, upgradeById, visibleTier
+    heistShare, ownedInTier, previewPpsGain, projectCost, projectLock, quantityCost, upgradeById, visibleTier
 } from './engine.js';
 import type { ProjectLock } from './engine.js';
 import {
@@ -172,7 +172,9 @@ class Shop {
             const cost = abilityCost(ability, live.view.settings);
             const waiting = Math.max(status.cooldownLeft, status.globalLeft);
             const influenceWait = ((cost.influence ?? 0) - live.you.influence) / GAME_CONFIG.influence.regenPerSecond;
-            let label = `${ability.verb}${kind === 'attack' ? ` ${targetName}` : ''} — ${formatCost(cost)}`;
+            const rival = live.view.players.find(player => player.seat === targetSeat);
+            const share = rival && ability.effects.some(effect => effect.type === 'steal_phones') ? ` (${formatPercent(heistShare(live.you.phonesMade, rival.phonesMade, rival.theftFactor))})` : '';
+            let label = `${ability.verb}${kind === 'attack' ? ` ${targetName}${share}` : ''} — ${formatCost(cost)}`;
             if (waiting > 0) label = `READY IN ${formatSeconds(waiting)}`;
             else if (kind === 'attack' && targetSeat < 0) label = 'No rival to target';
             else if (influenceWait > 0 && canAfford(live.you, { ...cost, influence: 0 })) label = `${label} · ${formatSeconds(influenceWait)}`;
@@ -322,6 +324,14 @@ export class Screens {
         el('floaters').appendChild(node);
     }
 
+    shakePhone(): void {
+        const phone = el('phone-icon');
+        phone.classList.remove('is-shaking');
+        void phone.offsetWidth;
+        phone.classList.add('is-shaking');
+        phone.onanimationend = () => phone.classList.remove('is-shaking');
+    }
+
     setHint(text: string): void {
         setText(el('hint'), text);
         el('hint').hidden = !text;
@@ -385,9 +395,7 @@ export class Screens {
         }
         setText(el('target-stats-label'), `${live.names[rival.seat] ?? companyTheme(rival.companyId).name}'s stats`);
         const chips: Array<Chip> = [{ text: `${formatNumber(rival.pps)} PPS`, kind: '', tip: 'Phones per second this rival is producing right now.' }];
-        chips.push(rival.mitigation === null
-            ? { text: 'Defenses hidden', kind: '', tip: 'This rival has Trade Secret Protection, so their defenses and scouting are hidden.' }
-            : { text: `Mitigation ${formatPercent(rival.mitigation)}`, kind: 'safe', tip: 'Share of sabotage this rival ignores.' });
+        chips.push({ text: `Mitigation ${formatPercent(rival.mitigation)}`, kind: 'safe', tip: 'Share of sabotage this rival ignores.' });
         if (rival.shielded) chips.push({ text: 'Shield active', kind: 'safe', tip: 'An active defense (Lockdown or Defense Grid) will weaken or block your next attack.' });
         if (rival.immune) chips.push({ text: 'Immune', kind: 'safe', tip: 'Production attacks have no effect on them for a few seconds after a cleanse.' });
         if (rival.pressure > 0)
@@ -395,16 +403,6 @@ export class Screens {
                 text: `Under pressure ×${rival.pressure}`, kind: 'danger',
                 tip: `${rival.pressure} other player${rival.pressure === 1 ? '' : 's'} slowed them in the last 30 seconds, so new production attacks only land at ${rival.pressure === 1 ? '60%' : '30%'} strength.`
             });
-        if (rival.intel) {
-            chips.push({ text: `Tiers ${rival.intel.tiers.join('/')}`, kind: '', tip: 'Shop tier reached in Economy, Defense and Offense.' });
-            for (const entry of rival.intel.abilities) {
-                const wait = entry.readyAt - live.now;
-                chips.push({
-                    text: `${abilityById(entry.id)?.name ?? ''} ${wait > 0 ? formatSeconds(wait) : 'ready'}`, kind: wait > 0 ? '' : 'safe',
-                    tip: 'A defensive ability this rival owns and when it can be used again.'
-                });
-            }
-        }
         if (!panel.firstChild) panel.appendChild(make('div', 'chip-row'));
         renderChips(panel.firstChild as HTMLElement, chips);
     }
@@ -495,8 +493,8 @@ export class Screens {
             whiff: `${ability} from ${who} hit a decoy at ${target}`,
             immune: `${target} was immune to ${ability} from ${who}`,
             weaker: `${ability} from ${who} was weaker than ${target}'s current debuff`,
-            recon: `${who} scouted ${target}`,
-            failed: `${who} failed to scout ${target}`
+            stolen: `${who} stole ${formatNumber(event.amount ?? 0)} phones from ${target}`,
+            failed: `${who}'s heist on ${target} found nothing to steal`
         };
         return outcomes[event.outcome ?? 'landed'] ?? '';
     }

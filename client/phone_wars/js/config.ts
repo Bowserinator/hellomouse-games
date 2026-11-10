@@ -27,15 +27,16 @@ export const GAME_CONFIG = {
         maxPpsSlow: 0.65,
         passiveMitigationCap: 0.70,
         minimumDurationFraction: 0.35,
-        globalOffenseCooldownSec: 10,
+        globalOffenseCooldownSec: 3,
         repeatTargetWindowSec: 20,
         repeatTargetMultiplier: 0.50,
         antiDogpileWindowSec: 30,
         antiDogpileMultipliers: [1, 0.60, 0.30],
         revenueSlowCap: 0.60,
-        leaderBountyCashRefundFraction: 0.15,
+        leaderBountyCashRefundFraction: 0.30,
         leaderBountyCurrentCashCapFraction: 0.05
     },
+    heist: { behindFraction: 0.03, aheadBaseFraction: 0.05, maxFraction: 0.20 },
     catchup: { behindLeaderFraction: 0.25, economyProjectDiscount: 0.10 }
 };
 

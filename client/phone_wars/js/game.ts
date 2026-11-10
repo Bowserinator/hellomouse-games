@@ -66,6 +66,8 @@ function announce(event: GameEvent): void {
     else if (event.type === 'attack' && event.target === seat)
         if (event.outcome === 'landed')
             showToast(`ATTACKED · ${ability} · -${formatPercent(event.slow ?? 0)} · ${formatSeconds(event.duration ?? 0)}`, true);
+        else if (event.outcome === 'stolen')
+            showToast(`ROBBED · ${ability} · -${formatNumber(event.amount ?? 0)} phones`, true);
         else if (event.outcome === 'blocked' || event.outcome === 'whiff' || event.outcome === 'immune')
             showToast(`BLOCKED · ${ability} from ${who}`, false);
 }
@@ -186,7 +188,7 @@ connection = connectToGame({
     }
 });
 
-el('assemble').onclick = () => {
+const assemble = (): void => {
     const model = live();
     if (!model || model.view.winner >= 0) return;
     sentClicks++;
@@ -194,7 +196,9 @@ el('assemble').onclick = () => {
     const gain = model.rates.clickPhones;
     screens.floatGain(`+${gain >= 10 ? formatNumber(gain) : String(Number(gain.toFixed(1)))}`);
     move({ action: 'make_phone' });
+    screens.shakePhone();
 };
+el('assemble').onclick = el('phone-icon').onclick = assemble;
 el('win-close').onclick = () => dialog('win-modal').close();
 el('win-rematch').onclick = el('back-to-lobby').onclick = () => move({ action: 'RETURN_TO_LOBBY' });
 el<HTMLInputElement>('invite').value = location.href;

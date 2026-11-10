@@ -48,7 +48,7 @@ function describeEffect(effect: Effect): string {
     switch (effect.type) {
         case 'activate_slow': return `-${percent} production for ${seconds}`;
         case 'activate_revenue_slow': return `-${percent} cash per phone for ${seconds}`;
-        case 'activate_recon': return `Reveals rival defenses for ${seconds}`;
+        case 'steal_phones': return 'Steal rivals phones (more if they are ahead)';
         case 'cleanse_debuffs': return effect.count ? `Removes ${effect.count} active attack` : 'Removes every active attack';
         case 'temporary_mitigation': return `Attacks are ${percent} weaker for ${seconds}`;
         case 'block_next_attack': return `Blocks the next attack within ${seconds}`;

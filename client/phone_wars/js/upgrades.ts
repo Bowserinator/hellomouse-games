@@ -30,7 +30,7 @@ export const CONTENT: Content = {
         },
         {
             id: 'lab', name: 'Research Lab', icon: 'science', category: 'research',
-            baseCost: 35_000, growth: 1.19, basePps: 0, baseRps: 2, unlock: 100_000
+            baseCost: 35_000, growth: 1.6, basePps: 0, baseRps: 1, unlock: 100_000
         }
     ],
     upgrades: [
@@ -183,10 +183,10 @@ export const CONTENT: Content = {
             effects: [{ type: 'reduce_attack_duration', target: 'self', fraction: 0.15 }]
         },
         {
-            id: 'def_anti_spy', name: 'Trade Secret Protection', lane: 'defense', tier: 3,
-            description: 'Reconnaissance against you fails and your defenses are hidden from rivals.', stat: 'Blocks recon', icon: 'visibility_off',
+            id: 'def_vaults', name: 'Reinforced Warehouse Vaults', lane: 'defense', tier: 3,
+            description: 'Warehouse Heists steal 30% fewer of your phones.', stat: '-30% theft', icon: 'inventory',
             purchase: { cash: 110_000, research: 75 },
-            effects: [{ type: 'hide_recon_details', target: 'self' }]
+            effects: [{ type: 'reduce_theft', target: 'self', fraction: 0.30 }]
         },
         {
             id: 'def_shield', name: 'Emergency Factory Lockdown', lane: 'defense', tier: 3,
@@ -214,11 +214,11 @@ export const CONTENT: Content = {
         },
         {
             id: 'def_quantum_crypto', name: 'Quantum-Secure Factory OS', lane: 'defense', tier: 5,
-            description: 'Cyber and recon attacks last 55% shorter.', stat: '-55% cyber time', icon: 'enhanced_encryption',
+            description: 'Cyber attacks last 55% shorter and Warehouse Heists steal 25% fewer phones.', stat: '-55% cyber time', icon: 'enhanced_encryption',
             purchase: { cash: 6_500_000, research: 1_000 },
             effects: [
                 { type: 'reduce_attack_duration', target: 'self', fraction: 0.55, category: 'cyber' },
-                { type: 'reduce_attack_duration', target: 'self', fraction: 0.55, category: 'recon' }
+                { type: 'reduce_theft', target: 'self', fraction: 0.25 }
             ]
         },
         {
@@ -237,98 +237,98 @@ export const CONTENT: Content = {
         {
             id: 'atk_bad_reviews', name: 'Fake Review Campaign', lane: 'offense', tier: 1,
             description: 'Unlocks a marketing attack: -15% production for 18 seconds.', stat: '-15% PPS, 18s', icon: 'thumb_down',
-            purchase: { cash: 450 },
+            purchase: { cash: 360 },
             effects: [{ type: 'unlock_ability', target: 'self', abilityId: 'ability_bad_reviews' }]
         },
         {
             id: 'atk_component_delay', name: 'Component Shipment Delay', lane: 'offense', tier: 1,
             description: 'Unlocks a supply attack: -20% production for 15 seconds.', stat: '-20% PPS, 15s', icon: 'local_shipping',
-            purchase: { cash: 700 },
+            purchase: { cash: 560 },
             effects: [{ type: 'unlock_ability', target: 'self', abilityId: 'ability_component_delay' }]
         },
         {
-            id: 'atk_spy', name: 'Competitive Intelligence', lane: 'offense', tier: 1,
-            description: 'Unlocks reconnaissance: reveals a rival\'s defenses, cooldowns and shop tiers for 20 seconds.', stat: 'Scout 20s', icon: 'visibility',
-            purchase: { cash: 500 },
-            effects: [{ type: 'unlock_ability', target: 'self', abilityId: 'ability_spy' }]
+            id: 'atk_heist', name: 'Warehouse Heist', lane: 'offense', tier: 1,
+            description: 'Unlocks a raid that steals phones from a rival: 3% of theirs if they are behind you, up to 20% if they are ahead. You sell what you steal.', stat: 'Steal phones!', icon: 'warehouse',
+            purchase: { cash: 400 },
+            effects: [{ type: 'unlock_ability', target: 'self', abilityId: 'ability_heist' }]
         },
         {
             id: 'atk_poach', name: 'Engineer Poaching', lane: 'offense', tier: 2,
             description: 'Unlocks a workforce attack: -25% production for 18 seconds.', stat: '-25% PPS, 18s', icon: 'person_remove',
-            purchase: { cash: 4_000 },
+            purchase: { cash: 3_200 },
             effects: [{ type: 'unlock_ability', target: 'self', abilityId: 'ability_poach' }]
         },
         {
             id: 'atk_price_war', name: 'Aggressive Price War', lane: 'offense', tier: 2,
             description: 'Unlocks a revenue attack: -30% cash per phone for 25 seconds. Production is unaffected.', stat: '-30% cash, 25s', icon: 'price_change',
-            purchase: { cash: 8_000 },
+            purchase: { cash: 6_400 },
             effects: [{ type: 'unlock_ability', target: 'self', abilityId: 'ability_price_war' }]
         },
         {
             id: 'atk_shipping', name: 'Port Congestion', lane: 'offense', tier: 2,
             description: 'Unlocks a supply attack: -30% production for 16 seconds.', stat: '-30% PPS, 16s', icon: 'directions_boat',
-            purchase: { cash: 13_000 },
+            purchase: { cash: 10_400 },
             effects: [{ type: 'unlock_ability', target: 'self', abilityId: 'ability_shipping' }]
         },
         {
             id: 'atk_ransomware', name: 'Factory Ransomware', lane: 'offense', tier: 3,
             description: 'Unlocks a cyber attack: -35% production for 16 seconds.', stat: '-35% PPS, 16s', icon: 'lock_open',
-            purchase: { cash: 85_000, research: 75 },
+            purchase: { cash: 68_000, research: 60 },
             effects: [{ type: 'unlock_ability', target: 'self', abilityId: 'ability_ransomware' }]
         },
         {
             id: 'atk_patent', name: 'Patent Lawsuit', lane: 'offense', tier: 3,
             description: 'Unlocks a revenue attack: -40% cash per phone for 30 seconds.', stat: '-40% cash, 30s', icon: 'gavel',
-            purchase: { cash: 130_000, research: 100 },
+            purchase: { cash: 104_000, research: 80 },
             effects: [{ type: 'unlock_ability', target: 'self', abilityId: 'ability_patent' }]
         },
         {
             id: 'atk_power', name: 'Power Grid Disruption', lane: 'offense', tier: 3,
             description: 'Unlocks a power attack: -40% production for 14 seconds.', stat: '-40% PPS, 14s', icon: 'power_off',
-            purchase: { cash: 190_000, research: 150 },
+            purchase: { cash: 152_000, research: 120 },
             effects: [{ type: 'unlock_ability', target: 'self', abilityId: 'ability_power' }]
         },
         {
             id: 'atk_chip', name: 'Chip Supply Embargo', lane: 'offense', tier: 4,
             description: 'Unlocks a supply attack: -45% production for 16 seconds.', stat: '-45% PPS, 16s', icon: 'block',
-            purchase: { cash: 750_000, research: 250 },
+            purchase: { cash: 600_000, research: 200 },
             effects: [{ type: 'unlock_ability', target: 'self', abilityId: 'ability_chip' }]
         },
         {
             id: 'atk_botnet', name: 'Botnet Factory Attack', lane: 'offense', tier: 4,
             description: 'Unlocks a cyber attack: -50% production for 12 seconds.', stat: '-50% PPS, 12s', icon: 'bug_report',
-            purchase: { cash: 1_200_000, research: 350 },
+            purchase: { cash: 960_000, research: 280 },
             effects: [{ type: 'unlock_ability', target: 'self', abilityId: 'ability_botnet' }]
         },
         {
             id: 'atk_media', name: 'Product Recall Hoax', lane: 'offense', tier: 4,
             description: 'Unlocks a revenue attack: -50% cash per phone for 25 seconds.', stat: '-50% cash, 25s', icon: 'campaign',
-            purchase: { cash: 1_600_000, research: 500 },
+            purchase: { cash: 1_280_000, research: 400 },
             effects: [{ type: 'unlock_ability', target: 'self', abilityId: 'ability_media' }]
         },
         {
             id: 'atk_satellite', name: 'Satellite Logistics Jam', lane: 'offense', tier: 5,
             description: 'Unlocks a supply attack: -55% production for 12 seconds.', stat: '-55% PPS, 12s', icon: 'satellite',
-            purchase: { cash: 7_000_000, research: 1_000 },
+            purchase: { cash: 5_600_000, research: 800 },
             effects: [{ type: 'unlock_ability', target: 'self', abilityId: 'ability_satellite' }]
         },
         {
             id: 'atk_emp', name: 'Precision EMP Raid', lane: 'offense', tier: 5,
             description: 'Unlocks a power attack: -60% production for 10 seconds.', stat: '-60% PPS, 10s', icon: 'flash_off',
-            purchase: { cash: 12_000_000, research: 1_700 },
+            purchase: { cash: 9_600_000, research: 1_360 },
             effects: [{ type: 'unlock_ability', target: 'self', abilityId: 'ability_emp' }]
         },
         {
             id: 'atk_mole', name: 'Corporate Mole Network', lane: 'offense', tier: 5,
             description: 'Your attacks last 10% longer before defenses, up to 2 seconds.', stat: '+10% attack time', icon: 'badge',
-            purchase: { cash: 18_000_000, research: 2_200 },
+            purchase: { cash: 14_400_000, research: 1_760 },
             effects: [{ type: 'modify_attack_duration', target: 'self', fraction: 0.10, capSec: 2 }]
         }
     ],
     abilities: [
         {
             id: 'ability_emergency_patch', name: 'Emergency Patch', verb: 'Patch', kind: 'defense',
-            sourceUpgradeId: 'def_patch', activation: { cash: 1_000 }, cooldownSec: 80,
+            sourceUpgradeId: 'def_patch', activation: { cash: 1_000 }, cooldownSec: 180,
             effects: [{ type: 'cleanse_debuffs', target: 'self', count: 1 }]
         },
         {
@@ -348,72 +348,72 @@ export const CONTENT: Content = {
         },
         {
             id: 'ability_bad_reviews', name: 'Fake Reviews', verb: 'Smear', kind: 'attack',
-            sourceUpgradeId: 'atk_bad_reviews', activation: { cash: 300, influence: 20 }, cooldownSec: 45,
+            sourceUpgradeId: 'atk_bad_reviews', activation: { cash: 150, influence: 20 }, cooldownSec: 15,
             effects: [{ type: 'activate_slow', target: 'selectedOpponent', fraction: 0.15, category: 'marketing', durationSec: 18 }]
         },
         {
             id: 'ability_component_delay', name: 'Delay Shipment', verb: 'Delay', kind: 'attack',
-            sourceUpgradeId: 'atk_component_delay', activation: { cash: 500, influence: 25 }, cooldownSec: 50,
+            sourceUpgradeId: 'atk_component_delay', activation: { cash: 250, influence: 25 }, cooldownSec: 17,
             effects: [{ type: 'activate_slow', target: 'selectedOpponent', fraction: 0.20, category: 'supply', durationSec: 15 }]
         },
         {
-            id: 'ability_spy', name: 'Scout', verb: 'Scout', kind: 'attack',
-            sourceUpgradeId: 'atk_spy', activation: { cash: 250, influence: 15 }, cooldownSec: 35,
-            effects: [{ type: 'activate_recon', target: 'selectedOpponent', category: 'recon', durationSec: 20 }]
+            id: 'ability_heist', name: 'Warehouse Heist', verb: 'Raid', kind: 'attack',
+            sourceUpgradeId: 'atk_heist', activation: { cash: 125, influence: 35 }, cooldownSec: 90,
+            effects: [{ type: 'steal_phones', target: 'selectedOpponent' }]
         },
         {
             id: 'ability_poach', name: 'Poach Engineers', verb: 'Poach', kind: 'attack',
-            sourceUpgradeId: 'atk_poach', activation: { cash: 2_000, influence: 30 }, cooldownSec: 65,
+            sourceUpgradeId: 'atk_poach', activation: { cash: 1_000, influence: 30 }, cooldownSec: 22,
             effects: [{ type: 'activate_slow', target: 'selectedOpponent', fraction: 0.25, category: 'workforce', durationSec: 18 }]
         },
         {
             id: 'ability_price_war', name: 'Price War', verb: 'Undercut', kind: 'attack',
-            sourceUpgradeId: 'atk_price_war', activation: { cash: 4_000, influence: 30 }, cooldownSec: 65,
+            sourceUpgradeId: 'atk_price_war', activation: { cash: 2_000, influence: 30 }, cooldownSec: 22,
             effects: [{ type: 'activate_revenue_slow', target: 'selectedOpponent', fraction: 0.30, category: 'marketing', durationSec: 25 }]
         },
         {
             id: 'ability_shipping', name: 'Port Congestion', verb: 'Block port of', kind: 'attack',
-            sourceUpgradeId: 'atk_shipping', activation: { cash: 6_000, influence: 35 }, cooldownSec: 70,
+            sourceUpgradeId: 'atk_shipping', activation: { cash: 3_000, influence: 35 }, cooldownSec: 23,
             effects: [{ type: 'activate_slow', target: 'selectedOpponent', fraction: 0.30, category: 'supply', durationSec: 16 }]
         },
         {
             id: 'ability_ransomware', name: 'Ransomware', verb: 'Encrypt', kind: 'attack',
-            sourceUpgradeId: 'atk_ransomware', activation: { cash: 25_000, influence: 40 }, cooldownSec: 80,
+            sourceUpgradeId: 'atk_ransomware', activation: { cash: 12_500, influence: 40 }, cooldownSec: 27,
             effects: [{ type: 'activate_slow', target: 'selectedOpponent', fraction: 0.35, category: 'cyber', durationSec: 16 }]
         },
         {
             id: 'ability_patent', name: 'Patent Lawsuit', verb: 'Sue', kind: 'attack',
-            sourceUpgradeId: 'atk_patent', activation: { cash: 35_000, influence: 40 }, cooldownSec: 80,
+            sourceUpgradeId: 'atk_patent', activation: { cash: 17_500, influence: 40 }, cooldownSec: 27,
             effects: [{ type: 'activate_revenue_slow', target: 'selectedOpponent', fraction: 0.40, category: 'legal', durationSec: 30 }]
         },
         {
             id: 'ability_power', name: 'Grid Disruption', verb: 'Black out', kind: 'attack',
-            sourceUpgradeId: 'atk_power', activation: { cash: 45_000, influence: 45 }, cooldownSec: 90,
+            sourceUpgradeId: 'atk_power', activation: { cash: 22_500, influence: 45 }, cooldownSec: 30,
             effects: [{ type: 'activate_slow', target: 'selectedOpponent', fraction: 0.40, category: 'power', durationSec: 14 }]
         },
         {
             id: 'ability_chip', name: 'Chip Embargo', verb: 'Embargo', kind: 'attack',
-            sourceUpgradeId: 'atk_chip', activation: { cash: 200_000, influence: 50 }, cooldownSec: 95,
+            sourceUpgradeId: 'atk_chip', activation: { cash: 100_000, influence: 50 }, cooldownSec: 32,
             effects: [{ type: 'activate_slow', target: 'selectedOpponent', fraction: 0.45, category: 'supply', durationSec: 16 }]
         },
         {
             id: 'ability_botnet', name: 'Botnet Attack', verb: 'Hack', kind: 'attack',
-            sourceUpgradeId: 'atk_botnet', activation: { cash: 300_000, influence: 55 }, cooldownSec: 105,
+            sourceUpgradeId: 'atk_botnet', activation: { cash: 150_000, influence: 55 }, cooldownSec: 35,
             effects: [{ type: 'activate_slow', target: 'selectedOpponent', fraction: 0.50, category: 'cyber', durationSec: 12 }]
         },
         {
             id: 'ability_media', name: 'Recall Hoax', verb: 'Smear', kind: 'attack',
-            sourceUpgradeId: 'atk_media', activation: { cash: 350_000, influence: 45 }, cooldownSec: 100,
+            sourceUpgradeId: 'atk_media', activation: { cash: 175_000, influence: 45 }, cooldownSec: 33,
             effects: [{ type: 'activate_revenue_slow', target: 'selectedOpponent', fraction: 0.50, category: 'marketing', durationSec: 25 }]
         },
         {
             id: 'ability_satellite', name: 'Satellite Jam', verb: 'Jam', kind: 'attack',
-            sourceUpgradeId: 'atk_satellite', activation: { cash: 1_500_000, influence: 60 }, cooldownSec: 115,
+            sourceUpgradeId: 'atk_satellite', activation: { cash: 750_000, influence: 60 }, cooldownSec: 38,
             effects: [{ type: 'activate_slow', target: 'selectedOpponent', fraction: 0.55, category: 'supply', durationSec: 12 }]
         },
         {
             id: 'ability_emp', name: 'EMP Raid', verb: 'Raid', kind: 'attack',
-            sourceUpgradeId: 'atk_emp', activation: { cash: 2_500_000, influence: 65 }, cooldownSec: 125,
+            sourceUpgradeId: 'atk_emp', activation: { cash: 1_250_000, influence: 65 }, cooldownSec: 42,
             effects: [{ type: 'activate_slow', target: 'selectedOpponent', fraction: 0.60, category: 'power', durationSec: 10 }]
         }
     ]

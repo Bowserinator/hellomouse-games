@@ -125,7 +125,6 @@ class PhoneWarsGame extends Game {
             if (!MONEY_MULTIPLIERS.includes(moneyMultiplier)) return 'Invalid money multiplier';
             this.settings.moneyMultiplier = moneyMultiplier;
         }
-        for (const player of this.players) if (player) player.ready = false;
         return '';
     }
 

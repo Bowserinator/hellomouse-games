@@ -9091,5 +9091,361 @@
     "shakeStrength": 0,
     "emitters": [],
     "soundIdentifiers": []
+  },
+  "barcode_scanner": {
+    "kind": "beam",
+    "colour": "#ff2a2a",
+    "durationSeconds": 0.18,
+    "particleCount": 0,
+    "glowIntensity": 6,
+    "shakeStrength": 0,
+    "emitters": [],
+    "soundIdentifiers": []
+  },
+  "barcode_scanner_burst": {
+    "kind": "none",
+    "colour": "#ff2a2a",
+    "durationSeconds": 0,
+    "particleCount": 0,
+    "glowIntensity": 6,
+    "shakeStrength": 0,
+    "emitters": [
+      {
+        "pool": "fire",
+        "count": 32,
+        "shape": "ring",
+        "speed": [
+          0,
+          0
+        ],
+        "lifetime": [
+          0.3,
+          0.5
+        ],
+        "size": [
+          2.5,
+          0.2
+        ],
+        "colours": [
+          "#ff8080",
+          "#5a0a0a"
+        ],
+        "drag": 1.5,
+        "gravityScale": 0,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 8,
+        "radius": [
+          0.5,
+          1
+        ],
+        "radialSpeed": [
+          20,
+          32
+        ]
+      },
+      {
+        "pool": "sparks",
+        "count": 24,
+        "shape": "shell",
+        "speed": [
+          10,
+          26
+        ],
+        "lifetime": [
+          0.2,
+          0.5
+        ],
+        "size": [
+          0.2,
+          0.02
+        ],
+        "colours": [
+          "#ffd0d0",
+          "#ff2a2a"
+        ],
+        "drag": 0.8,
+        "gravityScale": 0,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 6
+      }
+    ],
+    "soundIdentifiers": [
+      "precisionFire"
+    ]
+  },
+  "booster": {
+    "kind": "none",
+    "colour": "#ffb040",
+    "durationSeconds": 0,
+    "particleCount": 0,
+    "glowIntensity": 6,
+    "shakeStrength": 0,
+    "emitters": [
+      {
+        "pool": "fire",
+        "count": 40,
+        "shape": "shell",
+        "speed": [
+          6,
+          18
+        ],
+        "lifetime": [
+          0.2,
+          0.5
+        ],
+        "size": [
+          2,
+          0.2
+        ],
+        "colours": [
+          "#ffe080",
+          "#ff5010"
+        ],
+        "drag": 2,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 6
+      },
+      {
+        "pool": "smoke",
+        "count": 24,
+        "shape": "shell",
+        "speed": [
+          2,
+          8
+        ],
+        "lifetime": [
+          0.8,
+          1.8
+        ],
+        "size": [
+          1.5,
+          4
+        ],
+        "colours": [
+          "#a69b89",
+          "#302820"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.04,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0
+      }
+    ],
+    "soundIdentifiers": []
+  },
+  "tornado": {
+    "kind": "none",
+    "colour": "#c8d0d8",
+    "durationSeconds": 0,
+    "particleCount": 0,
+    "glowIntensity": 4,
+    "shakeStrength": 0,
+    "emitters": [
+      {
+        "pool": "smoke",
+        "count": 48,
+        "shape": "ring",
+        "speed": [
+          0,
+          2
+        ],
+        "lifetime": [
+          0.6,
+          1.2
+        ],
+        "size": [
+          2,
+          5
+        ],
+        "colours": [
+          "#d0d6dc",
+          "#707880"
+        ],
+        "drag": 1.5,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 0,
+        "radius": [
+          1,
+          4
+        ],
+        "radialSpeed": [
+          6,
+          12
+        ]
+      }
+    ],
+    "soundIdentifiers": [],
+    "loopSoundIdentifier": "woosh"
+  },
+  "repair_kit": {
+    "kind": "none",
+    "colour": "#60ff90",
+    "durationSeconds": 0,
+    "particleCount": 0,
+    "glowIntensity": 5,
+    "shakeStrength": 0,
+    "emitters": [
+      {
+        "pool": "fire",
+        "count": 36,
+        "shape": "shell",
+        "speed": [
+          2,
+          8
+        ],
+        "lifetime": [
+          0.4,
+          0.9
+        ],
+        "size": [
+          1.5,
+          0.2
+        ],
+        "colours": [
+          "#c0ffd0",
+          "#20c060"
+        ],
+        "drag": 2,
+        "gravityScale": -0.05,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 6
+      },
+      {
+        "pool": "sparks",
+        "count": 30,
+        "shape": "shell",
+        "speed": [
+          4,
+          14
+        ],
+        "lifetime": [
+          0.3,
+          0.8
+        ],
+        "size": [
+          0.2,
+          0.02
+        ],
+        "colours": [
+          "#ffffff",
+          "#60ff90"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.02,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 6
+      }
+    ],
+    "soundIdentifiers": []
+  },
+  "teleporter": {
+    "kind": "none",
+    "colour": "#c77dff",
+    "durationSeconds": 0,
+    "particleCount": 0,
+    "glowIntensity": 6,
+    "shakeStrength": 0,
+    "emitters": [
+      {
+        "pool": "fire",
+        "count": 40,
+        "shape": "ring",
+        "speed": [
+          0,
+          0
+        ],
+        "lifetime": [
+          0.3,
+          0.6
+        ],
+        "size": [
+          2.5,
+          0.2
+        ],
+        "colours": [
+          "#e0b0ff",
+          "#3a0a7a"
+        ],
+        "drag": 1.5,
+        "gravityScale": 0,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 8,
+        "radius": [
+          0.5,
+          1
+        ],
+        "radialSpeed": [
+          10,
+          18
+        ]
+      },
+      {
+        "pool": "sparks",
+        "count": 32,
+        "shape": "shell",
+        "speed": [
+          4,
+          16
+        ],
+        "lifetime": [
+          0.3,
+          0.8
+        ],
+        "size": [
+          0.2,
+          0.02
+        ],
+        "colours": [
+          "#f0d0ff",
+          "#a040ff"
+        ],
+        "drag": 0.8,
+        "gravityScale": -0.03,
+        "spin": [
+          -5,
+          5
+        ],
+        "glow": 6
+      }
+    ],
+    "soundIdentifiers": []
+  },
+  "launch_star_sound": {
+    "kind": "none",
+    "colour": "#ffffff",
+    "durationSeconds": 0,
+    "particleCount": 0,
+    "glowIntensity": 0,
+    "shakeStrength": 0,
+    "emitters": [],
+    "soundIdentifiers": [
+      "missileLaunch"
+    ]
   }
 }

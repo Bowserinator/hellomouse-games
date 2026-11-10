@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Snakes and ladders, but you bet on stocks. For 1-8 players.">
+    <meta name="author" content="Bowserinator">
+    <meta name="theme-color" content="#000000">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Hellomouse Games">
+    <meta property="og:title" content="Stocks and Ladders - Hellomouse Games">
+    <meta property="og:description" content="Snakes and ladders, but you bet on stocks. For 1-8 players.">
+    <meta property="og:image" content="https://games.hellomouse.net/stocks_and_ladders/img/thumbnail.png">
+    <meta property="og:image:width" content="560">
+    <meta property="og:image:height" content="300">
+    <meta property="og:image:alt" content="Stocks and Ladders stock trading game">
+    <meta property="og:url" content="https://games.hellomouse.net/stocks_and_ladders/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Stocks and Ladders - Hellomouse Games">
+    <meta name="twitter:description" content="Snakes and ladders, but you bet on stocks. For 1-8 players.">
+    <meta name="twitter:image" content="https://games.hellomouse.net/stocks_and_ladders/img/thumbnail.png">
+    <title>Stocks and Ladders</title>
+    <link rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" href="css/index.css">
+    <script src="/shared/js/index.js" defer></script>
+    <script src="js/game.js" type="module"></script>
+</head>
+<body>
+    <p id="disconnect-banner" role="alert" hidden></p>
+    <main id="lobby">
+        <nav class="menubar lobby-title">
+            <button id="rules-open-lobby" type="button">96) Rules</button>
+            <a href="/" target="_blank" rel="noopener">97) More games</a>
+            <span class="spacer"></span>
+            <h1>Stocks and Ladders</h1>
+        </nav>
+        <section class="lobby-card">
+            <h2>Lobby</h2>
+            <ol id="players"></ol>
+            <form id="username-form">
+                <label for="username">Your name</label>
+                <div class="input-row">
+                    <input id="username" maxlength="16" pattern="[A-Za-z0-9_]+" required autocomplete="nickname">
+                    <button type="submit">Set name</button>
+                </div>
+            </form>
+            <label for="invite">Invite your friends</label>
+            <div class="input-row" id="invite-row">
+                <input id="invite" readonly>
+                <button id="copy-invite" type="button">Copy invite</button>
+            </div>
+            <span id="color-label" class="field-label">Color</span>
+            <div id="color-picker" class="chip-group" role="radiogroup" aria-labelledby="color-label"></div>
+            <div class="button-row">
+                <button id="ready" type="button">Ready</button>
+                <button id="start-game" class="primary" type="button">Start game</button>
+            </div>
+            <p id="start-help" role="status"></p>
+            <button id="new-room" type="button" hidden>Room unavailable — start a new room</button>
+        </section>
+        <section class="lobby-card">
+            <h2>Match settings</h2>
+            <span id="rounds-label" class="field-label">Rounds</span>
+            <div id="rounds-option" class="toggle-group" role="radiogroup" aria-labelledby="rounds-label"></div>
+            <span id="timer-label" class="field-label">Time per round</span>
+            <div id="timer-option" class="toggle-group" role="radiogroup" aria-labelledby="timer-label"></div>
+            <p class="rules">
+                Five stocks, each with its own hidden personality. Every round, split your money across them,
+                then watch the day play out. Prices carry over between rounds, so learn who is who.
+            </p>
+        </section>
+    </main>
+
+    <main id="game" hidden>
+        <header class="commandbar">
+            <span class="field wide">STOCKS AND LADDERS Equity <i>▾</i></span>
+            <span class="spacer"></span>
+            <span id="day-label"></span>
+            <span id="clock" aria-live="off"></span>
+        </header>
+        <section id="quote" class="quote">
+            <div class="quote-main">
+                <b id="quote-name"></b>
+                <span class="unit">$</span>
+                <span id="quote-arrow"></span>
+                <span id="quote-value"></span>
+                <span id="quote-change"></span>
+            </div>
+            <div class="quote-stats">
+                <span>Rank <b id="quote-rank"></b></span>
+                <span>Open <b id="quote-open"></b></span>
+                <span>High <b id="quote-high"></b></span>
+                <span>Low <b id="quote-low"></b></span>
+                <span>Day <b id="quote-day"></b></span>
+            </div>
+        </section>
+        <nav class="menubar">
+            <button id="rules-open-game" type="button">96) Rules</button>
+            <button id="show-results" type="button" hidden>97) Results</button>
+            <span class="spacer"></span>
+            <span class="menu-title">Stocks and Ladders</span>
+        </nav>
+        <div class="subheader">
+            <span class="tag">USD</span>
+            <span id="match-name" class="cyan"></span>
+            <span class="spacer"></span>
+            <span class="sub-label">Rounds</span>
+            <span id="match-rounds" class="select"></span>
+            <span class="sub-label">Timer</span>
+            <span id="match-timer" class="select"></span>
+        </div>
+        <div id="timer-track"><span id="timer-fill"></span></div>
+        <div class="board">
+            <aside class="bar-panel">
+                <div class="panel-head">Allocation</div>
+                <p id="balance" class="balance"></p>
+                <div id="allocation-bar"></div>
+            </aside>
+            <section class="chart-panel">
+                <div id="day-tabs" class="tabs"></div>
+                <div class="chart-area">
+                    <canvas id="chart"></canvas>
+                    <div id="chart-scroll"><div id="chart-spacer"></div></div>
+                </div>
+            </section>
+            <aside class="side-panel">
+                <section class="data-table">
+                    <div class="table-head"><span>In USD</span><span>Last</span><span>Chg %</span></div>
+                    <ul id="stocks"></ul>
+                </section>
+                <section class="data-table scores-table">
+                    <div class="table-head"><span>Player</span><span>Value</span><span>Chg %</span></div>
+                    <ol id="scores"></ol>
+                </section>
+                <button id="lock-in" class="primary" type="button">Ready</button>
+            </aside>
+        </div>
+        <footer class="ticker">
+            <ol>
+                <li><span class="code">407</span><span class="src">BN</span><span class="time"></span><span class="text"></span></li>
+                <li><span class="code">406</span><span class="src">BFW</span><span class="time"></span><span class="text"></span></li>
+                <li><span class="code">405</span><span class="src">BN</span><span class="time"></span><span class="text"></span></li>
+            </ol>
+        </footer>
+    </main>
+
+    <p id="notice" role="alert" hidden></p>
+    <dialog id="rules-modal" aria-labelledby="rules-title">
+        <h2 id="rules-title">Rules</h2>
+        <ol class="rules-list">
+            <li>Everyone starts with $10,000. After the last round, the biggest balance wins.</li>
+            <li>Each round is one trading day. Drag the four dividers on the left bar to split your whole balance across the five stocks. The split always totals 100%.</li>
+            <li>Press Ready when you are done. If the timer runs out, your current split is locked in for you. You can press Unready to change your mind until then.</li>
+            <li>When the day starts, your money becomes shares at the opening price. When it ends, the shares are sold at the closing price. Prices carry over into the next day.</li>
+            <li>Each stock has a hidden personality, and tickers are random every match. One climbs slowly, one swings wildly, one moves in waves, one is calm until a sudden crash or spike, and one rises then falls. Watch the charts to work out who is who.</li>
+            <li>Rivals' splits stay secret during the match. You only see their scores. Allocations by round are revealed at the end.</li>
+            <li>While planning, scroll the chart left to look at earlier days.</li>
+        </ol>
+        <div class="button-row">
+            <button id="rules-close" class="primary" type="button">Got it</button>
+        </div>
+    </dialog>
+    <dialog id="results-modal" aria-labelledby="results-title">
+        <h2 id="results-title"></h2>
+        <ol id="standings"></ol>
+        <span class="field-label">Allocation by round</span>
+        <div id="breakdown-players" class="chip-row"></div>
+        <div id="breakdown"></div>
+        <ul id="behaviors"></ul>
+        <div class="button-row">
+            <button id="results-close" type="button">View charts</button>
+            <button id="results-lobby" class="primary" type="button">Back to lobby</button>
+            <span id="results-wait">Waiting for the host…</span>
+        </div>
+    </dialog>
+</body>
+</html>

@@ -103,7 +103,7 @@ const terrainFields: Fields = {
     noiseFrequency: positive, rayCount: number(0, 64, true), rayLengthInVoxels: nonnegative,
     rayAngularSharpness: positive, rippleRingCount: number(0, 32, true), rippleSpacingInVoxels: positive,
     lengthInVoxels: positive, heightInVoxels: positive, widthInVoxels: positive, thicknessInVoxels: positive,
-    offset: vector
+    spreadDegrees: number(0, 89), offset: vector
 };
 const terrainOperation: Rule = (value, path) => {
     const fields = record(value, path);
@@ -115,12 +115,15 @@ const terrainOperation: Rule = (value, path) => {
         carveCylinder: { ...radius, heightInVoxels: positive },
         carveRavine: { lengthInVoxels: positive, widthInVoxels: positive, heightInVoxels: positive },
         addHollowDome: { ...radius, thicknessInVoxels: positive },
-        liftColumn: { ...radius, heightInVoxels: positive, thicknessInVoxels: positive }, scorch: radius
+        liftColumn: { ...radius, heightInVoxels: positive, thicknessInVoxels: positive }, scorch: radius,
+        addFunnel: { ...radius, heightInVoxels: positive, thicknessInVoxels: positive,
+            spreadDegrees: terrainFields.spreadDegrees }
     };
     if (typeof fields.operation !== 'string' || !Object.prototype.hasOwnProperty.call(required, fields.operation))
         invalid(`${path}.operation`, 'Unknown terrain operation');
     const optional: Fields = { offset: vector };
-    if (['addSphere', 'addHollowDome', 'scorch'].includes(fields.operation)) optional.materialIdentifier = material;
+    if (['addSphere', 'addHollowDome', 'scorch', 'addFunnel'].includes(fields.operation))
+        optional.materialIdentifier = material;
     if (fields.operation === 'carveShapedBlast')
         for (const key of ['irregularityFraction', 'noiseFrequency', 'rayCount', 'rayLengthInVoxels',
             'rayAngularSharpness', 'rippleRingCount', 'rippleSpacingInVoxels']) optional[key] = terrainFields[key];
@@ -133,7 +136,8 @@ const deployableFields: Fields = {
     modelIdentifier: identifier, delaySeconds: seconds, durationSeconds: seconds, intervalSeconds: seconds,
     shotCount: count, projectileIdentifier: identifier, damageProfileIdentifier: identifier,
     terrainProfileIdentifier: identifier, rangeInVoxels: positive, widthInVoxels: positive, heightInVoxels: positive,
-    thicknessInVoxels: positive, radiusInVoxels: positive, lengthInVoxels: positive, speedInVoxelsPerSecond: positive,
+    thicknessInVoxels: positive, spacingInVoxels: positive, radiusInVoxels: positive, lengthInVoxels: positive,
+    speedInVoxelsPerSecond: positive,
     dropSpeedInVoxelsPerSecond: nonnegative, liftInVoxels: positive, materialIdentifier: material,
     embeddedDepthInVoxels: nonnegative,
     coneDegrees: number(0, 360), persistTurns: number(1, 32, true),
@@ -152,15 +156,18 @@ const deployable: Rule = (value, path) => {
         storm: ['damageProfileIdentifier', 'terrainProfileIdentifier', 'rangeInVoxels', 'intervalSeconds'],
         marker: ['modelIdentifier', 'persistTurns'],
         airstrike: ['modelIdentifier', 'projectileIdentifier', 'intervalSeconds', 'shotCount', 'heightInVoxels',
-            'speedInVoxelsPerSecond']
+            'speedInVoxelsPerSecond'],
+        scanner: ['widthInVoxels', 'lengthInVoxels', 'spacingInVoxels', 'radiusInVoxels', 'heightInVoxels',
+            'durationSeconds', 'damageProfileIdentifier'],
+        tornado: ['modelIdentifier', 'radiusInVoxels', 'widthInVoxels', 'thicknessInVoxels', 'liftInVoxels',
+            'speedInVoxelsPerSecond', 'durationSeconds', 'intervalSeconds', 'damageProfileIdentifier']
     };
     if (typeof fields.kind !== 'string' || !Object.prototype.hasOwnProperty.call(requiredByKind, fields.kind))
         invalid(`${path}.kind`, 'Unknown deployable kind');
     const required: Fields = { kind: choice(fields.kind), effectProfileIdentifier: identifier };
     for (const key of requiredByKind[fields.kind]) required[key] = deployableFields[key];
-    if (fields.kind === 'wall' || fields.kind === 'dome') required.durationSeconds = number(.001, 30);
-    if (fields.kind === 'turret' || fields.kind === 'storm' || fields.kind === 'airstrike')
-        required.intervalSeconds = number(.001, 30);
+    if (['wall', 'dome', 'scanner', 'tornado'].includes(fields.kind)) required.durationSeconds = number(.001, 30);
+    if (['turret', 'storm', 'airstrike', 'tornado'].includes(fields.kind)) required.intervalSeconds = number(.001, 30);
     if (fields.kind === 'elevator') {
         required.thicknessInVoxels = number(1, 128, true);
         required.liftInVoxels = number(1, 128, true);
@@ -190,7 +197,7 @@ function actionRule(kind: string, required: Fields, optional: Fields = {}): void
 }
 actionRule('launchProjectile', { projectileIdentifier: identifier }, { yawOffsetDegrees: angle, pitchOffsetDegrees: angle,
     speedScale: number(0, 100), speedInVoxelsPerSecond: nonnegative, velocity: vector,
-    target: choice('aim', 'nearestTank', 'up', 'down'), origin: choice('context', 'owner', 'sky') });
+    target: choice('aim', 'nearestTank', 'up', 'down', 'autoAim'), origin: choice('context', 'owner', 'sky') });
 actionRule('spawnProjectiles', { projectileIdentifier: identifier, count,
     pattern: choice('single', 'spread', 'cone', 'ring', 'fountain', 'sphereShell', 'randomArea', 'line') }, {
     yawSpreadDegrees: number(0, 360), pitchSpreadDegrees: number(0, 180), pitchDegrees: angle,
@@ -200,26 +207,30 @@ actionRule('spawnProjectiles', { projectileIdentifier: identifier, count,
 });
 actionRule('explode', { terrainProfileIdentifier: identifier, damageProfileIdentifier: identifier,
     effectProfileIdentifier: identifier }, { terrainOverrides: object({}, terrainFields), damageOverrides: damage });
-actionRule('applyTerrain', { terrainProfileIdentifier: identifier }, { terrainOverrides: object({}, terrainFields) });
+actionRule('applyTerrain', { terrainProfileIdentifier: identifier }, { terrainOverrides: object({}, terrainFields),
+    centerOnTargetTank: boolean });
 actionRule('applyDamage', { damageProfileIdentifier: identifier }, { damageOverrides: damage });
 actionRule('playEffect', { effectProfileIdentifier: identifier }, { durationSeconds: seconds });
 actionRule('schedule', { delaySeconds: seconds, actions });
 actionRule('repeat', { count, intervalSeconds: seconds, actions }, { offsetPerIteration: vector });
 actionRule('setProjectileMode', {}, modeFields);
 actionRule('setProjectileVelocity', {}, { velocity: vector, speedInVoxelsPerSecond: nonnegative,
-    verticalSpeedInVoxelsPerSecond: number(-4096, 4096), horizontalSpeedScale: number(0, 10),
+    verticalSpeedInVoxelsPerSecond: number(-4096, 4096), horizontalSpeedScale: number(-10, 10),
     target: choice('aim', 'nearestTank', 'up', 'down') });
 actionRule('fireRay', { lengthInVoxels: positive, radiusInVoxels: nonnegative, damageProfileIdentifier: identifier,
     effectProfileIdentifier: identifier, passesThroughTerrain: boolean }, { terrainProfileIdentifier: identifier,
     target: choice('aim', 'nearestTank', 'allLivingTanks', 'down'), targetRangeInVoxels: positive,
-    randomConeDegrees: number(0, 180), origin: choice('context', 'sky'), stopsAtFirstTank: boolean,
-    damagesOwner: boolean });
+    randomConeDegrees: number(0, 180), bendTowardTankRangeInVoxels: positive, origin: choice('context', 'sky'),
+    stopsAtFirstTank: boolean, damagesOwner: boolean });
 actionRule('createLiquid', { kind: choice('oil', 'lava', 'fire'), cellCount: number(1, 4000, true) }, {
     durationSeconds: seconds, spreadBudget: number(0, 4000, true), igniteAfterSeconds: seconds,
     damageProfileIdentifier: identifier
 });
 actionRule('igniteLiquidNear', { radiusInVoxels: positive });
-actionRule('deployEntity', { definition: deployable });
+actionRule('boostOwner', { speedInVoxelsPerSecond: positive }, { upwardBias: number(0, 1) });
+actionRule('repairTank', { hitPoints: positive });
+actionRule('teleportOwner', { effectProfileIdentifier: identifier });
+actionRule('deployEntity', { definition: deployable }, { atProjectedImpact: boolean });
 actionRule('liftColumn', { radiusInVoxels: positive, thicknessInVoxels: number(1, 128, true),
     liftInVoxels: number(1, 128, true),
     speedInVoxelsPerSecond: positive });

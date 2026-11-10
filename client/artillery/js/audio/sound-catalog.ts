@@ -13,6 +13,7 @@ export const soundCatalog = {
     clink: '/galaxy_tanks/sound/shield_hit.mp3',
     burning: '/galaxy_tanks/sound/lava_sfx.mp3',
     hop: '/galaxy_tanks/sound/jump.mp3',
+    woosh: '/galaxy_tanks/sound/black_hole_woosh.mp3',
     missileLaunch: '/galaxy_tanks/sound/launch_star_launch.mp3',
     stormIdle: '/galaxy_tanks/sound/launch_star_idle.mp3',
     tunnel: '/galaxy_tanks/sound/dark_matter_hum.mp3',

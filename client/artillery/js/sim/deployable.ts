@@ -1,14 +1,16 @@
-import { simulationTicksPerSecond, tankHullHeightInVoxels, worldHeightInVoxels,
-    worldWaterSurfaceHeightInVoxels } from '../config.js';
+import { harmlessDamageProfileIdentifier, simulationTicksPerSecond, tankHullHeightInVoxels, tankHullLengthInVoxels,
+    tornadoFadeOutSeconds, tornadoLiftSpeedInVoxelsPerSecond, tornadoPullPerSecond, tornadoSwirlSpeedInVoxelsPerSecond,
+    worldHeightInVoxels, worldIndestructibleMaximumLayerIndex, worldWaterSurfaceHeightInVoxels } from '../config.js';
 import { arcTangent2, cosineOfRadians, fullCircleInRadians, sineOfRadians } from './math/deterministic-math.js';
 import { StateHash } from './math/hash.js';
-import { Vector3, createVector3, crossProduct, distanceBetweenVectors, normalizeVector } from './math/vector3.js';
+import { Vector3, createVector3, crossProduct, distanceBetweenVectors, normalizeVector,
+    vectorLength } from './math/vector3.js';
 import { Tank } from './tank.js';
 import { WeaponActionContext } from './weapon-actions.js';
 import { DeployableDefinition, WeaponAction } from './weapon-types.js';
 import { Material } from './world/material-table.js';
 import { estimateSurfaceNormal } from './world/surface-normal.js';
-import { carveRavine, liftColumn, setVoxel, TerrainEditResult } from './world/terrain-edit.js';
+import { carveCylinder, carveRavine, liftColumn, setVoxel, TerrainEditResult } from './world/terrain-edit.js';
 import { VoxelWorld } from './world/voxel-world.js';
 
 export type RunDeployableActions = (actions: ReadonlyArray<WeaponAction>, context: WeaponActionContext,
@@ -21,6 +23,7 @@ export class Deployable {
     public progressInVoxels = 0;
     public remainingTurns: number;
     private targetSeatIndices: Array<number> | null = null;
+    private scannedGroundHeights: Array<number> | null = null;
     /** For airstrikes: where the run enters the map, its unit heading across the ground and its length. */
     public readonly pathStart: Vector3 = createVector3();
     public readonly pathHeading = { x: 0, z: 0 };
@@ -96,6 +99,14 @@ export class Deployable {
         }
         if (definition.kind === 'airstrike') {
             this.stepAirstrike(elapsed, world, runActions);
+            return;
+        }
+        if (definition.kind === 'scanner') {
+            this.stepScanner(world, tanks, runActions, onTerrainEdit);
+            return;
+        }
+        if (definition.kind === 'tornado') {
+            this.stepTornado(world, tanks, runActions, onTerrainEdit);
             return;
         }
         if (definition.kind === 'turret' || definition.kind === 'storm') {
@@ -196,6 +207,128 @@ export class Deployable {
             { ...this.context, position, targetSeatIndex: null }, `deployable:${this.serial}.bomb:${shot}`);
         }
         this.isAlive = this.progressInVoxels <= this.pathLength && this.shotsFired < definition.shotCount!;
+    }
+
+    /** Sweeps a line of lasers across a square, one row at a time, burning everything the lasers reach. */
+    private stepScanner(world: VoxelWorld, tanks: ReadonlyArray<Tank>, runActions: RunDeployableActions,
+        onTerrainEdit: (edit: TerrainEditResult) => void): void {
+        const definition = this.definition;
+        const rowCount = Math.ceil(definition.lengthInVoxels!);
+        const columnCount = Math.floor(definition.widthInVoxels! / definition.spacingInVoxels!);
+        const center = this.context.projectedImpact ?? this.context.position;
+        // Burn depth is measured from the ground as it was before the sweep, so rows do not dig on top of each other
+        this.scannedGroundHeights ??= Array.from({ length: rowCount * columnCount }, (_, index) =>
+            world.highestSolidY(Math.floor(center.x - definition.widthInVoxels! / 2 +
+                (index % columnCount + .5) * definition.spacingInVoxels!),
+            Math.floor(center.z - definition.lengthInVoxels! / 2 + Math.floor(index / columnCount) + .5)));
+        const completed = Math.min(rowCount, Math.floor(this.ageInTicks /
+            (definition.durationSeconds! * simulationTicksPerSecond) * rowCount));
+        while (this.progressInVoxels < completed)
+            this.scanRow(this.progressInVoxels++, columnCount, world, tanks, runActions, onTerrainEdit);
+        this.isAlive = this.progressInVoxels < rowCount;
+    }
+
+    private scanRow(row: number, columnCount: number, world: VoxelWorld, tanks: ReadonlyArray<Tank>,
+        runActions: RunDeployableActions, onTerrainEdit: (edit: TerrainEditResult) => void): void {
+        const definition = this.definition, source = this.context.position;
+        const center = this.context.projectedImpact ?? source;
+        const left = center.x - definition.widthInVoxels! / 2;
+        const rowZ = center.z - definition.lengthInVoxels! / 2 + row + .5;
+        const path = `deployable:${this.serial}.row:${row}`;
+        for (let column = 0; column < columnCount; column++) {
+            const columnX = left + (column + .5) * definition.spacingInVoxels!;
+            const ground = this.scannedGroundHeights![row * columnCount + column];
+            const offsetX = columnX - source.x, offsetY = ground + 1 - source.y, offsetZ = rowZ - source.z;
+            const distance = vectorLength(createVector3(offsetX, offsetY, offsetZ));
+            runActions([{ action: 'fireRay', target: 'aim', lengthInVoxels: distance + definition.heightInVoxels!,
+                radiusInVoxels: 0, damageProfileIdentifier: harmlessDamageProfileIdentifier,
+                passesThroughTerrain: false, effectProfileIdentifier: definition.effectProfileIdentifier }],
+            { ...this.context, targetSeatIndex: null, position: source,
+                yawInRadians: arcTangent2(offsetX, offsetZ),
+                pitchInRadians: arcTangent2(offsetY, Math.sqrt(offsetX * offsetX + offsetZ * offsetZ)) },
+            `${path}.beam:${column}`);
+            if (ground >= 0) onTerrainEdit(carveCylinder(world, createVector3(columnX,
+                ground - definition.heightInVoxels! + 1, rowZ), definition.radiusInVoxels!,
+            definition.heightInVoxels!));
+        }
+        const halfReach = tankHullLengthInVoxels / 2;
+        for (const tank of tanks) {
+            const isUnderLine = Math.abs(tank.position.z - rowZ) <= halfReach &&
+                tank.position.x >= left - halfReach && tank.position.x <= left + definition.widthInVoxels! + halfReach;
+            const isExposed = world.highestSolidY(Math.floor(tank.position.x), Math.floor(tank.position.z)) <=
+                tank.position.y + tankHullHeightInVoxels;
+            if (tank.isWreck || !isUnderLine || !isExposed) continue;
+            runActions([{ action: 'applyDamage', damageProfileIdentifier: definition.damageProfileIdentifier! }],
+                { ...this.context, targetSeatIndex: tank.seatIndex, position: { ...tank.position } },
+                `${path}.damage:${tank.seatIndex}`);
+        }
+    }
+
+    /** How far a tornado is through its final fade-out, from 0 (solid) to 1 (gone). */
+    fadeProgress(interpolation: number): number {
+        const remainingTicks = this.definition.durationSeconds! * simulationTicksPerSecond -
+            (this.ageInTicks - 1 + interpolation);
+        return Math.min(1, Math.max(0, 1 - remainingTicks / (tornadoFadeOutSeconds * simulationTicksPerSecond)));
+    }
+
+    /** Digs only ground the tornado has newly moved over, so it makes a trench of fixed depth instead of sinking. */
+    private digNewColumns(world: VoxelWorld, previous: Vector3 | null,
+        onTerrainEdit: (edit: TerrainEditResult) => void): void {
+        const position = this.context.position, radius = this.definition.widthInVoxels! / 2;
+        const isInside = (center: Vector3, x: number, z: number): boolean => {
+            const offsetX = x + .5 - center.x, offsetZ = z + .5 - center.z;
+            return offsetX * offsetX + offsetZ * offsetZ <= radius * radius;
+        };
+        for (let x = Math.floor(position.x - radius); x <= Math.floor(position.x + radius); x++)
+            for (let z = Math.floor(position.z - radius); z <= Math.floor(position.z + radius); z++) {
+                if (!isInside(position, x, z) || previous && isInside(previous, x, z)) continue;
+                const ground = world.highestSolidY(x, z);
+                for (let layer = 0; layer < this.definition.thicknessInVoxels!; layer++)
+                    if (ground - layer > worldIndestructibleMaximumLayerIndex)
+                        onTerrainEdit(setVoxel(world, x, ground - layer, z, Material.AIR));
+            }
+    }
+
+    /** Rolls along the ground, digging it up and carrying enemy tanks around in its funnel while hurting them. */
+    private stepTornado(world: VoxelWorld, tanks: ReadonlyArray<Tank>, runActions: RunDeployableActions,
+        onTerrainEdit: (edit: TerrainEditResult) => void): void {
+        const definition = this.definition, position = this.context.position;
+        const speedPerTick = definition.speedInVoxelsPerSecond! / simulationTicksPerSecond;
+        const yaw = this.context.yawInRadians;
+        const headingX = sineOfRadians(yaw), headingZ = cosineOfRadians(yaw);
+        const previous = createVector3(position.x, position.y, position.z);
+        position.x += headingX * speedPerTick;
+        position.z += headingZ * speedPerTick;
+        const edge = world.mapEdgeLengthInVoxels;
+        if (position.x < 0 || position.z < 0 || position.x >= edge || position.z >= edge) {
+            this.isAlive = false;
+            return;
+        }
+        position.y = Math.max(world.highestSolidY(Math.floor(position.x), Math.floor(position.z)) + 1,
+            worldWaterSurfaceHeightInVoxels);
+        this.digNewColumns(world, this.ageInTicks === 1 ? null : previous, onTerrainEdit);
+        const owner = tanks.find(tank => tank.seatIndex === this.context.ownerSeatIndex);
+        const damageInterval = Math.ceil(definition.intervalSeconds! * simulationTicksPerSecond);
+        const speed = definition.speedInVoxelsPerSecond!;
+        for (const tank of tanks) {
+            const offsetX = position.x - tank.position.x, offsetZ = position.z - tank.position.z;
+            const distance = Math.sqrt(offsetX * offsetX + offsetZ * offsetZ);
+            if (tank.isWreck || tank.seatIndex === owner?.seatIndex || tank.teamIndex === owner?.teamIndex ||
+                distance > definition.radiusInVoxels! || tank.position.y - position.y > definition.liftInVoxels! * 2)
+                continue;
+            const swirl = distance > 0 ? tornadoSwirlSpeedInVoxelsPerSecond / distance : 0;
+            tank.velocity.x = headingX * speed + offsetX * tornadoPullPerSecond + offsetZ * swirl;
+            tank.velocity.z = headingZ * speed + offsetZ * tornadoPullPerSecond - offsetX * swirl;
+            tank.velocity.y = tank.position.y - position.y < definition.liftInVoxels!
+                ? tornadoLiftSpeedInVoxelsPerSecond : 0;
+            tank.isGrounded = false;
+            tank.airbornePeakHeight = Math.max(tank.airbornePeakHeight, tank.position.y);
+            if (this.ageInTicks % damageInterval === 0)
+                runActions([{ action: 'applyDamage', damageProfileIdentifier: definition.damageProfileIdentifier! }],
+                    { ...this.context, targetSeatIndex: tank.seatIndex, position: { ...tank.position } },
+                    `deployable:${this.serial}.damage:${tank.seatIndex}`);
+        }
+        this.isAlive = this.ageInTicks < definition.durationSeconds! * simulationTicksPerSecond;
     }
 
     private stepDetonation(elapsed: number, world: VoxelWorld, runActions: RunDeployableActions): void {
@@ -321,7 +454,8 @@ export class Deployable {
             .number(definition.intervalSeconds ?? 0).number(definition.shotCount ?? 0)
             .number(definition.rangeInVoxels ?? 0).number(definition.widthInVoxels ?? 0)
             .number(definition.heightInVoxels ?? 0).number(definition.thicknessInVoxels ?? 0)
-            .number(definition.radiusInVoxels ?? 0).number(definition.lengthInVoxels ?? 0)
+            .number(definition.spacingInVoxels ?? 0).number(definition.radiusInVoxels ?? 0)
+            .number(definition.lengthInVoxels ?? 0)
             .number(definition.speedInVoxelsPerSecond ?? 0).number(definition.dropSpeedInVoxelsPerSecond ?? 0)
             .number(definition.liftInVoxels ?? 0)
             .number(definition.embeddedDepthInVoxels ?? 0);

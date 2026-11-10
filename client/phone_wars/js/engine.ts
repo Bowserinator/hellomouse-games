@@ -3,7 +3,7 @@ import { GAME_CONFIG, targetScale, thresholdScale, tierMilestone } from './confi
 import { CONTENT } from './upgrades.js';
 import type {
     AttackCategory, Ability, Action, ActionResult, Content, Context, Cost, Effect, EffectType, GameEvent,
-    IntelView, Lane, Machine, MatchState, PlayerState, PublicPlayer, Rates, Settings, Upgrade, View
+    Lane, Machine, MatchState, PlayerState, PublicPlayer, Rates, Settings, Upgrade, View
 } from './types.js';
 
 const LANES: Array<Lane> = ['economy', 'defense', 'offense'];
@@ -28,7 +28,7 @@ export function createMatchState(settings: Settings, companies: Array<string>): 
             smoothPps: 0, clicks: 0, clickBudget: GAME_CONFIG.clickBurst, lastClickAt: 0,
             machines: Object.fromEntries(CONTENT.machines.map(machine => [machine.id, 0])),
             owned: [], readyAt: {}, offenseReadyAt: 0,
-            debuffs: [], shields: [], hits: [], immuneUntil: 0, intel: []
+            debuffs: [], shields: [], hits: [], immuneUntil: 0
         })),
         time: 0, rngState: settings.seed >>> 0, nextEventId: 1, events: [],
         shipmentSeat: -1, winner: -1, placements: []
@@ -48,10 +48,6 @@ function ownedEffects(player: PlayerState): Array<Effect> {
     for (const id of player.owned)
         effects.push(...UPGRADES.get(id)?.effects ?? []);
     return effects;
-}
-
-function hasEffect(player: PlayerState, type: EffectType): boolean {
-    return ownedEffects(player).some(effect => effect.type === type);
 }
 
 /** Effects sharing a stack group add their bonuses, every other effect multiplies. */
@@ -268,23 +264,45 @@ function bonusDuration(attacker: PlayerState, base: number): number {
     return extra;
 }
 
+export function heistFraction(attackerPhones: number, targetPhones: number): number {
+    const { heist } = GAME_CONFIG;
+    if (targetPhones <= attackerPhones) return heist.behindFraction;
+    const ratio = attackerPhones > 0 ? targetPhones / attackerPhones : Infinity;
+    return Math.min(heist.maxFraction, heist.aheadBaseFraction * (1 + Math.log(ratio)));
+}
+
+export function heistShare(attackerPhones: number, targetPhones: number, targetTheftFactor: number): number {
+    return heistFraction(attackerPhones, targetPhones) * targetTheftFactor;
+}
+
+export function theftFactor(defender: PlayerState): number {
+    let factor = 1;
+    for (const effect of ownedEffects(defender))
+        if (effect.type === 'reduce_theft') factor *= 1 - (effect.fraction ?? 0);
+    return factor;
+}
+
+function stealPhones(state: MatchState, attacker: PlayerState, target: PlayerState,
+    base: Pick<GameEvent, 'seat' | 'target' | 'ref'>): boolean {
+    const stolen = target.phonesMade * heistShare(attacker.phonesMade, target.phonesMade, theftFactor(target));
+    if (stolen <= 0) {
+        pushEvent(state, { type: 'attack', outcome: 'failed', ...base });
+        return false;
+    }
+    const earned = stolen * computeRates(attacker, state.time, state.settings.moneyMultiplier).salePrice;
+    target.phonesMade -= stolen;
+    attacker.phonesMade += stolen;
+    attacker.cash += earned;
+    attacker.lifetimeCash += earned;
+    pushEvent(state, { type: 'attack', outcome: 'stolen', amount: stolen, ...base });
+    resolveVictory(state);
+    return true;
+}
+
 function resolveAttack(state: MatchState, attacker: PlayerState, target: PlayerState,
     ability: Ability, activationCash: number): void {
     const time = state.time, { sabotage } = GAME_CONFIG;
     const base = { seat: attacker.seat, target: target.seat, ref: ability.id };
-
-    const recon = ability.effects.find(effect => effect.type === 'activate_recon');
-    if (recon) {
-        if (hasEffect(target, 'hide_recon_details')) {
-            pushEvent(state, { type: 'attack', outcome: 'failed', ...base });
-            return;
-        }
-        const duration = (recon.durationSec ?? 0) * durationFactor(target, 'recon');
-        attacker.intel = attacker.intel.filter(intel => intel.seat !== target.seat);
-        attacker.intel.push({ seat: target.seat, until: time + duration });
-        pushEvent(state, { type: 'attack', outcome: 'recon', duration, ...base });
-        return;
-    }
 
     const grid = target.shields.findIndex(shield => shield.kind === 'block' && shield.until > time);
     if (grid >= 0) {
@@ -298,7 +316,9 @@ function resolveAttack(state: MatchState, attacker: PlayerState, target: PlayerS
         return;
     }
 
-    let landed = false;
+    const targetAhead = target.phonesMade > attacker.phonesMade;
+    let landed = ability.effects.some(effect => effect.type === 'steal_phones') &&
+        stealPhones(state, attacker, target, base);
     for (const effect of ability.effects) {
         const kind = effect.type === 'activate_slow' ? 'pps' : effect.type === 'activate_revenue_slow' ? 'revenue' : null;
         if (!kind) continue;
@@ -331,7 +351,7 @@ function resolveAttack(state: MatchState, attacker: PlayerState, target: PlayerS
         landed = true;
     }
 
-    if (landed && target.phonesMade > attacker.phonesMade)
+    if (landed && targetAhead)
         attacker.cash += Math.min(activationCash * sabotage.leaderBountyCashRefundFraction,
             attacker.cash * sabotage.leaderBountyCurrentCashCapFraction);
 }
@@ -431,7 +451,6 @@ function expireStatuses(state: MatchState): void {
     for (const player of state.players) {
         player.debuffs = player.debuffs.filter(debuff => debuff.expiresAt > time);
         player.shields = player.shields.filter(shield => shield.until > time);
-        player.intel = player.intel.filter(intel => intel.until > time);
         player.hits = player.hits.filter(hit => time - hit.at < GAME_CONFIG.sabotage.antiDogpileWindowSec);
     }
 }
@@ -481,32 +500,17 @@ export function advanceGame(state: MatchState, dt: number): void {
     resolveVictory(state);
 }
 
-function intelOf(target: PlayerState, settings: Settings): IntelView {
-    return {
-        mitigation: mitigationOf(target),
-        tiers: LANES.map(lane => visibleTier(target, lane, settings)),
-        abilities: CONTENT.abilities
-            .filter(ability => ability.kind === 'defense' && target.owned.includes(ability.sourceUpgradeId))
-            .map(ability => ({ id: ability.id, readyAt: target.readyAt[ability.id] ?? 0 }))
-    };
-}
-
 export function selectPlayerView(state: MatchState, seat: number): View {
     const you = state.players[seat];
     const ranking = rankPlayers(state);
-    const players: Array<PublicPlayer> = state.players.map(player => {
-        const secret = hasEffect(player, 'hide_recon_details');
-        const scouted = player !== you && !secret && you?.intel.some(intel => intel.seat === player.seat);
-        return {
-            seat: player.seat, companyId: player.companyId, phonesMade: player.phonesMade, pps: player.smoothPps,
-            rank: ranking.indexOf(player.seat) + 1,
-            shielded: player.shields.length > 0, immune: player.immuneUntil > state.time,
-            pressure: pressureOn(player, state.time),
-            private: secret && player !== you,
-            mitigation: secret && player !== you ? null : mitigationOf(player),
-            intel: scouted ? intelOf(player, state.settings) : null
-        };
-    });
+    const players: Array<PublicPlayer> = state.players.map(player => ({
+        seat: player.seat, companyId: player.companyId, phonesMade: player.phonesMade, pps: player.smoothPps,
+        rank: ranking.indexOf(player.seat) + 1,
+        shielded: player.shields.length > 0, immune: player.immuneUntil > state.time,
+        pressure: pressureOn(player, state.time),
+        mitigation: mitigationOf(player),
+        theftFactor: theftFactor(player)
+    }));
     return {
         time: state.time, settings: state.settings, leaderPhones: contextOf(state).leaderPhones,
         you, players, events: state.events.slice(-12),

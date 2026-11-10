@@ -387,5 +387,25 @@
         "noiseFrequency": 0.35
       }
     ]
+  },
+  "funnel": {
+    "operations": [
+      {
+        "operation": "addFunnel",
+        "radiusInVoxels": 4,
+        "heightInVoxels": 20,
+        "thicknessInVoxels": 2,
+        "spreadDegrees": 40,
+        "materialIdentifier": "DIRT"
+      }
+    ]
+  },
+  "lucky_shot": {
+    "operations": [
+      {
+        "operation": "carveSphere",
+        "radiusInVoxels": 3
+      }
+    ]
   }
 }

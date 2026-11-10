@@ -105,7 +105,7 @@ export interface RemovedVoxelSample {
 
 export interface SimulationEvent {
     type: 'explosion' | 'projectileSpawn' | 'projectileRemoved' | 'beam' | 'burnStart' |
-    'tankDamaged' | 'tankKilled' | 'bounce' | 'splash' | 'terrainAdded' | 'teleport' | 'deployable' | 'effect' |
+    'tankDamaged' | 'tankKilled' | 'tankRepaired' | 'bounce' | 'splash' | 'terrainAdded' | 'teleport' | 'deployable' | 'effect' |
     'line' | 'lineEnd';
     tick: number;
     serial: number;

@@ -389,5 +389,29 @@
     "falloff": "constant",
     "knockbackImpulse": 100,
     "knockbackUpwardBias": 0.35
+  },
+  "harmless": {
+    "directHitDamage": 0,
+    "splashDamage": 0,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 0,
+    "knockbackUpwardBias": 0.35
+  },
+  "barcode_scanner": {
+    "directHitDamage": 1,
+    "splashDamage": 0,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 0,
+    "knockbackUpwardBias": 0.35
+  },
+  "tornado": {
+    "directHitDamage": 1,
+    "splashDamage": 0,
+    "splashRadiusInVoxels": 0,
+    "falloff": "constant",
+    "knockbackImpulse": 0,
+    "knockbackUpwardBias": 0.35
   }
 }

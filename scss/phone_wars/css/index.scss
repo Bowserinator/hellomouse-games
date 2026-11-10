@@ -28,6 +28,28 @@ $shadow-raised: 0 4px 8px rgba(0, 0, 0, .2), 0 2px 4px rgba(0, 0, 0, .14);
     display: none !important;
 }
 
+// Thin, trackless scrollbars like Android's
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 2px;
+    background: rgba(0, 0, 0, .35);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, .35) transparent;
+    }
+}
+
 body {
     margin: 0;
     min-height: 100vh;
@@ -484,6 +506,12 @@ h1, h2 {
         font-size: 96px;
         color: var(--company-primary);
         opacity: .85;
+        cursor: pointer;
+        touch-action: manipulation;
+
+        &.is-shaking {
+            animation: phone-shake .3s ease-in-out;
+        }
     }
 
     .big {
@@ -506,6 +534,28 @@ h1, h2 {
     font-size: 20px;
     font-weight: 700;
     animation: floater-rise .8s ease-out forwards;
+}
+
+@keyframes phone-shake {
+    0%, 100% {
+        transform: translateX(0) rotate(0);
+    }
+
+    20% {
+        transform: translateX(-4px) rotate(-8deg);
+    }
+
+    40% {
+        transform: translateX(4px) rotate(8deg);
+    }
+
+    60% {
+        transform: translateX(-3px) rotate(-5deg);
+    }
+
+    80% {
+        transform: translateX(3px) rotate(5deg);
+    }
 }
 
 @keyframes floater-rise {

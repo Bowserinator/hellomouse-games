@@ -7,7 +7,7 @@ export type PreviewMode = 'ballistic' | 'straight' | 'fan' | 'self' | 'direction
 
 export interface TerrainOperation {
     operation: 'carveSphere' | 'carveShapedBlast' | 'addSphere' | 'carveCapsule' | 'carveLineAlongRay' |
-    'carveCylinder' | 'carveRavine' | 'addHollowDome' | 'liftColumn' | 'scorch';
+    'carveCylinder' | 'carveRavine' | 'addHollowDome' | 'liftColumn' | 'scorch' | 'addFunnel';
     radiusInVoxels?: number;
     materialIdentifier?: string;
     irregularityFraction?: number;
@@ -21,6 +21,8 @@ export interface TerrainOperation {
     heightInVoxels?: number;
     widthInVoxels?: number;
     thicknessInVoxels?: number;
+    /** Total opening angle of a cone-shaped edit. */
+    spreadDegrees?: number;
     offset?: VoxelTuple;
 }
 
@@ -50,7 +52,7 @@ interface LaunchAction extends OffsetAction {
     speedScale?: number;
     speedInVoxelsPerSecond?: number;
     velocity?: VoxelTuple;
-    target?: 'aim' | 'nearestTank' | 'up' | 'down';
+    target?: 'aim' | 'nearestTank' | 'up' | 'down' | 'autoAim';
     origin?: 'context' | 'owner' | 'sky';
 }
 
@@ -118,6 +120,8 @@ interface RayAction extends OffsetAction {
     target?: 'aim' | 'nearestTank' | 'allLivingTanks' | 'down';
     targetRangeInVoxels?: number;
     randomConeDegrees?: number;
+    /** Once the ray passes this close to an enemy tank, it turns and heads straight for it. */
+    bendTowardTankRangeInVoxels?: number;
     origin?: 'context' | 'sky';
 }
 
@@ -132,7 +136,8 @@ interface LiquidAction extends OffsetAction {
 }
 
 export interface DeployableDefinition {
-    kind: 'turret' | 'spider' | 'wall' | 'dome' | 'elevator' | 'ravine' | 'storm' | 'marker' | 'airstrike';
+    kind: 'turret' | 'spider' | 'wall' | 'dome' | 'elevator' | 'ravine' | 'storm' | 'marker' | 'airstrike' |
+    'scanner' | 'tornado';
     modelIdentifier?: string;
     effectProfileIdentifier: string;
     delaySeconds?: number;
@@ -146,6 +151,7 @@ export interface DeployableDefinition {
     widthInVoxels?: number;
     heightInVoxels?: number;
     thicknessInVoxels?: number;
+    spacingInVoxels?: number;
     radiusInVoxels?: number;
     lengthInVoxels?: number;
     speedInVoxelsPerSecond?: number;
@@ -160,11 +166,17 @@ export interface DeployableDefinition {
 
 export type WeaponAction = LaunchAction | SpawnAction | TimedActions | RepeatedActions | ModeAction | VelocityAction |
 RayAction | LiquidAction | (OffsetAction & ExplosionReferences & { action: 'explode' }) |
-(OffsetAction & { action: 'applyTerrain'; terrainProfileIdentifier: string; terrainOverrides?: TerrainOverrides }) |
+(OffsetAction & { action: 'applyTerrain'; terrainProfileIdentifier: string; terrainOverrides?: TerrainOverrides;
+    centerOnTargetTank?: boolean }) |
 (OffsetAction & { action: 'applyDamage'; damageProfileIdentifier: string; damageOverrides?: Partial<DamageProfile> }) |
 (OffsetAction & { action: 'playEffect'; effectProfileIdentifier: string; durationSeconds?: number }) |
 (OffsetAction & { action: 'igniteLiquidNear'; radiusInVoxels: number }) |
-(OffsetAction & { action: 'deployEntity'; definition: DeployableDefinition }) |
+(OffsetAction & { action: 'boostOwner'; speedInVoxelsPerSecond: number; upwardBias?: number }) |
+(OffsetAction & { action: 'repairTank'; hitPoints: number }) |
+(OffsetAction & { action: 'teleportOwner'; effectProfileIdentifier: string }) |
+(OffsetAction & { action: 'deployEntity'; definition: DeployableDefinition;
+    /** Gives the deployable the point where the projectile is predicted to land. */
+    atProjectedImpact?: boolean }) |
 (OffsetAction & { action: 'liftColumn'; radiusInVoxels: number; thicknessInVoxels: number; liftInVoxels: number;
     speedInVoxelsPerSecond: number; }) | { action: 'destroySelf' };
 

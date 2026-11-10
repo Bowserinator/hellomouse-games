@@ -2,7 +2,7 @@ import { powerCentipercentMaximum, projectileDefaultLifetimeInSeconds, projectil
     projectileGravityInVoxelsPerSecondSquared, resolveMaximumDurationInSeconds, simulationTicksPerSecond,
     tankHullHeightInVoxels, turretPitchMaximumDegrees, turretPitchMinimumDegrees,
     turretPitchQuantizationSteps } from '../config.js';
-import { radiansPerDegree } from './math/deterministic-math.js';
+import { arcTangent2, arcTangentOfRatio, radiansPerDegree } from './math/deterministic-math.js';
 import { decodePitch, decodeYaw, quantizePitch, quantizeYaw } from './math/fixed-quantize.js';
 import { launchVelocity, stepProjectileBallistics } from './math/projectile-ballistics.js';
 import { Vector3, createVector3, vectorLength } from './math/vector3.js';
@@ -31,13 +31,17 @@ const originIterations = 3;
 const degreesPerPitchStep = (turretPitchMaximumDegrees - turretPitchMinimumDegrees) /
     (turretPitchQuantizationSteps - 1);
 
+function planarLength(x: number, z: number): number {
+    return Math.sqrt(x * x + z * z);
+}
+
 function distanceToSegment(point: Vector3, start: Vector3, end: Vector3): number {
     const x = end.x - start.x, y = end.y - start.y, z = end.z - start.z;
     const lengthSquared = x * x + y * y + z * z;
     const fraction = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1,
         ((point.x - start.x) * x + (point.y - start.y) * y + (point.z - start.z) * z) / lengthSquared));
-    return Math.hypot(start.x + x * fraction - point.x, start.y + y * fraction - point.y,
-        start.z + z * fraction - point.z);
+    return vectorLength(createVector3(start.x + x * fraction - point.x, start.y + y * fraction - point.y,
+        start.z + z * fraction - point.z));
 }
 
 /** Finds a bearing, elevation and power that makes the selected weapon's shot reach the target tank. */
@@ -63,8 +67,8 @@ export function solveAutoAim(world: VoxelWorld, data: WeaponDataFiles, tank: Tan
         for (let iteration = 0; iteration < originIterations; iteration++) {
             const origin = muzzleAt(yaw, pitch);
             const dx = aimPoint.x - origin.x, dz = aimPoint.z - origin.z;
-            yaw = Math.atan2(dx, dz);
-            pitch = Math.atan2(aimPoint.y - origin.y, Math.hypot(dx, dz));
+            yaw = arcTangent2(dx, dz);
+            pitch = arcTangent2(aimPoint.y - origin.y, planarLength(dx, dz));
             if (!withinPitchLimits(pitch)) return { kind: 'unreachable' };
         }
         return { kind: 'solved', solution: { yawQuantized: quantizeYaw(yaw), pitchQuantized: quantizePitch(pitch),
@@ -95,7 +99,8 @@ export function solveAutoAim(world: VoxelWorld, data: WeaponDataFiles, tank: Tan
         let closest = Infinity;
         const sample = (previous: Vector3, next: Vector3): boolean => {
             const hit = raycastVoxels(world, previous, createVector3(next.x - previous.x, next.y - previous.y,
-                next.z - previous.z), Math.hypot(next.x - previous.x, next.y - previous.y, next.z - previous.z));
+                next.z - previous.z), vectorLength(createVector3(next.x - previous.x, next.y - previous.y,
+                next.z - previous.z)));
             closest = Math.min(closest, distanceToSegment(aimPoint, previous, hit ? hit.position : next));
             return hit === null && next.y > 0;
         };
@@ -106,13 +111,16 @@ export function solveAutoAim(world: VoxelWorld, data: WeaponDataFiles, tank: Tan
 
     /** The pitch that lands on the target in a vacuum for the low or high arc. */
     const analyticPitch = (origin: Vector3, speed: number, highArc: boolean): number | null => {
-        const horizontal = Math.hypot(aimPoint.x - origin.x, aimPoint.z - origin.z);
+        const horizontal = planarLength(aimPoint.x - origin.x, aimPoint.z - origin.z);
         const rise = aimPoint.y - origin.y;
-        if (gravity === 0) return Math.atan2(rise, horizontal);
+        if (gravity === 0) return arcTangent2(rise, horizontal);
         if (horizontal < .5) return highArc ? turretPitchMaximumDegrees * radiansPerDegree : null;
-        const discriminant = speed ** 4 - gravity * (gravity * horizontal * horizontal + 2 * rise * speed * speed);
+        const speedSquared = speed * speed;
+        const discriminant = speedSquared * speedSquared - gravity * (gravity * horizontal * horizontal +
+            2 * rise * speedSquared);
         if (discriminant < 0) return null;
-        return Math.atan((speed * speed + (highArc ? 1 : -1) * Math.sqrt(discriminant)) / (gravity * horizontal));
+        return arcTangentOfRatio((speedSquared + (highArc ? 1 : -1) * Math.sqrt(discriminant)) /
+            (gravity * horizontal));
     };
 
     const powers: Array<number> = [];
@@ -130,7 +138,7 @@ export function solveAutoAim(world: VoxelWorld, data: WeaponDataFiles, tank: Tan
             let valid = true;
             for (let iteration = 0; iteration < originIterations && valid; iteration++) {
                 const origin = muzzleAt(yaw, pitch);
-                yaw = Math.atan2(aimPoint.x - origin.x, aimPoint.z - origin.z);
+                yaw = arcTangent2(aimPoint.x - origin.x, aimPoint.z - origin.z);
                 const guess = analyticPitch(origin, speed, highArc);
                 if (guess === null) valid = false;
                 else pitch = Math.max(turretPitchMinimumDegrees * radiansPerDegree,
