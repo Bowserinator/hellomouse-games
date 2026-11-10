@@ -112,6 +112,14 @@ export function resolveSelection(
     return chosen;
 }
 
+export function emptyCause(sel: Selector): string {
+    if (sel.zone === 'deck' || sel.zone === 'discard') return sel.zone;
+    if (sel.zone !== 'hand' && sel.zone !== 'stable') return 'target';
+    if (sel.owner === 'self') return sel.zone;
+    if (sel.owner === 'other') return sel.zone === 'hand' ? 'otherHand' : 'otherStable';
+    return 'target';
+}
+
 export function canSatisfy(ex: ExecCtx, sel: Selector, controller: number, frame: Frame, cause?: EventType): boolean {
     const candidates = candidatesOf(ex, sel, controller, cause);
     return candidates.length >= targetRange(sel.count, frame).min;

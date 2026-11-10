@@ -24,11 +24,12 @@ export type EventType =
     | 'turnStart'
     | 'turnEnd'
     | 'deckOut'
-    | 'move';
+    | 'move'
+    | 'fizzle';
 
 export const EVENT_TYPES: Array<EventType> = [
     'play', 'enterStable', 'leaveStable', 'destroy', 'discard',
-    'sacrifice', 'return', 'draw', 'neigh', 'cancel', 'turnStart', 'turnEnd', 'deckOut', 'move'
+    'sacrifice', 'return', 'draw', 'neigh', 'cancel', 'turnStart', 'turnEnd', 'deckOut', 'move', 'fizzle'
 ];
 
 export type NodeId = string;
@@ -212,6 +213,7 @@ export interface CardEvent {
     type: EventType;
     card?: Iid;
     player?: number;
+    by?: number;
     from?: Place;
     to?: Place;
     targetCard?: Iid;

@@ -12,7 +12,7 @@ import { findReplacements } from '../query/replacements.js';
 import type { ExecCtx } from './context.js';
 import { ImpossibleError, controllerOf, eventOf, moveCtxOf, sourceOf, worldOf } from './context.js';
 import { ask } from './prompt.js';
-import { canSatisfy, resolveSelection, revealToAll, targetRange } from './selectors.js';
+import { canSatisfy, emptyCause, resolveSelection, revealToAll, targetRange } from './selectors.js';
 
 export type PrimResult = 'done' | 'wait';
 
@@ -25,6 +25,12 @@ function requireCandidates(ex: ExecCtx, frame: Frame, prim: Primitive, controlle
     for (const sel of requiredSelectors(prim))
         if (!canSatisfy(ex, sel, controller, frame, prim.p === 'destroy' || prim.p === 'sacrifice' ? prim.p : undefined))
             throw new ImpossibleError();
+}
+
+function fizzle(ex: ExecCtx, frame: Frame, cause: string) {
+    if (ex.sim) return;
+    const source = sourceOf(frame);
+    ex.log.emit({ type: 'fizzle', card: source || undefined, player: controllerOf(ex, frame), cause });
 }
 
 function ensureDeck(ex: ExecCtx) {
@@ -99,6 +105,7 @@ function takeFrom(
         const candidates = ex.state[from].filter(iid => matches(spec.filter, iid, ctx));
         if (candidates.length === 0) {
             if (shuffleAfter) shuffleZone(ex, from, controller);
+            fizzle(ex, frame, from);
             return 'done';
         }
         revealTo(ex, candidates, controller);
@@ -134,6 +141,11 @@ function moveSelected(
 ): PrimResult {
     const chosen = resolveSelection(ex, frame, `${frame.node}:${index}`, sel, sourceOf(frame), cause);
     if (chosen === 'wait') return 'wait';
+    if (chosen.length === 0) {
+        fizzle(ex, frame, emptyCause(sel));
+        frame.bindings.__success = false;
+        return 'done';
+    }
     const order = replacementOrder(ex, frame, chosen, cause);
     if (order === 'wait') return 'wait';
     const ctx = { ...moveCtxOf(ex), order };
@@ -205,7 +217,10 @@ function lookAndSteal(ex: ExecCtx, frame: Frame, prim: { from: 'deck' | 'discard
 
     if (!Array.isArray(looked)) {
         const from = ex.state[prim.from];
-        if (from.length === 0) return 'done';
+        if (from.length === 0) {
+            fizzle(ex, frame, prim.from);
+            return 'done';
+        }
         looked = from.slice(0, prim.count);
         bulkMove(ex.state, looked, 'limbo', undefined, ex.log);
         revealToAll(ex, looked);
@@ -407,6 +422,10 @@ export function runPrimitive(ex: ExecCtx, frame: Frame, prim: Primitive): PrimRe
         case 'stealUntil': {
             const chosen = resolveSelection(ex, frame, `${frame.node}:0`, prim.sel, sourceOf(frame));
             if (chosen === 'wait') return 'wait';
+            if (chosen.length === 0) {
+                fizzle(ex, frame, emptyCause(prim.sel));
+                return 'done';
+            }
             const source = sourceOf(frame);
             for (const iid of chosen) {
                 const owner = ex.state.cards[iid]?.owner;
@@ -454,7 +473,10 @@ export function runPrimitive(ex: ExecCtx, frame: Frame, prim: Primitive): PrimRe
             if (theirs === 'wait') return 'wait';
             const a = mine[0];
             const b = theirs[0];
-            if (!a || !b) return 'done';
+            if (!a || !b) {
+                fizzle(ex, frame, emptyCause(a ? prim.theirs : prim.mine));
+                return 'done';
+            }
             const ctx = moveCtxOf(ex);
             const ownerA = ex.state.cards[a].owner;
             const ownerB = ex.state.cards[b].owner;
@@ -469,6 +491,7 @@ export function runPrimitive(ex: ExecCtx, frame: Frame, prim: Primitive): PrimRe
         case 'shuffleInto': {
             const chosen = resolveSelection(ex, frame, `${frame.node}:0`, prim.sel, sourceOf(frame));
             if (chosen === 'wait') return 'wait';
+            if (chosen.length === 0) fizzle(ex, frame, emptyCause(prim.sel));
             const ctx = moveCtxOf(ex);
             const owner = ownerFor(ex, frame, prim.owner);
             for (const iid of chosen) moveCard(ctx, iid, { zone: prim.zone, owner }, 'play');

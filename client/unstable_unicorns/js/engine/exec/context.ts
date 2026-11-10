@@ -24,6 +24,7 @@ export interface ExecCtx {
     prompts: { n: number };
     custom: Record<string, CustomHandler>;
     sim?: boolean;
+    actor?: number;
     queue(pending: Pending): void;
     deckOut?: () => void;
 }
@@ -36,6 +37,7 @@ export function moveCtxOf(ex: ExecCtx): MoveCtx {
     return {
         ...worldOf(ex),
         log: ex.log,
+        actor: ex.actor,
         runReplacement: (player, source, effect, event) => {
             ex.queue({ source, player, effect: effect.id as NodeId, event });
         }

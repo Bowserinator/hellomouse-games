@@ -15,6 +15,7 @@ export type Destination = Zone | { zone: Zone; owner?: number };
 export interface MoveCtx extends World {
     log: EventLog;
     runReplacement(player: number, source: Iid, effect: Effect, event: CardEvent): void;
+    actor?: number;
     order?: Array<Iid>;
     ignoredReplacements?: Array<Iid>;
 }
@@ -119,6 +120,7 @@ export function moveCard(ctx: MoveCtx, iid: Iid, dest: Destination, cause: Event
         from: placeOf(from, previousOwner), to: placeOf(to, owner),
         publicDefId: played ? def?.id : undefined,
         ...played && owner !== previousOwner ? { targetPlayer: owner } : {},
+        ...ctx.actor !== undefined ? { by: ctx.actor } : {},
         unicorn: wasUnicorn, suppressed });
     if (from === 'stable' && (to !== 'stable' || owner !== previousOwner))
         ctx.log.emit({ type: 'leaveStable', card: iid, player: previousOwner, unicorn: wasUnicorn, suppressed });

@@ -1,5 +1,5 @@
 import { cardEntry } from './card.js';
-import { playTarget, seatName } from './log.js';
+import { fizzleReason, isPlayEvent, playTarget, seatName } from './log.js';
 import type { LoggedEvent } from '../engine/events.js';
 import type { ViewModel } from '../engine/view.js';
 
@@ -14,7 +14,14 @@ export function bindEffectToast(node: HTMLElement): void {
 }
 
 export function effectToast(event: LoggedEvent, view: ViewModel, names: Array<string | null>): void {
+    if (event.type === 'fizzle') {
+        const source = event.card === undefined ? undefined : view.cards[event.card]?.defId;
+        showEffectToast(`${seatName(names, event.player)}\u2019s ${source ? cardEntry(source)?.name ?? 'card' : 'effect'} had no effect`,
+            `It could not be applied because ${fizzleReason(event, false)}.`);
+        return;
+    }
     if ((event.type !== 'play' && event.type !== 'enterStable') || event.card === undefined) return;
+    if (event.type === 'play' && !isPlayEvent(event)) return;
     const defId = event.publicDefId ?? view.cards[event.card]?.defId;
     const entry = defId === undefined ? undefined : cardEntry(defId);
     if (!entry) return;

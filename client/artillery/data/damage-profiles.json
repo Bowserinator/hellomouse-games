@@ -106,7 +106,7 @@
   },
   "napalm": {
     "directHitDamage": 0,
-    "splashDamage": 2,
+    "splashDamage": 4,
     "splashRadiusInVoxels": 3,
     "falloff": "constant",
     "knockbackImpulse": 0,
@@ -121,7 +121,7 @@
   },
   "burn_napalm": {
     "damageOverTime": {
-      "amountPerSecond": 1,
+      "amountPerSecond": 3,
       "durationSeconds": 5,
       "stacking": "perSource"
     }

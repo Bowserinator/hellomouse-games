@@ -82,7 +82,12 @@ export function step(ex: ExecCtx): 'ok' | 'wait' {
             return 'ok';
         }
         case 'prim': {
-            if (runPrimitive(ex, frame, node.prim) === 'wait') return 'wait';
+            ex.actor = controllerOf(ex, frame);
+            try {
+                if (runPrimitive(ex, frame, node.prim) === 'wait') return 'wait';
+            } finally {
+                ex.actor = undefined;
+            }
             finish(ex, frame.bindings[SUCCESS] !== false);
             return 'ok';
         }

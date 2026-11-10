@@ -3,6 +3,7 @@ import { CameraController } from './ui/camera-input.js';
 import { CenterView } from './ui/center.js';
 import { ChainBanner } from './ui/chain-banner.js';
 import { ConfirmModal } from './ui/confirm.js';
+import { NoticeModal } from './ui/notice.js';
 import { TargetModal, targetWarning } from './ui/target-modal.js';
 import { HandView, describeBlocker, handInteraction } from './ui/hand.js';
 import { applyHint, hints } from './ui/indicators.js';
@@ -14,7 +15,7 @@ import { contentSize, layout } from './ui/polygon.js';
 import type { TableLayout } from './ui/polygon.js';
 import { seatElement, StatusTooltip } from './ui/seat.js';
 import { tableArt, tableArtExtent } from './ui/table-art.js';
-import { describeEvent } from './ui/log.js';
+import { describeEvent, fizzleReason } from './ui/log.js';
 import { mockHandDefaults, mockView } from './ui/mock.js';
 import { cardEntry, cardLabel, cardName } from './ui/card.js';
 import { bindEffectToast, effectToast } from './ui/effect-toast.js';
@@ -159,6 +160,8 @@ const confirmModal = new ConfirmModal($('confirm-body'), () => {
     note('');
     render();
 });
+
+const noticeModal = new NoticeModal($('notice-body'));
 
 const targetModal = new TargetModal($('target-body'), () => names, seat => {
     if (!view || selectedHand === null) return;
@@ -443,6 +446,7 @@ function applyView(next: ViewModel): void {
 
 function appendLog(events: Array<LoggedEvent>, next: ViewModel | null = view): void {
     if (!next) return;
+    const replay = lastSeq === 0;
     let appended = 0;
     for (const event of events) {
         if (event.seq <= lastSeq) continue;
@@ -456,7 +460,12 @@ function appendLog(events: Array<LoggedEvent>, next: ViewModel | null = view): v
                 original && original !== WILDCARD ? cardName(original) : 'a card', event.superNeigh);
         }
 
-        effectToast(event, next, names);
+        if (event.type === 'fizzle' && event.player === next.seat && !replay)
+            noticeModal.open({
+                text: `This card could not be applied because ${fizzleReason(event, true)}.`,
+                source: event.card === undefined || !next.cards[event.card] ? undefined : cardName(next.cards[event.card].defId)
+            });
+        else effectToast(event, next, names);
         const text = describeEvent(event, next.cards, names);
         if (!text) continue;
         const line = document.createElement('div');
@@ -1033,6 +1042,7 @@ function openWinPreview(): void {
 function closeMockModals(): void {
     promptModal.close();
     confirmModal.close();
+    noticeModal.close();
     targetModal.close();
     if (view) babyModal.render(view);
     winModal.style.display = 'none';
@@ -1048,6 +1058,11 @@ $('mock-modals').addEventListener('click', event => {
         openPromptPreview(which.slice('prompt-'.length));
     else if (which === 'confirm')
         confirmModal.open('This card currently can have no effect. Continue?');
+    else if (which === 'notice')
+        noticeModal.open({
+            text: 'This card could not be applied because the discard pile has no matching card.',
+            source: 'Magical Flying Unicorn'
+        });
     else if (which === 'target')
         openTargetPreview();
     else if (which === 'baby')
