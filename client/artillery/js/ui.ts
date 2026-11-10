@@ -336,10 +336,14 @@ export class ArtilleryUI {
             heading.style.setProperty('grid-row', '1');
             return heading;
         });
+        const rowsUsedPerTeam = new Map<number, number>();
         roster.replaceChildren(...headings, ...seats.map(seat => {
             const row = document.createElement('li');
+            const teamRow = (rowsUsedPerTeam.get(seat.teamIndex) ?? 0) + 1;
+            rowsUsedPerTeam.set(seat.teamIndex, teamRow);
             row.style.setProperty('--team', `#${teamPrimaryColours[seat.teamIndex].toString(16).padStart(6, '0')}`);
             row.style.setProperty('grid-column', String(seat.teamIndex + 1));
+            row.style.setProperty('grid-row', String(teamRow + 1));
             row.classList.toggle('roster__slot--own', seat.seatIndex === seatIndex);
             row.textContent = `${seat.username}${seat.seatIndex === seatIndex ? ' (you)' : ''}`;
             const status = document.createElement('small');
