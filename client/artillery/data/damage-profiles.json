@@ -311,8 +311,8 @@
     "knockbackUpwardBias": 0.35
   },
   "gamma_blaster": {
-    "directHitDamage": 3,
-    "splashDamage": 3,
+    "directHitDamage": 2,
+    "splashDamage": 2,
     "splashRadiusInVoxels": 0,
     "falloff": "constant",
     "knockbackImpulse": 100,

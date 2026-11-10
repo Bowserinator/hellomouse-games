@@ -140,10 +140,11 @@ function renderControls(model: Live): void {
     setText('day-label', view.phase === 'finished' ? 'FINAL RESULTS' : `DAY ${view.round} OF ${view.rounds}`);
     setText('clock', planning ? formatClock(remaining) : '');
     el('timer-fill').style.width = planning ? `${Math.max(0, Math.min(1, remaining / planningMilliseconds)) * 100}%` : '0';
-    lockIn.hidden = view.phase === 'finished';
-    lockIn.disabled = !planning;
+    const finished = view.phase === 'finished';
+    lockIn.hidden = finished && !sync?.isHost;
+    lockIn.disabled = !planning && !finished;
     lockIn.classList.toggle('submitted', view.submitted);
-    setNodeText(lockIn, view.submitted ? 'Unready' : 'Ready');
+    setNodeText(lockIn, finished ? 'Lobby' : view.submitted ? 'Unready' : 'Ready');
     el('show-results').hidden = view.phase !== 'finished';
 }
 
@@ -343,6 +344,10 @@ connection = connectToGame({
 
 el('lock-in').onclick = () => {
     const model = live();
+    if (model?.view.phase === 'finished') {
+        move({ action: 'RETURN_TO_LOBBY' });
+        return;
+    }
     if (!model || model.view.phase !== 'planning') return;
     if (model.view.submitted) move({ action: 'UNSUBMIT' });
     else move({ action: 'SUBMIT', allocation: bar.getAllocation() });

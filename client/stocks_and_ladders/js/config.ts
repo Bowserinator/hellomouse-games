@@ -37,14 +37,14 @@ export const BEHAVIOR_LABELS: Record<Behavior, string> = {
 export const BEHAVIOR_PARAMS = {
     steady: { drift: 0.0004, sigma: 0.0015 * NOISE },
     volatile: { sigma: 0.03 * NOISE },
-    wave: { minPeriodRounds: 3, maxPeriodRounds: 8, minAmplitude: 0.1, maxAmplitude: 0.25, jitter: 0.004 * NOISE },
+    wave: { minPeriodRounds: 3, maxPeriodRounds: 8, minAmplitude: 0.1, maxAmplitude: 0.25, jitter: 0.02 * NOISE },
     swan: {
         drift: 0.0001, sigma: 0.002 * NOISE, chancePerTick: 0.005, crashShare: 0.65,
         minCrash: 0.25, maxCrash: 0.45, minRise: 0.2, maxRise: 0.4
     },
     trend: {
         minPeakFraction: 0.35, maxPeakFraction: 0.65, minRise: 0.5, maxRise: 0.9,
-        minFall: 0.3, maxFall: 0.5, jitter: 0.003 * NOISE
+        minFall: 0.3, maxFall: 0.5, jitter: 0.015 * NOISE
     }
 };
 

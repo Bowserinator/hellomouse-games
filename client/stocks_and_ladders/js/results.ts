@@ -91,7 +91,8 @@ export class Results {
             column.append(stack, label);
             return column;
         }));
-        el('behaviors').replaceChildren(...view.tickers.map((ticker, stock) =>
-            listItem(STOCK_COLORS[stock], `${ticker} · ${BEHAVIOR_LABELS[final.behaviors[stock]]}`)));
+        // Sorted so the order cannot be matched back to the stocks
+        el('behaviors').replaceChildren(...final.behaviors.map(behavior => BEHAVIOR_LABELS[behavior]).sort()
+            .map(label => Object.assign(document.createElement('li'), { textContent: label })));
     }
 }
