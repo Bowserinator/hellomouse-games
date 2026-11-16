@@ -64,10 +64,9 @@
             <div id="rounds-option" class="toggle-group" role="radiogroup" aria-labelledby="rounds-label"></div>
             <span id="timer-label" class="field-label">Time per round</span>
             <div id="timer-option" class="toggle-group" role="radiogroup" aria-labelledby="timer-label"></div>
-            <p class="rules">
-                Five stocks, each with its own hidden personality. Every round, split your money across them,
-                then watch the day play out. Prices carry over between rounds, so learn who is who.
-            </p>
+            <span id="mode-label" class="field-label">Stock behavior</span>
+            <div id="mode-option" class="toggle-group" role="radiogroup" aria-labelledby="mode-label"></div>
+            <p id="lobby-help" class="rules"></p>
         </section>
     </main>
 
@@ -152,7 +151,7 @@
             <li>Each round is one trading day. Drag the four dividers on the left bar to split your whole balance across the five stocks. The split always totals 100%.</li>
             <li>Press Ready when you are done. If the timer runs out, your current split is locked in for you. You can press Unready to change your mind until then.</li>
             <li>When the day starts, your money becomes shares at the opening price. When it ends, the shares are sold at the closing price. Prices carry over into the next day.</li>
-            <li>Each stock has a hidden personality, and tickers are random every match. One climbs slowly, one swings wildly, one moves in waves, one is calm until a sudden crash or spike, and one rises then falls. Watch the charts to work out who is who.</li>
+            <li id="rules-stocks"></li>
             <li>Rivals' splits stay secret during the match. You only see their scores. Allocations by round are revealed at the end.</li>
             <li>While planning, scroll the chart left to look at earlier days.</li>
         </ol>

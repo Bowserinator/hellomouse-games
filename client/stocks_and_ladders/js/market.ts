@@ -1,7 +1,7 @@
 /** Price generation for the five stocks, each with a distinct hidden behaviour. */
 import { Rng } from '../../shared/ts/seeded-random.js';
-import { BEHAVIORS, BEHAVIOR_PARAMS, GAME_CONFIG, TICKER_POOL } from './config.js';
-import type { Behavior } from './types.js';
+import { BEHAVIORS, BEHAVIOR_PARAMS, DYNAMIC_PARAMS, GAME_CONFIG, TICKER_POOL } from './config.js';
+import type { Behavior, StockMode } from './types.js';
 
 interface Dynamics {
     next(): number;
@@ -9,12 +9,14 @@ interface Dynamics {
 
 export interface Stock {
     ticker: string;
-    behavior: Behavior;
-    dynamics: Dynamics;
+    behavior: Behavior | null;
+    dynamics: Dynamics | null;
+    noise: Rng;
     prices: Array<number>;
 }
 
 export interface Market {
+    mode: StockMode;
     stocks: Array<Stock>;
 }
 
@@ -109,21 +111,54 @@ function createDynamics(behavior: Behavior, rng: Rng, totalTicks: number): Dynam
     }
 }
 
-export function createMarket(rng: Rng, rounds: number): Market {
+export function createMarket(rng: Rng, rounds: number, mode: StockMode): Market {
     const tickers = shuffled(rng, TICKER_POOL).slice(0, GAME_CONFIG.stockCount);
     const totalTicks = rounds * GAME_CONFIG.ticksPerRound;
     return {
+        mode,
         stocks: shuffled(rng, BEHAVIORS).map((behavior, index) => ({
             ticker: tickers[index],
-            behavior,
-            dynamics: createDynamics(behavior, rng.fork(index + 1), totalTicks),
+            behavior: mode === 'fixed' ? behavior : null,
+            dynamics: mode === 'fixed' ? createDynamics(behavior, rng.fork(index + 1), totalTicks) : null,
+            noise: rng.fork(index + 1),
             prices: [GAME_CONFIG.startingPrice]
         }))
     };
 }
 
-export function advanceRound(market: Market): void {
-    for (const stock of market.stocks)
-        for (let tick = 0; tick < GAME_CONFIG.ticksPerRound; tick++)
-            stock.prices.push(Math.max(GAME_CONFIG.minimumPrice, stock.dynamics.next()));
+/** Daily returns that favour stocks holding more than the average share of the money, summing to zero overall. */
+export function popularityReturns(investments: Array<number>): Array<number> {
+    const total = investments.reduce((sum, amount) => sum + amount, 0);
+    if (total <= 0) return investments.map(() => 0);
+    const shares = investments.map(amount => amount / total);
+    const average = shares.reduce((sum, share) => sum + share * share, 0);
+    return shares.map(share => DYNAMIC_PARAMS.volatility * (share - average));
+}
+
+/** A random walk from the open that is pinned to land exactly on the close. */
+function closingBridge(rng: Rng, open: number, close: number): Array<number> {
+    const ticks = GAME_CONFIG.ticksPerRound;
+    const walk: Array<number> = [];
+    let position = 0;
+    for (let tick = 0; tick < ticks; tick++) {
+        position += DYNAMIC_PARAMS.sigma * rng.gauss();
+        walk.push(position);
+    }
+    const path = walk.map((value, index) => {
+        const progress = (index + 1) / ticks;
+        return (open + (close - open) * progress) * Math.exp(value - progress * position);
+    });
+    path[ticks - 1] = close;
+    return path;
+}
+
+export function advanceRound(market: Market, closeReturns: Array<number> = []): void {
+    market.stocks.forEach((stock, index) => {
+        const { dynamics } = stock;
+        const open = stock.prices[stock.prices.length - 1];
+        const path = dynamics
+            ? Array.from({ length: GAME_CONFIG.ticksPerRound }, () => dynamics.next())
+            : closingBridge(stock.noise, open, open * (1 + closeReturns[index]));
+        for (const price of path) stock.prices.push(Math.max(GAME_CONFIG.minimumPrice, price));
+    });
 }

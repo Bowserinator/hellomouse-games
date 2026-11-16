@@ -92,7 +92,7 @@ export class Results {
             return column;
         }));
         // Sorted so the order cannot be matched back to the stocks
-        el('behaviors').replaceChildren(...final.behaviors.map(behavior => BEHAVIOR_LABELS[behavior]).sort()
+        el('behaviors').replaceChildren(...(final.behaviors ?? []).map(behavior => BEHAVIOR_LABELS[behavior]).sort()
             .map(label => Object.assign(document.createElement('li'), { textContent: label })));
     }
 }

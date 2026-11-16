@@ -1,7 +1,7 @@
 /** Lobby page: player list, ready state, invite link, color choice and match settings. */
 import { copyInviteLink } from '../../shared/ts/copy-invite-link.js';
 import { el } from '../../shared/ts/dom.js';
-import { GAME_CONFIG, PLAYER_COLORS } from './config.js';
+import { GAME_CONFIG, PLAYER_COLORS, STOCK_MODE_LABELS } from './config.js';
 import type { Move, Sync } from './types.js';
 
 const COPIED_LABEL_MILLISECONDS = 2000;
@@ -35,6 +35,7 @@ function setChecked(buttons: Array<HTMLButtonElement>, checked: (value: string) 
 export class Lobby {
     private roundButtons: Array<HTMLButtonElement>;
     private timerButtons: Array<HTMLButtonElement>;
+    private modeButtons: Array<HTMLButtonElement>;
     private colorButtons: Array<HTMLButtonElement>;
 
     constructor(send: (message: Record<string, unknown>) => void) {
@@ -43,6 +44,8 @@ export class Lobby {
             rounds => String(rounds), rounds => move({ action: 'SET_OPTIONS', rounds }));
         this.timerButtons = buildGroup(el('timer-option'), GAME_CONFIG.timerPresets,
             seconds => `${seconds}s`, timerSeconds => move({ action: 'SET_OPTIONS', timerSeconds }));
+        this.modeButtons = buildGroup(el('mode-option'), GAME_CONFIG.stockModes,
+            mode => STOCK_MODE_LABELS[mode], stockMode => move({ action: 'SET_OPTIONS', stockMode }));
         this.colorButtons = buildGroup(el('color-picker'), PLAYER_COLORS,
             () => '', color => move({ action: 'SET_COLOR', color }));
         for (const button of this.colorButtons) {
@@ -91,6 +94,7 @@ export class Lobby {
 
         setChecked(this.roundButtons, value => Number(value) === settings.rounds, isHost);
         setChecked(this.timerButtons, value => Number(value) === settings.timerSeconds, isHost);
+        setChecked(this.modeButtons, value => value === settings.stockMode, isHost);
         setChecked(this.colorButtons, value => seats[youAre]?.color === value, youAre >= 0);
         for (const button of this.colorButtons) {
             const takenBy = seats.findIndex(seat => seat.color === button.dataset.value);

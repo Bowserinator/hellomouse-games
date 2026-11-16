@@ -1,5 +1,5 @@
 /** Tuning values, lobby presets and palettes. */
-import type { Behavior } from './types.js';
+import type { Behavior, StockMode } from './types.js';
 
 export const GAME_CONFIG = {
     minimumPlayers: 1,
@@ -16,6 +16,8 @@ export const GAME_CONFIG = {
     defaultRounds: 10,
     timerPresets: [15, 30, 45, 60],
     defaultTimerSeconds: 30,
+    stockModes: ['fixed', 'dynamic'] as Array<StockMode>,
+    defaultStockMode: 'fixed' as StockMode,
     animationMilliseconds: 4000,
     settleMilliseconds: 1500,
     percentTotal: 100
@@ -46,6 +48,16 @@ export const BEHAVIOR_PARAMS = {
         minPeakFraction: 0.35, maxPeakFraction: 0.65, minRise: 0.5, maxRise: 0.9,
         minFall: 0.3, maxFall: 0.5, jitter: 0.015 * NOISE
     }
+};
+
+export const STOCK_MODE_LABELS: Record<StockMode, string> = {
+    fixed: 'Fixed',
+    dynamic: 'Dynamic'
+};
+
+export const DYNAMIC_PARAMS = {
+    volatility: 1,
+    sigma: 0.02
 };
 
 export const STOCK_COLORS = ['#ff5c5c', '#4da3ff', '#3ddc84', '#ffb000', '#c77dff'];

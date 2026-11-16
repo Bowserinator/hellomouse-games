@@ -13,7 +13,11 @@ const HOST_ONLY = 'Only the host can do that';
 const ALREADY_STARTED = 'The match has already started';
 
 class StocksAndLaddersGame extends Game {
-    settings: LobbySettings = { rounds: GAME_CONFIG.defaultRounds, timerSeconds: GAME_CONFIG.defaultTimerSeconds };
+    settings: LobbySettings = {
+        rounds: GAME_CONFIG.defaultRounds,
+        timerSeconds: GAME_CONFIG.defaultTimerSeconds,
+        stockMode: GAME_CONFIG.defaultStockMode
+    };
     state: MatchState | null = null;
     private colors = new Map<Client, string>();
     private names: Array<string> = [];
@@ -91,7 +95,7 @@ class StocksAndLaddersGame extends Game {
     }
 
     private setOptions(client: Client, move: Move): string {
-        const { rounds, timerSeconds } = move;
+        const { rounds, timerSeconds, stockMode } = move;
         if (!this.isHost(client)) return HOST_ONLY;
         if (rounds !== undefined) {
             if (!GAME_CONFIG.roundPresets.includes(rounds)) return 'Invalid round count';
@@ -100,6 +104,10 @@ class StocksAndLaddersGame extends Game {
         if (timerSeconds !== undefined) {
             if (!GAME_CONFIG.timerPresets.includes(timerSeconds)) return 'Invalid timer';
             this.settings.timerSeconds = timerSeconds;
+        }
+        if (stockMode !== undefined) {
+            if (!GAME_CONFIG.stockModes.includes(stockMode)) return 'Invalid stock behavior';
+            this.settings.stockMode = stockMode;
         }
         return '';
     }

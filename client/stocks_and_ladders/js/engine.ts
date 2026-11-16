@@ -1,9 +1,9 @@
 /** Match rules: allocations, round settlement and the per-player view. */
 import { Rng } from '../../shared/ts/seeded-random.js';
 import { GAME_CONFIG } from './config.js';
-import { advanceRound, createMarket } from './market.js';
+import { advanceRound, createMarket, popularityReturns } from './market.js';
 import type { Market } from './market.js';
-import type { LobbySettings, Phase, View } from './types.js';
+import type { Behavior, LobbySettings, Phase, View } from './types.js';
 
 export interface PlayerState {
     color: string;
@@ -37,7 +37,7 @@ export function isValidAllocation(allocation: unknown): allocation is Array<numb
 export function createMatch(settings: LobbySettings, seed: number, colors: Array<string>): MatchState {
     return {
         settings,
-        market: createMarket(new Rng(seed), settings.rounds),
+        market: createMarket(new Rng(seed), settings.rounds, settings.stockMode),
         players: colors.map(color => ({
             color,
             allocation: evenAllocation(),
@@ -74,10 +74,16 @@ export function retractSubmission(state: MatchState, seat: number): string {
     return '';
 }
 
+function investedAmounts(state: MatchState, start: number): Array<number> {
+    return state.market.stocks.map((_, stock) => state.players.reduce((sum, player) =>
+        sum + player.worth[start] * player.allocation[stock] / GAME_CONFIG.percentTotal, 0));
+}
+
 export function resolveRound(state: MatchState): void {
-    advanceRound(state.market);
-    const { stocks } = state.market;
     const start = state.completedRounds * GAME_CONFIG.ticksPerRound;
+    advanceRound(state.market, state.market.mode === 'dynamic'
+        ? popularityReturns(investedAmounts(state, start)) : undefined);
+    const { stocks } = state.market;
     for (const player of state.players) {
         const money = player.worth[start];
         for (let tick = 1; tick <= GAME_CONFIG.ticksPerRound; tick++)
@@ -116,7 +122,7 @@ export function selectView(state: MatchState, seat: number): View {
         ...phase === 'finished' ? {
             final: {
                 allocations: players.map(player => player.history),
-                behaviors: market.stocks.map(stock => stock.behavior),
+                ...market.mode === 'fixed' ? { behaviors: market.stocks.map(stock => stock.behavior as Behavior) } : {},
                 placements: rankPlayers(state)
             }
         } : {}

@@ -8,7 +8,7 @@ import { GAME_CONFIG, STOCK_COLORS } from './config.js';
 import { formatChange, formatClock, formatMoney, formatPrice, formatWhole } from './format.js';
 import { Lobby } from './lobby.js';
 import { Results } from './results.js';
-import { bindRules } from './rules.js';
+import { bindRules, renderRules } from './rules.js';
 import { valueAt } from './series.js';
 import { beep, unlockAudio } from './sound.js';
 import type { Move, Sync, View } from './types.js';
@@ -294,6 +294,7 @@ function onSync(next: Sync): void {
     sync = next;
     receivedAt = performance.now();
     dirty = true;
+    renderRules(next.settings.stockMode);
     if (restoreName && next.youAre >= 0) {
         restoreName = false;
         const username = localStorage.getItem('username');

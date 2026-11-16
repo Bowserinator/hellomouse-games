@@ -1,9 +1,11 @@
 export type Behavior = 'steady' | 'volatile' | 'wave' | 'swan' | 'trend';
 export type Phase = 'planning' | 'settling' | 'finished';
+export type StockMode = 'fixed' | 'dynamic';
 
 export interface LobbySettings {
     rounds: number;
     timerSeconds: number;
+    stockMode: StockMode;
 }
 
 export interface SeatInfo {
@@ -20,7 +22,7 @@ export interface PlayerView {
 
 export interface FinalView {
     allocations: Array<Array<Array<number>>>;
-    behaviors: Array<Behavior>;
+    behaviors?: Array<Behavior>;
     placements: Array<number>;
 }
 
@@ -54,6 +56,7 @@ export interface Move {
     action: string;
     rounds?: number;
     timerSeconds?: number;
+    stockMode?: StockMode;
     color?: string;
     allocation?: Array<number>;
 }
