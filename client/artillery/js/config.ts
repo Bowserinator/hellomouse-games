@@ -30,7 +30,6 @@ export const worldNoiseOctaveCount = 4;
 export const worldGenerationMaximumAttempts = 8;
 export const decorationCellEdgeLengthInVoxels = 16;
 export const worldTreeProbability = 0.35;
-export const worldCaveProbability = 0.12;
 export const worldFloatingIslandProbability = 0.035;
 export const spawnMinimumSeparationInVoxels = 16;
 export const spawnWalkabilityGridSpacingInVoxels = 4;
@@ -43,7 +42,6 @@ export const centerElevationBoostInVoxels = 30;
 export const worldGenerationNoise = {
     terrainForkLabel: 1001,
     floatingIslandForkLabel: 2001,
-    caveForkOffset: 3001,
     decorationForkLabel: 4001,
     themeForkLabel: 6001,
     offsetCount: 16,
@@ -104,22 +102,6 @@ export const worldTerrainSettings = {
     lightStrataThickness: 2,
     darkStrataTop: 4,
     darkStoneTop: 24
-} as const;
-
-export const worldCaveSettings = {
-    minimumHeight: 6,
-    activationCellEdge: 16,
-    warpScale: 29,
-    warpStrength: 5,
-    firstHorizontalScale: 13,
-    firstVerticalScale: 11,
-    secondHorizontalScale: 15,
-    secondVerticalScale: 12,
-    cavityHorizontalScale: 18,
-    cavityVerticalScale: 13,
-    tubeHalfWidth: .13,
-    cavityRoofDepth: 3,
-    cavityThreshold: .72
 } as const;
 
 export const worldFloatingIslandSettings = {

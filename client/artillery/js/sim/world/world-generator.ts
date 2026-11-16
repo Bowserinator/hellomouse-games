@@ -1,8 +1,8 @@
 import { decorationCellEdgeLengthInVoxels, terrainSandMaximumHeightInVoxels,
-    terrainSoilDepthInVoxels, worldCaveProbability, worldChunkEdgeLengthInVoxels,
+    terrainSoilDepthInVoxels, worldChunkEdgeLengthInVoxels,
     worldFloatingIslandProbability, worldHeightInVoxels, worldTreeProbability, worldGenerationNoise,
     worldSeabedTransitionWidthInVoxels,
-    worldCaveSettings as caves, worldFloatingIslandSettings as floating,
+    worldFloatingIslandSettings as floating,
     worldDecorationSettings as decoration } from '../../config.js';
 import { Rng } from '../../../../shared/ts/seeded-random.js';
 import { surfaceMaterial } from './biomes.js';
@@ -26,7 +26,6 @@ const decorationCellEdge = decorationCellEdgeLengthInVoxels;
 export class WorldGenerator {
     public readonly fields: TerrainFields;
     private readonly floatingIslands: Array<FloatingIsland> = [];
-    private readonly caveCells = new Map<number, boolean>();
     private readonly strataCycleLength: number;
 
     constructor(public readonly matchSeed: number, public readonly mapEdgeLengthInVoxels: number,
@@ -57,31 +56,6 @@ export class WorldGenerator {
                     radius, depth: candidateRandom.range(floating.minimumDepth, floating.maximumDepth),
                     hasTree: candidateRandom.float() < floating.treeProbability });
             }
-    }
-
-    private isCave(x: number, y: number, z: number, surfaceHeight: number): boolean {
-        if (y < caves.minimumHeight || y > surfaceHeight) return false;
-        const coarseEdge = caves.activationCellEdge;
-        const horizontalCells = Math.ceil(this.mapEdgeLengthInVoxels / coarseEdge);
-        const key = Math.floor(x / coarseEdge) + horizontalCells *
-            (Math.floor(z / coarseEdge) + horizontalCells * Math.floor(y / coarseEdge));
-        let isActive = this.caveCells.get(key);
-        if (isActive === undefined) {
-            isActive = new Rng(this.matchSeed).fork(key + worldGenerationNoise.caveForkOffset).float() <
-                worldCaveProbability;
-            this.caveCells.set(key, isActive);
-        }
-        if (!isActive) return false;
-        const warp = this.fields.noise(x / caves.warpScale, y / caves.warpScale, z / caves.warpScale, 2) *
-            caves.warpStrength;
-        const first = this.fields.noise((x + warp) / caves.firstHorizontalScale, y / caves.firstVerticalScale,
-            z / caves.firstHorizontalScale, 3);
-        const second = this.fields.noise(x / caves.secondHorizontalScale, (y + warp) / caves.secondVerticalScale,
-            z / caves.secondHorizontalScale, 4);
-        const cavity = this.fields.noise(x / caves.cavityHorizontalScale, y / caves.cavityVerticalScale,
-            z / caves.cavityHorizontalScale, 5);
-        return (Math.abs(first - .5) < caves.tubeHalfWidth && Math.abs(second - .5) < caves.tubeHalfWidth) ||
-            (y < surfaceHeight - caves.cavityRoofDepth && cavity > caves.cavityThreshold);
     }
 
     public generateChunk(chunkX: number, chunkY: number, chunkZ: number): ChunkStorage {
@@ -117,7 +91,6 @@ export class WorldGenerator {
                     const y = originY + localY;
                     let material: Material;
                     if (y === 0 || (height > 0 && y === 1)) material = materials.seabed ?? Material.SEABED;
-                    else if (this.isCave(x, y, z, height)) continue;
                     else if (y === height) material = surface;
                     else if (y >= height - (materials.soilDepth ?? terrainSoilDepthInVoxels))
                         material = height <= terrainSandMaximumHeightInVoxels
