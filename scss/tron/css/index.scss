@@ -1,0 +1,274 @@
+$bg: #000;
+$panel: #05090d;
+$cyan: #00e5ff;
+$text: #e0f7ff;
+$muted: #5f7f88;
+$line: rgba(0, 229, 255, .5);
+$font: 'Orbitron', 'Courier New', monospace;
+
+* {
+    box-sizing: border-box;
+    border-radius: 0;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: $bg;
+    color: $text;
+    font-family: $font;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    user-select: none;
+}
+
+canvas {
+    display: block;
+    position: fixed;
+    inset: 0;
+}
+
+button, input {
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: $text;
+    background: $panel;
+    border: 1px solid $line;
+    padding: 8px 14px;
+    margin: 0;
+}
+
+input {
+    user-select: text;
+    min-width: 0;
+    flex: 1;
+}
+
+button {
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        border-color: $cyan;
+        color: $cyan;
+    }
+
+    &:disabled {
+        opacity: .35;
+        cursor: default;
+    }
+
+    &.selected {
+        background: $cyan;
+        border-color: $cyan;
+        color: $bg;
+    }
+
+    &.primary {
+        border-color: $cyan;
+        color: $cyan;
+    }
+}
+
+#ping, #disconnect-banner {
+    position: fixed;
+    margin: 0;
+    z-index: 5;
+    font-size: 11px;
+    color: $muted;
+}
+
+#ping {
+    left: 10px;
+    bottom: 8px;
+}
+
+#disconnect-banner {
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 8px;
+    text-align: center;
+    background: #ff1744;
+    color: #fff;
+}
+
+#hud {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    min-width: 180px;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, .7);
+    border: 1px solid $line;
+    font-size: 13px;
+
+    p {
+        margin: 0 0 8px;
+        color: $muted;
+    }
+
+    ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    li {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 3px 0 3px 8px;
+        border-left: 4px solid var(--player-color);
+
+        &.you {
+            color: #fff;
+        }
+
+        &.dead {
+            opacity: .4;
+        }
+    }
+}
+
+#banner, #spectate {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    padding: 10px 24px;
+    white-space: nowrap;
+    text-align: center;
+    background: rgba(0, 0, 0, .6);
+    pointer-events: none;
+}
+
+#banner {
+    top: 30%;
+    font-size: 40px;
+    font-weight: 700;
+}
+
+#spectate {
+    bottom: 24px;
+    font-size: 14px;
+    color: $muted;
+}
+
+#lobby {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+    max-width: 460px;
+    margin: auto;
+    height: fit-content;
+    max-height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+    background: $bg;
+    border: 1px solid $line;
+
+    header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+    }
+
+    h1 {
+        margin: 0;
+        font-size: 32px;
+        color: $cyan;
+    }
+
+    a {
+        color: $muted;
+        font-size: 12px;
+        text-decoration: none;
+
+        &:hover {
+            color: $cyan;
+        }
+    }
+
+    ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    li {
+        padding: 5px 0 5px 10px;
+        margin-bottom: 4px;
+        border-left: 4px solid var(--player-color);
+    }
+}
+
+.field-label {
+    font-size: 11px;
+    color: $muted;
+}
+
+#username-form, .input-row, .button-row {
+    display: flex;
+    gap: 8px;
+}
+
+.button-row button {
+    flex: 1;
+}
+
+.toggle-group, .chip-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.swatch {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 2px solid transparent;
+
+    &.selected {
+        border-color: #fff;
+    }
+
+    &:disabled {
+        opacity: .15;
+    }
+}
+
+dialog {
+    min-width: 280px;
+    padding: 20px;
+    background: $bg;
+    color: $text;
+    border: 1px solid $cyan;
+
+    &::backdrop {
+        background: rgba(0, 0, 0, .7);
+    }
+
+    ol {
+        list-style: none;
+        margin: 0 0 16px;
+        padding: 0;
+    }
+
+    li {
+        padding: 5px 0 5px 10px;
+        margin-bottom: 4px;
+        border-left: 4px solid var(--player-color);
+    }
+}
