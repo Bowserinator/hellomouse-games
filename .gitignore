@@ -25,5 +25,8 @@ yarn-error.log*
 TODO.txt
 errors.txt
 .pi
-# Do not commit any tests no exceptions
+# Do not commit any tests or scripts no exceptions
 tests/*
+scripts/
+archive.zip
+*.patch

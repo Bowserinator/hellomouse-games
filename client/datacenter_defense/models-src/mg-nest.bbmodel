@@ -1,0 +1,463 @@
+{
+    "meta": {
+        "format_version": "4.10",
+        "model_format": "free",
+        "box_uv": false
+    },
+    "name": "mg-nest",
+    "model_identifier": "mg-nest",
+    "resolution": {
+        "width": 64,
+        "height": 64
+    },
+    "elements": [
+        {
+            "name": "base",
+            "type": "cube",
+            "uuid": "00000000-0000-4000-8000-000000000001",
+            "from": [
+                -14,
+                0,
+                -14
+            ],
+            "to": [
+                14,
+                8,
+                14
+            ],
+            "origin": [
+                0,
+                4,
+                0
+            ],
+            "rotation": [
+                0,
+                0,
+                0
+            ],
+            "color": 3,
+            "faces": {
+                "north": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "south": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "east": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "west": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "up": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "down": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                }
+            }
+        },
+        {
+            "name": "pedestal",
+            "type": "cube",
+            "uuid": "00000000-0000-4000-8000-000000000002",
+            "from": [
+                -4.5,
+                7,
+                -4.5
+            ],
+            "to": [
+                4.5,
+                15,
+                4.5
+            ],
+            "origin": [
+                0,
+                11,
+                0
+            ],
+            "rotation": [
+                0,
+                0,
+                0
+            ],
+            "color": 0,
+            "faces": {
+                "north": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "south": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "east": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "west": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "up": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "down": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                }
+            }
+        },
+        {
+            "name": "gun",
+            "type": "cube",
+            "uuid": "00000000-0000-4000-8000-000000000004",
+            "from": [
+                -6.5,
+                13,
+                -5.5
+            ],
+            "to": [
+                6.5,
+                21,
+                5.5
+            ],
+            "origin": [
+                0,
+                17,
+                0
+            ],
+            "rotation": [
+                0,
+                0,
+                0
+            ],
+            "color": 0,
+            "faces": {
+                "north": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "south": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "east": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "west": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "up": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "down": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                }
+            }
+        },
+        {
+            "name": "tube",
+            "type": "cube",
+            "uuid": "00000000-0000-4000-8000-000000000006",
+            "from": [
+                4,
+                16.5,
+                -1.5
+            ],
+            "to": [
+                22,
+                19.5,
+                1.5
+            ],
+            "origin": [
+                13,
+                18,
+                0
+            ],
+            "rotation": [
+                0,
+                0,
+                0
+            ],
+            "color": 1,
+            "faces": {
+                "north": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "south": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "east": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "west": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "up": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "down": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                }
+            }
+        },
+        {
+            "name": "muzzle_0",
+            "type": "cube",
+            "uuid": "00000000-0000-4000-8000-000000000007",
+            "from": [
+                22.5,
+                17.5,
+                -0.5
+            ],
+            "to": [
+                23.5,
+                18.5,
+                0.5
+            ],
+            "origin": [
+                23,
+                18,
+                0
+            ],
+            "rotation": [
+                0,
+                0,
+                0
+            ],
+            "color": 1,
+            "faces": {
+                "north": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "south": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "east": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "west": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "up": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                },
+                "down": {
+                    "uv": [
+                        0,
+                        0,
+                        16,
+                        16
+                    ],
+                    "texture": false
+                }
+            }
+        }
+    ],
+    "outliner": [
+        {
+            "name": "body",
+            "origin": [
+                0,
+                0,
+                0
+            ],
+            "children": [
+                "00000000-0000-4000-8000-000000000001",
+                "00000000-0000-4000-8000-000000000002",
+                {
+                    "name": "turret_0",
+                    "origin": [
+                        0,
+                        17,
+                        0
+                    ],
+                    "children": [
+                        "00000000-0000-4000-8000-000000000004",
+                        {
+                            "name": "barrel_0",
+                            "origin": [
+                                5,
+                                18,
+                                0
+                            ],
+                            "children": [
+                                "00000000-0000-4000-8000-000000000006",
+                                "00000000-0000-4000-8000-000000000007"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "textures": []
+}

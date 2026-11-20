@@ -1,0 +1,45 @@
+.wave-clock {
+    position: absolute;
+    z-index: 2;
+    pointer-events: none;
+    text-align: center;
+    background: #faf9f4dc;
+    padding: 5px 9px;
+    line-height: 1.2;
+}
+
+.wave-clock {
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.result-toast {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    translate: -50% 0;
+    padding: 12px 24px;
+    text-align: center;
+    background: #f4f3ed;
+    color: #252922;
+    border: 1px solid #d4d8cc;
+    z-index: 20;
+    animation: result-drop 300ms ease-out;
+
+    h1 {
+        margin: 0 0 6px;
+    }
+}
+
+@keyframes result-drop {
+    from {
+        transform: translateY(-100%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .result-toast {
+        animation: none;
+    }
+}

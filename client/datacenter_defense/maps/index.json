@@ -1,0 +1,11 @@
+[
+    {
+        "id": "test_arena",
+        "name": "Test arena",
+        "file": "test_arena.mapx",
+        "preview": "test_arena.png",
+        "winTime": 720,
+        "playable": true,
+        "mapHash": 3593037002
+    }
+]

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Model preview</title>
+    <link rel="stylesheet" href="css/editor.css">
+    <script defer src="js/vendor/three.min.js"></script>
+    <script defer src="js/vendor/GLTFLoader.js"></script>
+    <script defer src="js/vendor/BufferGeometryUtils.js"></script>
+    <script type="module" src="js/render/model-preview.js"></script>
+</head>
+<body class="model-preview">
+    <header id="controls">
+        <select id="model" aria-label="Model"></select>
+        <label>Scale <input id="scale" type="number" min="0.001" step="0.01" value="1"></label>
+        <label>Yaw <input id="yaw" type="range" min="-180" max="180" value="0"></label>
+        <label>Aim <input id="aim" type="range" min="-180" max="180" value="0"></label>
+        <label><input id="fire" type="checkbox">Fire</label>
+        <label><input id="sonic" type="checkbox">Sonic refraction</label>
+        <label>Power <input id="power" type="range" min="0" max="100" value="100"></label>
+        <button id="copy">Copy spec</button>
+        <output id="message"></output>
+    </header>
+    <div id="model-canvas"></div>
+</body>
+</html>

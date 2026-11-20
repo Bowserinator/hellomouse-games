@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Datacenter Defense - Hellomouse Games">
+    <meta name="author" content="Bowserinator">
+    <meta property="og:title" content="Datacenter Defense - Hellomouse Games">
+    <meta property="og:description" content="Defend the datacenter together.">
+    <meta property="og:image" content="/datacenter_defense/img/thumbnail.jpg">
+    <title>Datacenter Defense</title>
+    <link rel="stylesheet" href="/shared/css/index.css">
+    <link rel="stylesheet" href="css/editor.css">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans&family=Material+Icons">
+    <script src="/shared/js/index.js" defer></script>
+    <script src="js/vendor/three.min.js" defer></script>
+    <script src="js/vendor/GLTFLoader.js" defer></script>
+    <script src="js/vendor/BufferGeometryUtils.js" defer></script>
+    <script src="js/vendor/polygon-clipping.js" defer></script>
+    <script src="js/client.js" type="module"></script>
+</head>
+<body>
+    <main id="game-app">
+        <section id="lobby" aria-label="Lobby">
+            <h1>DATACENTER DEFENSE</h1>
+            <div id="lobby-content"></div>
+            <div class="lobby-footer">
+                <div id="invite-box" hidden>
+                    <input id="invite" readonly aria-label="Invite link">
+                    <button id="copy-invite">Copy link</button>
+                </div>
+                <button id="start" disabled>Start</button>
+            </div>
+            <a class="map-editor-link" href="editor.html">Map editor</a>
+        </section>
+        <section id="loading" role="status" aria-live="polite" hidden>
+            <span class="loading-spinner" aria-hidden="true"></span>
+            <p id="loading-text">Loading battlefield…</p>
+        </section>
+        <section id="game" aria-label="Battlefield" hidden></section>
+        <p id="disconnect-banner" role="alert" hidden></p>
+        <section id="result" class="result-toast" aria-label="Game result" hidden>
+            <h1 id="result-title" role="status"></h1>
+            <a href="./">Return to lobby</a>
+        </section>
+    </main>
+</body>
+</html>

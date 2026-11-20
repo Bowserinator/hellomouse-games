@@ -1,0 +1,23 @@
+body.model-preview {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    height: 100vh;
+    margin: 0;
+
+    header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px;
+    }
+
+    input[type='number'] {
+        width: 64px;
+    }
+
+    #model-canvas {
+        min-height: 0;
+        min-width: 0;
+        overflow: hidden;
+    }
+}
