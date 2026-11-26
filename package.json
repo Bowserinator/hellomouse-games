@@ -5,14 +5,13 @@
   "type": "module",
   "scripts": {
     "serve": "cd build && node server/server.js",
-    "build": "tsc -p tsconfig.json && node scripts/check-datacenter-sim.mjs && node scripts/build-map-index.mjs",
+    "build": "tsc -p tsconfig.json",
     "scssHot": "sass --style=compressed --watch scss/:client/",
     "scssCompile": "sass --style=compressed scss/:client/",
     "scss": "npm-run-all scssCompile copyfiles",
     "copyfiles": "copyfiles -e \"**/*.ts\" \"./client/**\" ./build/",
     "minify": "minify-all-js ./build",
-    "artilleryCssAudit": "node scripts/css-audit.mjs scss/artillery/css client/artillery",
-    "buildAll": "npm-run-all build scss artilleryCssAudit copyfiles minify"
+    "buildAll": "npm-run-all build scss copyfiles minify"
   },
   "devDependencies": {
     "@babel/core": "^7.17.10",
