@@ -25,3 +25,4 @@
 - Module comments should summarize the module, not list its functions or classes.
 - Do not add obvious comments to short functions or beside self-explanatory code. Add a comment only when the reason is not clear from the code.
 - Comments should describe what the code does, not its storage format or implementation details. Do not expose representation details or name internal helpers unnecessarily.
+- Never add steps to build/ or new npm commands to validate etc... unless explicitly asked
