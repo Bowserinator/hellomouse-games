@@ -60,6 +60,15 @@ nav {
     font-family: var(--font-material);
 }
 nav h1 a { color: inherit; text-decoration: none; }
+.nav-timer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: bold;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
 nav h1 { margin: 0; color: var(--accent); font-family: var(--font-title); font-weight: normal; letter-spacing: .02em; }
 .nav-buttons {
     gap: 28px;
@@ -259,9 +268,14 @@ button:not(:disabled):hover { border-color: var(--accent); }
 .panning { cursor: grabbing; }
 .board-origin {
     position: absolute;
+    z-index: 0;
+}
+.piece-layer {
+    position: absolute;
+    z-index: 3;
     perspective: 3200px;
 }
-.board-origin > button, .board-surface, .hell-board, .board-brand, .credit-card, .deck {
+.board-origin > button, .piece-layer > button, .board-surface, .hell-board, .board-brand, .credit-card, .deck {
     position: absolute;
     transform: translate(-50%, -50%) rotate(var(--angle, 0deg));
 }
@@ -409,7 +423,6 @@ button:not(:disabled):hover { border-color: var(--accent); }
     height: 47px;
     margin: -23.5px 0 0 -23.5px;
     transform: translateZ(calc(var(--depth) * 1.8px));
-    filter: brightness(0) invert(.62) sepia(1) saturate(2.2) brightness(calc(.6 + var(--layer) * .4));
 }
 .piece__sheen {
     left: 50%;
@@ -1023,8 +1036,16 @@ $chat-width: min(340px, 95vw);
     display: flex;
     align-items: center;
     gap: 8px;
+    max-width: 100%;
+    min-width: 0;
+    strong {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 }
-.trade-partner__icon { width: 24px; height: 24px; }
+.trade-partner__icon { flex: none; width: 24px; height: 24px; }
 .trade-sides {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1452,6 +1473,12 @@ $chat-width: min(340px, 95vw);
     padding: 14px 8px;
     &:not(:disabled):hover { border-color: #2196f3; }
     &:disabled { opacity: .4; filter: grayscale(1); }
+    strong {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 }
 .player-pick__icon { width: 56px; height: 56px; }
 .deed-picker {
@@ -1511,7 +1538,7 @@ $chat-width: min(340px, 95vw);
 }
 .list small { display: block; }
 #flight-layer, #explosion-layer { position: fixed; inset: 0; z-index: 5; pointer-events: none; }
-#explosion-layer { mix-blend-mode: screen; }
+#explosion-layer:not(:empty) { mix-blend-mode: screen; }
 .flight { position: absolute; }
 .flight-anchor { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 .reveal { padding: 5px; overflow: hidden; background: var(--paper); border: 1px solid var(--ink); }
@@ -1589,14 +1616,6 @@ $chat-width: min(340px, 95vw);
     // border-top: 15px solid var(--group);
     box-shadow: 0 2px 4px #28382c;
 }
-.escape-count {
-    position: absolute;
-    left: 113px;
-    width: max-content;
-    color: var(--paper);
-    background: #533859;
-    padding: 9px;
-}
 .legal, .required { outline-width: calc(2px / var(--scale, 1)); }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0s !important; }
@@ -1625,6 +1644,31 @@ $chat-width: min(340px, 95vw);
     color: white;
     background: #533859 url('../img/card_faces/get_out_of_hell.png') center / cover;
     border-color: #c9a9db;
+}
+@mixin upgrade-face($k) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px * $k;
+    width: 78px * $k;
+    height: 124px * $k;
+    padding: 36px * $k 6px * $k 6px * $k;
+    color: #fff;
+    text-align: center;
+    background: #3a3a3a url('../img/card_faces/black_market.png') center / 100% 100% no-repeat;
+    border: 0;
+    font-family: var(--font-board);
+    strong { font-size: 9px * $k; letter-spacing: .02em; text-transform: uppercase; }
+    small { font-size: 6px * $k; line-height: 1.2; }
+}
+.deed-fan .upgrade-card { @include upgrade-face(1); }
+.held-face--escape, .property-view .upgrade-card { margin: 0 auto; }
+.property-view .upgrade-card { @include upgrade-face(3); }
+.held-face--escape {
+    width: 234px;
+    height: 330px;
+    background: #533859 url('../img/card_faces/get_out_of_hell.png') center / cover;
+    border: 1px solid #c9a9db;
 }
 .escape-ghost {
     position: absolute;
@@ -1732,11 +1776,26 @@ button.deck-card:not(:disabled) { pointer-events: auto; }
 }
 
 .grabbed { z-index: 5; }
-.deed-fan .deed-pick { touch-action: none; }
+.deed-fan .deed-pick, .deed-fan .upgrade-card { touch-action: none; }
 
 .end-turn {
-    outline: 2px solid #d99235;
-    animation: target-pulse 1s ease-in-out infinite alternate;
+    position: relative;
+    &::before, &::after {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        outline: 2px solid #75e5a0;
+        pointer-events: none;
+    }
+    &::after {
+        outline-color: #dcffdf;
+        animation: end-turn-pulse 1s ease-in-out infinite alternate;
+    }
+}
+
+@keyframes end-turn-pulse {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 #mock-tools {

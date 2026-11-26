@@ -2,7 +2,7 @@ import { boards } from '../boards/index.js';
 import { seatColors, tokenImage, upgrades } from '../types.js';
 import type { Position } from '../types.js';
 import type { View } from '../engine/state.js';
-import { button, el, money, tokenIcon } from './dom.js';
+import { button, el, money } from './dom.js';
 
 export const origin = { x: 1050, y: 930 };
 export const readerPoint = { x: 720, y: 111 };
@@ -30,6 +30,50 @@ const faceSides = [
 const restAngles = [0, 0];
 const PIECE_LAYERS = 10;
 const PIECE_HOP = 26;
+
+const clamp = (value: number): number => Math.min(1, Math.max(0, value));
+
+/** Flat color of a piece layer at the given shade, from 0 (darkest) to 1 (lightest). */
+function layerColor(shade: number): string {
+    const saturation = 2.2;
+    const matrices = [
+        [0.393, 0.769, 0.189, 0.349, 0.686, 0.168, 0.272, 0.534, 0.131],
+        [0.213 + 0.787 * saturation, 0.715 - 0.715 * saturation, 0.072 - 0.072 * saturation,
+            0.213 - 0.213 * saturation, 0.715 + 0.285 * saturation, 0.072 - 0.072 * saturation,
+            0.213 - 0.213 * saturation, 0.715 - 0.715 * saturation, 0.072 + 0.928 * saturation]
+    ];
+    let color = [0.62, 0.62, 0.62];
+    for (const m of matrices) {
+        const [r, g, b] = color;
+        color = [0, 3, 6].map(i => clamp(m[i] * r + m[i + 1] * g + m[i + 2] * b));
+    }
+    const channels = color.map(value => Math.round(clamp(value * (0.6 + shade * 0.4)) * 255));
+    return `rgb(${channels.join(' ')})`;
+}
+
+const tintedLayers = new Map<string, Promise<string>>();
+
+function tintedLayer(image: string, shade: number): Promise<string> {
+    const key = `${image}|${shade}`;
+    let result = tintedLayers.get(key);
+    if (!result) {
+        const source = new Image();
+        source.src = image;
+        result = source.decode().then(() => {
+            const canvas = document.createElement('canvas');
+            canvas.width = source.naturalWidth;
+            canvas.height = source.naturalHeight;
+            const context = canvas.getContext('2d') as CanvasRenderingContext2D;
+            context.drawImage(source, 0, 0);
+            context.globalCompositeOperation = 'source-in';
+            context.fillStyle = layerColor(shade);
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL();
+        });
+        tintedLayers.set(key, result);
+    }
+    return result;
+}
 
 export function scatterDice(): void {
     restAngles.forEach((_, i) => {
@@ -96,7 +140,10 @@ export class BoardView {
     readonly pieces: Array<HTMLButtonElement> = [];
     private piecePlaces: Array<{ x: number; y: number }> = [];
     private vantage = { x: 0, y: 0 };
+    private shineUntil = 0;
+    private shining = false;
     readonly root = el('div', '', 'board-origin');
+    private pieceLayer = el('div', '', 'piece-layer');
     readonly dice: HTMLButtonElement;
     readonly diceCubes: Array<HTMLElement>;
     readonly reader: HTMLButtonElement;
@@ -184,8 +231,10 @@ export class BoardView {
             node.className = 'piece';
             const stack = el('span', '', 'piece__stack');
             for (let layer = 0; layer < PIECE_LAYERS; layer++) {
-                const slice = tokenIcon(0, 'piece__layer');
-                slice.style.setProperty('--layer', String(layer / (PIECE_LAYERS - 1)));
+                const slice = el('img', '', 'piece__layer');
+                slice.alt = '';
+                slice.draggable = false;
+                slice.dataset.shade = String(layer / (PIECE_LAYERS - 1));
                 slice.style.setProperty('--depth', String(layer));
                 stack.append(slice);
             }
@@ -199,8 +248,26 @@ export class BoardView {
             node.style.setProperty('--seat', seatColors[seat]);
             node.hidden = true;
             this.pieces.push(node);
-            this.root.append(node);
+            this.pieceLayer.append(node);
         }
+        this.root.append(this.pieceLayer);
+        const moved = new MutationObserver(records => {
+            for (const { target } of records) {
+                const node = target as HTMLElement;
+                const spot = `${node.style.left} ${node.style.top}`;
+                if (node.dataset.spot === spot) continue;
+                node.dataset.spot = spot;
+                this.wake(50);
+            }
+        });
+        for (const node of this.pieces) moved.observe(node, { attributes: true, attributeFilter: ['style'] });
+        this.wake(100);
+    }
+
+    private wake(ms: number): void {
+        this.shineUntil = Math.max(this.shineUntil, performance.now() + ms);
+        if (this.shining) return;
+        this.shining = true;
         requestAnimationFrame(this.shine);
     }
 
@@ -216,13 +283,15 @@ export class BoardView {
             node.style.setProperty('--view-x', x);
             node.style.setProperty('--view-y', y);
         }
-        requestAnimationFrame(this.shine);
+        if (performance.now() < this.shineUntil) requestAnimationFrame(this.shine);
+        else this.shining = false;
     };
 
     /** Moves the point the board is viewed from, in board coordinates. */
     setVantage(x: number, y: number): void {
         this.vantage = { x, y };
-        this.root.style.perspectiveOrigin = `${x}px ${y}px`;
+        this.pieceLayer.style.perspectiveOrigin = `${x}px ${y}px`;
+        this.wake(50);
     }
 
     hop(piece: HTMLElement, steps: number, duration: number): void {
@@ -233,6 +302,7 @@ export class BoardView {
                 { '--hop': String(PIECE_HOP), offset: (step + 0.5) / steps, easing: 'ease-in' });
         keyframes.push({ '--hop': '0', offset: 1 });
         piece.animate(keyframes, { duration });
+        this.wake(duration + 50);
     }
 
     settlePiece(seat: number, reflow = false): void {
@@ -246,12 +316,16 @@ export class BoardView {
         const from = { left, top };
         animation?.cancel();
         place(node, point.x, point.y);
-        if (reflow) node.animate([from, { left: node.style.left, top: node.style.top }],
-            { id: 'piece-reflow', duration: 200, easing: 'ease-out' });
+        if (reflow) {
+            node.animate([from, { left: node.style.left, top: node.style.top }],
+                { id: 'piece-reflow', duration: 200, easing: 'ease-out' });
+            this.wake(250);
+        }
     }
 
     render(view: View, seat: number, hell: boolean, moving: ReadonlyMap<number, number>, reflow: boolean): void {
         const { phase } = view;
+        this.wake(300);
         const active = view.turn === seat && !view.players[seat]?.eliminated;
         this.hell.hidden = !hell;
         this.dice.disabled = !active || !['roll', 'extra'].includes(phase.kind);
@@ -314,7 +388,11 @@ export class BoardView {
             if (!player || player.eliminated) return;
             const image = tokenImage(player.token);
             node.querySelectorAll<HTMLImageElement>('.piece__layer').forEach(layer => {
-                if (layer.getAttribute('src') !== image) layer.src = image;
+                if (layer.dataset.image === image) return;
+                layer.dataset.image = image;
+                void tintedLayer(image, Number(layer.dataset.shade)).then(url => {
+                    if (layer.dataset.image === image) layer.src = url;
+                });
             });
             (node.querySelector('.piece__sheen') as HTMLElement).style.setProperty('mask-image', `url("${image}")`);
             const swap = view.swapTargets.includes(i);

@@ -7,8 +7,8 @@ import { station } from '../stations.js';
 import { validPose } from '../card-pose.js';
 import { SPIN_MS, eventDuration } from '../ui/timing.js';
 import { fallback } from './afk.js';
-import { eligible } from './auctions.js';
-import { available, shortfall, transact } from './banking.js';
+import { BID_GRACE_MS, eligible } from './auctions.js';
+import { available, bailAmount, shortfall, transact } from './banking.js';
 import { deckOf, shuffle } from './decks.js';
 import type { Card } from '../cards/cardEffects.js';
 import { walk } from './movement.js';
@@ -89,6 +89,12 @@ export class MonopolyEngine {
         return this.events.length;
     }
 
+    /** When the current phase stops accepting commands; auctions allow slightly late bids for latency. */
+    get expiry(): number | null {
+        if (this.deadline === null) return null;
+        return this.phase.kind === 'auction' ? this.deadline + BID_GRACE_MS : this.deadline;
+    }
+
     isCurrentAuctionSnapshot(seq: number): boolean {
         return this.phase.kind === 'auction' && seq >= this.auctionOpenedAtSeq && seq <= this.seq;
     }
@@ -150,6 +156,11 @@ export class MonopolyEngine {
         this.emit('ledger', reason, { seat: payer ?? undefined, target: creditor ?? undefined, amount, property });
     }
 
+    bailCost(seat: number): number {
+        const player = this.players[seat];
+        return player.bail === null ? 0 : bailAmount(player.bail, available(player), this.settings.hell);
+    }
+
     private dice(count: number): Array<number> {
         return Array.from({ length: count }, () => this.rng.int(1, 6));
     }
@@ -169,19 +180,23 @@ export class MonopolyEngine {
 
     private salary(seat: number): boolean {
         const player = this.players[seat];
+        const devil = player.upgrades.includes('devil');
+        if (devil) {
+            this.consume(seat, 'devil');
+            if (!this.rng.int(0, 1)) {
+                this.emit('upgrade', 'The Devil sent you to Hell', { seat });
+                return false;
+            }
+        }
         this.pay(null, seat, this.settings.goSalary, 'GO salary');
         player.laps++;
         if (this.settings.stock) this.spins = 1;
         if (this.settings.market) this.shops++;
-        if (!player.upgrades.includes('devil')) return true;
-        this.consume(seat, 'devil');
-        if (this.rng.int(0, 1)) {
+        if (devil) {
             this.pay(null, seat, 200, 'Devil’s Deal');
             this.emit('upgrade', 'The Devil paid out', { seat });
-            return true;
         }
-        this.emit('upgrade', 'The Devil sent you to Hell', { seat });
-        return false;
+        return true;
     }
 
     private move(seat: number, steps: number, dice: number, depth = 0, override?: 'railroad' | 'utility'): void {
@@ -215,7 +230,7 @@ export class MonopolyEngine {
     private roll(): void {
         const player = this.players[this.turn];
         const inHell = player.bail !== null;
-        const dice = this.dice(inHell && this.settings.hell ? this.board.hell.diceCount : 2);
+        const dice = this.dice(2);
         const total = dice.reduce((sum, die) => sum + die, 0);
         const double = dice.length === 2 && dice[0] === dice[1];
         this.rolled = true;
@@ -389,7 +404,8 @@ export class MonopolyEngine {
 
     private openAuction(property: string): void {
         const duration = this.settings.auctionSeconds;
-        this.setPhase({ kind: 'auction', property, leader: null, bid: 0, history: [], abstained: [] }, duration);
+        const start = Math.max(1, Math.round((this.property(property) as Property).deed.price / 2));
+        this.setPhase({ kind: 'auction', property, leader: null, bid: 0, start, history: [], abstained: [] }, duration);
         this.emit('auction', 'Auction opened', { property });
         this.auctionOpenedAtSeq = this.seq;
     }
@@ -398,7 +414,7 @@ export class MonopolyEngine {
         const phase = this.phase;
         const player = this.players[seat];
         if (phase.kind !== 'auction' || phase.abstained.includes(seat) || typeof amount !== 'number' ||
-            !Number.isSafeInteger(amount) || amount <= phase.bid || amount > available(player) + (phase.leader === seat ? phase.bid : 0)) return false;
+            !Number.isSafeInteger(amount) || amount < (phase.leader === null ? phase.start : phase.bid + 1) || amount > available(player) + (phase.leader === seat ? phase.bid : 0)) return false;
         if (phase.leader !== null) this.players[phase.leader].reserved -= phase.bid;
         player.reserved += amount;
         phase.leader = seat;
@@ -410,10 +426,11 @@ export class MonopolyEngine {
 
     private abstain(seat: number): boolean {
         const phase = this.phase;
-        if (phase.kind !== 'auction' || phase.abstained.includes(seat)) return false;
+        if (phase.kind !== 'auction' || phase.abstained.includes(seat) ||
+            phase.history.some(bid => bid.seat === seat)) return false;
         phase.abstained.push(seat);
         this.emit('abstain', 'Abstained', { seat, property: phase.property });
-        if (this.active().every(other => other === phase.leader || phase.abstained.includes(other))) this.settle();
+        if (this.active().filter(other => !phase.abstained.includes(other)).length < 2) this.settle();
         return true;
     }
 
@@ -677,6 +694,7 @@ export class MonopolyEngine {
         const offer = this.trade;
         if (!offer || command.id !== offer.id || ![offer.from, offer.to].includes(seat)) return false;
         if (command.action === 'CANCEL_TRADE') {
+            if (seat === offer.to) this.emit('tradeDeclined', 'Trade declined', { seat, target: offer.from });
             this.trade = null;
             return true;
         }
@@ -814,8 +832,9 @@ export class MonopolyEngine {
             if (action === 'ROLL') {
                 this.roll(); return true;
             }
-            if (phase.kind === 'roll' && action === 'BAIL' && player.bail !== null && available(player) >= player.bail) {
-                this.pay(seat, null, player.bail, 'Bail');
+            if (phase.kind === 'roll' && action === 'BAIL' && player.bail !== null &&
+                available(player) >= this.bailCost(seat)) {
+                this.pay(seat, null, this.bailCost(seat), 'Bail');
                 this.portal(seat, false);
                 return true;
             }
@@ -898,13 +917,14 @@ export class MonopolyEngine {
             player.reserved -= phase.wager;
             player.stockNet += gain;
             this.pay(gain < 0 ? this.turn : null, gain > 0 ? this.turn : null, Math.abs(gain), 'Stock return');
-            this.emit('stockResult', '', { seat: this.turn, privateTo: this.turn, amount: gain });
+            this.emit('stockResult', '', { seat: this.turn, amount: gain });
             this.progress();
         } else this.apply(this.actor(), fallback(this.view(this.actor())));
     }
 
     command(seat: number, command: Command, now: number): boolean {
-        if (this.deadline !== null && now >= this.deadline && !['POSE', 'SCAN'].includes(command.action)) return false;
+        const { expiry } = this;
+        if (expiry !== null && now >= expiry && !['POSE', 'SCAN'].includes(command.action)) return false;
         this.now = now;
         const from = this.seq;
         const phase = this.phase;
@@ -915,7 +935,8 @@ export class MonopolyEngine {
     }
 
     timeout(now: number): boolean {
-        if (this.deadline === null || now < this.deadline) return false;
+        const { expiry } = this;
+        if (expiry === null || now < expiry) return false;
         this.now = now;
         const from = this.seq;
         const phase = this.phase;
@@ -934,7 +955,8 @@ export class MonopolyEngine {
             if (event.privateTo !== undefined && event.privateTo !== seat) return [];
             if (this.settings.hiddenBalances && (
                 (event.kind === 'ledger' || event.kind === 'pledge') && event.seat !== seat && event.target !== seat ||
-                event.kind === 'rescue' && event.seat !== seat
+                event.kind === 'rescue' && event.seat !== seat ||
+                event.kind === 'stockResult' && event.seat !== seat
             )) return [{ ...event, amount: undefined }];
             return [event];
         });

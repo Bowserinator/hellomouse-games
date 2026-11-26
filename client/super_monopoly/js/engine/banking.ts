@@ -2,6 +2,9 @@ import type { Debt, LedgerEntry, Player } from './state.js';
 
 export const available = (player: Player): number => player.cash - player.reserved;
 
+export const bailAmount = (bail: number, funds: number, percent: boolean): number =>
+    percent ? Math.floor(Math.max(0, funds) * bail / 100) : bail;
+
 export function transact(players: ReadonlyArray<Player>, payer: number | null, creditor: number | null,
     amount: number, reason: string, seq: number, property?: string): LedgerEntry {
     const from = payer === null ? null : players[payer];

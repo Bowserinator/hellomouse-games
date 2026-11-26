@@ -20,6 +20,7 @@
 <body>
     <nav>
         <h1><a href="/" target="_blank" rel="noopener">Bowseropoly</a></h1>
+        <span id="game-timer" class="nav-timer" hidden></span>
         <div class="nav-buttons">
             <button id="skip-motion" type="button" hidden>Skip animation</button>
             <button id="rules-button" class="nav-link" type="button" aria-haspopup="dialog">Rules</button>
@@ -100,10 +101,10 @@
             <b>Rules:</b>
             <ul>
                 <li>For 2-8 players. Each player starts with $1,500.</li>
-                <li>Crossing Go earns you $200 and gives you the option to gamble all your money in the stock market spinner, or buy something from the black market. You may do both after passing Go.</li>
+                <li>Passing or landing on Go earns you $200 and gives you the option to gamble all your money in the stock market spinner, or buy something from the black market. You may do both after passing Go.</li>
                 <li>Roll two dice; doubles earn you a bonus roll; three doubles in one turn sends you to Hell.</li>
-                <li>When you land on an unowned property, you can buy it. If you skip, a timed auction opens to all players. Bids do not extend the timer; the highest bid wins.</li>
-                <li>You pay rent when you land on an unmortgaged deed. Bare streets in a complete set pay double; yacht rent depends on how many yachts that player owns; superweapon rent is a multiple of a dice roll.</li>
+                <li>When you land on an unowned property, you can buy it. If you skip, a timed auction opens to all players. Bids do not extend the timer; the highest bid wins. Once you bid you cannot abstain. The auction ends early when everyone but one player has abstained.</li>
+                <li>You pay rent when you land on an unmortgaged deed. Bare streets in a complete set pay double; <span data-term="railroad"></span> rent depends on how many <span data-term="railroad"></span>s that player owns; <span data-term="utility"></span> rent is a multiple of a dice roll.</li>
                 <li>Build and sell evenly, and sell all buildings before mortgaging. The number of houses and hotels is limited (host adjustable).</li>
                 <li>You can trade cash, deeds, and "Get out of Hell" cards. When you receive a mortgaged deed in a trade, you pay 10% interest to keep it mortgaged, or principal plus interest to unmortgage it.</li>
                 <li>When you go bankrupt, a GoFundMe starts where other players can send you money to stay in the game. If you go bankrupt anyway, donations are refunded.</li>
@@ -111,8 +112,9 @@
             </ul>
             <b>Notes:</b>
             <ul>
-                <li>Land on Go or Free Parking to select a deed to auction. You may not auction deeds that would complete a set for a player.</li>
-                <li>In Hell, land on the exit gate, use a "Get out of Hell" card, or pay bail to leave. Bail starts at $50 and drops $10 per lap to $20.</li>
+                <li>Landing exactly on Go or Free Parking (not just passing) lets you select a deed to auction. You may not auction deeds that would complete a set for a player.</li>
+                <li>In Hell, land on the exit gate, use a "Get out of Hell" card, or pay bail to leave. Bail starts at 50% of your cash and drops 10 percentage points per lap to 20%.</li>
+                <li>Devil's Deal: if it sends you to Hell when you pass Go, you do not collect the Go salary.</li>
                 <li>You may hold up to three Black Market upgrades at a time (no duplicates).
                     <ul>
                         <li>Dead Hand: on bankruptcy, you explode, destroying the square you're on and bankrupting other players on it. A destroyed square loses its buildings and can no longer be owned, bought, auctioned, or charged rent.</li>

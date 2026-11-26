@@ -17,8 +17,8 @@ export function register(board: BoardDefinition): RegisteredBoard {
     if (hell.spaces.length < 2 || hell.spaces[0]?.type !== 'visiting' ||
         !Number.isSafeInteger(hell.initialBail) || !Number.isSafeInteger(hell.minBail) ||
         hell.minBail < 0 || hell.initialBail < hell.minBail ||
-        !Number.isSafeInteger(hell.reductionPerLap) || hell.reductionPerLap < 0 ||
-        (hell.diceCount !== 1 && hell.diceCount !== 2)) throw new Error(`Invalid Hell configuration for ${board.id}`);
+        !Number.isSafeInteger(hell.reductionPerLap) || hell.reductionPerLap < 0) throw new Error(`Invalid Hell configuration for ${board.id}`);
+    if (!board.terms.railroad || !board.terms.utility) throw new Error(`Invalid terms for ${board.id}`);
 
     const spaces = [...board.spaces, ...hell.spaces];
     const deeds = spaces.filter(isProperty);
@@ -37,7 +37,14 @@ export function register(board: BoardDefinition): RegisteredBoard {
                 (effect.kind === 'nearest' && !board.spaces.some(space => space.type === effect.type)))
                 throw new Error(`Invalid destination for ${id} on ${board.id}`);
         }
-        return Object.freeze(deck.map(card => Object.freeze({ ...card, effect: Object.freeze({ ...card.effect }) })));
+        return Object.freeze(deck.map(card => {
+            const { effect } = card;
+            const destination = effect.kind === 'advance'
+                ? board.spaces.find(space => space.id === effect.destination)?.name : undefined;
+            const text = card.text.replace('{destination}', destination ?? '')
+                .replace('{railroad}', board.terms.railroad).replace('{utility}', board.terms.utility);
+            return Object.freeze({ ...card, text, effect: Object.freeze({ ...effect }) });
+        }));
     };
     const cards = Object.freeze({ chance: resolveDeck('chance'), chest: resolveDeck('chest') });
 

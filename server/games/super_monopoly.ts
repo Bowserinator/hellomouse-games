@@ -31,12 +31,12 @@ function cpuFactor(engine: MonopolyEngine, seat: number, property: Property): nu
     return property.type === 'street' ? 1 : property.type === 'railroad' ? 1.1 : 0.8;
 }
 
-function cpuBid(engine: MonopolyEngine, seat: number, property: Property, current: number): number | null {
+function cpuBid(engine: MonopolyEngine, seat: number, property: Property, current: number, start: number): number | null {
     const { price } = property.deed;
     const factor = cpuFactor(engine, seat, property);
     const room = available(engine.players[seat]) - (factor === SET_COMPLETE ? 0 : cpuBuffer(engine, seat) / 2);
     const limit = Math.floor(Math.min(price * factor, room) / 10) * 10;
-    const next = current ? Math.min(current + roundBid(price * 0.08), limit) : roundBid(price * 0.2);
+    const next = current ? Math.min(current + roundBid(price * 0.08), limit) : start;
     return next > current && next <= limit ? next : null;
 }
 
@@ -79,8 +79,9 @@ function cpuMove(engine: MonopolyEngine, seat: number): Command | null {
     if (phase.kind === 'auction') {
         const property = engine.property(phase.property) as Property;
         if (phase.leader === seat || phase.abstained.includes(seat)) return null;
-        const bid = cpuBid(engine, seat, property, phase.bid);
-        return bid ? { action: 'BID', amount: bid } : { action: 'ABSTAIN' };
+        const bid = cpuBid(engine, seat, property, phase.bid, phase.start);
+        if (bid) return { action: 'BID', amount: bid };
+        return phase.history.some(entry => entry.seat === seat) ? null : { action: 'ABSTAIN' };
     }
     if (phase.kind === 'rescue')
         return phase.debt.payer === seat || phase.declined.includes(seat) ? null : { action: 'OPT_OUT' };
@@ -90,7 +91,7 @@ function cpuMove(engine: MonopolyEngine, seat: number): Command | null {
     switch (phase.kind) {
         case 'roll':
             if (me.bail !== null && me.cards.length) return { action: 'ESCAPE', card: me.cards[0], target: seat };
-            return me.bail !== null && cash >= me.bail + buffer ? { action: 'BAIL' } : { action: 'ROLL' };
+            return me.bail !== null && cash >= engine.bailCost(seat) + buffer ? { action: 'BAIL' } : { action: 'ROLL' };
         case 'extra': return { action: 'ROLL' };
         case 'draw': return { action: 'DRAW' };
         case 'arson': return { action: 'DECLINE' };
@@ -366,7 +367,6 @@ export default class SuperMonopolyGame extends Game {
         const key = this.engine ? seat : client;
         const ids = this.actions.get(key) ?? new Set<string>();
         if (ids.has(move.actionId)) {
-            console.warn('Super Monopoly: duplicate move');
             return this.send(client, this.globalStateSync(client));
         }
         if (move.seq !== (this.engine?.seq ?? 0) &&
@@ -380,7 +380,6 @@ export default class SuperMonopolyGame extends Game {
         }
         const accepted = this.engine ? this.engine.command(seat, move, now) : this.lobby(client, move);
         if (!accepted) {
-            console.warn('Super Monopoly: rejected move');
             return this.error(client, 'Move not available');
         }
         ids.add(move.actionId);
@@ -421,12 +420,12 @@ export default class SuperMonopolyGame extends Game {
             this.send(client, this.globalStateSync(client));
 
         clearTimeout(this.timer);
-        if (this.engine && this.engine.deadline !== null) {
+        if (this.engine && this.engine.expiry !== null) {
             this.timer = setTimeout(() => {
                 if (!this.playerCount && !this.observers.size) return this.close();
                 this.engine?.timeout(Date.now());
                 this.syncAll();
-            }, Math.max(0, this.engine.deadline - Date.now()));
+            }, Math.max(0, this.engine.expiry - Date.now()));
             this.timer.unref();
         }
         if (this.playerCount || this.observers.size) {

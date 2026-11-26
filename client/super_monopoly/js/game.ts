@@ -3,7 +3,7 @@ import type { GameConnection } from '../../shared/ts/game-connection.js';
 import { copyInviteLink } from '../../shared/ts/copy-invite-link.js';
 import { boards, isProperty } from './boards/index.js';
 import { settingBounds, tokens, tokenImage, seatColors, upgrades } from './types.js';
-import type { Pose, Settings } from './types.js';
+import type { Pose, Settings, Upgrade } from './types.js';
 import type { Sync } from './protocol.js';
 import { byId, button, cancelable, confirmPanel, el, money, panel, panelActions, panelBack, tokenIcon } from './ui/dom.js';
 import type { GameDialog } from './ui/dom.js';
@@ -13,12 +13,12 @@ import {
 } from './ui/board.js';
 import { CameraController } from './ui/camera-input.js';
 import type { Camera } from './ui/camera-math.js';
-import { validPose } from './card-pose.js';
 import { station } from './stations.js';
 import { tableArt, tableArtExtent } from './ui/table-art.js';
 import { interest, management } from './engine/propertyManagement.js';
 import { cards, deckOf } from './engine/decks.js';
 import { mortgageFee } from './engine/trades.js';
+import { bailAmount } from './engine/banking.js';
 import { calculateRent } from './engine/rent.js';
 import { sectors } from './engine/stockMarket.js';
 import { fly } from './ui/flight.js';
@@ -232,18 +232,42 @@ function confirmEscape(card: string, target: number): void {
     });
 }
 
-function escapeCard(card: string, textless = false): HTMLButtonElement {
-    const node = button(textless ? '' : 'Get out of hell', () => pickPlayer('Get out of hell', escapeTargets(), target => {
+function chooseEscapeTarget(card: string): void {
+    pickPlayer('Get out of hell', escapeTargets(), target => {
         send('ESCAPE', { card, target });
         escapeSelection = null;
         highlightEscapes();
-    }), !escapeTargets().length);
+    });
+}
+
+function inspectEscape(card: string, mine: boolean): void {
+    const content = el('div', '', 'property-view');
+    content.append(el('div', '', 'held-face held-face--escape'));
+    panel('', content);
+    if (mine) panelActions([button('Get out of hell', () => {
+        byId<GameDialog>('panel').close();
+        chooseEscapeTarget(card);
+    }, !escapeTargets().length)], true);
+}
+
+function inspectUpgrade(id: Upgrade): void {
+    const item = upgrades[id];
+    const face = el('div', '', 'upgrade-card');
+    face.append(el('strong', item.name), el('small', item.description));
+    const content = el('div', '', 'property-view');
+    content.append(face);
+    panel('', content);
+}
+
+function escapeCard(card: string, textless = false): HTMLButtonElement {
+    const node = textless ? button('', () => inspectEscape(card, true))
+        : button('Get out of hell', () => chooseEscapeTarget(card), !escapeTargets().length);
     node.className = 'escape-card';
     node.setAttribute('aria-label', 'Get out of hell');
     let start: PointerEvent | undefined;
     let ghost: HTMLElement | undefined;
     node.onpointerdown = event => {
-        if (event.button !== 0) return;
+        if (event.button !== 0 || !escapeTargets().length) return;
         event.stopPropagation();
         start = event;
         node.setPointerCapture(event.pointerId);
@@ -298,6 +322,15 @@ interface Grab {
     own: boolean;
 }
 let drag: Grab | null = null;
+
+/** Whether a card is currently being carried; a grab whose card left the page is discarded. */
+function carrying(): boolean {
+    if (drag && !drag.node.isConnected) {
+        cancelAnimationFrame(drag.raf);
+        drag = null;
+    }
+    return !!drag?.moved;
+}
 const tweens = new WeakMap<HTMLElement, () => void>();
 let previewTime = 0;
 let ignoreClick = false;
@@ -419,6 +452,7 @@ function attachGrab(node: HTMLButtonElement, home: () => Pose | null, own: () =>
     drop: (grab: Grab) => boolean): void {
     node.addEventListener('pointerdown', event => {
         const from = home();
+        carrying();
         if (event.button !== 0 || drag || !from) return;
         event.stopPropagation();
         ignoreClick = false;
@@ -484,11 +518,6 @@ function addCreditCard(seat: number): HTMLButtonElement {
             localScanUntil = performance.now() + 2000;
             scanFlight(node, start, home, eventDuration({ kind: 'scan', seq: 0, timestamp: 0, text: '' }), pose.angle);
             send('SCAN', own ? {} : { target: seat });
-            return true;
-        }
-        if (own && validPose(pose, board.dimensions.width, board.dimensions.height)) {
-            send('POSE', { pose });
-            poseCard(node, pose);
             return true;
         }
         return false;
@@ -558,8 +587,11 @@ function propertyClick(id: string, back?: () => void): void {
         trade.append(button('Trade property', () => offerTrade(id), !allowed || built));
         if (built) tooltip(trade, 'Sell all buildings before trading');
         actionBar.append(trade);
-    } else actionBar.append(el('p', deed.destroyed ? 'Deed destroyed' : 'Only the owner can manage this deed',
-        'property-actions__note'));
+    } else {
+        const ownerName = deed.owner === null ? undefined : view.players[deed.owner]?.name;
+        actionBar.append(el('p', deed.destroyed ? 'Deed destroyed'
+            : `Only ${ownerName ?? 'the owner'} can manage this deed`, 'property-actions__note'));
+    }
     const content = el('div', '', 'property-view');
     content.append(face, actionBar);
     panel('', content);
@@ -765,7 +797,7 @@ function shop(): void {
     const list = el('div', '', 'market');
     for (const [id, item] of Object.entries(upgrades)) {
         const card = button('', () => send('SHOP', { upgrade: id }),
-            !player || player.upgrades.some(upgrade => upgrade === id) || cash() < item.price ||
+            !player || !state.view.shops || player.upgrades.some(upgrade => upgrade === id) || cash() < item.price ||
             player.upgrades.length >= state.settings.upgradeLimit);
         card.className = 'market__card';
         card.append(el('strong', item.name), el('span', money(item.price), 'market__price'),
@@ -800,7 +832,7 @@ const settingGroups: Array<{ title: string; items: Array<[keyof Settings, string
         ['market', 'Black market', 'Buy upgrades with cash'],
         ['upgradeLimit', 'Upgrades per player', 'How many black market upgrades a player can hold'],
         ['hell', 'Hell board', 'Detention sends players to a second board'],
-        ['specialAuctions', 'Special auctions', 'Landing on GO, Chance, Chest or Free Parking triggers an auction'],
+        ['specialAuctions', 'Special auctions', 'Landing exactly on GO or Free Parking triggers an auction'],
         ['hiddenBalances', 'Hidden balances', 'Players cannot see each other\'s cash']
     ] },
     { title: 'Bankruptcy', items: [
@@ -953,8 +985,10 @@ function drawControls(sync: Sync): void {
         const roll = button('Roll dice', () => send('ROLL'));
         roll.className = 'end-turn';
         main.push(roll);
-        if (phase.kind === 'roll' && player.bail !== null)
-            act(`Pay bail ${money(player.bail)}`, 'BAIL', {}, cash() < player.bail);
+        if (phase.kind === 'roll' && player.bail !== null) {
+            const bail = bailAmount(player.bail, cash(), sync.settings.hell);
+            act(`Pay bail ${money(bail)}`, 'BAIL', {}, cash() < bail);
+        }
         if (view.swapTargets.length) main.push(button('Identity Theft', swapPicker));
     }
     if (own && phase.kind === 'draw') act(`Draw ${deckName(phase.deck)}`, 'DRAW');
@@ -993,12 +1027,13 @@ function drawControls(sync: Sync): void {
                 abstain: () => send('ABSTAIN')
             };
             const auction = {
-                bid: phase.bid,
+                bid: phase.leader === null ? phase.start - 1 : phase.bid,
                 leader: phase.leader === null ? null : players[phase.leader].name,
                 history: phase.history.map(bid => ({ name: players[bid.seat].name, amount: bid.amount })),
                 limit: player && !player.eliminated ? cash() + (phase.leader === me ? phase.bid : 0) : 0,
                 balance: player && !player.eliminated ? cash() : null,
-                abstained: phase.abstained.includes(me)
+                abstained: phase.abstained.includes(me),
+                hasBid: phase.history.some(bid => bid.seat === me)
             };
             showAuction(options, auction);
         }
@@ -1360,6 +1395,47 @@ function renderLog(forceScroll = false): void {
 
 const movingPieces = new Map<number, number>();
 const pendingRolls = new Set<number>();
+const pendingHand = new Map<string, number>();
+const pendingBalance = new Map<number, number>();
+const shownBalance = new Map<number, number>();
+
+function clearPendingDisplay(): void {
+    pendingHand.clear();
+    pendingBalance.clear();
+    shownBalance.clear();
+    for (const node of deedFans.querySelectorAll<HTMLElement>('[data-deed], [data-card]')) node.style.visibility = '';
+}
+
+function handKey(event: GameEvent): string | undefined {
+    if (event.kind === 'deed' && event.property) return `deed:${event.property}`;
+    if (event.kind !== 'draw' || !event.card) return undefined;
+    const held = cards[deckOf(event.card)].find(item => item.id === event.card)?.effect.kind === 'escape';
+    return held ? `card:${event.card}` : undefined;
+}
+
+function releaseHand(key: string): void {
+    const remaining = (pendingHand.get(key) ?? 1) - 1;
+    if (remaining) {
+        pendingHand.set(key, remaining);
+        return;
+    }
+    pendingHand.delete(key);
+    const [kind, id] = key.split(':');
+    for (const node of deedFans.querySelectorAll<HTMLElement>(`[data-${kind}="${id}"]`)) node.style.visibility = '';
+}
+
+function settleBalance(seat: number): void {
+    const remaining = (pendingBalance.get(seat) ?? 1) - 1;
+    if (remaining) {
+        pendingBalance.set(seat, remaining);
+        return;
+    }
+    pendingBalance.delete(seat);
+    shownBalance.delete(seat);
+    const cash = state?.view?.players[seat].cash;
+    const balance = byId('leaderboard').children.item(seat)?.querySelector('.balance');
+    if (balance && typeof cash === 'number') balance.textContent = money(cash);
+}
 
 function showDice(dice: ReadonlyArray<number>): void {
     const values = dice.length ? dice : [5, 3];
@@ -1481,6 +1557,22 @@ function animateEvents(events: Array<GameEvent>): void {
                 seat !== undefined) : [];
         for (const seat of seats) movingPieces.set(seat, (movingPieces.get(seat) ?? 0) + 1);
         if (event.kind === 'roll' && event.dice) pendingRolls.add(event.seq);
+        const handItem = handKey(event);
+        if (handItem) pendingHand.set(handItem, (pendingHand.get(handItem) ?? 0) + 1);
+        const balances: Array<{ seat: number; start: number; end: number }> = [];
+        if (event.kind === 'ledger') {
+            const entry = state?.view?.ledger.find(item => item.seq === event.seq);
+            for (const seat of [event.seat, event.target]) {
+                if (seat === undefined) continue;
+                const start = event.seat === seat ? entry?.payerBefore : entry?.creditorBefore;
+                const end = event.seat === seat ? entry?.payerAfter : entry?.creditorAfter;
+                if (typeof start === 'number' && typeof end === 'number') balances.push({ seat, start, end });
+            }
+        }
+        for (const { seat, start } of balances) {
+            if (!pendingBalance.has(seat)) shownBalance.set(seat, start);
+            pendingBalance.set(seat, (pendingBalance.get(seat) ?? 0) + 1);
+        }
         window.setTimeout(() => {
             if (generation !== animationGeneration) return;
             const card = event.seat === undefined ? undefined : creditCards[event.seat];
@@ -1491,23 +1583,20 @@ function animateEvents(events: Array<GameEvent>): void {
                 table.pieces[seat].getAnimations().find(item => item.id === 'piece-reflow')?.cancel();
             if (event.kind === 'build' && event.property) flashWhite(table.tiles.get(event.property), duration);
 
-            if (event.kind === 'ledger')
-                for (const seat of [event.seat, event.target]) {
-                    if (seat === undefined) continue;
+            for (const { seat, start, end } of balances) {
+                const began = performance.now();
+                const tick = (time: number) => {
+                    if (generation !== animationGeneration) return;
+                    const progress = Math.max(0, Math.min(1, (time - began) / duration));
+                    const value = Math.round(start + (end - start) * progress);
+                    shownBalance.set(seat, value);
                     const balance = byId('leaderboard').children.item(seat)?.querySelector('.balance');
-                    const entry = state?.view?.ledger.find(item => item.seq === event.seq);
-                    const start = event.seat === seat ? entry?.payerBefore : entry?.creditorBefore;
-                    const end = event.seat === seat ? entry?.payerAfter : entry?.creditorAfter;
-                    if (!balance || typeof start !== 'number' || typeof end !== 'number') continue;
-                    const began = performance.now();
-                    const tick = (time: number) => {
-                        if (!balance.isConnected || generation !== animationGeneration) return;
-                        const progress = Math.max(0, Math.min(1, (time - began) / duration));
-                        balance.textContent = money(Math.round(start + (end - start) * progress));
-                        if (progress < 1) requestAnimationFrame(tick);
-                    };
-                    requestAnimationFrame(tick);
-                }
+                    if (balance) balance.textContent = money(value);
+                    if (progress < 1) requestAnimationFrame(tick);
+                    else settleBalance(seat);
+                };
+                requestAnimationFrame(tick);
+            }
 
             if (event.kind === 'move' && piece && event.path?.length) {
                 const points = event.path.map(location);
@@ -1515,7 +1604,7 @@ function animateEvents(events: Array<GameEvent>): void {
                 place(piece, end.x, end.y);
                 piece.animate(points.map(p => ({ left: `${p.x}px`, top: `${p.y}px` })), { duration });
                 table.hop(piece, points.length - 1, duration);
-                if (!drag) camera.follow(() => pieceCenter(piece), 0.84, duration + 800);
+                if (!carrying()) camera.follow(() => pieceCenter(piece), 0.84, duration + 800);
             }
             if (event.kind === 'draw' && event.card) {
                 const key = deckOf(event.card);
@@ -1564,7 +1653,7 @@ function animateEvents(events: Array<GameEvent>): void {
             if ((event.kind === 'hell' || event.kind === 'release') && event.path?.length) {
                 const point = location(event.path[event.path.length - 1]);
                 if (piece) place(piece, point.x, point.y);
-                if (!drag)
+                if (!carrying())
                     camera.follow(() => ({ x: origin.x + point.x, y: origin.y + point.y }), 0.7, duration + 1200);
                 table.root.animate([{ filter: 'brightness(1)' }, { filter: 'brightness(.75)' },
                     { filter: 'brightness(1)' }], { duration });
@@ -1596,6 +1685,9 @@ function animateEvents(events: Array<GameEvent>): void {
                     { opacity: .45, scale: '1' }], { duration });
             if (['draw', 'hell', 'release', 'swap', 'destroy', 'deadHand', 'bankrupt'].includes(event.kind)) toast(event.text, eventToast(event));
         }, Math.max(0, delay));
+        if (handItem) window.setTimeout(() => {
+            if (generation === animationGeneration) releaseHand(handItem);
+        }, Math.max(0, delay) + duration);
         const rolled = event.kind === 'roll' ? event.dice : undefined;
         if (seats.length || rolled) window.setTimeout(() => {
             if (generation !== animationGeneration) return;
@@ -1633,6 +1725,7 @@ function renderSync(message: Sync): void {
         animationUntil = 0;
         movingPieces.clear();
         pendingRolls.clear();
+        clearPendingDisplay();
         world.getAnimations({ subtree: true }).forEach(animation => animation.cancel());
         log = [];
         readSeq = 0;
@@ -1648,10 +1741,13 @@ function renderSync(message: Sync): void {
     if (sameGame) {
         animateEvents(next);
         for (const event of next) {
-            if (event.kind !== 'stockResult' || event.seat !== message.youAre || event.amount === undefined) continue;
+            if (event.kind === 'tradeDeclined' && event.seat !== undefined && event.target === message.youAre)
+                toast(`${view.players[event.seat].name} declined your trade offer`);
+            if (event.kind !== 'stockResult' || event.seat === undefined || event.amount === undefined) continue;
             const gain = event.amount;
-            toast(gain ? `${gain > 0 ? 'Won' : 'Lost'} ${money(Math.abs(gain))} on stocks` : 'Broke even on stocks',
-                'stock');
+            const who = event.seat === message.youAre ? 'You' : view.players[event.seat].name;
+            toast(gain ? `${who} ${gain > 0 ? 'won' : 'lost'} ${money(Math.abs(gain))} on stocks`
+                : `${who} broke even on stocks`, 'stock');
         }
     }
     if (!pendingRolls.size) showDice(view.dice);
@@ -1700,14 +1796,15 @@ function renderSync(message: Sync): void {
         const deedsLink = button(`${owned.length} deeds`, () => openDeeds(seat));
         deedsLink.className = 'link';
         stats.append(`${sets.size} sets · `, deedsLink, ` · Net ${money(player.netWorth)}`);
-        if (player.bail !== null) stats.append(` · Bail ${money(player.bail)}`);
+        if (player.bail !== null)
+            stats.append(` · Bail ${message.settings.hell ? `${player.bail}%` : money(player.bail)}`);
         if (player.eliminated) stats.append(' · Out');
         const badge = button('', () => focusSeat(seat));
         badge.className = 'player-card__icon';
         badge.setAttribute('aria-label', `Focus on P${seat + 1}: ${player.name}`);
         badge.append(tokenIcon(player.token));
         row.append(badge, name,
-            el('span', money(player.cash), 'balance'), stats);
+            el('span', money(shownBalance.get(seat) ?? player.cash), 'balance'), stats);
         for (const upgrade of player.upgrades) {
             const icon = el('span', upgrades[upgrade].icon);
             icon.title = upgrades[upgrade].name;
@@ -1729,6 +1826,7 @@ function renderSync(message: Sync): void {
                 ignoreClick = false;
             });
             card.dataset.deed = property.id;
+            if (pendingHand.has(`deed:${property.id}`)) card.style.visibility = 'hidden';
             const line = Math.floor(i / FAN_ROW_SIZE);
             const inLine = Math.min(FAN_ROW_SIZE, owned.length - line * FAN_ROW_SIZE);
             const home = { x: (i % FAN_ROW_SIZE - (inLine - 1) / 2) * step, y: line * FAN_ROW_STEP, angle: 0 };
@@ -1736,17 +1834,38 @@ function renderSync(message: Sync): void {
             attachGrab(card, () => home, () => false, () => false);
             fan.append(card);
         }
-        if (seat === message.youAre) player.cards.forEach((card, i) => {
-            const held = escapeCard(card, true);
-            held.dataset.card = card;
-            place(held, reach + 75 + i * 20, 0);
+        player.upgrades.forEach((id, i) => {
+            const item = upgrades[id];
+            const held = el('button', '', 'upgrade-card');
+            held.type = 'button';
+            held.title = `${item.name}: ${item.description}`;
+            held.append(el('strong', item.name), el('small', item.description));
+            const home = { x: -(reach + 75 + i * 20), y: 0, angle: 0 };
+            place(held, home.x, home.y, home.angle);
+            held.onclick = () => {
+                if (!ignoreClick) inspectUpgrade(id);
+                ignoreClick = false;
+            };
+            attachGrab(held, () => home, () => false, () => false);
             fan.append(held);
         });
-        else if (player.cards.length) {
-            const held = el('span', `↗ ×${player.cards.length}`, 'escape-count');
-            held.dataset.card = player.cards.at(-1);
+        player.cards.forEach((card, i) => {
+            const mine = seat === message.youAre;
+            const home = { x: reach + 75 + i * 20, y: 0, angle: 0 };
+            const held = mine ? escapeCard(card, true) : button('', () => {
+                if (!ignoreClick) inspectEscape(card, false);
+                ignoreClick = false;
+            });
+            if (!mine) {
+                held.className = 'escape-card';
+                held.setAttribute('aria-label', 'Get out of hell');
+                attachGrab(held, () => home, () => false, () => false);
+            }
+            held.dataset.card = card;
+            if (pendingHand.has(`card:${card}`)) held.style.visibility = 'hidden';
+            place(held, home.x, home.y, home.angle);
             fan.append(held);
-        }
+        });
         fans.push(fan);
         return row;
     });
@@ -1783,6 +1902,8 @@ function offlineConnection(): GameConnection {
     };
 }
 
+const usernameKey = 'super_monopoly.username';
+
 function connect() {
     let resume: { resumeToken: string; nextTick: number } | undefined;
     const stored = sessionStorage.getItem(tokenKey());
@@ -1799,6 +1920,8 @@ function connect() {
         disconnectBanner: byId('disconnect-banner'),
         onOpen: () => {
             byId('disconnect-banner').hidden = true;
+            const name = localStorage.getItem(usernameKey);
+            if (name && !resume) connection.send({ type: 'USERNAME', username: name });
         },
         onClose: () => {
             clearTimeout(reconnect);
@@ -1862,9 +1985,12 @@ byId<HTMLInputElement>('invite').onclick = event => (event.currentTarget as HTML
 byId('copy-link').onclick = () => {
     void copyInviteLink(byId('game-link'), window.location.href);
 };
+byId<HTMLInputElement>('username').value = localStorage.getItem(usernameKey) ?? '';
 byId<HTMLFormElement>('profile').onsubmit = event => {
     event.preventDefault();
-    connection.send({ type: 'USERNAME', username: byId<HTMLInputElement>('username').value });
+    const { value } = byId<HTMLInputElement>('username');
+    localStorage.setItem(usernameKey, value);
+    connection.send({ type: 'USERNAME', username: value });
 };
 function buildPicker(id: 'token' | 'skin', choices: Array<{ value: number; label: string; image: string }>): void {
     const root = byId(id);
@@ -1934,6 +2060,9 @@ byId('log-panel').onclick = () => {
 byId<GameDialog>('log-modal').addEventListener('click', event => {
     if (event.target === event.currentTarget) byId<GameDialog>('log-modal').close();
 });
+document.querySelectorAll<HTMLElement>('[data-term]').forEach(node => {
+    node.textContent = board.terms[node.dataset.term as 'railroad' | 'utility'];
+});
 byId('rules-button').onclick = () => byId<GameDialog>('rules-modal').showModal();
 function setHudCollapsed(collapsed: boolean): void {
     byId('hud-actions').hidden = collapsed;
@@ -1954,6 +2083,7 @@ byId('skip-motion').onclick = () => {
     for (const seat of movingPieces.keys()) table.settlePiece(seat);
     movingPieces.clear();
     pendingRolls.clear();
+    clearPendingDisplay();
     showDice(state?.view?.dice ?? []);
     renderLog();
     byId('flight-layer').replaceChildren();
@@ -1965,6 +2095,17 @@ byId('skip-motion').onclick = () => {
 };
 window.setInterval(() => {
     byId('skip-motion').hidden = performance.now() >= animationUntil && spinAnimation?.playState !== 'running';
+    const timer = byId('game-timer');
+    const view = state?.view;
+    const cap = state?.settings.minuteCap ?? 0;
+    timer.hidden = !view || !cap || view.phase.kind === 'over';
+    if (view && cap && view.phase.kind !== 'over') {
+        const left = Math.max(0, view.started + cap * 60000 - Date.now() - clock);
+        const seconds = Math.ceil(left / 1000);
+        const hours = Math.floor(seconds / 3600);
+        const parts = [...hours ? [hours] : [], Math.floor(seconds / 60) % 60, seconds % 60];
+        timer.textContent = `Time left: ${parts.map(part => String(part).padStart(2, '0')).join(':')}`;
+    }
     const bar = byId<HTMLProgressElement>('deadline');
     bar.hidden = deadline === null;
     if (deadline === null) return;

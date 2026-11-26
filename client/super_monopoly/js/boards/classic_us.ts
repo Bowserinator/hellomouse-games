@@ -13,7 +13,7 @@ function service(id: string, name: string, type: 'railroad' | 'utility'): Space 
 
 function draw(type: 'chance' | 'chest', index: number): Space {
     return {
-        id: `${type}_${index}`, type, specialAuction: true,
+        id: `${type}_${index}`, type,
         name: type === 'chance' ? 'Chance' : 'Community Chest'
     };
 }
@@ -32,6 +32,7 @@ const board: BoardDefinition = {
     },
     destinations: { go: 'go', gate: 'hell_gate' },
     decks: { chance: 'chance_us', chest: 'community_chest_us' },
+    terms: { railroad: 'yacht', utility: 'superweapon' },
     spaces: [
         { id: 'go', name: 'GO', type: 'go', specialAuction: true },
         street('mediterranean_avenue', 'K-Corp', 'brown', 60, 50, [2, 10, 30, 90, 160, 250]),
@@ -75,7 +76,7 @@ const board: BoardDefinition = {
         street('boardwalk', 'Leafsheep Cafe', 'dark_blue', 400, 200, [50, 200, 600, 1400, 1700, 2000])
     ],
     hell: {
-        initialBail: 50, minBail: 20, reductionPerLap: 10, diceCount: 1,
+        initialBail: 50, minBail: 20, reductionPerLap: 10,
         spaces: [
             { id: 'hell_entry', name: 'Hell Gate', type: 'visiting' },
             street('brimstone_estate', 'art chat 4', 'hell', 180, 100, [14, 70, 200, 550, 750, 950]),

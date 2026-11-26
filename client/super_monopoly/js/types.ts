@@ -17,7 +17,7 @@ export const defaults = {
     playerLimit: 8,
     startingBalance: 1500,
     goSalary: 200,
-    auctionSeconds: 30,
+    auctionSeconds: 15,
     rescueSeconds: 30,
     specialAuctions: true,
     stock: true,
@@ -91,12 +91,12 @@ export interface BoardDefinition {
     colors: Readonly<Record<string, string>>;
     destinations: { go: string; gate: string };
     decks: { chance: string; chest: string };
+    terms: { railroad: string; utility: string };
     spaces: ReadonlyArray<Space>;
     hell: {
         initialBail: number;
         minBail: number;
         reductionPerLap: number;
-        diceCount: number;
         spaces: ReadonlyArray<Space>;
     };
 }
@@ -111,10 +111,10 @@ export interface Deed {
 
 export const upgrades = {
     deadHand: { name: 'Dead Hand', price: 350, icon: '☠', description: 'When you go bankrupt, explode and bankrupt everyone else on your square with you.' },
-    robber: { name: 'Robber’s Knife', price: 450, icon: '†', description: 'One-time: Steal $100 when you land on the same square as someone else.' },
+    robber: { name: 'Robber’s Knife', price: 80, icon: '†', description: 'One-time: Steal $100 when you land on the same square as someone else.' },
     arson: { name: 'Arson', price: 200, icon: '♨', description: 'One-time: Destroy one house before paying rent.' },
-    identity: { name: 'Identity Theft', price: 300, icon: '⇄', description: 'One-time: Swap positions with another player before rolling.' },
-    devil: { name: 'Devil’s Deal', price: 50, icon: '♠', description: 'Next time you pass GO, 50/50 chance of either extra $200 or going to hell.' }
+    identity: { name: 'Identity Theft', price: 350, icon: '⇄', description: 'One-time: Swap positions with another player before rolling.' },
+    devil: { name: 'Devil’s Deal', price: 50, icon: '♠', description: 'Next time you pass GO, 50/50 chance of either an extra $200 or going to hell without collecting GO salary.' }
 };
 
 export type Upgrade = keyof typeof upgrades;

@@ -68,8 +68,9 @@ export class CameraController {
         const x = Math.max(w / 2 - content.w * camera.scale, Math.min(w / 2, camera.x));
         const y = Math.max(h / 2 - content.h * camera.scale, Math.min(h / 2, camera.y));
         camera = { ...camera, x, y };
+        const zoomed = camera.scale !== this.camera.scale;
         this.camera = camera;
-        this.world.style.setProperty('--scale', String(camera.scale));
+        if (zoomed) this.world.style.setProperty('--scale', String(camera.scale));
         this.world.style.transform =
             `translate(${camera.x.toFixed(2)}px, ${camera.y.toFixed(2)}px) scale(${camera.scale.toFixed(4)})`;
         this.onChange(camera);

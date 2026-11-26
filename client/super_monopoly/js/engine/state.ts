@@ -38,7 +38,7 @@ export type Phase =
     { kind: 'purchase'; property: string } |
     { kind: 'arson'; property: string; dice: number } |
     { kind: 'select'; properties: Array<string> } |
-    { kind: 'auction'; property: string; leader: number | null; bid: number;
+    { kind: 'auction'; property: string; leader: number | null; bid: number; start: number;
         history: Array<{ seat: number; amount: number }>; abstained: Array<number>; } |
     { kind: 'mortgageTransfer'; seat: number; property: string } |
     { kind: 'debt'; debt: Debt } |

@@ -1,6 +1,5 @@
 // Offline sandbox that drives the game interface with a fake server.
 import { boards, isProperty } from './boards/index.js';
-import { cards } from './engine/decks.js';
 import { sectors } from './engine/stockMarket.js';
 import type { GameEvent, View } from './engine/state.js';
 import type { Sync } from './protocol.js';
@@ -16,6 +15,7 @@ type EventInput = Omit<GameEvent, 'seq' | 'timestamp'>;
 type Handler = (action: string, fields: Record<string, unknown>) => void;
 
 const board = boards.classicUs;
+const { cards } = board;
 const properties = [...board.spaces, ...board.hell.spaces].filter(isProperty);
 const names = ['Alexandra Montgomery', 'Ada Lovelace-Byron', 'Bartholomew Fitzgerald', 'Cyrus Vandenberg'];
 const main = (index: number): Position => ({ board: 'main', index });
@@ -33,9 +33,9 @@ function makePlayer(seat: number, position: Position, extra: Partial<Player> = {
 }
 
 const players = [
-    makePlayer(0, main(5), { cards: ['C09'] }),
-    makePlayer(1, main(12)),
-    makePlayer(2, hell(2), { bail: 50, hellSteps: 2, cards: ['CC05'] }),
+    makePlayer(0, main(5), { cards: ['C09'], upgrades: ['arson', 'identity'] }),
+    makePlayer(1, main(12), { upgrades: ['deadHand', 'robber'] }),
+    makePlayer(2, hell(2), { bail: 50, hellSteps: 2, cards: ['CC05'], upgrades: ['devil'] }),
     makePlayer(3, main(25))
 ];
 
@@ -324,7 +324,7 @@ export function startMock(renderSync: (sync: Sync) => void): Handler {
         ['Rescue', { kind: 'rescue', debt: { payer: 1, creditor: 3, amount: 800, reason: 'Rent' }, target: 800,
             pledges: { 3: 100 }, declined: [] }],
         ['Transfer', { kind: 'mortgageTransfer', seat: 0, property: 'reading_railroad' }],
-        ['Bid', { kind: 'auction', property: 'marvin_gardens', leader: 1, bid: 120,
+        ['Bid', { kind: 'auction', property: 'marvin_gardens', leader: 1, bid: 120, start: 100,
             history: [{ seat: 3, amount: 100 }, { seat: 1, amount: 120 }], abstained: [] }]
     ];
     const auction = phases[6][1];

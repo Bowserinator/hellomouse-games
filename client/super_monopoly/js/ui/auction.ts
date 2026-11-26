@@ -8,6 +8,7 @@ export interface AuctionView {
     limit: number;
     balance: number | null;
     abstained: boolean;
+    hasBid: boolean;
 }
 
 export interface AuctionOptions {
@@ -21,6 +22,7 @@ export interface AuctionOptions {
 }
 
 const presets = [1, 5, 10, 50];
+const BID_COOLDOWN_MS = 3000;
 
 let active: { key: string; dock: HTMLElement; update: (auction: AuctionView) => void; stop: () => void } | null = null;
 
@@ -87,6 +89,8 @@ export function showAuction(options: AuctionOptions, auction: AuctionView): void
     });
 
     let selected: number | 'custom' = presets[0];
+    let cooldownUntil = 0;
+    let cooldownTimer: ReturnType<typeof setInterval> | undefined;
     let current: AuctionView = auction;
     const minimum = () => current.bid + 1;
     const chosen = () => selected === 'custom' ? Math.floor(custom.valueAsNumber) : current.bid + selected;
@@ -103,7 +107,7 @@ export function showAuction(options: AuctionOptions, auction: AuctionView): void
         amounts.hidden = !bidder;
         bid.hidden = !bidder;
         abstain.hidden = current.balance === null;
-        abstain.disabled = current.abstained;
+        abstain.disabled = current.abstained || current.hasBid;
         abstain.textContent = current.abstained ? 'Abstained' : 'Abstain';
         if (typeof selected === 'number' && current.bid + selected > current.limit)
             selected = chips.find(chip => current.bid + chip.amount <= current.limit)?.amount ?? 'custom';
@@ -118,8 +122,10 @@ export function showAuction(options: AuctionOptions, auction: AuctionView): void
         custom.max = String(current.limit);
         error.textContent = selected === 'custom' && custom.valueAsNumber > current.limit
             ? `You can bid up to ${money(current.limit)}` : '';
-        bid.disabled = current.abstained || !valid();
-        bid.textContent = !current.abstained && valid() ? `Bid ${money(chosen())}` : 'Bid';
+        const cooldown = Math.max(0, cooldownUntil - Date.now());
+        bid.disabled = current.abstained || !valid() || cooldown > 0;
+        bid.textContent = cooldown > 0 ? `Bid (${Math.ceil(cooldown / 1000)}s)`
+            : !current.abstained && valid() ? `Bid ${money(chosen())}` : 'Bid';
     }
 
     const update = (next: AuctionView): void => {
@@ -140,11 +146,22 @@ export function showAuction(options: AuctionOptions, auction: AuctionView): void
     custom.addEventListener('input', refresh);
     abstain.addEventListener('click', () => options.abstain());
     bid.addEventListener('click', () => {
-        if (valid()) options.bid(chosen());
+        if (!valid() || Date.now() < cooldownUntil) return;
+        options.bid(chosen());
+        cooldownUntil = Date.now() + BID_COOLDOWN_MS;
+        clearInterval(cooldownTimer);
+        cooldownTimer = setInterval(() => {
+            if (Date.now() >= cooldownUntil) clearInterval(cooldownTimer);
+            refresh();
+        }, 100);
+        refresh();
     });
     update(auction);
     byId('game').append(dock);
     void dock.offsetHeight;
     dock.classList.remove('away');
-    active = { key: options.key, dock, update, stop: timer.stop };
+    active = { key: options.key, dock, update, stop: () => {
+        timer.stop();
+        clearInterval(cooldownTimer);
+    } };
 }

@@ -1,7 +1,7 @@
 import { card } from './cardEffects.js';
 
 export default [
-    card('CC01', 'Head to GO and collect salary.', { kind: 'advance', destination: 'go' }),
+    card('CC01', 'Head to {destination} and collect salary.', { kind: 'advance', destination: 'go' }),
     card('CC02', 'Bank correction. Collect $200.', { kind: 'bank', amount: 200 }),
     card('CC03', 'Pay $50 for a checkup.', { kind: 'bank', amount: -50 }),
     card('CC04', 'Stock sale. Collect $50.', { kind: 'bank', amount: 50 }),
