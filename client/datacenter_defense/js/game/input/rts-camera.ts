@@ -18,6 +18,7 @@ export class RtsCamera {
     private desired: number;
     private maximum: number;
     private keys = new Set<string>();
+    private fastZoom = false;
     private pointer?: { x: number; y: number };
     private grab?: T.Vector3;
     private anchor?: { x: number; y: number; point: T.Vector3 };
@@ -32,7 +33,7 @@ export class RtsCamera {
             event.preventDefault();
             const point = this.ground(event.clientX, event.clientY);
             if (point) this.anchor = { x: event.clientX, y: event.clientY, point };
-            this.desired = Math.max(12, Math.min(this.maximum, this.desired * Math.exp(event.deltaY * 0.0015)));
+            this.zoom(event.deltaY * 0.0015);
         }, { ...options, passive: false });
         canvas.addEventListener('contextmenu', event => event.preventDefault(), options);
         canvas.addEventListener('pointerdown', event => {
@@ -76,17 +77,20 @@ export class RtsCamera {
             this.pointer = undefined;
         }, options);
         window.addEventListener('keydown', event => {
-            if (event.target instanceof HTMLElement &&
-                (event.target.matches('input, select, textarea') || event.target.isContentEditable)) return;
+            if (event.defaultPrevented || event.ctrlKey || event.altKey || event.metaKey ||
+                event.target instanceof Element && event.target.closest('input, select, textarea, [contenteditable], dialog'))
+                return;
+            this.fastZoom = event.shiftKey;
             const key = event.key.toLowerCase();
             if (key === ' ') {
                 this.orbit = true; this.returning = undefined; this.grab = undefined; event.preventDefault();
             }
-            if (['w', 'a', 's', 'd', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown'].includes(key)) {
+            if (['q', 'w', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown'].includes(key)) {
                 this.keys.add(key); event.preventDefault();
             }
         }, options);
         window.addEventListener('keyup', event => {
+            this.fastZoom = event.shiftKey;
             this.keys.delete(event.key.toLowerCase());
             if (event.key === ' ') returnToRts();
         }, options);
@@ -94,6 +98,9 @@ export class RtsCamera {
             this.keys.clear(); this.pointer = undefined; returnToRts(); release();
         }, options);
         this.apply();
+    }
+    private zoom(delta: number) {
+        this.desired = Math.max(12, Math.min(this.maximum, this.desired * Math.exp(delta)));
     }
     ground(x: number, y: number): T.Vector3 | undefined {
         const bounds = this.canvas.getBoundingClientRect();
@@ -112,17 +119,23 @@ export class RtsCamera {
     }
     project(x: number, z: number, height = 0) {
         const bounds = this.canvas.getBoundingClientRect();
-        const point = new THREE.Vector3(x, elevation(this.world, { x, z }) + height, z).project(this.camera);
+        const point = new THREE.Vector3(x, elevation(this.world, { x, z }) + height, z);
+        point.applyMatrix4(this.camera.matrixWorldInverse);
+        const behind = point.z >= 0;
+        point.applyMatrix4(this.camera.projectionMatrix);
         return { x: bounds.left + (point.x + 1) * bounds.width / 2,
-            y: bounds.top + (1 - point.y) * bounds.height / 2, visible: point.z >= -1 && point.z <= 1 };
+            y: bounds.top + (1 - point.y) * bounds.height / 2, behind, visible: point.z >= -1 && point.z <= 1 };
     }
     update(now: number) {
         const elapsed = this.last ? Math.min(0.05, (now - this.last) / 1000) : 0;
         this.last = now;
-        let x = Number(this.keys.has('d') || this.keys.has('arrowright')) -
-            Number(this.keys.has('a') || this.keys.has('arrowleft'));
-        let z = Number(this.keys.has('s') || this.keys.has('arrowdown')) -
-            Number(this.keys.has('w') || this.keys.has('arrowup'));
+        const zoom = Number(this.keys.has('w')) - Number(this.keys.has('q'));
+        if (zoom) {
+            this.anchor = undefined;
+            this.zoom(zoom * elapsed * (this.fastZoom ? 3 : 1.2));
+        }
+        let x = Number(this.keys.has('arrowright')) - Number(this.keys.has('arrowleft'));
+        let z = Number(this.keys.has('arrowdown')) - Number(this.keys.has('arrowup'));
         if (this.pointer && !this.grab && !this.orbit) {
             x += Number(this.pointer.x > 0.985) - Number(this.pointer.x < 0.015);
             z += Number(this.pointer.y > 0.985) - Number(this.pointer.y < 0.015);

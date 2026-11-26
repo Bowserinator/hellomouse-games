@@ -15,8 +15,8 @@ fn occupancy_set(cell: u32, id: i32) {
 fn free_entity(id: u32) {
     let at = entity(id); let def = entity_def(id);
     unit_occupancy(id,vec2<i32>(atomicLoad(&extra[at + E_x]),atomicLoad(&extra[at + E_z])),false);
+    if (atomicLoad(&extra[at + E_state]) == 1) { change_storage(entity_source(id),def,-1); }
     atomicStore(&extra[at + E_state], 0); atomicStore(&extra[at + E_hp], 0);
-    economy_caps();
     for (var mount = 0u; mount < 4u; mount++) {
         atomicStore(&extra[u32(defs[D_beams]) + (id * 4u + mount) * 8u], 0);
     }
@@ -25,16 +25,11 @@ fn free_entity(id: u32) {
         atomicAdd(&extra[u32(defs[D_flowControl]) + 2u], 1);
     }
 }
-fn has_builder(command: u32, use_objective: bool, tier: i32, centre: vec2<i32>, ranged: bool) -> bool {
+fn has_builder(command: u32, tier: i32, centre: vec2<i32>, ranged: bool) -> bool {
     let metres = centre / Q;
-    let objective = vec2<i32>(i32(p(P_objectiveX)),i32(p(P_objectiveZ))) / Q;
-    let delta = metres - objective;
-    let radius = defs[D_objectiveBuildRadius];
-    if (use_objective && atomicLoad(&extra[0]) > 0 && eco(C_objectiveTier) >= tier &&
-        (!ranged || in_circle(delta.x,delta.y,radius))) { return true; }
     for (var id = 0u; id < min(MAX_ENTITIES,u32(atomicLoad(&extra[2]))); id++) {
         let at = entity(id);
-        if (!selected_entity(command,id) || !is_active(id)) { continue; }
+        if (!selected_entity(command,id) || !is_active(id) || crane_upgrading(id)) { continue; }
         let def = entity_def(id); let reach = defs[def + U_buildRadius];
         if (reach <= 0 || defs[def + U_tier] < tier) { continue; }
         let origin = vec2<i32>(atomicLoad(&extra[at + E_x]),atomicLoad(&extra[at + E_z])) / Q;
@@ -53,7 +48,10 @@ fn placement_box(def: u32, x: i32, z: i32, rotation: i32) -> vec4<i32> {
     let origin = vec2<i32>(x,z) / Q;
     return vec4<i32>(origin,origin + size);
 }
-fn placement_clear(def: u32, box: vec4<i32>) -> bool {
+fn mobile_blocker(id: u32) -> bool {
+    return is_active(id) && defs[entity_def(id) + U_kind] == 2 && defs[entity_def(id) + U_speed] > 0;
+}
+fn placement_clear(def: u32, box: vec4<i32>, ignored: i32, allow_mobile: bool) -> bool {
     if (p(P_cellQ) != u32(Q) || any(box.xy < vec2<i32>(0)) ||
         any(box.zw > vec2<i32>(i32(p(P_columns)),i32(p(P_rows))))) { return false; }
     let height = defs[def + U_flightHeight];
@@ -63,14 +61,16 @@ fn placement_clear(def: u32, box: vec4<i32>) -> bool {
         if (!flight_clear(centre,size,height,centre)) { return false; }
         for (var other = 0u; other < u32(atomicLoad(&extra[2])); other++) {
             let at = entity(other);
-            if (is_live(other) && defs[entity_def(other) + U_flightHeight] > 0 &&
+            if (is_live(other) && i32(other) != ignored && defs[entity_def(other) + U_flightHeight] > 0 &&
+                !(allow_mobile && mobile_blocker(other)) &&
                 all(abs(centre - vec2<i32>(atomicLoad(&extra[at + E_x]),atomicLoad(&extra[at + E_z]))) <
                 (size + unit_size(other)) / 2)) { return false; }
         }
     } else {
         for (var z = box.y; z < box.w; z++) { for (var x = box.x; x < box.z; x++) {
             let cell = u32(z) * p(P_columns) + u32(x);
-            if (base_cost(cell) == 0u || occupancy(cell) >= 0) { return false; }
+            let occupied = occupancy(cell);
+            if (base_cost(cell) == 0u || (occupied >= 0 && occupied != ignored && !(allow_mobile && mobile_blocker(u32(occupied))))) { return false; }
         } }
     }
     return true;
@@ -112,12 +112,12 @@ fn cancel_ghost(x: i32, z: i32, source: u32) {
     }
 }
 fn queue_ghost(def_id: i32, x: i32, z: i32, rotation: i32, owner: u32, source: u32, command: u32,
-    objective: bool, append: bool) -> bool {
+    append: bool) -> bool {
     if (def_id < 0 || def_id >= defs[D_unitCount] ||
         x < 0 || z < 0 || rotation < 0 || rotation > 3) { return false; }
     let def = placement_def(def_id); let box = placement_box(def,x,z,rotation);
-    if (defs[def + U_kind] == 6 || !placement_clear(def,box) ||
-        !has_builder(command,objective,defs[def + U_tier],(box.xy + box.zw) * Q / 2,true)) { return false; }
+    if (defs[def + U_kind] == 6 || !placement_clear(def,box,-1,true) ||
+        !has_builder(command,defs[def + U_tier],(box.xy + box.zw) * Q / 2,true)) { return false; }
     var kept = 0u;
     for (var i = 0u; i < ghost_count(); i++) {
         let at = ghost_at(i);
@@ -133,12 +133,61 @@ fn queue_ghost(def_id: i32, x: i32, z: i32, rotation: i32, owner: u32, source: u
     atomicStore(&extra[at + 1u],box.x * Q); atomicStore(&extra[at + 2u],box.y * Q);
     atomicStore(&extra[at + 3u],rotation);
     atomicStore(&extra[at + 4u],i32(owner)); atomicStore(&extra[at + 5u],i32(source));
+    atomicStore(&extra[at + 6u],0);
     atomicStore(&extra[u32(defs[D_ghosts])],i32(kept + 1u));
     return true;
 }
+fn clear_footprint(def: u32, box: vec4<i32>) {
+    let centre = (box.xy + box.zw) * Q / 2;
+    let size = (box.zw - box.xy) * Q;
+    let flying = defs[def + U_flightHeight] > 0;
+    for (var id = 0u; id < min(MAX_ENTITIES,u32(atomicLoad(&extra[2]))); id++) {
+        if (!mobile_blocker(id) || (defs[entity_def(id) + U_flightHeight] > 0) != flying) { continue; }
+        let at = entity(id);
+        if (atomicLoad(&extra[at + E_clearUntil]) > i32(p(P_tick))) { continue; }
+        let point = vec2<i32>(atomicLoad(&extra[at + E_x]),atomicLoad(&extra[at + E_z]));
+        let bounds = unit_bounds(id,point);
+        let half = (size + unit_size(id)) / 2;
+        if ((flying && any(abs(point - centre) >= half)) ||
+            (!flying && (any(bounds.xy >= box.zw) || any(box.xy >= bounds.zw)))) { continue; }
+        let along = clamp(point,centre - half,centre + half);
+        var best = 2147483647;
+        var goal = point;
+        // shortcut: search nearby exits only, use pathfinding if units need to detour around walls.
+        for (var offset = 1; offset <= 8; offset++) {
+            let margin = offset * Q;
+            let candidates = array<vec2<i32>,4>(vec2<i32>(centre.x - half.x - margin,along.y),
+                vec2<i32>(centre.x + half.x + margin,along.y),vec2<i32>(along.x,centre.y - half.y - margin),
+                vec2<i32>(along.x,centre.y + half.y + margin));
+            for (var side = 0u; side < 4u; side++) {
+                let candidate = candidates[side];
+                let delta = abs(candidate - point) / 256;
+                let distance = delta.x * delta.x + delta.y * delta.y;
+                if (distance < best && unit_fits(id,candidate)) { best = distance; goal = candidate; }
+            }
+        }
+        if (any(goal != point)) {
+            atomicStore(&extra[at + E_clearX],goal.x);
+            atomicStore(&extra[at + E_clearZ],goal.y);
+            atomicStore(&extra[at + E_clearUntil],i32(p(P_tick)) + 200);
+        }
+    }
+}
+@compute @workgroup_size(1)
+fn clear_construction() {
+    for (var index = 0u; index < ghost_count(); index++) {
+        let at = ghost_at(index);
+        if (atomicLoad(&extra[at + 6u]) == 0) { continue; }
+        atomicStore(&extra[at + 6u],0);
+        clear_footprint(placement_def(atomicLoad(&extra[at])),ghost_box(at));
+    }
+}
 fn spawn_ghost(index: u32, def: u32, box: vec4<i32>) -> i32 {
-    if (!placement_clear(def,box)) { erase_ghost(index); return -1; }
     let ghost = ghost_at(index);
+    if (!placement_clear(def,box,-1,false)) {
+        atomicStore(&extra[ghost + 6u],1);
+        return -1;
+    }
     let def_id = atomicLoad(&extra[ghost]); let rotation = atomicLoad(&extra[ghost + 3u]);
     let owner = atomicLoad(&extra[ghost + 4u]); let source = atomicLoad(&extra[ghost + 5u]);
     let flying = defs[def + U_flightHeight] > 0;
@@ -180,7 +229,7 @@ fn spawn_ghost(index: u32, def: u32, box: vec4<i32>) -> i32 {
     return i32(id);
 }
 fn place_row(def_id: i32, x0: i32, z0: i32, x1: i32, z1: i32, owner: u32, source: u32, command: u32,
-    objective: bool, append: bool) {
+    append: bool) {
     if (def_id < 0 || def_id >= defs[D_unitCount] || min(min(x0,z0),min(x1,z1)) < 0 ||
         max(x0,x1) / Q > i32(p(P_columns)) || max(z0,z1) / Q > i32(p(P_rows))) { return; }
     let def = u32(defs[D_unit]) + u32(def_id) * u32(defs[D_unitStride]);
@@ -195,7 +244,7 @@ fn place_row(def_id: i32, x0: i32, z0: i32, x1: i32, z1: i32, owner: u32, source
         if (!along_x) { offset = vec2<i32>(abs(dx) * travel / max(1,abs(dz)),travel); }
         let x = (x0 / Q + sign(dx) * offset.x) * Q;
         let z = (z0 / Q + sign(dz) * offset.y) * Q;
-        if (!queue_ghost(def_id,x,z,0,owner,source,command,objective,append || i > 0)) { break; }
+        if (!queue_ghost(def_id,x,z,0,owner,source,command,append || i > 0)) { break; }
     }
 }
 @compute @workgroup_size(${workgroupSize})
@@ -204,13 +253,33 @@ fn clear_entities(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_wor
     atomicStore(&extra[u32(defs[D_entityDamage]) + i], 0);
     atomicStore(&extra[u32(defs[D_powerDrain]) + i], 0);
 }
+fn sonic_recharge(id: u32) {
+    let at = entity(id);
+    atomicStore(&extra[at + E_power],0);
+    atomicStore(&extra[at + E_state],3);
+    atomicStore(&extra[at + E_timer],i32(p(P_tick)) + defs[entity_def(id) + U_recharge]);
+}
 @compute @workgroup_size(1)
 fn shield_prepare() {
     let base = u32(defs[D_shields]); var count = 0u;
     for (var id = 0u; id < min(MAX_ENTITIES,u32(atomicLoad(&extra[2]))); id++) {
         let at = entity(id);
-        if (atomicLoad(&extra[at + E_state]) == 1 && defs[entity_def(id) + U_kind] == 4 &&
-            atomicLoad(&extra[at + E_power]) > 0) {
+        if (!is_live(id) || (atomicLoad(&extra[at + E_flags]) & 1) != 0) { continue; }
+        let def = entity_def(id);
+        let sonic = defs[def + U_kind] == 4;
+        let state = atomicLoad(&extra[at + E_state]);
+        if (state != 1 && !(sonic && state == 3 && i32(p(P_tick)) >= atomicLoad(&extra[at + E_timer]))) {
+            continue;
+        }
+        if (defs[def + U_drainWhenFiring] == 0 && !pay_energy(id,defs[def + U_energyDrain])) {
+            if (sonic && state == 1) { sonic_recharge(id); }
+            continue;
+        }
+        if (sonic) {
+            if (state == 3) {
+                atomicStore(&extra[at + E_power],defs[def + U_power]);
+                atomicStore(&extra[at + E_state],1);
+            }
             count++; atomicStore(&extra[base + count],i32(id));
         }
     }
@@ -221,7 +290,7 @@ fn sonic_force(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_workgr
     let emitter = index(id,groups); if (emitter >= MAX_ENTITIES) { return; }
     let at = entity(emitter); let def = entity_def(emitter);
     if (atomicLoad(&extra[at + E_state]) != 1 || defs[def + U_kind] != 4 ||
-        atomicLoad(&extra[at + E_power]) <= 0) { return; }
+        atomicLoad(&extra[at + E_power]) <= 0 || (atomicLoad(&extra[at + E_flags]) & 1) != 0) { return; }
     let radius = cm(defs[def + U_sonicRadius]); if (radius <= 0) { return; }
     let origin = vec2<i32>(atomicLoad(&extra[at + E_x]),atomicLoad(&extra[at + E_z]));
     var query = target_query(origin - vec2<i32>(defs[def + U_sonicRadius]),
@@ -322,21 +391,11 @@ fn apply_entity_damage() {
         let at = entity(id);
         if (!is_live(id)) { continue; }
         let def = entity_def(id);
-        if (defs[def + U_kind] == 4 && atomicLoad(&extra[at + E_state]) != 2) {
-            if (atomicLoad(&extra[at + E_state]) == 3) {
-                if (i32(p(P_tick)) >= atomicLoad(&extra[at + E_timer])) {
-                    atomicStore(&extra[at + E_power],defs[def + U_power]);
-                    atomicStore(&extra[at + E_state],1);
-                }
-            } else {
-                let power = max(0,atomicLoad(&extra[at + E_power]) -
-                    max(0,atomicLoad(&extra[u32(defs[D_powerDrain]) + id])));
-                atomicStore(&extra[at + E_power],power);
-                if (power == 0) {
-                    atomicStore(&extra[at + E_state],3);
-                    atomicStore(&extra[at + E_timer],i32(p(P_tick)) + defs[def + U_recharge]);
-                }
-            }
+        if (defs[def + U_kind] == 4 && is_active(id)) {
+            let power = max(0,atomicLoad(&extra[at + E_power]) -
+                max(0,atomicLoad(&extra[u32(defs[D_powerDrain]) + id])));
+            atomicStore(&extra[at + E_power],power);
+            if (power == 0) { sonic_recharge(id); }
         }
     }
 }

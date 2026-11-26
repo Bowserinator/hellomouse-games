@@ -1,7 +1,8 @@
+import { LOBBY_LIMIT } from '../../shared/protocol.js';
 import { SALE_EFFECT_SLOTS } from '../commands.js';
 import { abilitiesWGSL } from './abilities.js';
 import { ORDER_WORDS, RENDER_AIM_ACTIVE, RENDER_CHARGE_SHIFT, RENDER_BEAM_WORDS, RENDER_ENTITY_WORDS,
-    RENDER_PROJECTILE_WORDS, RENDER_EXPLOSION_WORDS, RENDER_STORAGE_BONUS,
+    RENDER_PROJECTILE_WORDS, RENDER_PROJECTILE_LAUNCH, RENDER_EXPLOSION_WORDS, RENDER_STORAGE_BONUS,
     RENDER_ZOMBIE_HP_MASK, RENDER_ZOMBIE_STATE_SHIFT } from '../layout.js';
 
 export function tickKernels(workgroupSize: number): string {
@@ -71,8 +72,8 @@ fn spawn_release(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_work
     if (defs[D_winTick] > 0 && (atomicLoad(&extra[0]) <= 0 || p(P_tick) + 1u >= u32(defs[D_winTick]))) { return; }
     let wave_mode = defs[D_waveMode] != 0;
     var spawn = 0u;
+    let slot = wave_slot(i);
     if (wave_mode) {
-        let slot = u32(defs[D_waves]) + i * 3u;
         if (p(P_tick) != nav[slot + 2u]) { return; }
         spawn = nav[slot];
     } else {
@@ -120,9 +121,9 @@ fn spawn_release(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_work
         let weight = u32(max(0,defs[zombie_def(i32(kind)) + 16u]));
         if (ticket < weight) { variant = i32(kind); break; } ticket -= weight;
     }
-    if (wave_mode) { variant = i32(nav[u32(defs[D_waves]) + i * 3u + 1u]); }
+    if (wave_mode) { variant = i32(nav[slot + 1u]); }
     put(F_meta,i,(15 << 16u) | variant);
-    put(F_hp, i, defs[zombie_def(variant)]); set_state(i, 1);
+    put(F_hp, i, scaled_zombie_stat(i,defs[zombie_def(variant)],WAVE_HP)); set_state(i, 1);
 }
 @compute @workgroup_size(${workgroupSize})
 fn grid_build(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_workgroups) groups: vec3<u32>) {
@@ -159,6 +160,10 @@ fn objective_distance(x: i32, z: i32) -> i32 {
     while (max(abs(delta.x),abs(delta.y)) > 32767) { delta /= 2; scale *= 2; }
     return i32(root(u32(delta.x * delta.x + delta.y * delta.y))) * scale;
 }
+fn objective_focused(x: i32, z: i32) -> bool {
+    return atomicLoad(&extra[0]) > 0 &&
+        in_circle(cm(x) - cm(i32(p(P_objectiveX))),cm(z) - cm(i32(p(P_objectiveZ))),3000);
+}
 @compute @workgroup_size(${workgroupSize})
 fn zombie_think(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_workgroups) groups: vec3<u32>) {
     let i = index(id, groups); if (i >= p(P_count)) { return; }
@@ -175,8 +180,18 @@ fn zombie_think(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_workg
     let closest = select(min(recorded - 1,distance_to_goal),distance_to_goal,recorded == 0);
     atomicStore(&extra[progress],closest + 1);
     let leash = closest + max(0,defs[D_pursuitLeash]);
-    let search_range = select(range,max(range,defs[D_pursuitRange]),distance_to_goal <= leash);
+    let focused = objective_focused(x,z);
+    let search_range = select(range,max(range,defs[D_pursuitRange]),!focused && distance_to_goal <= leash);
+    let objective_in_range = (mask & 1u) != 0u && atomicLoad(&extra[0]) > 0 &&
+        in_circle(cm(x) - cm(i32(p(P_objectiveX))),cm(z) - cm(i32(p(P_objectiveZ))),
+            range + cm(i32(p(P_objectiveRadius))));
     set_state(i, 1); set_target(i, 0); put(F_tgt, i, -1);
+    if (focused && objective_in_range) {
+        set_target(i,1); set_state(i,2);
+        if (cooldown == 0) { attack(i,def); }
+        return;
+    }
+    if (focused && cooldown != 0) { return; }
     let cell = cell_at(x, z);
     if (cell == 4294967295u) { return; }
     let step = direction(cell, u32(defs[def + 4u]));
@@ -215,7 +230,7 @@ fn zombie_think(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_workg
     var shield_contact = false;
     let memory = u32(defs[D_sonicAggro]) + i * 3u;
     let remembered = atomicLoad(&extra[memory]) - 1;
-    if ((mask & 2u) != 0u && remembered >= 0 && remembered < i32(MAX_ENTITIES)) {
+    if (!focused && (mask & 2u) != 0u && remembered >= 0 && remembered < i32(MAX_ENTITIES)) {
         let shield = u32(remembered); let at = entity(shield); let unit = entity_def(shield);
         let dx = cm(x) - cm(atomicLoad(&extra[at + E_x]));
         let dz = cm(z) - cm(atomicLoad(&extra[at + E_z]));
@@ -225,7 +240,7 @@ fn zombie_think(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_workg
             in_circle(dx,dz,radius + max(range,defs[D_pursuitRange]))) {
             selected = remembered;
             shield_contact = atomicLoad(&extra[at + E_state]) == 1 &&
-                in_circle(dx,dz,radius + range + cm(defs[def + 2u]));
+                (atomicLoad(&extra[at + E_flags]) & 1) == 0 && in_circle(dx,dz,radius + range + cm(defs[def + 2u]));
         } else { atomicStore(&extra[memory],0); }
     }
     if (selected >= 0) { set_target(i, 2); put(F_tgt, i, selected); }
@@ -241,12 +256,11 @@ fn zombie_think(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_workg
         }
         if (selected >= 0) { set_target(i, 3); put(F_tgt, i, selected); }
     }
-    if (selected < 0 && (mask & 1u) != 0u && atomicLoad(&extra[0]) > 0 &&
-        in_circle(cm(x) - cm(i32(p(P_objectiveX))), cm(z) - cm(i32(p(P_objectiveZ))),
-            range + cm(i32(p(P_objectiveRadius))))) { set_target(i, 1); }
+    if (selected < 0 && objective_in_range) { set_target(i, 1); }
     let kind = meta_target(current(F_meta,i));
     if (kind != 0 && (kind != 2 || shield_contact || entity_in_range(u32(selected),x,z,range))) {
-        set_state(i, 2); if (cooldown == 0) { attack(i, def); }
+        if (!focused) { set_state(i,2); }
+        if (cooldown == 0) { attack(i, def); }
     }
 }
 fn body_walkable(x: i32, z: i32, radius: i32) -> bool {
@@ -323,19 +337,19 @@ fn zombie_move(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_workgr
         }
     }
     let victim = current(F_tgt,i);
-    if (state == 1 && meta_target(current(F_meta,i)) == 2 && victim >= 0 && victim < i32(MAX_ENTITIES)) {
+    let focused = objective_focused(x,z);
+    if (!focused && state == 1 && meta_target(current(F_meta,i)) == 2 && victim >= 0 && victim < i32(MAX_ENTITIES)) {
         let at = entity(u32(victim));
         blended = vec2<i32>(cm(atomicLoad(&extra[at + E_x])) - cm(x),cm(atomicLoad(&extra[at + E_z])) - cm(z));
     }
     var ranged_drive = false;
-    if (defs[def + 5u] == 1 && meta_target(current(F_meta,i)) == 2 && victim >= 0 && victim < i32(MAX_ENTITIES)) {
+    if (!focused && defs[def + 5u] == 1 && meta_target(current(F_meta,i)) == 2 && victim >= 0 && victim < i32(MAX_ENTITIES)) {
         let at = entity(u32(victim));
         let delta = vec2<i32>(cm(atomicLoad(&extra[at + E_x])) - cm(x),cm(atomicLoad(&extra[at + E_z])) - cm(z));
         let distance = i32(root(u32(delta.x * delta.x + delta.y * delta.y)));
         let desired = cm(defs[def + 17u]);
         blended = vec2<i32>(0);
         if (distance > desired + 50) { blended = delta; ranged_drive = true; }
-        if (distance < desired - 50) { blended = -delta; ranged_drive = true; }
     }
     let recovery = atomicLoad(&extra[u32(defs[D_stuck]) + i * 4u + 3u]);
     if (state == 1 && recovery > 0) {
@@ -528,6 +542,7 @@ fn consume_emits(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_work
             let def = zombie_def(meta_variant(current(F_meta, zombie)));
             let target_def = entity_def(u32(victim));
             if (defs[target_def + U_kind] == 4 && atomicLoad(&extra[entity(u32(victim)) + E_state]) == 1 &&
+                (atomicLoad(&extra[entity(u32(victim)) + E_flags]) & 1) == 0 &&
                 atomicLoad(&extra[entity(u32(victim)) + E_power]) > 0) {
                 atomicAdd(&extra[u32(defs[D_powerDrain]) + u32(victim)],max(0,damage));
             } else if ((defs[target_def + U_kind] != 5 ||
@@ -549,7 +564,11 @@ fn apply_damage(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_workg
     let hp = max(0, current(F_hp, i) - damage); put(F_hp, i, hp);
     if (damage > 0) { atomicStore(&extra[u32(defs[D_damageTime]) + i],i32(p(P_tick)) + 1); }
     if (hp == 0) {
-        set_state(i, 3); set_credit(i, atomicLoad(&extra[p(P_credits) + i]));
+        let credit = atomicLoad(&extra[p(P_credits) + i]);
+        set_state(i, 3); set_credit(i, credit);
+        if (credit >= 0 && credit < ${LOBBY_LIMIT}) {
+            atomicAdd(&extra[u32(defs[D_economy]) + C_kills + u32(credit)],1);
+        }
         atomicStore(&extra[u32(defs[D_explosionImpulse]) + i * 2u],0);
         atomicStore(&extra[u32(defs[D_explosionImpulse]) + i * 2u + 1u],0);
     }
@@ -557,11 +576,15 @@ fn apply_damage(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_workg
 @compute @workgroup_size(1)
 fn objective_update() {
     atomicStore(&extra[0], max(0, atomicLoad(&extra[0]) - i32(atomicLoad(&scratch[2]))));
-    economy_caps();
+    if (atomicLoad(&extra[0]) == 0) {
+        for (var slot = 0u; slot < ${LOBBY_LIMIT}u; slot++) {
+            if (player_has_economy(slot)) { economy_caps(slot); }
+        }
+    }
 }
 @compute @workgroup_size(${workgroupSize})
 fn end_match(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_workgroups) groups: vec3<u32>) {
-    if (atomicLoad(&extra[0]) > 0 && p(P_tick) + 1u < u32(defs[D_winTick])) { return; }
+    if (atomicLoad(&extra[0]) <= 0 || p(P_tick) + 1u < u32(defs[D_winTick])) { return; }
     let i = index(id, groups);
     if (i < p(P_count) && current(F_hp,i) > 0) {
         put(F_hp,i,0); set_state(i,3);
@@ -627,6 +650,7 @@ fn runtime_snapshot(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_w
         atomicStore(&scratch[output + 5u],u32(atomicLoad(&extra[source + 1u])));
         atomicStore(&scratch[output + 6u],u32(atomicLoad(&extra[shot_aux(i)])));
         atomicStore(&scratch[output + 7u],u32(atomicLoad(&extra[shot_aux(i) + 1u])));
+        atomicStore(&scratch[output + ${RENDER_PROJECTILE_LAUNCH}u],u32(atomicLoad(&extra[shot_aux(i) + 7u])));
     }
     let beams = shots + u32(defs[D_projectileCountMax]) * ${RENDER_PROJECTILE_WORDS}u;
     if (i < MAX_ENTITIES * 4u) {

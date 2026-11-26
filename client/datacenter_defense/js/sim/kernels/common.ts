@@ -1,4 +1,4 @@
-import { FIELD, FIXED_WGSL, META, STATE_FIELDS } from '../fixed.js';
+import { FIELD, FIXED_WGSL, META, STATE_FIELDS, WAVE_DAMAGE, WAVE_HP, WAVE_WORDS } from '../fixed.js';
 import { ENTITY, ENTITY_WORDS, MAX_ENTITIES, PARAM } from '../layout.js';
 import { UNIT, UNIT_STRIDE } from '../entity/registry.js';
 import { VARIANT_WGSL } from '../variants.js';
@@ -71,6 +71,13 @@ fn p(i: u32) -> u32 {
     }
 }
 fn zombie_def(kind: i32) -> u32 { return u32(defs[D_zombie]) + u32(kind) * VARIANT_STRIDE; }
+const WAVE_HP: u32 = ${WAVE_HP}u;
+const WAVE_DAMAGE: u32 = ${WAVE_DAMAGE}u;
+fn wave_slot(id: u32) -> u32 { return u32(defs[D_waves]) + id * ${WAVE_WORDS}u; }
+fn scaled_zombie_stat(id: u32, stat: i32, offset: u32) -> i32 {
+    if (defs[D_waveMode] == 0) { return stat; }
+    return (stat * i32(nav[wave_slot(id) + offset]) + 50) / 100;
+}
 fn cells() -> u32 { return p(P_columns) * p(P_rows); }
 fn nav_columns() -> u32 { return u32(defs[D_staticParams + P_columns]); }
 fn flow_cell(cell: u32) -> u32 {

@@ -4,9 +4,14 @@ import type { World } from '../mapx.js';
 import type { RenderSnapshot } from '../sim/core.js';
 import { ENTITY as E, isLive, RENDER_AIMS, RENDER_ORDERS, ENTITY_DESTROYED, MAX_ENTITIES,
     RENDER_ENTITY_WORDS as STRIDE, RENDER_EXPLOSION_WORDS, RENDER_SALE_EFFECT,
-    RENDER_CHARGE_SHIFT, RENDER_PROJECTILE_WORDS, ECONOMY as C, zombieHp } from '../sim/layout.js';
+    RENDER_CHARGE_SHIFT, RENDER_PROJECTILE_WORDS, RENDER_PROJECTILE_LAUNCH, RENDER_BEAM_WORDS,
+    isActive, zombieHp } from '../sim/layout.js';
 import { BALANCE } from '../sim/balance.js';
-import { defaults, entities, type EntityDef } from '../sim/entity/registry.js';
+import { entities, type EntityDef } from '../sim/entity/registry.js';
+import { CRANES, LANDMINE, SONIC_SMALL, SONIC_LARGE } from '../sim/content/index.js';
+import { BEAM_WEAPON } from '../sim/content/weapons.js';
+import type { LoopSound } from '../../../shared/ts/audio-engine.js';
+import { DefenseAudio, EXPLOSION, SHOCKWAVE, SONIC_HUM } from './defense-audio.js';
 import { projectiles } from '../sim/projectile/registry.js';
 import { weapons, weaponTable, WEAPON_STRIDE, WEAPON } from '../sim/weapon/registry.js';
 import { Q, TICK_HZ } from '../sim/fixed.js';
@@ -69,6 +74,9 @@ export class DefenseView {
     private explosions: T.InstancedMesh;
     private flashes: Array<{ x: number; y: number; z: number; radius: number; born: number }> = [];
     private explosionSeen = new Int32Array(0);
+    private interceptSeen = new Int32Array(MAX_ENTITIES * 4);
+    private audioLoops: Array<LoopSound> = [];
+    readonly audio: DefenseAudio;
     private flashAlphas = new Float32Array(128);
     private markers = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.ShaderMaterial({
         transparent: true, depthTest: true, depthWrite: false, side: THREE.DoubleSide,
@@ -163,6 +171,7 @@ export class DefenseView {
         this.explosions.count = 0; this.explosions.frustumCulled = false;
         this.explosions.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         this.effects = new Effects(scene); this.sonic = new Sonic(world, scene);
+        this.audio = new DefenseAudio(camera.target);
         this.markers.frustumCulled = false;
         this.markers.geometry.setAttribute('position',
             new THREE.BufferAttribute(this.markerPositions, 3).setUsage(THREE.DynamicDrawUsage));
@@ -173,7 +182,7 @@ export class DefenseView {
         this.models = new Models(this.group);
     }
     accept(snapshot: RenderSnapshot) {
-        if (!snapshot.defense) return;
+        if (!snapshot.defense || snapshot.tick <= (this.snapshot?.tick ?? -1)) return;
         this.previous = this.snapshot; this.snapshot = snapshot;
         this.models.accept(snapshot.defense.entities, this.previous?.defense?.entities);
         this.collectWrecks(snapshot);
@@ -193,6 +202,8 @@ export class DefenseView {
                 if (impacts[at + 5] === RENDER_SALE_EFFECT) {
                     if (age < 0.8) this.saleEffects.push({ x: impacts[at + 1] / Q, z: impacts[at + 2] / Q,
                         height: impacts[at + 3] / Q + 1, born: now - age });
+                    if (age < 0.3) this.audio.play('cash_register.mp3',
+                        { x: impacts[at + 1] / Q, y: 0, z: impacts[at + 2] / Q }, 0.65);
                     continue;
                 }
                 if (age >= 4) continue;
@@ -200,7 +211,21 @@ export class DefenseView {
                 const definition = projectiles[impacts[at + 5]];
                 const point = new THREE.Vector3(x, elevation(this.world, { x, z }) + impacts[at + 3] / Q, z);
                 this.effects.trigger(definition?.impactFx ?? 'bullet', point, now - age);
-                if (impacts[at + 4] < 0 && age < 0.3) this.tracer(-impacts[at + 4] - 1, point, now - age);
+                if (age < 0.3) {
+                    if (definition?.impactFx === 'firework') this.audio.play('fireworks.mp3', point, 0.38);
+                    else if (definition?.impactFx === 'explosion' || definition?.impactFx === 'tomahawk')
+                        this.audio.play(EXPLOSION, point, Math.min(1, 0.42 + Math.max(0, impacts[at + 4]) / Q * 0.035));
+                    if (impacts[at + 4] < 0) {
+                        const mount = -impacts[at + 4] - 1;
+                        this.tracer(mount, point, now - age);
+                        if (stamp > this.interceptSeen[mount]) {
+                            this.interceptSeen[mount] = stamp;
+                            const source = this.entity(Math.floor(mount / 4));
+                            const origin = isLive(source) ? { x: source[E.x] / Q, y: 0, z: source[E.z] / Q } : point;
+                            this.audio.intercept(origin);
+                        }
+                    }
+                }
                 if (age < 0.55 && impacts[at + 4] > 0 && definition?.motion !== 2 && definition?.impactFx !== 'gas' &&
                     EFFECTS.get(definition?.impactFx ?? '')?.flash !== false) {
                     if (this.flashes.length === 128) this.flashes.shift();
@@ -209,6 +234,13 @@ export class DefenseView {
             }
         }
         for (let at = 0; at < shots.length; at += RENDER_PROJECTILE_WORDS) {
+            const launch = shots[at + RENDER_PROJECTILE_LAUNCH];
+            if (launch > (this.previous?.tick ?? 0) && snapshot.tick - launch < 5) {
+                const source = this.entity(Math.floor(at / RENDER_PROJECTILE_WORDS / this.ring / 4));
+                const position = isLive(source) ? { x: source[E.x] / Q, y: 0, z: source[E.z] / Q }
+                    : { x: shots[at + 1] / Q, y: 0, z: shots[at + 2] / Q };
+                this.audio.launch(shots[at + 4], position);
+            }
             if (shots[at] === 3 && projectiles[shots[at + 4]]?.impactFx === 'gas') {
                 const point = new THREE.Vector3(shots[at + 1] / Q,
                     shots[at + 3] / Q + 0.5, shots[at + 2] / Q);
@@ -235,11 +267,31 @@ export class DefenseView {
             if (definition?.trailFx) this.effects.trail(definition.trailFx, start, end, now);
             if (!same && definition?.muzzleFx) this.effects.trigger(definition.muzzleFx, start, now);
         }
-        for (let at = 0; at < snapshot.defense.beams.length; at += 8) {
-            const beam = snapshot.defense.beams;
-            if (beam[at] <= 0) continue;
-            this.attacking.add(Math.floor(at / 32));
+        const beams = snapshot.defense.beams, previousBeams = this.previous?.defense?.beams;
+        for (let at = 0; at < beams.length; at += RENDER_BEAM_WORDS) {
+            if (beams[at] <= 0) continue;
+            this.attacking.add(Math.floor(at / (4 * RENDER_BEAM_WORDS)));
+            if (beams[at + 6] === BEAM_WEAPON && (previousBeams?.[at] ?? 0) <= 0)
+                this.audio.play(SHOCKWAVE, { x: beams[at + 1] / Q, y: 0, z: beams[at + 2] / Q }, 0.7);
         }
+        this.audioLoops = [];
+        const rows = snapshot.defense.entities;
+        for (let at = 0; at < rows.length; at += STRIDE) {
+            const definition = rows[at + E.def];
+            if (definition !== LANDMINE && definition !== SONIC_SMALL && definition !== SONIC_LARGE) continue;
+            if (!isActive(rows.subarray(at, at + STRIDE))) continue;
+            const position = { x: rows[at + E.x] / Q, y: 0, z: rows[at + E.z] / Q };
+            if (definition === LANDMINE) {
+                const armed = rows[at + E.timer] + 1;
+                if (armed > (this.previous?.tick ?? 0) && armed <= snapshot.tick && snapshot.tick - armed < 5)
+                    this.audio.play('beep.mp3', position, 0.45);
+            } else if (rows[at + E.power] > 0)
+                this.audioLoops.push({ key: String(at), name: SONIC_HUM, position,
+                    gain: definition === SONIC_LARGE ? 0.45 : 0.32, rate: 1 });
+        }
+    }
+    updateAudio(dt: number, paused: boolean) {
+        this.audio.updateLoops(paused ? [] : this.audioLoops, this.camera.target, dt);
     }
     private collectWrecks(snapshot: RenderSnapshot) {
         const rows = snapshot.defense?.entities, old = this.previous?.defense?.entities;
@@ -445,13 +497,11 @@ export class DefenseView {
     explodeObjective(x: number, z: number, radius: number, now: number) {
         const y = elevation(this.world, { x, z }) + 3;
         this.effects.trigger('explosion', new THREE.Vector3(x, y, z), now);
+        this.audio.play(EXPLOSION, { x, y, z });
         if (this.flashes.length === 128) this.flashes.shift();
         this.flashes.push({ x, y, z, radius: Math.max(4, radius), born: now });
     }
-    drawObjective(site: { x: number; z: number; radius: number }, hp: number, selected: boolean,
-        tick: number, paused: boolean) {
-        const economy = this.snapshot?.defense?.economy;
-        if (!economy) return;
+    drawObjective(site: { x: number; z: number; radius: number }, hp: number, selected: boolean) {
         const x = site.x / Q, z = site.z / Q, radius = site.radius / Q;
         const centre = this.camera.project(x, z), edge = this.camera.project(x + radius, z);
         if (!centre.visible) return;
@@ -462,29 +512,32 @@ export class DefenseView {
             ctx.beginPath(); ctx.strokeStyle = '#377eaf'; ctx.lineWidth = 2;
             ctx.arc(px, py, screenRadius, 0, Math.PI * 2); ctx.stroke();
         }
-        const width = Math.min(140, screenRadius * 2), barY = py + 11;
-        this.healthBar(px, barY, width, 4, Math.min(1, hp / BALANCE.objective.hp));
-        const tier = economy[C.objectiveTier] + 1;
-        if (tier > economy[C.upgradeTarget]) return;
-        const total = defaults(tier).buildSeconds * TICK_HZ * 256;
-        const progress = economy[C.upgradeProgress], gain = economy[C.upgradeGain];
-        const y = barY + 6;
-        ctx.fillStyle = '#4a4326'; ctx.fillRect(px - width / 2, y, width, 4);
-        ctx.fillStyle = '#d7b84b'; ctx.fillRect(px - width / 2, y, width * progress / total, 4);
+        const scale = this.camera.fade > 0.01 ? 0.5 : 1;
+        const width = Math.min(140, screenRadius * 2) * scale, barY = py + 11;
+        this.healthBar(px, barY, width, 4 * scale, Math.min(1, hp / BALANCE.objective.hp));
+    }
+    private drawUpgrade(x: number, z: number, radius: number, px: number, y: number, width: number, height: number,
+        tier: number, total: number, progress: number, gain: number, tick: number, held: boolean) {
+        const ctx = this.context, bounds = this.camera.canvas.getBoundingClientRect();
+        ctx.fillStyle = '#4a4326'; ctx.fillRect(px - width / 2, y, width, height);
+        ctx.fillStyle = '#d7b84b'; ctx.fillRect(px - width / 2, y, width * progress / total, height);
         const name = `T${tier} Upgrade`;
-        const held = economy[C.objectiveHold] !== 0;
-        const label = paused || held ? `${name} (Paused)` : name;
+        const label = held ? `${name} (Paused)` : name;
         this.etaLabel(px, y + 16, label, gain && !held ? (total - progress) / (gain * TICK_HZ) : undefined);
         if (!gain || held) return;
-        ctx.save(); ctx.fillStyle = '#ffdc73';
+        ctx.save(); ctx.fillStyle = '#fff39a'; ctx.strokeStyle = '#7c470e'; ctx.lineWidth = 2;
+        const time = tick / (2 * TICK_HZ);
         for (let i = 0; i < 60; i++) {
-            const age = ((tick / TICK_HZ + i / 60) % 1 + 1) % 1;
-            const angle = i * 2.4 + tick / TICK_HZ * 5 + age * 3;
-            const spread = radius * (0.75 + age / 3);
+            const age = ((time + i / 60) % 1 + 1) % 1;
+            const angle = i * 2.4 + time * 5 + age * 3;
+            const spread = radius * 1.5 * (0.75 + age / 3);
             const spark = this.camera.project(x + Math.cos(angle) * spread, z + Math.sin(angle) * spread, 1 + age * 6);
             if (!spark.visible) continue;
-            ctx.globalAlpha = 1 - age;
-            ctx.fillRect(spark.x - bounds.left, spark.y - bounds.top, 3 - age, 3 - age);
+            ctx.globalAlpha = 1 - age * 0.55;
+            const size = 7 - age * 3;
+            const sx = spark.x - bounds.left - size / 2, sy = spark.y - bounds.top - size / 2;
+            ctx.strokeRect(sx, sy, size, size);
+            ctx.fillRect(sx, sy, size, size);
         }
         ctx.restore();
     }
@@ -545,7 +598,8 @@ export class DefenseView {
         if (tint) mesh.setColorAt(index, tint);
         mesh.geometry.getAttribute('constructionAlpha')?.setX(index, opacity);
     }
-    draw(now: number, tick: number, shift: boolean) {
+    draw(now: number, tick: number, shift: boolean, paused: boolean,
+        visibleSegments?: (id: number, count: number) => Array<number>) {
         this.markerCount = 0; this.markers.geometry.setDrawRange(0, 0); this.etaLabels.length = 0;
         const snapshot = this.snapshot, defense = snapshot?.defense;
         if (!snapshot || !defense) return;
@@ -659,9 +713,45 @@ export class DefenseView {
                     z + mx * Math.sin(facing) + mz * Math.cos(facing), altitude + tall,
                     Math.PI / 2 - angle, 1, 1, 1, opacity, tint);
             });
+            const selected = this.selected.has(id), buildRadius = definition.options.buildRadius;
+            if (selected && buildRadius) ranges.push({ x, z, radius: buildRadius, color: '#f5c542', owner: id });
+            if (row[E.state] === 1 && buildRadius && row[E.buildTask] >= 0 &&
+                (!(row[E.flags] & 1) || row[E.explicitTask])) {
+                const target = this.entity(row[E.buildTask]);
+                if (isLive(target) && target[E.rotation] >>> 2 === source &&
+                    target[E.flags] >> 8 === row[E.taskGeneration]) {
+                    const from = project(x, z, altitude + tall * 0.8);
+                    if (from.visible) {
+                        const footprint = entities[target[E.def]].footprint;
+                        const rotated = (target[E.rotation] & 1) !== 0;
+                        const scanWidth = rotated ? footprint.depth : footprint.width;
+                        const scanDepth = rotated ? footprint.width : footprint.depth;
+                        const targetHeight = this.altitude(target, tick) + 0.8;
+                        const phase = now / 220 + id;
+                        ctx.save();
+                        ctx.strokeStyle = '#fff';
+                        ctx.globalAlpha = 0.85;
+                        ctx.lineWidth = 1.5;
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+                        ctx.shadowBlur = 3;
+                        ctx.setLineDash([6, 3]);
+                        ctx.beginPath();
+                        for (let lane = -1; lane <= 1; lane++) {
+                            const scan = Math.sin(phase + lane * 0.85);
+                            const to = project(target[E.x] / Q + scan * scanWidth * 0.4,
+                                target[E.z] / Q + lane * scanDepth * 0.34, targetHeight);
+                            if (!to.visible) continue;
+                            ctx.moveTo(from.x, from.y);
+                            ctx.lineTo(to.x, to.y);
+                        }
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+                }
+            }
             const point = project(x, z, altitude + tall + 0.4);
-            if (!point.visible && !(shift && !this.logicalOrders.has(id))) continue;
-            const selected = this.selected.has(id), hp = Math.max(0, row[E.hp] / definition.maxHp);
+            if (!point.visible && !shift) continue;
+            const hp = Math.max(0, row[E.hp] / definition.maxHp);
             if (point.visible) {
                 ctx.fillStyle = color; ctx.fillRect(point.x - 4, point.y + 4, 8, 4);
             }
@@ -672,13 +762,14 @@ export class DefenseView {
                     radius: Math.hypot(definition.footprint.width, definition.footprint.depth) * 0.6 });
                 ranges.push(...this.rangesAt(row[E.def], x, z).map(range => ({ ...range, owner: id })));
             }
-            if (this.camera.fade > 0.01) {
+            const iconView = this.camera.fade > 0.01;
+            if (iconView) {
                 ctx.save(); ctx.globalAlpha = this.camera.fade; ctx.translate(point.x, point.y);
                 ctx.translate(-12, -12);
                 ctx.globalAlpha *= opacity;
                 this.drawTintedIcon(row[E.def], 0, 0, color);
                 ctx.fillStyle = hp < 0.3 ? '#bb4c40' : '#35596b';
-                for (let pip = 0; pip < definition.tier; pip++) ctx.fillRect(4 + pip * 6, 25, 3, 3);
+                for (let pip = 0; pip < definition.tier; pip++) ctx.fillRect(4 + pip * 6, 1, 3, 3);
                 ctx.restore();
             }
             let charge = 1, cooldownBar = false;
@@ -697,7 +788,8 @@ export class DefenseView {
                     .applyMatrix4(this.camera.camera.matrixWorldInverse);
                 const pixels = bounds.height / (2 * Math.tan(this.camera.camera.fov * Math.PI / 360) *
                     Math.max(0.01, -centre.z));
-                const barWidth = definition.footprint.width * pixels, barHeight = pixels * 0.13;
+                const barWidth = iconView ? 12 : definition.footprint.width * pixels;
+                const barHeight = iconView ? 1.5 : pixels * 0.13;
                 let barY = project(x, z, altitude + tall / 2).y;
                 const halfWidth = spec?.halfWidth ?? (person ? 0.7 : definition.footprint.width * 0.9) / 2;
                 const halfDepth = spec?.halfDepth ?? (person ? 0.7 : definition.footprint.depth * 0.9) / 2;
@@ -708,9 +800,15 @@ export class DefenseView {
                         const corner = project(cx, cz, h + ground - elevation(this.world, { x: cx, z: cz }));
                         if (corner.visible) barY = Math.max(barY, corner.y);
                     }
-                if (this.camera.fade > 0.01) barY = Math.max(barY, point.y + 30);
-                barY += Math.max(2, pixels * 0.06);
+                barY = iconView ? point.y + 14 : barY + Math.max(2, pixels * 0.06);
                 this.healthBar(point.x, barY, barWidth, barHeight, hp);
+                if (row[E.upgradeTarget] > definition.tier) {
+                    const tier = definition.tier + 1;
+                    const total = entities[CRANES[tier - 1]].options.buildSeconds * TICK_HZ * 256;
+                    this.drawUpgrade(x, z, definition.footprint.width / 2, point.x, barY + barHeight + 2,
+                        barWidth, iconView ? 2 : 4, tier, total, row[E.upgradeProgress],
+                        row[E.upgradeGain], tick, paused || !!(row[E.flags] & 1));
+                }
                 if (definition.kind === 4) {
                     const shield = Math.max(0, Math.min(1, row[E.power] / Math.max(1, definition.options.power ?? 0)));
                     const y = barY + barHeight + pixels * 0.06;
@@ -723,10 +821,13 @@ export class DefenseView {
                     ctx.fillStyle = '#d7b84b'; ctx.fillRect(point.x - barWidth / 2, y, barWidth * charge, barHeight);
                 }
             }
-            if (shift && !this.logicalOrders.has(id)) {
+            if (shift) {
                 let start = point, origin = { x, z }, seconds = 0;
-                for (let segment = 0; segment < row[E.orderCount]; segment++) {
-                    const at = RENDER_ORDERS + segment * 4, kind = row[at];
+                const count = row[E.orderCount];
+                const segments = visibleSegments?.(id, count) ??
+                    Array.from({ length: this.logicalOrders.has(id) ? 0 : count }, (_, index) => index);
+                for (let segment = 0; segment < segments.length; segment++) {
+                    const at = RENDER_ORDERS + segments[segment] * 4, kind = row[at];
                     let tx = row[at + 1] / Q, tz = row[at + 2] / Q;
                     if (kind === 1) {
                         const victim = row[at + 1], words = snapshot.words;
@@ -902,7 +1003,7 @@ export class DefenseView {
     }
     destroy() {
         this.group.parent?.remove(this.group); this.overlay.remove();
-        this.effects.destroy(); this.sonic.destroy(); this.beams.parent?.remove(this.beams);
+        this.audio.dispose(); this.effects.destroy(); this.sonic.destroy(); this.beams.parent?.remove(this.beams);
         this.tracerLines.parent?.remove(this.tracerLines); this.explosions.parent?.remove(this.explosions);
         this.markers.parent?.remove(this.markers); this.markers.geometry.dispose(); this.markers.material.dispose();
 

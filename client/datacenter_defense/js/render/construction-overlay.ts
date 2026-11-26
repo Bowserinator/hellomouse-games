@@ -14,7 +14,11 @@ export class ConstructionOverlay {
     private patched = new WeakSet<T.Material>();
     private count = { value: 0 };
     private circles = { value: Array.from({ length: 64 }, () => new THREE.Vector3()) };
-    setCircles(circles: ReadonlyArray<ConstructionCircle>) {
+    setCircles(circles: ReadonlyArray<ConstructionCircle> | undefined) {
+        if (!circles) {
+            this.count.value = -1;
+            return;
+        }
         // shortcut: Show the 64 largest radii; use a texture if larger crane networks need exact shading.
         const visible = [...circles].sort((a, b) => b.radius - a.radius).slice(0, 64);
         this.count.value = visible.length;
@@ -37,14 +41,16 @@ export class ConstructionOverlay {
                     shader.fragmentShader = `varying vec2 constructionPosition;
 uniform int constructionCount;
 uniform vec3 constructionCircles[64];\n${shader.fragmentShader}`.replace('#include <dithering_fragment>', `
-float constructionInside = 0.0;
+float constructionInside = constructionCount < 0 ? 1.0 : 0.0;
 for (int i = 0; i < 64; i++) {
     if (i >= constructionCount) break;
     vec3 circle = constructionCircles[i];
-    constructionInside = max(constructionInside, 1.0 - smoothstep(circle.z - 1.0, circle.z + 1.0,
-        distance(constructionPosition, circle.xy)));
+    if (distance(constructionPosition, circle.xy) <= circle.z) {
+        constructionInside = 1.0;
+        break;
+    }
 }
-gl_FragColor.rgb *= mix(0.45, 1.0, constructionInside);
+gl_FragColor.rgb *= mix(0.97, 1.0, constructionInside);
 #include <dithering_fragment>`);
                 };
                 material.customProgramCacheKey = () => 'construction-overlay-v1';

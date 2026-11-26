@@ -6,8 +6,7 @@ import { ZombieView } from './zombie-view.js';
 import { DefenseSession } from '../game/defense-session.js';
 import { checkWebGPU } from '../webgpu.js';
 import { SimulationControls } from '../game/ui/simulation-controls.js';
-import { ConstructionOverlay, type ConstructionCircle } from '../render/construction-overlay.js';
-import { BALANCE } from '../sim/balance.js';
+import { ConstructionOverlay } from '../render/construction-overlay.js';
 import type { DriverOptions } from '../sim/driver.js';
 
 export class Preview {
@@ -24,7 +23,6 @@ export class Preview {
     private objectiveFallStart?: number;
     private objectiveFall = 0;
     private construction = new ConstructionOverlay();
-    private objectiveCircles: Array<ConstructionCircle> = [];
     private sun = new THREE.DirectionalLight(0xffffff, 0.35);
     private shadowBounds = new THREE.Box3();
     private shadowRegion = '';
@@ -117,14 +115,14 @@ export class Preview {
         this.simulation?.showFlow(show);
     }
     private drag?: { x: number; y: number; button: number };
-    constructor(private host: HTMLElement) {
+    constructor(private host: HTMLElement, private showSpawns = true) {
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
         this.renderer.setClearColor(MAP_FOG_COLOR);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.shadowMap.autoUpdate = false;
-        host.append(this.renderer.domElement);
+        host.prepend(this.renderer.domElement);
         this.scene.add(this.geometry.group);
         this.scene.add(new THREE.HemisphereLight(0xffffff, 0xffffff, 0.65));
         this.sun.castShadow = true;
@@ -206,7 +204,8 @@ export class Preview {
                 this.geometry.setObjectiveFall(this.objectiveFall);
                 this.renderer.shadowMap.needsUpdate = true;
             }
-            this.construction.setCircles(this.defense?.constructionCircles() ?? this.objectiveCircles);
+            const circles = this.defense?.constructionCircles();
+            this.construction.setCircles(this.driver?.result ? undefined : circles);
             this.fitShadows();
             this.renderer.render(this.scene, this.camera);
             this.defense?.view.renderRefraction(this.renderer);
@@ -259,12 +258,9 @@ export class Preview {
         this.geometry.details = this.details;
         this.geometry.overlays = this.overlays;
         const previous = this.geometry.group.children.at(-1);
-        this.geometry.sync(world);
+        this.geometry.sync(world, this.showSpawns);
         this.geometry.setObjectiveFall(this.objectiveFall);
-        this.objectiveCircles = world.objects.filter(object => object.kind === 'objective')
-            .map(object => ({ x: object.x, z: object.z, radius: BALANCE.construction.objective }));
         this.construction.apply(this.geometry.group);
-        this.construction.setCircles(this.objectiveCircles);
         if (this.geometry.group.children.at(-1) !== previous) {
             this.shadowBounds.setFromObject(this.geometry.group);
             this.renderer.shadowMap.needsUpdate = true;

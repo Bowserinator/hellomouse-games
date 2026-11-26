@@ -1,19 +1,19 @@
+import { LOBBY_LIMIT } from '../shared/protocol.js';
 import { MAX_ZOMBIES } from './fixed.js';
 import { MAX_ENTITIES, MAX_ORDERS } from './layout.js';
 
 export enum CommandType {
     MoveInput, PlaceWeapon, UpgradeWeapon, SellWeapon, Ready, DebugProjectile, ActivateField,
     Place, Sell, PlaceRow, Order, RemoveOrder, FireAt, ClearOverride, SetPriority, SetStance,
-    ObjectiveStance, ObjectiveUpgrade, RemoveGhost
+    RemoveGhost, Gift, CraneUpgrade, Inherit
 }
 export enum OrderType {
     Move, Attack, AttackMove, FireAt, Stop, Assist
 }
 export interface Command {
     player: number; seq: number; targetTick: number; type: CommandType; payload: Array<number>; blob?: Array<number>;
-    source?: number;
+    source?: number; clientSeq?: number;
 }
-export const OBJECTIVE_ASSIST_TARGET = MAX_ENTITIES;
 export const ORDER_WAYPOINT = 4;
 export const ORDER_RECOVER = 8;
 export const ORDER_TARGET_SHIFT = 4;
@@ -40,12 +40,12 @@ export function orderedCommands(commands: ReadonlyArray<Command>, tick: number):
         if (![c.player, c.seq, c.targetTick, c.type, ...c.payload].every(Number.isInteger) ||
             c.player < 0 || c.player >= MAX_PLAYERS || c.seq < 0 || c.seq > 0xffffffff ||
             c.source !== undefined && (!Number.isInteger(c.source) || c.source < 0 || c.source >= 32) ||
-            c.targetTick !== tick || c.type < CommandType.MoveInput || c.type > CommandType.RemoveGhost ||
+            c.targetTick !== tick || c.type < CommandType.MoveInput || c.type > CommandType.Inherit ||
             c.payload.length > 8 || c.payload.some(n => n < -2147483648 || n > 2147483647) ||
             i > 0 && result[i - 1].player === c.player && result[i - 1].seq === c.seq)
             throw Error('Invalid or duplicate simulation command');
         const a = c.payload[0], b = c.payload[1], d = c.payload[3];
-        const lengths = [1, 4, 2, 1, 0, 4, 1, 6, 2, 7, 4, 2, 3, 0, 3, 1, 1, 2, 2];
+        const lengths = [1, 4, 2, 1, 0, 4, 1, 6, 2, 7, 4, 2, 3, 0, 3, 1, 2, 3, 4, 2];
         const selected = [CommandType.Order, CommandType.FireAt, CommandType.ClearOverride,
             CommandType.SetPriority, CommandType.SetStance, CommandType.Place, CommandType.PlaceRow].includes(c.type);
         if ((c.blob?.length ?? 0) !== (selected ? COMMAND_BLOB_WORDS : 0) ||
@@ -54,19 +54,26 @@ export function orderedCommands(commands: ReadonlyArray<Command>, tick: number):
                 c.payload[4] < 0 || c.payload[4] > 1 || c.payload[5] < 0 || c.payload[5] > 1) ||
             c.type === CommandType.PlaceRow && (c.payload.some(n => n < 0) || c.payload[5] > 1 || c.payload[6] > 1) ||
             c.type === CommandType.RemoveGhost && (a < 0 || b < 0) ||
-            c.type === CommandType.ObjectiveUpgrade && (a < 2 || a > 3 || b < 0 || b > 1) ||
-            [CommandType.Sell, CommandType.RemoveOrder].includes(c.type) && (a < 0 || a >= 1024) ||
-            c.type === CommandType.Sell && (b < 0 || b > 0xffffff) ||
+            [CommandType.Sell, CommandType.RemoveOrder, CommandType.Gift].includes(c.type) &&
+                (a < 0 || a >= MAX_ENTITIES) ||
+            [CommandType.Sell, CommandType.Gift].includes(c.type) && (b < 0 || b > 0xffffff) ||
+            c.type === CommandType.Gift && (c.payload[2] < 0 || c.payload[2] >= LOBBY_LIMIT ||
+                c.payload[2] === (c.source ?? c.player)) ||
             c.type === CommandType.RemoveOrder && (b < 0 || b >= MAX_ORDERS) ||
             c.type === CommandType.Order && (a < 0 || a > OrderType.Assist || b < 0 || c.payload[2] < 0 || d < 0 ||
                 (d >>> ORDER_TARGET_SHIFT) > MAX_ZOMBIES ||
                 (d >>> ORDER_TARGET_SHIFT) !== 0 && a !== OrderType.AttackMove) ||
             c.type === CommandType.FireAt && (a < 0 || b < 0 || c.payload[2] < 0 || c.payload[2] > 1) ||
             c.type === CommandType.SetPriority && (a < 0 || a > 3) ||
-            [CommandType.SetStance, CommandType.ObjectiveStance].includes(c.type) && (a < 0 || a > 1)) throw Error('Invalid entity command');
+            c.type === CommandType.SetStance && (a < 0 || a > 1)) throw Error('Invalid entity command');
         if (c.type === CommandType.Order && a === OrderType.Assist &&
-            (b > OBJECTIVE_ASSIST_TARGET || c.payload[2] > 1 || d !== 0)) throw Error('Invalid assist command');
+            (b >= MAX_ENTITIES || c.payload[2] > 1 || d !== 0)) throw Error('Invalid assist command');
         if (c.payload.length !== lengths[c.type]) throw Error('Invalid command payload length');
+        if (c.type === CommandType.CraneUpgrade && (a < 0 || a >= MAX_ENTITIES || b < 0 || b > 0xffffff ||
+            c.payload[2] < 2 || c.payload[2] > 3 || d < 0 || d > 1) ||
+            c.type === CommandType.Inherit && (a < 1 || a >= 1 << LOBBY_LIMIT || b < 1 || b >= 1 << LOBBY_LIMIT ||
+                (a & b) !== 0 || (b & (1 << (c.source ?? c.player))) === 0))
+            throw Error('Invalid upgrade or inheritance command');
         if (c.type === CommandType.MoveInput && (a < -1 || a > 255))
             throw Error('Invalid movement direction');
         if ([CommandType.PlaceWeapon, CommandType.UpgradeWeapon, CommandType.SellWeapon,

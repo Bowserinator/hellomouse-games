@@ -1,6 +1,6 @@
 .defense-controls {
     position: absolute;
-    inset: auto 0 0;
+    inset: auto 4px 4px;
     z-index: 3;
     display: flex;
     flex-direction: column;
@@ -42,20 +42,20 @@
 
     &__sale-units {
         display: grid;
-        grid-template-columns: repeat(auto-fill, 42px);
+        grid-template-columns: repeat(auto-fill, 56px);
         gap: 8px;
     }
 
     &__sale-unit {
         position: relative;
         padding: 4px;
-        background: var(--paper);
-        border: 1px solid var(--line);
+        background: var(--panel);
+        box-shadow: var(--elevation-1);
 
         img {
             display: block;
-            width: 32px;
-            height: 32px;
+            width: 48px;
+            height: 48px;
             object-fit: contain;
         }
     }
@@ -79,38 +79,50 @@
 
     &__overview {
         display: flex;
-        flex-wrap: wrap;
-        align-items: stretch;
+        align-items: flex-end;
         gap: 6px;
         width: fit-content;
         max-width: 100%;
-        overflow: visible;
         flex-shrink: 0;
-        padding: 5px;
-        background: var(--panel);
-        border: 1px solid var(--line);
-        pointer-events: auto;
-        width: 520px;
 
         &[hidden] {
             display: none;
         }
     }
 
-    &__unit {
-        flex: 0 0 320px;
-        width: 320px;
-        max-width: 100%;
-        box-sizing: border-box;
+    &__unit, &__properties {
+        min-width: 0;
         border: 1px solid var(--line);
+        background: var(--panel);
+        box-shadow: var(--elevation-4);
+        overflow-wrap: anywhere;
+        pointer-events: auto;
+    }
+
+    &__unit {
+        width: 320px;
     }
 
     &__properties {
-        flex: 0 0 179px;
-        max-width: 100%;
+        width: max-content;
         padding: 6px;
         white-space: pre-line;
-        border: 1px solid var(--line);
+    }
+
+    &__money {
+        color: var(--money-ink);
+    }
+
+    &__power {
+        color: var(--energy);
+    }
+
+    &__weapon {
+        color: #c62828;
+    }
+
+    &__description {
+        font-style: italic;
     }
 
     &__shield {
@@ -176,7 +188,9 @@
         position: absolute;
         right: -5px;
         bottom: -5px;
-        padding: 1px 2px;
+        min-width: 12px;
+        line-height: 12px !important;
+        height: 12px;
         background: #000;
         color: #fff;
         font: 9px/1.1 monospace;
@@ -212,6 +226,11 @@
             color: #85692d;
             background: #eee6cf;
         }
+
+        &:disabled {
+            filter: saturate(0);
+            opacity: 0.5;
+        }
     }
 
     &__action-icon {
@@ -229,16 +248,16 @@
     }
 
     &__controls, &__build {
-        padding: 5px;
-        border: 1px solid var(--line);
+        padding: 10px;
         background: var(--panel);
+        box-shadow: var(--elevation-4);
         pointer-events: auto;
     }
 
     &__controls {
         display: grid;
         grid-template-columns: repeat(4, 34px);
-        gap: 3px;
+        gap: 6px;
         align-content: start;
         position: relative;
     }
@@ -251,8 +270,8 @@
         grid-template-columns: repeat(2, minmax(90px, 1fr));
         gap: 3px;
         padding: 5px;
-        border: 1px solid var(--line);
         background: var(--panel);
+        box-shadow: var(--elevation-8);
         font-size: 9pt;
 
         &[hidden] {
@@ -271,28 +290,41 @@
     }
 
     &__build {
+        display: flex;
         flex: 1;
+        gap: 6px;
         min-width: 0;
     }
 
     &__tabs {
         display: flex;
-        gap: 2px;
-        padding-bottom: 3px;
+        flex: none;
+        flex-direction: column;
+        margin: -5px 0 -5px -5px;
+        border-right: 1px solid var(--line);
+        background: var(--paper);
 
         button {
-            position: relative;
-            padding: 2px 16px 8px 10px;
-            font-size: 9pt;
+            flex: 1;
+            min-height: 16px;
+            padding: 0 8px;
+
+            &:disabled {
+                color: var(--ink);
+                background: transparent;
+                opacity: 0.38;
+            }
         }
     }
 
     &__cards {
         display: flex;
+        flex: 1;
         min-width: 0;
         overflow-x: auto;
-        gap: 4px;
+        gap: 6px;
         height: 70px;
+        padding-inline: 3px 6px;
     }
 
     &__tabs[hidden], &__cards[hidden], &__card[hidden] {
@@ -300,8 +332,7 @@
     }
 
     &__selection {
-        background: var(--paper);
-        border: 1px solid var(--line);
+        background: var(--panel);
     }
 
     &__card {
@@ -315,12 +346,42 @@
         height: 58px;
         box-sizing: border-box;
         margin-top: 4px;
+        border: 1px solid var(--line);
+
+        &, &:hover:not(:disabled), &:active:not(:disabled) {
+            box-shadow: none;
+        }
+
+        &:focus-visible {
+            outline-offset: -2px;
+        }
 
         img {
             width: 40px;
             height: 40px;
         }
 
+    }
+}
+
+.command-bar__tabs button, .defense-tutorial nav button {
+    justify-content: flex-start;
+    border: 1px solid var(--line);
+    background-color: transparent;
+    font-size: 9pt;
+    line-height: 1.2;
+
+    &, &:hover:not(:disabled), &:active:not(:disabled) {
+        box-shadow: none;
+    }
+
+    &[aria-pressed='true'] {
+        border-left-color: #2196f3;
+        background: #e3f2fd;
+    }
+
+    &:focus-visible {
+        outline-offset: -2px;
     }
 }
 
@@ -335,6 +396,17 @@
     z-index: 4;
     user-select: none;
     line-height: 1.1;
+
+    &[aria-disabled='true'] {
+        color: var(--muted);
+        cursor: not-allowed;
+        box-shadow: none;
+
+        &:hover, &:active {
+            background-image: none;
+            box-shadow: none;
+        }
+    }
 
     .material-icons {
         display: block;

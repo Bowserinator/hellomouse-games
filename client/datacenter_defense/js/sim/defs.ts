@@ -81,7 +81,6 @@ export const DEF_HEADER = {
     targetSpread: 123,
     waves: 124,
     waveMode: 125,
-    objectiveBuildRadius: 126,
     economy: 127,
     construction: 128,
     ghosts: 129,
@@ -133,7 +132,6 @@ export function compileDefs(parameters = new Uint32Array(64),
         weaponWords.length + projectileWords.length + 8 + ranges.length * 2);
     words[DEF_HEADER.explosionPush] = Math.round(BALANCE.explosionPushSpeed * Q / 20);
     words[DEF_HEADER.targetSpread] = BALANCE.targetSpread;
-    words[DEF_HEADER.objectiveBuildRadius] = BALANCE.construction.objective;
     for (let i = 2; i < zombies.length; i += VARIANT_STRIDE)
         words[DEF_HEADER.maxRadius] = Math.max(words[DEF_HEADER.maxRadius], zombies[i]);
     words[DEF_HEADER.pursuitRange] = Math.round(BALANCE.zombie.pursuitRange * 100);

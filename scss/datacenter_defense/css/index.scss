@@ -10,7 +10,7 @@
 
     #lobby-content {
         display: grid;
-        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+        grid-template-columns: minmax(0, 3fr) minmax(0, 200px);
         align-items: start;
         gap: 24px;
         margin-bottom: 24px;
@@ -94,6 +94,15 @@
         > button {
             display: block;
             margin: 12px auto 0;
+            box-sizing: border-box;
+            width: 100%;
+            min-width: 0;
+        }
+
+        > label {
+            display: grid;
+            gap: 4px;
+            margin-top: 12px;
         }
     }
 
@@ -190,21 +199,60 @@
     }
 
     .loading-spinner {
-        width: 32px;
-        height: 32px;
-        border: 3px solid #d4d8cc;
-        border-top-color: #50774b;
-        animation: loading-spin 0.8s linear infinite;
+        position: relative;
+        width: 98px;
+        height: 98px;
+        overflow: hidden;
+        border: 1px solid #50774b;
+        background:
+            linear-gradient(#9ab49140 1px, transparent 1px) 0 0 / 12px 12px,
+            linear-gradient(90deg, #9ab49140 1px, transparent 1px) 0 0 / 12px 12px,
+            #24332a;
+
+        &::before {
+            content: '';
+            position: absolute;
+            inset: 34px;
+            border: 1px solid #c3ebaf;
+            background: linear-gradient(#c3ebaf, #c3ebaf) center / 4px 4px no-repeat;
+            animation: loading-signal 1.8s ease-out infinite;
+        }
+
+        &::after {
+            content: '';
+            position: absolute;
+            inset: 25% 0 auto;
+            height: 24px;
+            border-bottom: 1px solid #c3ebaf;
+            background: linear-gradient(transparent, #a7e48c55);
+            animation: loading-sweep 1.8s linear infinite;
+        }
     }
 
-    @keyframes loading-spin {
+    @keyframes loading-signal {
+        0%, 40% {
+            opacity: 1;
+            transform: scale(0.65);
+        }
+
+        85%, 100% {
+            opacity: 0;
+            transform: scale(2.8);
+        }
+    }
+
+    @keyframes loading-sweep {
+        from {
+            transform: translateY(-48px);
+        }
+
         to {
-            transform: rotate(360deg);
+            transform: translateY(72px);
         }
     }
 
     @media (prefers-reduced-motion: reduce) {
-        .loading-spinner {
+        .loading-spinner::before, .loading-spinner::after {
             animation: none;
         }
     }
@@ -222,13 +270,15 @@
     }
 
     #result {
+        width: 400px;
         position: fixed;
     }
 
     .mock-states {
         position: absolute;
-        right: 10px;
-        top: 50px;
+        left: 50%;
+        top: 62px;
+        transform: translateX(-50%);
         z-index: 4;
         display: flex;
         gap: 4px;

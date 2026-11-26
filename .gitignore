@@ -30,3 +30,4 @@ tests/*
 scripts/
 archive.zip
 *.patch
+*.psd

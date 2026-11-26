@@ -1,14 +1,29 @@
+import { CRANE_T2, CRANE_T3 } from '../content/index.js';
 import { BALANCE } from '../balance.js';
-import { defaults } from '../entity/registry.js';
 import { TICK_HZ } from '../fixed.js';
-import { ECONOMY } from '../layout.js';
-
-const upgrades = [defaults(2), defaults(3)];
+import { LOBBY_LIMIT } from '../../shared/protocol.js';
+import { ECONOMY, PLAYER_ECONOMY_WORDS, playerEconomyOffset } from '../layout.js';
 
 export const ECONOMY_WGSL = `
 ${Object.entries(ECONOMY).map(([name, value]) => `const C_${name}: u32 = ${value}u;`).join('\n')}
 fn eco(key: u32) -> i32 { return atomicLoad(&extra[u32(defs[D_economy]) + key]); }
 fn eco_set(key: u32, value: i32) { atomicStore(&extra[u32(defs[D_economy]) + key],value); }
+fn economy_offset(slot: u32) -> u32 {
+    if (slot == 0u) { return 0u; }
+    return ${playerEconomyOffset(1)}u + (slot - 1u) * ${PLAYER_ECONOMY_WORDS}u;
+}
+fn player_has_economy(slot: u32) -> bool {
+    return (u32(eco(C_players)) & (1u << slot)) != 0u;
+}
+fn pay_energy(id: u32, cost: i32) -> bool {
+    if (cost == 0 || defs[D_unlimitedEconomy] != 0) { return true; }
+    let offset = economy_offset(entity_source(id));
+    let balance = eco(offset + C_power);
+    if (balance < cost) { return false; }
+    eco_set(offset + C_power,balance - cost);
+    eco_set(offset + C_powerRate,eco(offset + C_powerRate) + cost);
+    return true;
+}
 fn wide(a: u32, b: u32) -> vec2<u32> {
     let low = (a & 65535u) * (b & 65535u);
     let middle = (a >> 16u) * (b & 65535u) + (low >> 16u);
@@ -47,28 +62,10 @@ fn shortage(funds: u32, demand: vec2<u32>) -> u32 {
     }
     return min(65536u,available * 65536u / max(1u,need.x));
 }
-fn objective_upgrading() -> bool {
-    return atomicLoad(&extra[0]) > 0 && eco(C_upgradeTarget) > eco(C_objectiveTier);
-}
-fn objective_power() -> i32 {
-    return array<i32,3>(${BALANCE.construction.power.join(',')})[u32(eco(C_objectiveTier) - 1)];
-}
-fn queue_upgrade(tier: i32, append: bool) {
-    if (atomicLoad(&extra[0]) <= 0 || tier <= eco(C_objectiveTier) || tier > 3) { return; }
-    eco_set(C_upgradeTarget,select(tier,max(tier,eco(C_upgradeTarget)),append));
-}
-fn objective_reach(id: u32) -> bool {
-    if (!is_active(id)) { return false; }
-    let radius = defs[entity_def(id) + U_buildRadius];
-    let at = entity(id);
-    let dx = atomicLoad(&extra[at + E_x]) / Q - i32(p(P_objectiveX)) / Q;
-    let dz = atomicLoad(&extra[at + E_z]) / Q - i32(p(P_objectiveZ)) / Q;
-    return radius > 0 && in_circle(dx,dz,radius);
-}
-fn storage_on_edge(cell: vec2<i32>, centre: vec2<i32>, size: vec2<i32>, axis: u32, storage_key: u32) -> i32 {
+fn storage_on_edge(cell: vec2<i32>, centre: vec2<i32>, size: vec2<i32>, axis: u32, storage_key: u32, owner: u32) -> i32 {
     if (any(cell < vec2<i32>(0)) || cell.x >= i32(p(P_columns)) || cell.y >= i32(p(P_rows))) { return 0; }
     let found = occupancy(u32(cell.y) * p(P_columns) + u32(cell.x));
-    if (found < 0 || !is_active(u32(found))) { return 0; }
+    if (found < 0 || !is_active(u32(found)) || entity_source(u32(found)) != owner) { return 0; }
     let id = u32(found); let other_size = unit_size(id);
     let at = entity(id);
     let other = vec2<i32>(atomicLoad(&extra[at + E_x]),atomicLoad(&extra[at + E_z]));
@@ -80,127 +77,192 @@ fn adjacent_storage(id: u32, storage_key: u32) -> i32 {
     let at = entity(id); let size = unit_size(id);
     let centre = vec2<i32>(atomicLoad(&extra[at + E_x]),atomicLoad(&extra[at + E_z]));
     let first = (centre - size / 2) / Q; let end = (centre + size / 2) / Q;
-    return storage_on_edge(vec2<i32>(first.x - 1,first.y),centre,size,0u,storage_key) +
-        storage_on_edge(vec2<i32>(end.x,first.y),centre,size,0u,storage_key) +
-        storage_on_edge(vec2<i32>(first.x,first.y - 1),centre,size,1u,storage_key) +
-        storage_on_edge(vec2<i32>(first.x,end.y),centre,size,1u,storage_key);
+    let owner = entity_source(id);
+    return storage_on_edge(vec2<i32>(first.x - 1,first.y),centre,size,0u,storage_key,owner) +
+        storage_on_edge(vec2<i32>(end.x,first.y),centre,size,0u,storage_key,owner) +
+        storage_on_edge(vec2<i32>(first.x,first.y - 1),centre,size,1u,storage_key,owner) +
+        storage_on_edge(vec2<i32>(first.x,end.y),centre,size,1u,storage_key,owner);
 }
-fn economy_caps() -> vec2<i32> {
-    var money_cap = select(0,50000,atomicLoad(&extra[0]) > 0);
-    var power_cap = select(0,500000,atomicLoad(&extra[0]) > 0);
+fn economy_caps(owner: u32) -> vec2<i32> {
+    let offset = economy_offset(owner);
+    let players = u32(eco(C_players));
+    let count = max(1u,countOneBits(players));
+    let rank = countOneBits(players & ((1u << owner) - 1u));
+    let lane = (rank + p(P_tick)) % count;
     let alive = atomicLoad(&extra[0]) > 0;
-    var money_income = select(0,${BALANCE.objective.money * 40},alive);
-    var power_income = select(0,${BALANCE.objective.power * 40},alive);
+    let starter_share = select(0,eco(offset + C_starterShare),alive);
+    var money_cap = ${BALANCE.objective.moneyStorage} * starter_share;
+    var power_cap = ${BALANCE.objective.powerStorage} * starter_share;
+    let shared_income = vec2<u32>(${BALANCE.objective.money * 40}u,${BALANCE.objective.power * 40}u);
+    let share = shared_income / count + select(vec2<u32>(0u),vec2<u32>(1u),vec2<u32>(lane) < shared_income % count);
+    var income = select(vec2<i32>(0),vec2<i32>(share),alive);
     for (var id = 0u; id < min(MAX_ENTITIES,u32(atomicLoad(&extra[2]))); id++) {
-        if (!is_active(id)) { continue; }
+        if (!is_active(id) || entity_source(id) != owner) { continue; }
         let def = entity_def(id);
         money_cap += defs[def + U_moneyStorage]; power_cap += defs[def + U_powerStorage];
         let money = defs[def + U_moneyIncome]; let power = defs[def + U_powerIncome];
-        if (money > 0) { money_income += money * (8 + adjacent_storage(id,U_moneyStorage)); }
-        if (power > 0) { power_income += power * (8 + adjacent_storage(id,U_powerStorage)); }
+        if (money > 0) { income.x += money * (8 + adjacent_storage(id,U_moneyStorage)); }
+        if (power > 0) { income.y += power * (8 + adjacent_storage(id,U_powerStorage)); }
     }
-    eco_set(C_moneyCap,money_cap); eco_set(C_powerCap,power_cap);
-    eco_set(C_money,min(eco(C_money),money_cap)); eco_set(C_power,min(eco(C_power),power_cap));
-    eco_set(C_moneyIncome,money_income * 5 / 2); eco_set(C_powerIncome,power_income * 5 / 2);
-    return vec2<i32>(money_income,power_income);
+    eco_set(offset + C_moneyCap,money_cap); eco_set(offset + C_powerCap,power_cap);
+    eco_set(offset + C_money,min(eco(offset + C_money),money_cap));
+    eco_set(offset + C_power,min(eco(offset + C_power),power_cap));
+    eco_set(offset + C_moneyIncome,income.x * 5 / 2); eco_set(offset + C_powerIncome,income.y * 5 / 2);
+    return income;
+}
+fn change_storage(owner: u32, def: u32, direction: i32) {
+    let offset = economy_offset(owner);
+    let capacity = vec2<i32>(eco(offset + C_moneyCap),eco(offset + C_powerCap)) +
+        direction * vec2<i32>(defs[def + U_moneyStorage],defs[def + U_powerStorage]);
+    eco_set(offset + C_moneyCap,capacity.x); eco_set(offset + C_powerCap,capacity.y);
+    if (direction < 0) {
+        eco_set(offset + C_money,min(eco(offset + C_money),capacity.x));
+        eco_set(offset + C_power,min(eco(offset + C_power),capacity.y));
+    }
+}
+fn deposit(owner: u32, key: u32, cap: u32, amount: i32) -> i32 {
+    let offset = economy_offset(owner);
+    let added = min(amount,eco(offset + cap) - eco(offset + key));
+    eco_set(offset + key,eco(offset + key) + added);
+    return amount - added;
+}
+fn share_overflow(owner: u32, key: u32, cap: u32, cursor_key: u32, amount: i32) {
+    var left = amount;
+    while (left > 0) {
+        var room = 0;
+        for (var slot = 0u; slot < ${LOBBY_LIMIT}u; slot++) {
+            let offset = economy_offset(slot);
+            if (slot != owner && player_has_economy(slot) && eco(offset + key) < eco(offset + cap)) { room++; }
+        }
+        if (room == 0) { return; }
+        let share = left / room;
+        let cursor = u32(eco(cursor_key));
+        for (var i = 0u; i < ${LOBBY_LIMIT}u; i++) {
+            let slot = (cursor + i) % ${LOBBY_LIMIT}u;
+            if (slot == owner || !player_has_economy(slot)) { continue; }
+            let offer = select(min(left,1),share,share > 0);
+            let granted = offer - deposit(slot,key,cap,offer);
+            left -= granted;
+            if (share == 0 && granted > 0) { eco_set(cursor_key,i32((slot + 1u) % ${LOBBY_LIMIT}u)); }
+        }
+    }
+}
+fn crane_upgrading(id: u32) -> bool {
+    return atomicLoad(&extra[entity(id) + E_upgradeTarget]) > defs[entity_def(id) + U_tier];
+}
+fn crane_upgrade_def(id: u32) -> i32 {
+    return select(${CRANE_T3},${CRANE_T2},defs[entity_def(id) + U_tier] == 1);
+}
+fn crane_upgrade_box(id: u32, def: u32) -> vec4<i32> {
+    let at = entity(id);
+    let point = vec2<i32>(atomicLoad(&extra[at + E_x]),atomicLoad(&extra[at + E_z]));
+    let origin = unit_bounds(id,point).xy * Q;
+    return placement_box(def,origin.x,origin.y,0);
 }
 fn builder_reaches_point(builder: i32, centre: vec2<i32>, required: i32) -> bool {
-    var origin = vec2<i32>(i32(p(P_objectiveX)),i32(p(P_objectiveZ))) / Q;
-    var radius = defs[D_objectiveBuildRadius];
-    var tier = eco(C_objectiveTier);
-    if (builder < 0) { if (atomicLoad(&extra[0]) <= 0) { return false; } }
-    else {
-        let id = u32(builder); if (!is_active(id)) { return false; }
-        let def = entity_def(id); if (defs[def + U_buildPower] <= 0) { return false; }
-        let at = entity(id); radius = defs[def + U_buildRadius]; tier = defs[def + U_tier];
-        origin = vec2<i32>(atomicLoad(&extra[at + E_x]),atomicLoad(&extra[at + E_z])) / Q;
-    }
+    let id = u32(builder); if (!is_active(id)) { return false; }
+    let def = entity_def(id); if (defs[def + U_buildPower] <= 0) { return false; }
+    let at = entity(id);
+    let origin = vec2<i32>(atomicLoad(&extra[at + E_x]),atomicLoad(&extra[at + E_z])) / Q;
     let delta = centre / Q - origin;
-    return tier >= required && in_circle(delta.x,delta.y,radius);
+    return defs[def + U_tier] >= required && in_circle(delta.x,delta.y,defs[def + U_buildRadius]);
 }
-fn builder_reaches(builder: i32, victim: u32) -> bool {
+fn entity_source(id: u32) -> u32 { return u32(atomicLoad(&extra[entity(id) + E_rotation])) >> 2u; }
+fn builder_reaches(builder: i32, victim: u32, manual: bool) -> bool {
     if (!is_live(victim) || builder == i32(victim)) { return false; }
     let at = entity(victim); let def = entity_def(victim);
     let building = atomicLoad(&extra[at + E_state]) == 2;
-    if (!building && atomicLoad(&extra[at + E_hp]) >= defs[def + U_hp]) { return false; }
+    let upgrading = crane_upgrading(victim);
+    if (entity_source(u32(builder)) != entity_source(victim) && !(manual && (building || upgrading))) { return false; }
+    if (!building && !upgrading && atomicLoad(&extra[at + E_hp]) >= defs[def + U_hp]) { return false; }
     let centre = vec2<i32>(atomicLoad(&extra[at + E_x]),atomicLoad(&extra[at + E_z]));
     return builder_reaches_point(builder,centre,select(0,defs[def + U_tier],building));
 }
-fn next_ghost(builder: i32) -> i32 {
+fn next_ghost(builder: i32, owner: u32) -> i32 {
     var index = 0u;
     while (index < ghost_count()) {
         let at = ghost_at(index);
+        if (u32(atomicLoad(&extra[at + 5u])) != owner) { index++; continue; }
         let def = placement_def(atomicLoad(&extra[at])); let box = ghost_box(at);
         if (builder_reaches_point(builder,(box.xy + box.zw) * Q / 2,defs[def + U_tier])) {
             let spawned = spawn_ghost(index,def,box);
             if (spawned >= 0) { return spawned; }
             if (spawned == -2) { break; }
-        } else { index++; }
+        }
+        index++;
     }
     return -1;
 }
 fn set_build_task(builder: i32, victim: i32, manual: bool) {
-    if (victim < 0 || victim >= i32(MAX_ENTITIES) || !builder_reaches(builder,u32(victim))) { return; }
+    if (victim < 0 || victim >= i32(MAX_ENTITIES) || !builder_reaches(builder,u32(victim),manual)) { return; }
     let generation = atomicLoad(&extra[entity(u32(victim)) + E_flags]) >> 8;
-    if (builder < 0) {
-        eco_set(C_objectiveTask,victim); eco_set(C_objectiveGeneration,generation);
-        eco_set(C_objectiveExplicit,i32(manual));
-    } else {
-        let at = entity(u32(builder)); atomicStore(&extra[at + E_buildTask],victim);
-        atomicStore(&extra[at + E_taskGeneration],generation);
-        atomicStore(&extra[at + E_explicitTask],i32(manual));
+    let at = entity(u32(builder)); atomicStore(&extra[at + E_buildTask],victim);
+    atomicStore(&extra[at + E_taskGeneration],generation);
+    atomicStore(&extra[at + E_explicitTask],i32(manual));
+    if (manual && atomicLoad(&extra[at + E_skippedTask]) == victim + 1) {
+        atomicStore(&extra[at + E_skippedTask],0);
     }
 }
 fn collect_builder(builder: i32) {
-    var task = eco(C_objectiveTask); var generation = eco(C_objectiveGeneration);
-    var manual = eco(C_objectiveExplicit) != 0; var held = eco(C_objectiveHold) != 0; var power = objective_power();
-    if (builder < 0 && objective_upgrading()) { return; }
-    if (builder >= 0) {
-        let at = entity(u32(builder)); if (!is_active(u32(builder))) { return; }
-        power = defs[entity_def(u32(builder)) + U_buildPower]; if (power == 0) { return; }
-        task = atomicLoad(&extra[at + E_buildTask]); generation = atomicLoad(&extra[at + E_taskGeneration]);
-        manual = atomicLoad(&extra[at + E_explicitTask]) != 0;
-        held = (atomicLoad(&extra[at + E_flags]) & 1) != 0;
-        if (task == -2) {
-            if (objective_upgrading() && objective_reach(u32(builder))) {
-                if (!held) { eco_set(C_upgradeRequest,eco(C_upgradeRequest) + power * 256); }
-                return;
-            }
-            task = -1; manual = false;
-        }
+    let id = u32(builder); if (!is_active(id)) { return; }
+    let power = defs[entity_def(id) + U_buildPower]; if (power == 0) { return; }
+    let at = entity(id); let owner = entity_source(id);
+    if (crane_upgrading(id)) {
+        atomicStore(&extra[at + E_buildTask],-1);
+        atomicStore(&extra[at + E_explicitTask],0);
+        if ((atomicLoad(&extra[at + E_flags]) & 1) == 0) { atomicAdd(&extra[at + E_assist],power * 256); }
+        return;
     }
-    if (task >= 0 && (!builder_reaches(builder,u32(task)) ||
-        (atomicLoad(&extra[entity(u32(task)) + E_flags]) >> 8) != generation)) { task = -1; manual = false; }
-    if (!manual && (p(P_tick) % 10u == 0u || task < 0)) {
-        task = -1;
-        var repair = -1;
+    var task = atomicLoad(&extra[at + E_buildTask]);
+    let generation = atomicLoad(&extra[at + E_taskGeneration]);
+    var manual = atomicLoad(&extra[at + E_explicitTask]) != 0;
+    let held = (atomicLoad(&extra[at + E_flags]) & 1) != 0;
+    if (task >= 0 && (!builder_reaches(builder,u32(task),manual) ||
+        (atomicLoad(&extra[entity(u32(task)) + E_flags]) >> 8) != generation ||
+        (!manual && atomicLoad(&extra[entity(u32(task)) + E_state]) != 2 && !crane_upgrading(u32(task))))) {
+        task = -1; manual = false;
+    }
+    if (!manual && (p(P_tick) % 10u == 0u || task == -1)) {
+        var build = -1;
+        var upgrade = -1;
         if (!held) { for (var other = 0u; other < min(MAX_ENTITIES,u32(atomicLoad(&extra[2]))); other++) {
-            if (!builder_reaches(builder,other)) { continue; }
-            if (atomicLoad(&extra[entity(other) + E_state]) != 2) {
-                if (repair < 0) { repair = i32(other); }
+            if (!builder_reaches(builder,other,false) || (atomicLoad(&extra[at + E_skippedTask]) == i32(other) + 1 &&
+                atomicLoad(&extra[at + E_skippedGeneration]) == (atomicLoad(&extra[entity(other) + E_flags]) >> 8))) {
                 continue;
             }
-            if (task < 0 || fraction_greater(u32(atomicLoad(&extra[entity(other) + E_progress])),
+            if (atomicLoad(&extra[entity(other) + E_state]) != 2) {
+                if (upgrade < 0 && crane_upgrading(other)) { upgrade = i32(other); }
+                continue;
+            }
+            let previous = build;
+            if (previous < 0 || fraction_greater(u32(atomicLoad(&extra[entity(other) + E_progress])),
                 u32(defs[entity_def(other) + U_buildTicks]) * 256u,
-                u32(atomicLoad(&extra[entity(u32(task)) + E_progress])),
-                u32(defs[entity_def(u32(task)) + U_buildTicks]) * 256u)) { task = i32(other); }
+                u32(atomicLoad(&extra[entity(u32(previous)) + E_progress])),
+                u32(defs[entity_def(u32(previous)) + U_buildTicks]) * 256u)) { build = i32(other); }
         } }
-        if (task < 0 && !held) { task = next_ghost(builder); }
-        if (task < 0) { task = repair; }
+        task = build;
+        if (task < 0 && !held) { task = next_ghost(builder,owner); }
+        if (task < 0) { task = upgrade; }
     }
-    if (builder < 0) { eco_set(C_objectiveTask,task); eco_set(C_objectiveExplicit,i32(manual)); }
-    else {
-        let at = entity(u32(builder)); atomicStore(&extra[at + E_buildTask],task);
-        atomicStore(&extra[at + E_explicitTask],i32(manual));
-    }
+    atomicStore(&extra[at + E_buildTask],task);
+    atomicStore(&extra[at + E_explicitTask],i32(manual));
     if (task >= 0 && (!held || manual)) {
         set_build_task(builder,task,manual);
         atomicAdd(&extra[entity(u32(task)) + E_assist],power * 256);
+    } else if (task < 0 && !held) {
+        let queued = atomicLoad(&extra[at + E_queuedUpgrade]);
+        if (queued > defs[entity_def(id) + U_tier]) {
+            let def = placement_def(crane_upgrade_def(id));
+            if (placement_clear(def,crane_upgrade_box(id,def),builder,false)) {
+                atomicStore(&extra[at + E_upgradeTarget],queued);
+                atomicStore(&extra[at + E_queuedUpgrade],0);
+                atomicAdd(&extra[at + E_assist],power * 256);
+            }
+        }
     }
 }
-fn upgrade_build() -> vec3<i32> {
-    return array<vec3<i32>,2>(${upgrades.map(upgrade =>
-        `vec3<i32>(${upgrade.cost.money * 100},${upgrade.cost.power * 100},${upgrade.buildSeconds * TICK_HZ * 256})`).join(',')})[u32(eco(C_objectiveTier) - 1)];
+fn build_spec(def: u32) -> vec3<i32> {
+    return vec3<i32>(defs[def + U_moneyCost],defs[def + U_powerCost],defs[def + U_buildTicks] * 256);
 }
 fn build_cost(build: vec3<i32>, progress: i32, gain: i32) -> vec2<i32> {
     return vec2<i32>(cumulative(build.x,progress + gain,build.z) - cumulative(build.x,progress,build.z),
@@ -208,37 +270,62 @@ fn build_cost(build: vec3<i32>, progress: i32, gain: i32) -> vec2<i32> {
 }
 @compute @workgroup_size(1)
 fn economy_tick() {
-    let income = economy_caps() + vec2<i32>(eco(C_moneyCarry),eco(C_powerCarry));
-    eco_set(C_moneyCarry,income.x % 8); eco_set(C_powerCarry,income.y % 8);
-    eco_set(C_money,min(eco(C_moneyCap),eco(C_money) + income.x / 8));
-    eco_set(C_power,min(eco(C_powerCap),eco(C_power) + income.y / 8));
-    eco_set(C_upgradeGain,0);
-    let upgrading = objective_upgrading();
-    let held = eco(C_objectiveHold) != 0;
-    eco_set(C_upgradeRequest,select(0,objective_power() * 256,upgrading && !held));
+    var overflow: array<vec2<i32>,${LOBBY_LIMIT}>;
+    for (var slot = 0u; slot < ${LOBBY_LIMIT}u; slot++) {
+        if (!player_has_economy(slot)) { continue; }
+        let offset = economy_offset(slot);
+        let income = economy_caps(slot) + vec2<i32>(eco(offset + C_moneyCarry),eco(offset + C_powerCarry));
+        eco_set(offset + C_moneyCarry,income.x % 8); eco_set(offset + C_powerCarry,income.y % 8);
+        let sample = p(P_tick) % 20u;
+        eco_set(offset + C_moneyHistory + sample,income.x / 8);
+        eco_set(offset + C_powerHistory + sample,income.y / 8);
+        overflow[slot] = vec2<i32>(deposit(slot,C_money,C_moneyCap,income.x / 8),
+            deposit(slot,C_power,C_powerCap,income.y / 8));
+    }
+    for (var slot = 0u; slot < ${LOBBY_LIMIT}u; slot++) {
+        share_overflow(slot,C_money,C_moneyCap,C_moneyCursor,overflow[slot].x);
+        share_overflow(slot,C_power,C_powerCap,C_powerCursor,overflow[slot].y);
+    }
+}
+@compute @workgroup_size(1)
+fn collect_construction() {
     let previous_count = min(MAX_ENTITIES,u32(atomicLoad(&extra[2])));
-    for (var id = 0u; id < previous_count; id++) { atomicStore(&extra[entity(id) + E_assist],0); }
-    collect_builder(-1);
+    for (var id = 0u; id < previous_count; id++) {
+        atomicStore(&extra[entity(id) + E_assist],0);
+        atomicStore(&extra[entity(id) + E_upgradeGain],0);
+    }
     for (var id = 0u; id < previous_count; id++) { collect_builder(i32(id)); }
+}
+@compute @workgroup_size(1)
+fn spend_construction() {
     let count = min(MAX_ENTITIES,u32(atomicLoad(&extra[2])));
+    for (var slot = 0u; slot < ${LOBBY_LIMIT}u; slot++) {
+        if (player_has_economy(slot)) { spend_economy(slot,count); }
+    }
+    for (var slot = 0u; slot < ${LOBBY_LIMIT}u; slot++) {
+        if (player_has_economy(slot)) { economy_caps(slot); }
+    }
+}
+fn spend_economy(slot: u32, count: u32) {
+    let offset = economy_offset(slot);
     var money_demand = vec2<u32>(0u); var power_demand = vec2<u32>(0u);
-    let upgrade_request = u32(defs[D_economy]) + C_upgradeRequest;
-    if (upgrading && !held) {
-        let build = upgrade_build(); let progress = eco(C_upgradeProgress);
-        let gain = min(eco(C_upgradeRequest),build.z - progress);
-        let cost = build_cost(build,progress,gain);
-        eco_set(C_upgradeRequest,gain); eco_set(C_upgradeRequest + 3u,progress);
-        eco_set(C_upgradeRequest + 1u,cost.x); eco_set(C_upgradeRequest + 2u,cost.y);
-        money_demand = wide_add(money_demand,u32(cost.x)); power_demand = wide_add(power_demand,u32(cost.y));
-    } else { eco_set(C_upgradeRequest,0); }
     for (var id = 0u; id < count; id++) {
+        if (entity_source(id) != slot) { continue; }
         let at = entity(id); let request = u32(defs[D_construction]) + id * 4u;
         atomicStore(&extra[request],0);
         let assist = atomicLoad(&extra[at + E_assist]);
         if (assist == 0) { continue; }
-        let def = entity_def(id); let total = defs[def + U_buildTicks] * 256;
-        var progress = atomicLoad(&extra[at + E_progress]); var limit = total;
-        if (atomicLoad(&extra[at + E_state]) != 2) {
+        let crane = crane_upgrading(id);
+        var def = entity_def(id);
+        if (crane) {
+            def = placement_def(crane_upgrade_def(id));
+            if ((atomicLoad(&extra[at + E_flags]) & 1) != 0 ||
+                !placement_clear(def,crane_upgrade_box(id,def),i32(id),false)) { continue; }
+        }
+        let build = build_spec(def); let total = build.z;
+        var progress = atomicLoad(&extra[at + select(E_progress,E_upgradeProgress,crane)]); var limit = total;
+        let repairing = !crane && atomicLoad(&extra[at + E_state]) != 2;
+        if (repairing) {
             let hp = atomicLoad(&extra[at + E_hp]); let max_hp = defs[def + U_hp];
             progress = atomicLoad(&extra[at + E_repairProgress]);
             var base = atomicLoad(&extra[at + E_repairBase]);
@@ -250,8 +337,10 @@ fn economy_tick() {
             }
             limit = cumulative(total,max_hp - base,max_hp);
         }
-        let gain = min(assist,limit - progress);
-        let cost = build_cost(vec3<i32>(defs[def + U_moneyCost],defs[def + U_powerCost],total),progress,gain); atomicStore(&extra[request],gain);
+        var speed = select(assist,assist / ${BALANCE.construction.repairSpeedDivisor},repairing);
+        if (crane) { speed = assist / max(1,defs[entity_def(id) + U_buildPower]); }
+        let gain = min(speed,limit - progress);
+        let cost = build_cost(build,progress,gain); atomicStore(&extra[request],gain);
         atomicStore(&extra[request + 3u],progress);
         atomicStore(&extra[request + 1u],cost.x); atomicStore(&extra[request + 2u],cost.y);
         money_demand = wide_add(money_demand,u32(cost.x)); power_demand = wide_add(power_demand,u32(cost.y));
@@ -259,23 +348,20 @@ fn economy_tick() {
     let unlimited = defs[D_unlimitedEconomy] != 0;
     var scale = 65536u;
     if (!unlimited) {
-        scale = min(shortage(u32(eco(C_money)),money_demand),shortage(u32(eco(C_power)),power_demand));
+        scale = min(shortage(u32(eco(offset + C_money)),money_demand),shortage(u32(eco(offset + C_power)),power_demand));
     }
     var money_used = 0; var power_used = 0;
-    for (var id = 0u; id <= count; id++) {
-        let upgrade = id == count;
-        var request = upgrade_request;
-        var build = vec3<i32>(0); var at = 0u; var def = 0u; var building = false;
-        if (upgrade) {
-            if (eco(C_upgradeRequest) == 0) { continue; }
-            build = upgrade_build();
-        } else {
-            if (!is_live(id)) { continue; }
-            at = entity(id); def = entity_def(id);
-            building = atomicLoad(&extra[at + E_state]) == 2;
-            request = u32(defs[D_construction]) + id * 4u;
-            build = vec3<i32>(defs[def + U_moneyCost],defs[def + U_powerCost],defs[def + U_buildTicks] * 256);
+    for (var id = 0u; id < count; id++) {
+        if (!is_live(id) || entity_source(id) != slot) { continue; }
+        let at = entity(id); var def = entity_def(id);
+        let building = atomicLoad(&extra[at + E_state]) == 2;
+        let request = u32(defs[D_construction]) + id * 4u;
+        let crane = crane_upgrading(id);
+        if (crane) {
+            def = placement_def(crane_upgrade_def(id));
+            if (!placement_clear(def,crane_upgrade_box(id,def),i32(id),false)) { continue; }
         }
+        let build = build_spec(def);
         let before = atomicLoad(&extra[request + 3u]);
         let budget = vec2<i32>(i32(ratio(u32(atomicLoad(&extra[request + 1u])),scale,65536u)),
             i32(ratio(u32(atomicLoad(&extra[request + 2u])),scale,65536u)));
@@ -289,10 +375,25 @@ fn economy_tick() {
                 let cost = build_cost(build,before,low); money_used += cost.x; power_used += cost.y;
             }
             let total = build.z; let progress = before + low;
-            if (upgrade) {
-                eco_set(C_upgradeGain,low);
-                eco_set(C_upgradeProgress,select(progress,0,progress == total));
-                if (progress == total) { eco_set(C_objectiveTier,eco(C_objectiveTier) + 1); }
+            if (crane) {
+                atomicStore(&extra[at + E_upgradeGain],low);
+                atomicStore(&extra[at + E_upgradeProgress],select(progress,0,progress == total));
+                if (progress == total) {
+                    let box = crane_upgrade_box(id,def);
+                    let old = entity_def(id);
+                    let point = vec2<i32>(atomicLoad(&extra[at + E_x]),atomicLoad(&extra[at + E_z]));
+                    let centre = (box.xy + box.zw) * Q / 2;
+                    unit_occupancy(id,point,false);
+                    atomicStore(&extra[at + E_def],crane_upgrade_def(id));
+                    atomicStore(&extra[at + E_x],centre.x);
+                    atomicStore(&extra[at + E_z],centre.y);
+                    atomicAdd(&extra[at + E_hp],defs[def + U_hp] - defs[old + U_hp]);
+                    atomicStore(&extra[at + E_progress],total);
+                    atomicStore(&extra[at + E_repairBase],0);
+                    unit_occupancy(id,centre,true);
+                    atomicStore(&extra[u32(defs[D_flowControl])],1);
+                    atomicAdd(&extra[u32(defs[D_flowControl]) + 2u],1);
+                }
                 continue;
             }
             if (!building) {
@@ -317,19 +418,22 @@ fn economy_tick() {
             if (atomicLoad(&extra[at + E_hp]) <= 0) { free_entity(id); }
         }
     }
-    eco_set(C_money,eco(C_money) - money_used); eco_set(C_power,eco(C_power) - power_used);
+    eco_set(offset + C_money,eco(offset + C_money) - money_used);
+    eco_set(offset + C_power,eco(offset + C_power) - power_used);
+    eco_set(offset + C_moneyRate,money_used + eco(offset + C_moneyRate));
+    eco_set(offset + C_powerRate,power_used + eco(offset + C_powerRate));
+}
+fn sample_spending(slot: u32) {
+    let offset = economy_offset(slot);
     let sample = p(P_tick) % 20u;
-    eco_set(C_moneyHistory + sample,income.x / 8);
-    eco_set(C_powerHistory + sample,income.y / 8);
-    eco_set(16u + sample,money_used + eco(C_moneyRate));
-    eco_set(36u + sample,power_used + eco(C_powerRate));
-    eco_set(C_moneyRate,eco(16u + sample)); eco_set(C_powerRate,eco(36u + sample));
+    eco_set(offset + 16u + sample,eco(offset + C_moneyRate));
+    eco_set(offset + 36u + sample,eco(offset + C_powerRate));
     var money_rate = 0; var power_rate = 0;
     for (var i = 0u; i < 20u; i++) {
-        money_rate += min(2147483647 - money_rate,eco(16u + i));
-        power_rate += min(2147483647 - power_rate,eco(36u + i));
+        money_rate += min(2147483647 - money_rate,eco(offset + 16u + i));
+        power_rate += min(2147483647 - power_rate,eco(offset + 36u + i));
     }
-    eco_set(C_moneyUsed,money_rate); eco_set(C_powerUsed,power_rate); eco_set(C_sampleTick,i32(p(P_tick)));
-    economy_caps();
+    eco_set(offset + C_moneyUsed,money_rate); eco_set(offset + C_powerUsed,power_rate);
+    eco_set(offset + C_sampleTick,i32(p(P_tick)));
 }
 `;

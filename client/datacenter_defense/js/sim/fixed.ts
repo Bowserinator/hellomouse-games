@@ -3,7 +3,10 @@ export const TICK_HZ = 20;
 export const MAX_ZOMBIES = 100000;
 export const PER_SPAWN = 1000;
 // Keep the protocol at 1 during local development.
-export const PROTOCOL_VERSION = 6;
+export const PROTOCOL_VERSION = 25;
+export const WAVE_WORDS = 5;
+export const WAVE_HP = 3;
+export const WAVE_DAMAGE = 4;
 export const INF = 0xffffffff;
 export const STATE_FIELDS = 7;
 export const FIELD = { x: 0, z: 1, vx: 2, vz: 3, hp: 4, meta: 5, tgt: 6 } as const;

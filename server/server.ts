@@ -98,7 +98,7 @@ wsServer.on('request', (request: any) => {
                 return error(client, 'Missing gameID', 'NO_ID');
             if (!games[message.gameID]) // Failed: no game exists
                 return error(client, `GameID of ${message.gameID} doesn't exist`, 'NO_GAME');
-            if (!games[message.gameID].onJoin(client))
+            if (!games[message.gameID].onJoin(client, message))
                 return error(client, 'Not allowed to join this game', 'NOT_ALLOWED');
 
             gameStateSync(client.gameID);

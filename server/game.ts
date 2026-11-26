@@ -41,7 +41,7 @@ export default class Game {
      * @param {Client} client
      * @return {boolean} Accept client?
      */
-    onJoin(client: Client): boolean {
+    onJoin(client: Client, _message?: MessageData): boolean {
         // Fill null spots first (in case disconnect)
         client.gameID = this.uuid;
         let found = false;

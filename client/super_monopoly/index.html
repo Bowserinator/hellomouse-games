@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Super Monopoly - Hellomouse Games">
+    <meta name="author" content="Bowserinator">
+    <meta property="og:title" content="Super Monopoly - Hellomouse Games">
+    <meta property="og:description" content="Buy, trade, and build on a multiplayer tabletop.">
+    <meta property="og:image" content="/super_monopoly/img/thumbnail.png">
+    <title>Super Monopoly</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Figtree:wght@400;700&family=IBM+Plex+Sans:wght@400;500;700&family=League+Spartan:wght@400;700&family=Noto+Color+Emoji&family=Roboto:wght@400;500;700&family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared/css/index.css">
+    <link rel="stylesheet" href="css/index.css">
+    <script src="/shared/js/index.js" defer></script>
+    <script src="js/game.js" type="module"></script>
+</head>
+<body>
+    <nav>
+        <h1><a href="/" target="_blank" rel="noopener">Bowseropoly</a></h1>
+        <div class="nav-buttons">
+            <button id="skip-motion" type="button" hidden>Skip animation</button>
+            <button id="rules-button" class="nav-link" type="button" aria-haspopup="dialog">Rules</button>
+            <a class="nav-link" href="/" target="_blank" rel="noopener">More Games</a>
+        </div>
+    </nav>
+    <main>
+        <section id="lobby" class="lobby">
+            <h2 class="lobby__title">Bowseropoly</h2>
+            <div class="game-link" id="game-link">
+                <input id="invite" aria-label="Invite link" type="text" readonly>
+                <button id="copy-link" type="button">Copy link</button>
+            </div>
+            <section class="lobby__section">
+                <h3>Players</h3>
+                <div id="lobby-players"></div>
+            </section>
+            <form id="profile" class="lobby__section">
+                <h3>Your player</h3>
+                <div class="lobby__name">
+                    <input id="username" aria-label="Name" autocomplete="off" maxlength="16" pattern="[A-Za-z0-9_]+">
+                    <button type="submit">Set name</button>
+                </div>
+                <h4>Piece</h4>
+                <div id="token" class="picker" role="radiogroup" aria-label="Piece"></div>
+                <h4>Card</h4>
+                <div id="skin" class="picker picker--cards" role="radiogroup" aria-label="Card"></div>
+            </form>
+            <div class="lobby__actions">
+                <button id="ready" type="button" class="primary" disabled>Ready</button>
+                <button id="add-cpu" type="button" hidden>Add CPU</button>
+                <button id="start-game" type="button" hidden>Start game</button>
+            </div>
+            <details id="settings" class="lobby__section" open>
+                <summary>Game settings</summary>
+                <form id="options"></form>
+            </details>
+        </section>
+        <section id="game" hidden aria-label="Tabletop">
+            <div id="world-frame">
+                <div id="world"></div>
+            </div>
+            <div id="camera-controls" class="actions" aria-label="Camera controls">
+                <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
+                <button id="recenter" type="button">Recenter</button>
+                <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+                <button id="focus-board" type="button">Board</button>
+                <button id="focus-hell" type="button">Hell</button>
+            </div>
+            <aside id="leaderboard" aria-label="Leaderboard"></aside>
+            <section id="hud" class="away" aria-label="Game controls">
+                <div id="hud-banner" role="status" aria-live="polite"></div>
+                <button id="hud-toggle" type="button" aria-expanded="true" aria-controls="hud-actions">Hide controls</button>
+                <div id="hud-actions">
+                    <div class="actions" id="phase-controls"></div>
+                    <div class="actions" id="optional-controls"></div>
+                </div>
+                <progress id="deadline" aria-label="Time remaining" hidden></progress>
+            </section>
+            <button id="log-panel" type="button" aria-haspopup="dialog">Log</button>
+            <div id="flight-layer" aria-hidden="true"></div>
+            <div id="explosion-layer" aria-hidden="true"></div>
+        </section>
+    </main>
+    <button class="chat-tab" id="chat-toggle" type="button" aria-controls="chat" aria-expanded="false">
+        Chat <span id="chat-unread" hidden></span>
+    </button>
+    <section id="chat" aria-label="Chat" hidden>
+        <div id="messages" role="log"></div>
+        <form id="chat-form">
+            <input id="chat-input" aria-label="Chat message" type="text" maxlength="1000" autocomplete="off">
+            <button type="submit">Send</button>
+        </form>
+    </section>
+    <dialog class="modal" id="rules-modal" aria-labelledby="rules-title">
+        <h2 id="rules-title">Rules</h2>
+        <div class="rules">
+            <b>Rules:</b>
+            <ul>
+                <li>For 2-8 players. Each player starts with $1,500.</li>
+                <li>Crossing Go earns you $200 and gives you the option to gamble all your money in the stock market spinner, or buy something from the black market. You may do both after passing Go.</li>
+                <li>Roll two dice; doubles earn you a bonus roll; three doubles in one turn sends you to Hell.</li>
+                <li>When you land on an unowned property, you can buy it. If you skip, a timed auction opens to all players. Bids do not extend the timer; the highest bid wins.</li>
+                <li>You pay rent when you land on an unmortgaged deed. Bare streets in a complete set pay double; yacht rent depends on how many yachts that player owns; superweapon rent is a multiple of a dice roll.</li>
+                <li>Build and sell evenly, and sell all buildings before mortgaging. The number of houses and hotels is limited (host adjustable).</li>
+                <li>You can trade cash, deeds, and "Get out of Hell" cards. When you receive a mortgaged deed in a trade, you pay 10% interest to keep it mortgaged, or principal plus interest to unmortgage it.</li>
+                <li>When you go bankrupt, a GoFundMe starts where other players can send you money to stay in the game. If you go bankrupt anyway, donations are refunded.</li>
+                <li>By default, whoever has the highest net worth after 60 minutes, or is the last player not bankrupt, wins.</li>
+            </ul>
+            <b>Notes:</b>
+            <ul>
+                <li>Land on Go or Free Parking to select a deed to auction. You may not auction deeds that would complete a set for a player.</li>
+                <li>In Hell, land on the exit gate, use a "Get out of Hell" card, or pay bail to leave. Bail starts at $50 and drops $10 per lap to $20.</li>
+                <li>You may hold up to three Black Market upgrades at a time (no duplicates).
+                    <ul>
+                        <li>Dead Hand: on bankruptcy, you explode, destroying the square you're on and bankrupting other players on it. A destroyed square loses its buildings and can no longer be owned, bought, auctioned, or charged rent.</li>
+                    </ul>
+                </li>
+            </ul>
+            <b>Art credits:</b> Xenonomous, Appi, Riifu, Bowserinator
+        </div>
+        <form method="dialog"><button>Close</button></form>
+    </dialog>
+    <dialog class="modal" id="panel" aria-labelledby="panel-title">
+        <h2 id="panel-title"></h2>
+        <div id="panel-content"></div>
+        <form method="dialog"><button id="panel-close">Close</button></form>
+    </dialog>
+    <dialog class="modal" id="log-modal" aria-labelledby="log-title">
+        <h2 id="log-title">Log</h2>
+        <div class="log-view">
+            <div class="log-view__pane">
+                <input id="log-filter" aria-label="Filter" type="search">
+                <div class="log-view__col" id="log-moves">
+                    <ol id="log" role="log"></ol>
+                </div>
+            </div>
+            <div class="log-view__pane">
+                <div class="log-view__col" id="log-ledger">
+                    <ol id="ledger-list"></ol>
+                </div>
+            </div>
+        </div>
+        <form method="dialog"><button>Close</button></form>
+    </dialog>
+    <div id="toast-stack" role="status"></div>
+    <div id="disconnect-banner" role="status" hidden></div>
+</body>
+</html>

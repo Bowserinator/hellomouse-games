@@ -1,5 +1,5 @@
 import { validateWorld, type World, type Point } from '../mapx.js';
-import { hashWords, Q, TICK_HZ } from './fixed.js';
+import { hashWords, Q, TICK_HZ, WAVE_WORDS } from './fixed.js';
 import { VARIANTS } from './variants.js';
 import { bakeBuildings } from './buildings.js';
 import { BALANCE } from './balance.js';
@@ -33,7 +33,7 @@ function inside(polygon: Array<Point>, x: number, z: number): boolean {
     }
     return result;
 }
-export function bakeNav(world: World): NavBake {
+export function bakeNav(world: World, buildTime: number | null = null): NavBake {
     validateWorld(world);
     const objectives = world.objects.filter(e => e.kind === 'objective');
     const sources = world.objects.filter(e => e.kind === 'spawn');
@@ -175,13 +175,23 @@ export function bakeNav(world: World): NavBake {
     let firstWaveTick = world.rules ? world.rules.winTime * TICK_HZ : 0;
     if (world.rules) sources.forEach((source, spawn) => {
         for (const wave of world.rules!.waves[source.id] ?? []) {
-            firstWaveTick = Math.min(firstWaveTick, wave.time * TICK_HZ);
+            if (buildTime === null) firstWaveTick = Math.min(firstWaveTick, wave.time * TICK_HZ);
+            const hpScale = Math.round((wave.hpScale ?? 1) * 100);
+            const damageScale = Math.round((wave.damageScale ?? 1) * 100);
             VARIANTS.forEach((variant, type) => {
-                for (let i = 0; i < (wave.counts[variant.name] ?? 0); i++)
-                    slots.push(spawn, type, wave.time * TICK_HZ);
+                const amount = wave.counts[variant.name] ?? 0;
+                if (buildTime !== null && amount > 0) firstWaveTick = Math.min(firstWaveTick, wave.time * TICK_HZ);
+                for (let i = 0; i < amount; i++) slots.push(spawn, type, wave.time * TICK_HZ, hpScale, damageScale);
             });
         }
     });
+    let winTime = world.rules?.winTime ?? 0;
+    if (world.rules && buildTime !== null) {
+        const delta = buildTime - firstWaveTick / TICK_HZ;
+        firstWaveTick = buildTime * TICK_HZ;
+        winTime = Math.max(1, winTime + delta);
+        for (let i = 2; i < slots.length; i += WAVE_WORDS) slots[i] += delta * TICK_HZ;
+    }
     const words = new Uint32Array(waveOffset + slots.length);
     words.set(slots, waveOffset);
     words.set(new Uint32Array(buildingsData.buffer), buildingOffset);
@@ -191,11 +201,11 @@ export function bakeNav(world: World): NavBake {
     words.set(new Uint32Array(heights.buffer), terrainOffset);
     spawns.forEach((s, i) => words.set([s.x, s.z, s.radius], spawnOffset + i * 3));
     const header = [columns, rows, cellCm, widthCm, depthCm, baseDm, t.columns, t.rows,
-        objective.x, objective.z, objective.radius, Number(!!world.rules), world.rules?.winTime ?? 0];
+        objective.x, objective.z, objective.radius, Number(!!world.rules), winTime];
     return { columns, rows, cellCm, widthCm, depthCm, costs, airCosts, heights, baseDm,
         terrainColumns: t.columns, terrainRows: t.rows, spawns, objective, words,
         terrainOffset, spawnOffset, buildingOffset, waveOffset,
-        waveCount: world.rules ? slots.length / 3 : undefined, firstWaveTick,
-        winTick: world.rules ? world.rules.winTime * TICK_HZ : undefined,
+        waveCount: world.rules ? slots.length / WAVE_WORDS : undefined, firstWaveTick,
+        winTick: world.rules ? winTime * TICK_HZ : undefined,
         hash: hashWords(words, hashWords(header)), notices };
 }

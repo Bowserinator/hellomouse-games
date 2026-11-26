@@ -1,17 +1,28 @@
-.wave-clock {
-    position: absolute;
-    z-index: 2;
-    pointer-events: none;
-    text-align: center;
-    background: #faf9f4dc;
-    padding: 5px 9px;
-    line-height: 1.2;
-}
+:has(> .wave-clock) {
+    --wave-control-height: 42px;
 
-.wave-clock {
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
+    > .wave-clock {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 2;
+        align-content: center;
+        box-sizing: border-box;
+        width: 250px;
+        height: var(--wave-control-height);
+        text-align: center;
+        background: #faf9f4dc;
+        box-shadow: var(--elevation-4);
+        line-height: 1.2;
+    }
+
+    &:has(> .wave-clock:not([hidden])) > .simulation-pause {
+        right: auto;
+        left: calc(50% + 133px);
+        box-sizing: border-box;
+        height: var(--wave-control-height);
+    }
 }
 
 .result-toast {
@@ -24,6 +35,7 @@
     background: #f4f3ed;
     color: #252922;
     border: 1px solid #d4d8cc;
+    box-shadow: var(--elevation-8);
     z-index: 20;
     animation: result-drop 300ms ease-out;
 

@@ -1,4 +1,4 @@
-import { PLAYER_COLORS, type Battlefield, type LobbyState } from './shared/protocol.js';
+import { BUILD_TIMES, PLAYER_COLORS, type Battlefield, type LobbyState } from './shared/protocol.js';
 
 type MapDialog = HTMLDialogElement & { showModal(): void; close(): void };
 const COLOR_NAMES = ['Blue', 'Green', 'Cyan', 'Light blue', 'Light green', 'Indigo', 'Teal', 'Turquoise'];
@@ -66,6 +66,16 @@ export class Lobby {
             choose.onclick = () => this.chooseMap(state.map);
             mapColumn.append(choose);
         }
+        const label = document.createElement('label');
+        label.append('Build time override');
+        const buildTime = document.createElement('select');
+        for (const [seconds, name] of BUILD_TIMES) buildTime.add(new Option(name, String(seconds)));
+        buildTime.value = String(state.buildTime);
+        buildTime.disabled = this.slot !== state.host || state.phase !== 'LOBBY';
+        buildTime.onchange = () => this.send({ type: 'BUILD_TIME',
+            buildTime: buildTime.value === 'null' ? null : Number(buildTime.value) });
+        label.append(buildTime);
+        mapColumn.append(label);
         this.host.append(mapColumn);
         const start = document.getElementById('start') as HTMLButtonElement;
         start.disabled = this.slot !== state.host || state.phase !== 'LOBBY' || !me || !selected?.playable ||

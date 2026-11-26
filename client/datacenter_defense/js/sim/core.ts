@@ -1,13 +1,15 @@
 import { BALANCE } from './balance.js';
 import type { World } from '../mapx.js';
 import { bakeNav, type NavBake } from './nav-bake.js';
-import { INF, MAX_ZOMBIES, PER_SPAWN, Q, STATE_FIELDS, TICK_HZ } from './fixed.js';
+import { ANGLE_LUT, INF, MAX_ZOMBIES, PER_SPAWN, Q, STATE_FIELDS, TICK_HZ } from './fixed.js';
 import { VARIANTS } from './variants.js';
+import { CRANE_T1 } from './content/index.js';
+import { entities as entityDefs } from './entity/registry.js';
 import { compileDefs, DEF_HEADER } from './defs.js';
 import { COMMAND_DELAY_TICKS, COMMAND_RING, COMMAND_SLOT_WORDS, SALE_EFFECT_SLOTS,
     encodeCommands, orderedCommands, type Command } from './commands.js';
 import { Lockstep, type Handshake, type TickBundle } from './lockstep.js';
-import { ENTITY_WORDS, MAX_ENTITIES, MAX_WEAPONS, ORDER_WORDS, PARAM, PLAYER_WORDS,
+import { ENTITY as E, ENTITY_WORDS, MAX_ENTITIES, MAX_WEAPONS, ORDER_WORDS, PARAM, PLAYER_WORDS,
     PROJECTILE_WORDS, RENDER_BEAM_WORDS, RENDER_ENTITY_WORDS, RENDER_PROJECTILE_WORDS,
     RENDER_EXPLOSION_WORDS, GHOST_WORDS, SCRATCH, WEAPON_WORDS } from './layout.js';
 import { parallelKernels } from './kernels/parallel.js';
@@ -22,9 +24,10 @@ import { projectileKernels } from './kernels/projectiles.js';
 import { BUILDINGS_WGSL } from './kernels/buildings.js';
 import { hostileKernels } from './kernels/hostile.js';
 import { CWIS_WGSL } from './kernels/cwis.js';
-import { ECONOMY, ECONOMY_WORDS } from './layout.js';
+import { ECONOMY, ECONOMY_WORDS, playerEconomyOffset } from './layout.js';
 import { ECONOMY_WGSL } from './kernels/economy.js';
 import { SimProfiler } from './profile.js';
+import { LOBBY_LIMIT } from '../shared/protocol.js';
 
 export interface DefenseSnapshot {
     entities: Int32Array;
@@ -47,6 +50,8 @@ export interface StateSnapshot {
     buffers: Record<string, Uint32Array>;
 }
 export interface SimOptions {
+    starterSlots?: ReadonlyArray<number>;
+    buildTime?: number | null;
     seed?: number; workgroupSize?: number; hashInterval?: number; players?: ReadonlyArray<number>; signal?: AbortSignal;
     defense?: boolean; testMode?: boolean; continuousSpawn?: boolean; profile?: boolean; unlimitedEconomy?: boolean;
     onProgress?: (message: string) => void; onSnapshot?: (snapshot: RenderSnapshot) => void;
@@ -58,9 +63,11 @@ const SEPARATION_ITERATIONS = 4;
 const ENTRIES = ['flow_relax', 'flow_dirs', 'clear_tick', 'apply_commands', 'spawn_flags', 'spawn_release', 'grid_build',
     'radix_count', 'radix_scatter', 'grid_gather', 'scan_block', 'scan_add', 'zombie_think', 'zombie_move', 'zombie_separate', 'zombie_separate_commit', 'zombie_recover', 'emit_flags', 'emit_scatter', 'consume_emits',
     'weapons_update', 'projectile_update', 'projectile_hit', 'apply_damage', 'objective_update', 'state_hash', 'snapshot',
-    'economy_tick', 'clear_entities', 'apply_entity_damage', 'flow_rebuild_begin', 'flow_capture', 'flow_reset', 'flow_commit',
+    'economy_tick', 'collect_construction', 'clear_construction', 'spend_construction',
+    'clear_entities', 'apply_entity_damage',
+    'flow_rebuild_begin', 'flow_capture', 'flow_reset', 'flow_commit',
     'flow_rebuild_finish', 'coarse_count', 'coarse_scatter', 'weapon_target', 'artillery_scan', 'weapon_aim',
-    'weapon_fire', 'shot_update', 'shot_hit', 'shot_detonate', 'splash_scan', 'gas_reset', 'beam_update',
+    'weapon_fire', 'shot_update', 'shot_hit', 'shot_detonate', 'splash_scan', 'gas_reset', 'fund_beams', 'beam_update',
     'order_prepare', 'unit_move', 'unit_commit', 'shield_prepare', 'sonic_force', 'runover_damage',
     'hostile_emit', 'cwis_intercept', 'hostile_update', 'runtime_snapshot', 'end_match'];
 
@@ -117,7 +124,7 @@ export class SimCore {
     private definitionHash: number;
     private regions: Partial<Record<keyof typeof DEF_HEADER, number>> = { flowPasses: 8, flowTicks: 1 };
     private constructor(readonly device: GPUDevice, world: World, private options: SimOptions) {
-        this.nav = bakeNav(world); this.regions.buildings = this.nav.buildingOffset;
+        this.nav = bakeNav(world, options.buildTime); this.regions.buildings = this.nav.buildingOffset;
         this.notices = this.nav.notices.slice();
         this.regions.spawnPerSource = PER_SPAWN * (options.testMode ? 10 : 1);
         this.regions.spawnHpScale = options.testMode ? 3 : 1;
@@ -253,14 +260,22 @@ export class SimCore {
         storage('scratch', scratch); storage('flowArgs', 15);
         const initialExtra = new Int32Array(extra);
         initialExtra[0] = this.objectiveMaxHealth;
-        initialExtra.set([50000, 500000, 50000, 500000], this.regions.economy);
         const economy = this.regions.economy ?? 0;
-        initialExtra[economy + ECONOMY.objectiveTask] = -1;
-        initialExtra[economy + ECONOMY.objectiveTier] = 1;
-        initialExtra[economy + ECONOMY.upgradeTarget] = 1;
+        const owners = [...(options.starterSlots ?? this.lockstep.players)].sort((a, b) => a - b);
+        const share = Math.floor(LOBBY_LIMIT / owners.length), remainder = LOBBY_LIMIT % owners.length;
+        const allocation = owners.map((slot, rank) => ({ slot, count: share + Number(rank < remainder) }));
+        for (const { slot, count } of allocation) {
+            if (!Number.isInteger(slot) || slot < 0 || slot >= LOBBY_LIMIT) throw Error('Invalid starter slot');
+            initialExtra[economy + ECONOMY.players] |= 1 << slot;
+            const offset = economy + playerEconomyOffset(slot);
+            const money = BALANCE.objective.moneyStorage * count, power = BALANCE.objective.powerStorage * count;
+            initialExtra.set([money, power, money, power], offset);
+            initialExtra[offset + ECONOMY.starterShare] = count;
+        }
         initialExtra.fill(100, this.regions.gasSlow, (this.regions.gasSlow ?? 0) + this.count);
         for (let i = 0; i < 8; i++) initialExtra.set([n.objective.x, n.objective.z, -1, 100, 0, -1],
             this.parameters[PARAM.players] + i * PLAYER_WORDS);
+        if (options.defense) this.placeStartingCranes(initialExtra, allocation);
         storage('extra', extra, initialExtra);
         const flow = new Uint32Array(flowStride * this.regions.flowClasses);
         flow.fill(0xffffffff);
@@ -366,6 +381,60 @@ export class SimCore {
     private check() {
         if (this.destroyed || this.options.signal?.aborted) throw Error('Simulation stopped');
         if (this.error) throw this.error;
+    }
+    private placeStartingCranes(extra: Int32Array, allocation: ReadonlyArray<{ slot: number; count: number }>) {
+        const { objective, cellCm, costs, columns, rows } = this.nav;
+        if (cellCm !== 100) {
+            this.notices.push('Starter cranes require a one-metre construction grid');
+            return;
+        }
+        const crane = entityDefs[CRANE_T1];
+        const { width, depth } = crane.footprint;
+        const occupied = this.regions.occupancy ?? 0;
+        let slot = 0, id = 0;
+        for (const { slot: owner, count } of allocation)
+            for (let i = 0; i < count; i++) {
+                const [cos, sin] = ANGLE_LUT[Math.floor(slot++ * ANGLE_LUT.length / LOBBY_LIMIT)];
+                const dx = cos * 35 / 16384, dz = sin * 35 / 16384;
+                const x0 = Math.round(objective.x / Q + dx - width / 2);
+                const z0 = Math.round(objective.z / Q + dz - depth / 2);
+                let best = Infinity, bx = -1, bz = -1;
+                for (const radius of [12, Math.max(columns, rows)]) {
+                    for (let z = Math.max(0, z0 - radius); z <= Math.min(rows - depth, z0 + radius); z++)
+                        for (let x = Math.max(0, x0 - radius); x <= Math.min(columns - width, x0 + radius); x++) {
+                            const distance = (x - x0) ** 2 + (z - z0) ** 2;
+                            if (distance >= best) continue;
+                            let clear = true;
+                            for (let oz = 0; oz < depth; oz++) for (let ox = 0; ox < width; ox++) {
+                                const cell = (z + oz) * columns + x + ox;
+                                const occupancy = extra[occupied + (cell >>> 1)] >>> ((cell & 1) * 16);
+                                clear &&= (costs[cell] & 127) !== 0 && (occupancy & 65535) === 0;
+                            }
+                            if (clear) {
+                                best = distance; bx = x; bz = z;
+                            }
+                        }
+                    if (bx >= 0) break;
+                }
+                if (bx < 0) continue;
+                const at = (this.regions.entities ?? 0) + id * ENTITY_WORDS;
+                extra[at + E.state] = 1;
+                extra[at + E.def] = CRANE_T1;
+                extra[at + E.owner] = owner % 8;
+                extra[at + E.x] = (bx + width / 2) * Q;
+                extra[at + E.z] = (bz + depth / 2) * Q;
+                extra[at + E.hp] = crane.maxHp;
+                extra[at + E.rotation] = owner << 2;
+                extra[at + E.flags] = 1 << 8;
+                extra[at + E.buildTask] = -1;
+                for (let oz = 0; oz < depth; oz++) for (let ox = 0; ox < width; ox++) {
+                    const cell = (bz + oz) * columns + bx + ox;
+                    extra[occupied + (cell >>> 1)] |= (id + 1) << ((cell & 1) * 16);
+                }
+                id++;
+            }
+        extra[2] = id;
+        if (id < LOBBY_LIMIT) this.notices.push('Not enough space for all starter cranes');
     }
     private async initialize() {
         this.check();
@@ -561,6 +630,9 @@ export class SimCore {
         this.dispatch(encoder, 'clear_entities', MAX_ENTITIES);
         this.dispatch(encoder, 'apply_commands', 1);
         this.dispatch(encoder, 'economy_tick', 1);
+        this.dispatch(encoder, 'collect_construction', 1);
+        this.dispatch(encoder, 'clear_construction', 1);
+        this.dispatch(encoder, 'spend_construction', 1);
         this.dispatch(encoder, 'flow_rebuild_begin', 1);
         // Indirect arguments cannot also be bound as writable storage in the consuming pass.
         this.copy(encoder, this.buffers.scratch, p[PARAM.flowArgs] * 4, this.buffers.flowArgs, 0, 60);
@@ -629,6 +701,7 @@ export class SimCore {
         for (const entry of ['shot_update', 'shot_hit', 'shot_detonate'])
             this.dispatch(encoder, entry, this.regions.projectileCountMax ?? 0);
         this.dispatch(encoder, 'splash_scan', (this.regions.projectileCountMax ?? 0) * this.workgroupSize);
+        this.dispatch(encoder, 'fund_beams', 1);
         this.dispatch(encoder, 'beam_update', MAX_ENTITIES * 4);
         this.dispatch(encoder, 'weapons_update', this.count);
         this.dispatch(encoder, 'projectile_update', MAX_WEAPONS);

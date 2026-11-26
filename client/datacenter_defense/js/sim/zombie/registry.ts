@@ -13,7 +13,7 @@ export class MeleeAbility extends ZombieAbility {
     atomicStore(&extra[slot], 1);
     atomicStore(&extra[slot + 1u], current(F_tgt, id));
     atomicStore(&extra[slot + 2u], target_tag(id));
-    atomicStore(&extra[slot + 3u], defs[def + 7u]);
+    atomicStore(&extra[slot + 3u], scaled_zombie_stat(id,defs[def + 7u],WAVE_DAMAGE));
     set_cooldown(id, defs[def + 8u]);`;
     }
 }
@@ -48,7 +48,7 @@ export class SuicideAbility extends ZombieAbility {
     atomicStore(&extra[slot + 1u], current(F_tgt, id));
     atomicStore(&extra[slot + 2u], target_tag(id));
     atomicStore(&extra[slot + 3u], defs[def + 9u]);
-    atomicAdd(&extra[p(P_damage) + id], defs[def]);
+    atomicAdd(&extra[p(P_damage) + id], scaled_zombie_stat(id,defs[def],WAVE_HP));
     set_cooldown(id, defs[def + 8u]);`;
     }
 }

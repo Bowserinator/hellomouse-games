@@ -12,6 +12,8 @@ interface MessageData {
     message?: string;
     username?: string;
     ping?: number;
+    resumeToken?: string;
+    nextTick?: number;
 }
 
 // Game config

@@ -1,42 +1,48 @@
-import { defaults, entities } from '../../sim/entity/registry.js';
+import { entities } from '../../sim/entity/registry.js';
 import { iconUrl, fontIcon } from './icons.js';
 import { ENTITY as E, isActive, RENDER_AIMS, RENDER_ENTITY_WORDS, RENDER_ORDERS, RENDER_AIM_ACTIVE, RENDER_STORAGE_BONUS, zombieHp } from '../../sim/layout.js';
 import { weapons } from '../../sim/weapon/registry.js';
-import { projectiles, Motion } from '../../sim/projectile/registry.js';
+import { GasEffect, projectiles, Motion } from '../../sim/projectile/registry.js';
 import { BALANCE } from '../../sim/balance.js';
 import { Q, TICK_HZ } from '../../sim/fixed.js';
 import { type timeline } from '../../sim/timeline.js';
-import { BUILD_ORDER } from '../../sim/content/index.js';
+import { BUILD_ORDER, CRANES } from '../../sim/content/index.js';
 import { VARIANTS } from '../../sim/variants.js';
-import { formatResource } from './resource-bars.js';
 
 export type ControlAction = 'move' | 'attackMove' | 'fire' | 'stop' | 'hold' | 'sell' | 'clear' | 'cancel';
-type ObjectiveSelection = { name: string; hp: number; tier: number; target: number; progress: number; held: boolean };
+type ObjectiveSelection = { name: string; hp: number };
+type CraneUpgrade = ObjectiveSelection & {
+    tier: number; target: number; queued: number; progress: number; held: boolean;
+};
 export class CommandBar {
     readonly element = document.createElement('div');
     onBuild?: (definition: number) => void;
     onUpgrade?: (tier: number, append: boolean) => void;
+    onFilter?: (definition?: number) => void;
     onAction?: (action: ControlAction) => void;
     onPriority?: (mode: number, low: number, high: number) => void;
     private overview = document.createElement('div');
     private controls = document.createElement('div');
     private holdButton?: HTMLButtonElement;
+    private sellButton?: HTMLButtonElement;
     private cards = document.createElement('div');
     private selectedUnits = document.createElement('div');
     private selectionKey = '';
     private upgrades = new Map<number, { button: HTMLButtonElement; badge: HTMLElement }>();
     private objective?: ObjectiveSelection;
-    private upgradeHover?: number;
+    private upgrade?: CraneUpgrade;
     private buildTier = 0;
     private tabBar = document.createElement('div');
     private tabs: Array<HTMLButtonElement> = [];
     private zombieHover = 0;
+    private zombieHpScale = 100;
+    private zombieDamageScale = 100;
     private buttons = new Map<number, HTMLButtonElement>();
     private hoverName = document.createElement('div');
     private properties = document.createElement('div');
     private hovered?: number;
     private hoveredRow?: Int32Array;
-    private objectiveHover?: { name: string; hp: number; maxHp: number; clock?: ReturnType<typeof timeline> };
+    private objectiveHover?: ObjectiveSelection & { maxHp: number; clock?: ReturnType<typeof timeline> };
     private building?: number;
     private selectedRow?: Int32Array;
     private attacking = false;
@@ -48,7 +54,6 @@ export class CommandBar {
     private priorityButton = document.createElement('button');
     private priorityMenu = document.createElement('div');
     private priorityOptions: Array<HTMLButtonElement> = [];
-    private cardBadges = new Map<number, HTMLElement>();
     private tier = 1;
     private controller = new AbortController();
     private saleDialog = document.createElement('dialog') as HTMLDialogElement & { showModal(): void; close(): void; open: boolean };
@@ -77,18 +82,20 @@ export class CommandBar {
         this.overview.append(details, this.properties);
         this.controls.className = 'command-bar__controls';
         const actions: Array<[string, ControlAction, string, string]> = [
-            ['Move', 'move', 'M', 'arrow--right'], ['Attack move', 'attackMove', 'X', 'target'],
-            ['Fire at', 'fire', 'F', 'target'], ['Stop', 'stop', 'K', 'stop--filled'],
-            ['Hold fire', 'hold', 'H', 'pause--filled'],
+            ['Move', 'move', '', 'arrow--right'], ['Attack move', 'attackMove', 'A', 'target'],
+            ['Fire at', 'fire', 'F', 'target'], ['Stop', 'stop', 'S', 'stop--filled'],
+            ['Hold fire', 'hold', 'Z', 'pause--filled'],
             ['Clear target', 'clear', 'C', 'close'], ['Sell', 'sell', 'Delete', 'currency--dollar']
         ];
         for (const [label, action, key, icon] of actions) {
-            const button = this.button('', `${label} (${key})`, () => this.onAction?.(action));
-            button.className = 'command-bar__action'; button.append(this.actionIcon(icon), this.hotkeyBadge(key));
+            const button = this.button('', key ? `${label} (${key})` : label, () => this.onAction?.(action));
+            button.className = 'command-bar__action'; button.append(this.actionIcon(icon));
+            if (key) button.append(this.hotkeyBadge(key));
             button.setAttribute('data-action', action); this.controls.append(button);
             if (action === 'hold') {
                 this.holdButton = button; button.setAttribute('aria-pressed', 'false');
             }
+            if (action === 'sell') this.sellButton = button;
         }
         this.priorityButton = this.button('', 'Target priority (P)', () => {
             this.priorityMenu.hidden = !this.priorityMenu.hidden;
@@ -113,11 +120,12 @@ export class CommandBar {
         }, { signal: this.controller.signal });
         const build = document.createElement('div'), tabs = this.tabBar;
         build.className = 'command-bar__build'; tabs.className = 'command-bar__tabs';
-        for (let tier = 1; tier <= 3; tier++) {
-            const tab = this.button(['I', 'II', 'III'][tier - 1], `Tier ${tier} (F${tier})`, () => this.showTier(tier));
-            tab.append(this.hotkeyBadge(`F${tier}`)); this.tabs.push(tab); tabs.append(tab);
+        for (const [index, label] of ['Tier I', 'Tier II', 'Tier III'].entries()) {
+            const tier = index + 1;
+            const tab = this.button(label, `${label} (F${tier})`, () => this.showTier(tier));
+            this.tabs.push(tab); tabs.append(tab);
         }
-        const upgrades = this.button('↑', 'Upgrades', () => this.showTier(4));
+        const upgrades = this.button('Upgrades', 'Upgrades', () => this.showTier(4));
         this.tabs.push(upgrades); tabs.append(upgrades);
         this.cards.className = 'command-bar__cards';
         BUILD_ORDER.forEach(id => {
@@ -128,8 +136,7 @@ export class CommandBar {
             icon.src = iconUrl(definition.name); icon.alt = ''; icon.width = 64; icon.height = 64;
             card.addEventListener('pointerenter', () => this.hover(definition.name));
             card.addEventListener('pointerleave', () => this.hover());
-            const badge = this.hotkeyBadge(''); this.cardBadges.set(id, badge);
-            card.append(icon, badge); this.cards.append(card); this.buttons.set(id, card);
+            card.append(icon); this.cards.append(card); this.buttons.set(id, card);
         });
         for (const tier of [2, 3]) {
             const name = `T${tier} Upgrade`;
@@ -138,12 +145,6 @@ export class CommandBar {
             button.className = 'command-bar__card';
             const icon = document.createElement('img');
             icon.src = iconUrl(name); icon.alt = ''; icon.width = 64; icon.height = 64;
-            button.addEventListener('pointerenter', () => {
-                this.upgradeHover = tier; this.refresh();
-            });
-            button.addEventListener('pointerleave', () => {
-                this.upgradeHover = undefined; this.refresh();
-            });
             const badge = this.hotkeyBadge('');
             button.append(icon, badge); this.cards.append(button); this.upgrades.set(tier, { button, badge });
         }
@@ -154,7 +155,7 @@ export class CommandBar {
         const bar = document.createElement('div'); bar.className = 'command-bar'; bar.append(commands);
         this.element.append(this.overview, bar); host.append(this.element, this.saleDialog);
         this.saleDialog.className = 'command-bar__sale';
-        this.saleDialog.setAttribute('aria-label', 'Are you sure you want to sell these units');
+        this.saleDialog.setAttribute('aria-labelledby', 'sale-heading');
         this.saleDialog.addEventListener('keydown', event => event.stopPropagation(), { signal: this.controller.signal });
         this.saleDialog.addEventListener('close', () => {
             this.saleConfirm = undefined;
@@ -176,10 +177,6 @@ export class CommandBar {
             if (!this.priorityMenu.hidden && this.priorityOptions[hotkey]) {
                 this.priorityOptions[hotkey].click(); event.preventDefault(); return;
             }
-            if (this.buildTier && this.tier <= 3 && Number.isInteger(hotkey) && hotkey >= 0 && hotkey < 9) {
-                const cards = [...this.buttons].filter(([id]) => entities[id].tier === this.tier);
-                cards[hotkey]?.[1].click(); event.preventDefault(); return;
-            }
             const action = actions.find(([, , binding]) => binding.toLowerCase() === (key === ' ' ? 'space' : key));
             if (action) {
                 this.onAction?.(action[1]); event.preventDefault();
@@ -192,16 +189,17 @@ export class CommandBar {
             }
         }, { signal: this.controller.signal });
     }
-    confirmSale(groups: Array<{ definition: number; count: number }>, confirm: () => void) {
+    confirmSale(groups: Array<{ definition: number; count: number }>, refund: number, confirm: () => void) {
         if (this.saleDialog.open || !groups.length) return;
         this.saleConfirm = confirm; this.closePriority();
         const heading = document.createElement('h2'), icons = document.createElement('div');
-        heading.textContent = 'Are you sure you want to sell these units';
+        heading.id = 'sale-heading';
+        heading.textContent = `Are you sure you want to sell these units for $${refund}?`;
         icons.className = 'command-bar__sale-units';
         for (const { definition, count } of groups) {
             const item = document.createElement('div'), icon = document.createElement('img');
             item.className = 'command-bar__sale-unit';
-            icon.src = iconUrl(entities[definition].name); icon.width = 32; icon.height = 32;
+            icon.src = iconUrl(entities[definition].name); icon.width = 48; icon.height = 48;
             icon.alt = `${entities[definition].name} × ${count}`; item.title = icon.alt;
             item.append(icon);
             if (count > 1) item.append(this.hotkeyBadge(String(count)));
@@ -236,42 +234,42 @@ export class CommandBar {
         return icon;
     }
     private showTier(tier: number) {
-        if (tier === 4 && !this.objective || tier <= 3 && tier > this.buildTier) tier = 1;
-        if (tier !== this.tier) this.upgradeHover = undefined;
+        const available = (level: number) => this.buildTier >= level;
+        if (tier === 4 && !this.upgrade || tier <= 3 && !available(tier)) tier = this.upgrade ? 4 : 1;
         this.tier = tier;
-        this.tabBar.hidden = !this.buildTier;
+        this.tabBar.hidden = !this.buildTier && !this.upgrade;
         this.tabs.forEach((tab, i) => {
-            tab.disabled = i === 3 ? !this.objective : i + 1 > this.buildTier;
+            tab.disabled = i === 3 ? !this.upgrade : !available(i + 1);
             tab.setAttribute('aria-pressed', String(!tab.disabled && i + 1 === tier));
         });
-        let index = 0;
         for (const [id, button] of this.buttons) {
-            button.hidden = !this.buildTier || entities[id].tier !== tier;
-            if (!button.hidden) {
-                button.title = `${entities[id].name} (${++index})`;
-                this.cardBadges.get(id)!.textContent = index <= 9 ? String(index) : '';
-            }
+            const definition = entities[id];
+            button.hidden = definition.tier !== tier || definition.tier > this.buildTier;
         }
         for (const [level, { button, badge }] of this.upgrades) {
-            const objective = this.objective;
-            button.hidden = tier !== 4 || !objective;
-            button.disabled = !objective || objective.tier >= level;
-            if (!objective) continue;
-            const active = level === objective.tier + 1 && level <= objective.target;
-            const progress = Math.floor(objective.progress / (defaults(level).buildSeconds * TICK_HZ * 256) * 100);
-            badge.textContent = active ? `${progress}%` : objective.tier >= level ? '✓' : level <= objective.target ? '…' : '';
+            const crane = this.upgrade;
+            button.hidden = tier !== 4 || !crane;
+            button.disabled = !crane || crane.tier >= level;
+            if (!crane) continue;
+            const active = level === crane.tier + 1 && level <= crane.target;
+            const total = entities[CRANES[level - 1]].options.buildSeconds * TICK_HZ * 256;
+            const progress = Math.floor(crane.progress / total * 100);
+            const pending = level <= Math.max(crane.target, crane.queued);
+            badge.textContent = active ? `${progress}%` : crane.tier >= level ? '✓' : pending ? '…' : '';
         }
-        this.cards.hidden = !this.buildTier;
-        this.selectedUnits.hidden = !!this.buildTier || !this.selectionKey;
+        this.cards.hidden = !this.buildTier && !this.upgrade;
+        this.selectedUnits.hidden = !!this.buildTier || !!this.upgrade || !this.selectionKey;
     }
-    hoverZombie(packed: number) {
+    hoverZombie(packed: number, hpScale: number, damageScale: number) {
         this.zombieHover = packed;
+        this.zombieHpScale = hpScale;
+        this.zombieDamageScale = damageScale;
         this.refresh();
     }
-    hoverObjective(name: string, hp: number, maxHp: number, clock?: ReturnType<typeof timeline>) {
+    hoverObjective(objective: ObjectiveSelection, maxHp: number, clock?: ReturnType<typeof timeline>) {
         this.zombieHover = 0;
         this.hovered = undefined; this.hoveredRow = undefined;
-        this.objectiveHover = { name, hp, maxHp, clock }; this.refresh();
+        this.objectiveHover = { ...objective, maxHp, clock }; this.refresh();
     }
     hover(name = '', row?: Int32Array) {
         this.zombieHover = 0;
@@ -279,24 +277,32 @@ export class CommandBar {
         const id = entities.findIndex(definition => definition.name === name);
         this.hovered = id < 0 ? undefined : id; this.hoveredRow = row; this.refresh();
     }
-    selection(rows: ReadonlyArray<Int32Array>, attacking = false, objective?: ObjectiveSelection) {
+    selection(rows: ReadonlyArray<Int32Array>, attacking = false, objective?: ObjectiveSelection,
+        crane?: CraneUpgrade) {
         const row = rows[0];
+        const allBuilders = rows.every(unit => !!entities[unit[E.def]].options.buildPower);
         this.selectedRow = row; this.attacking = attacking; this.objective = objective;
-        this.buildTier = rows.reduce((tier, unit) => {
+        this.upgrade = allBuilders && !objective ? crane : undefined;
+        if (this.sellButton) this.sellButton.disabled = objective !== undefined || !rows.length;
+        this.buildTier = allBuilders ? rows.reduce((tier, unit) => {
             const def = entities[unit[E.def]];
-            return isActive(unit) && def.options.buildPower ? Math.max(tier, def.tier) : tier;
-        }, objective?.tier ?? 0);
+            return isActive(unit) && !(unit[E.upgradeTarget] > def.tier) ? Math.max(tier, def.tier) : tier;
+        }, 0) : 0;
         if (!this.buildTier) {
-            const counts = new Map<number, number>();
+            const counts = new Map<number | undefined, number>();
+            if (objective) counts.set(undefined, 1);
             for (const unit of rows) counts.set(unit[E.def], (counts.get(unit[E.def]) ?? 0) + 1);
             const key = [...counts].map(([id, count]) => `${id}:${count}`).join(',');
             if (key !== this.selectionKey) {
                 this.selectionKey = key;
                 this.selectedUnits.replaceChildren(...[...counts].map(([id, count]) => {
-                    const card = document.createElement('div'), icon = document.createElement('img');
+                    const name = id === undefined ? 'Defense objective' : entities[id].name;
+                    const card = this.button('', name, () => this.onFilter?.(id));
+                    const icon = document.createElement('img');
                     card.className = 'command-bar__card command-bar__selection';
-                    icon.src = iconUrl(entities[id].name); icon.alt = `${entities[id].name} × ${count}`;
-                    card.title = icon.alt; card.append(icon, this.hotkeyBadge(String(count)));
+                    icon.src = iconUrl(name); icon.alt = count > 1 ? `${name} × ${count}` : name;
+                    card.title = icon.alt; card.append(icon);
+                    if (count > 1) card.append(this.hotkeyBadge(String(count)));
                     return card;
                 }));
             }
@@ -304,13 +310,14 @@ export class CommandBar {
         this.showTier(this.tier);
         const priority = row ? row[E.flags] >>> 1 & 3 : 0;
         this.priorityOptions.forEach((option, index) => option.setAttribute('aria-selected', String(index === priority)));
-        const held = objective?.held ?? (!!row && (row[E.flags] & 1) !== 0);
-        const builder = this.buildTier > 0;
-        const title = `${held ? 'Resume' : 'Hold'} ${builder ? 'build' : 'fire'} (H)`;
+        const held = !!row && (row[E.flags] & 1) !== 0;
+        const builder = !!this.upgrade || this.buildTier > 0;
+        const action = this.upgrade && this.upgrade.target > this.upgrade.tier ? 'upgrade' : builder ? 'build' : 'fire';
+        const title = `${held ? 'Resume' : 'Hold'} ${action} (Z)`;
         if (this.holdButton && this.holdButton.title !== title) {
             this.holdButton.setAttribute('aria-pressed', String(held));
             this.holdButton.replaceChildren(builder ? fontIcon(held ? 'construction' : 'pause_circle')
-                : this.actionIcon(held ? 'play--filled' : 'pause--filled'), this.hotkeyBadge('H'));
+                : this.actionIcon(held ? 'play--filled' : 'pause--filled'), this.hotkeyBadge('Z'));
             this.holdButton.title = title;
             this.holdButton.setAttribute('aria-label', this.holdButton.title);
         }
@@ -320,18 +327,26 @@ export class CommandBar {
         this.healthFill.style.width = `${Math.max(0, Math.min(100, hp / maxHp * 100))}%`;
         this.healthText.textContent = `${Math.max(0, hp)} / ${maxHp} HP${rate}`;
     }
+    private property(text: string, kind?: 'money' | 'power' | 'weapon' | 'description') {
+        const item = document.createElement('span');
+        if (kind) item.className = `command-bar__${kind}`;
+        item.textContent = text;
+        return item;
+    }
     private refresh() {
+        const metres = (distance: number) => `${Math.round(distance * 10 / Q) / 10}m`;
         const zombie = VARIANTS[this.zombieHover & 255], zombieHealth = zombieHp(this.zombieHover);
         if (zombie && zombieHealth) {
             const projectile = zombie.ability.kind ? projectiles[zombie.ability.pack()[0]] : undefined;
             const attack = projectile?.name ?? 'Melee';
-            const damage = projectile?.damage ?? zombie.damage;
+            const damage = Math.round((projectile?.damage ?? zombie.damage) * this.zombieDamageScale / 100);
             const timing = zombie.ability.kind === 2 ? ' · On detonation' : ` · Every ${zombie.attackCooldown / TICK_HZ} s`;
             this.overview.hidden = false; this.properties.hidden = false;
             this.selectedIcon.hidden = true; this.shield.hidden = true;
             this.hoverName.textContent = zombie.name[0].toUpperCase() + zombie.name.slice(1);
-            this.properties.textContent = `${attack} · ${damage} damage${timing}\n${zombie.attackRange / Q} m range`;
-            this.showHealth(zombieHealth, zombie.maxHp);
+            this.properties.replaceChildren(this.property(`${attack} · ${damage} damage${timing}`, 'weapon'),
+                '\n', this.property(`${metres(zombie.attackRange)} range`, 'weapon'));
+            this.showHealth(zombieHealth, Math.round(zombie.maxHp * this.zombieHpScale / 100));
             this.state.textContent = ''; this.state.title = '';
             this.state.removeAttribute('aria-label'); this.state.removeAttribute('data-action');
             return;
@@ -341,24 +356,17 @@ export class CommandBar {
             ? { ...showObjective, maxHp: BALANCE.objective.hp, clock: undefined } : undefined);
         if (objective) {
             const { name, hp, maxHp, clock } = objective;
-            this.overview.hidden = false; this.selectedIcon.hidden = true;
+            this.overview.hidden = false; this.selectedIcon.hidden = false;
+            this.selectedIcon.src = iconUrl('Defense objective');
             this.shield.hidden = true;
-            this.properties.hidden = !this.objective;
-            if (this.objective) {
-                const { tier } = this.objective;
-                const upgrade = this.upgradeHover === undefined ? undefined : defaults(this.upgradeHover);
-                const properties = upgrade ? `T${this.upgradeHover} Upgrade\n${upgrade.cost.money} money · ${upgrade.cost.power} power\n${upgrade.buildSeconds} build seconds`
-                    : `T${tier} · ${BALANCE.construction.power[tier - 1]} build power`;
-                if (this.properties.textContent !== properties) this.properties.textContent = properties;
-            }
+            this.properties.hidden = true;
             const title = name || 'Defense objective';
             const seconds = clock?.seconds ?? 0;
             const time = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
             this.hoverName.textContent = clock && clock.phase !== 'over'
                 ? `${title} (${clock.phase === 'prep' ? 'Waves start in' : 'Time remaining'} ${time})` : title;
             this.showHealth(hp, maxHp, ' (+0/s)');
-            this.state.textContent = ''; this.state.title = '';
-            this.state.removeAttribute('aria-label'); this.state.removeAttribute('data-action');
+            this.showState('idle', 'asleep', 'Idle');
             return;
         }
         const id = this.hovered ?? this.building ?? this.selectedRow?.[E.def];
@@ -380,50 +388,58 @@ export class CommandBar {
         const definition = entities[row[E.def]], hp = Math.max(0, row[E.hp]);
         this.hoverName.textContent = definition.name;
         this.selectedIcon.src = iconUrl(definition.name);
-        const properties = (definition.options.weapons ?? []).map(mount => {
+        const properties: Array<string | HTMLElement> = (definition.options.weapons ?? []).map(mount => {
             const weapon = weapons[mount.definition], projectile = projectiles[weapon.projectile];
             if (weapon.fire.kind === 3)
-                return `${weapon.name} · ${weapon.fire.pack()[0]} intercepts / ${weapon.cooldown / 20} s · ${weapon.maxRange / Q} m`;
-            const dps = Math.trunc(projectile.damage * weapon.damageScalePct / 100) *
-                (projectile.motion === Motion.Beam ? 20 : 20 / weapon.cooldown);
-            if (projectile.execute) return `${weapon.name} · One hit · ${weapon.maxRange / Q} m · ${weapon.cooldown / 20} s`;
-            return `${weapon.name} (${Math.round(dps)} DPS) · ${weapon.maxRange / Q} m`;
-        });
+                return `${weapon.name} · ${weapon.fire.pack()[0]} intercepts / ${weapon.cooldown / 20} s · ${metres(weapon.maxRange)}`;
+            const effect = projectile.effects?.[0];
+            const scale = weapon.damageScalePct;
+            const cloudDamage = effect instanceof GasEffect ? Math.trunc(effect.damage * scale / 100) : 0;
+            const damage = Math.trunc(projectile.damage * scale / 100) + cloudDamage;
+            const dps = damage * (projectile.motion === Motion.Beam ? TICK_HZ : TICK_HZ / weapon.cooldown);
+            if (projectile.execute) return `${weapon.name} · One hit · ${metres(weapon.maxRange)} · ${weapon.cooldown / 20} s`;
+            return `${weapon.name} (${Math.round(dps)} DPS) · ${metres(weapon.maxRange)}`;
+        }).map(text => this.property(text, 'weapon'));
         if (definition.kind === 4) {
             const power = Math.max(0, row[E.power]), maximum = definition.options.power ?? 0;
             this.shield.hidden = false;
             this.shield.textContent = `${power} / ${maximum} (+0/s)`;
             this.shield.style.setProperty('--shield', `${maximum ? power / maximum * 100 : 0}%`);
-            properties.push(`Sonic Emitter · ${(definition.options.radius ?? 0) / Q} m`);
+            properties.push(this.property(`Sonic Emitter · ${metres(definition.options.radius ?? 0)}`, 'description'));
         }
-        if (definition.options.speed) properties.push(`${definition.options.speed / Q} m/s`);
-        if (definition.options.flightHeight) properties.push(`${definition.options.flightHeight / Q} m altitude`);
-        if (definition.options.runoverDamage) properties.push(`${definition.options.runoverDamage * 20} contact DPS`);
+        if (definition.options.speed) properties.push(this.property(`${definition.options.speed / Q} m/s`, 'description'));
+        if (definition.options.flightHeight) properties.push(this.property(`${metres(definition.options.flightHeight)} altitude`, 'description'));
+        if (definition.options.runoverDamage) properties.push(this.property(`${definition.options.runoverDamage * 20} contact DPS`, 'weapon'));
         if (definition.kind === 6) {
             const blast = projectiles[definition.options.projectile ?? 0];
-            properties.push(`${blast.damage} damage · ${blast.splashRadius / Q} m blast`);
+            properties.push(this.property(`${blast.damage} damage · ${metres(blast.splashRadius)} blast`, 'weapon'));
         }
+        const drain = definition.options.energyDrain;
+        if (drain) properties.push(this.property(`-${drain.perSecond} energy/s`, 'power'));
         const bonuses = row[RENDER_STORAGE_BONUS];
         for (const [name, storage] of [['money', bonuses & 15], ['power', (bonuses >>> 4) & 15]] as const) {
             const base = definition.options.income?.[name];
             if (!base) continue;
             const bonus = storage * 0.125;
             const output = row[E.state] === 2 ? 0 : base * (1 + bonus);
-            properties.push(`${formatResource(output)} ${name}/s${bonus ? ` (+${bonus * 100}% adjacency)` : ''}`);
+            properties.push(this.property(`${Math.round(output)} ${name}/s${bonus ? ` (+${bonus * 100}% adjacency)` : ''}`, name));
         }
         const costs = document.createElement('div'); costs.className = 'command-bar__costs';
-        const values: Array<[string, string, number]> = [
-            ['Money', 'payments', definition.options.cost.money], ['Power', 'bolt', definition.options.cost.power],
-            ['Build seconds', 'timer', definition.kind === 6 ? 0 : definition.options.buildSeconds]
-        ];
-        for (const [label, icon, value] of values) {
-            const item = document.createElement('span'); item.setAttribute('aria-label', `${label}: ${value}`);
-            item.title = label; item.append(fontIcon(icon), String(value)); costs.append(item);
+        const values = [
+            ['Money', 'payments', definition.options.cost.money, 'money'],
+            ['Power', 'bolt', definition.options.cost.power, 'power'],
+            ['Build seconds', 'timer', definition.options.buildSeconds, undefined]
+        ] as const;
+        for (const [label, icon, value, kind] of values) {
+            if (icon === 'timer' && definition.kind === 6) continue;
+            const item = this.property(String(value), kind);
+            item.setAttribute('aria-label', `${label}: ${value}`);
+            item.title = label; item.prepend(fontIcon(icon)); costs.append(item);
         }
         if (row[E.state] === 2)
             properties.unshift(`${Math.floor(row[E.progress] / (Math.max(1, definition.options.buildSeconds * 20) * 256) * 100)}% complete`);
-        if (definition.options.buildPower) properties.push(`${definition.options.buildPower} build power`);
-        this.properties.replaceChildren(costs, document.createTextNode(properties.join('\n')));
+        if (definition.options.buildPower) properties.push(this.property(`${definition.options.buildPower} build power`, 'description'));
+        this.properties.replaceChildren(costs, ...properties.flatMap((line, index) => index ? ['\n', line] : [line]));
         this.properties.hidden = false;
         this.showHealth(hp, definition.maxHp, ' (+0/s)');
         const kind = row[RENDER_ORDERS];
@@ -443,6 +459,9 @@ export class CommandBar {
             action = 'hold'; icon = 'pause--filled';
             title = definition.options.buildPower ? 'Hold build' : 'Hold fire';
         }
+        this.showState(action, icon, title);
+    }
+    private showState(action: string, icon: string, title: string) {
         if (this.state.title !== title || !this.state.firstChild) {
             this.state.textContent = ''; this.state.append(this.actionIcon(icon));
             this.state.title = title; this.state.setAttribute('aria-label', title);

@@ -1,6 +1,6 @@
 import {
     contains, decodeMap, downloadMap, encodeMap, polygonError, readMapFile, validateWorld,
-    type Entity, type Point, type World
+    type Entity, type Point, type Wave, type World
 } from '../mapx.js';
 import { blankWorld, bounds, center, elevation, entity, Saves, sculpt, warnings, type Brush } from './world.js';
 import { cloneWorld, History } from './history.js';
@@ -25,6 +25,7 @@ const saves = new Saves();
 let world = blankWorld();
 let history = new History();
 let selected = '';
+let copiedWaves: Array<Wave> | undefined;
 let vertex = -1;
 let tool = 'select';
 let points: Array<Point> = [];
@@ -235,6 +236,11 @@ function draw() {
                 context.font = '11px system-ui';
                 context.textAlign = 'center';
                 context.fillText(e.kind === 'objective' ? 'D' : e.kind === 'spawn' ? 'S' : '', c.x, c.z + 4);
+                if (e.kind === 'spawn') {
+                    const count = world.rules?.waves[e.id]?.length ?? 0;
+                    context.font = '10px system-ui';
+                    context.fillText(`(${count} ${count === 1 ? 'wave' : 'waves'})`, c.x, c.z + 16);
+                }
                 context.textAlign = 'start';
             }
         }
@@ -302,6 +308,7 @@ function button(label: string, action: () => void) {
     b.textContent = label;
     b.onclick = action;
     properties.append(b);
+    return b;
 }
 function heading(text: string) {
     const h = document.createElement('h2');
@@ -375,6 +382,54 @@ function textControl(label: string, value: string, change: (value: string) => vo
     };
     row.append(input);
     properties.append(row);
+}
+function openWaveEditor(spawn: string) {
+    const draft = cloneWorld(world);
+    const dialog = document.createElement('dialog') as EditorDialog;
+    dialog.className = 'wave-dialog';
+    dialog.setAttribute('aria-label', 'Edit waves');
+    const title = document.createElement('h2');
+    title.textContent = 'Edit waves';
+    const form = document.createElement('form');
+    const error = document.createElement('p');
+    error.setAttribute('role', 'alert');
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.textContent = 'Cancel';
+    cancel.onclick = () => dialog.close();
+    const save = document.createElement('button');
+    save.type = 'submit';
+    save.textContent = 'Save';
+    const refresh = () => {
+        const previous = form.querySelector('.wave-list');
+        const x = previous?.scrollLeft ?? 0, y = previous?.scrollTop ?? 0;
+        form.replaceChildren();
+        waveEditor(form, draft, spawn, refresh);
+        form.append(cancel, save, error);
+        form.querySelector('.wave-list')?.scrollTo(x, y);
+        error.hidden = true;
+    };
+    form.onsubmit = event => {
+        event.preventDefault();
+        draft.rules?.waves[spawn]?.sort((a, b) => a.time - b.time);
+        try {
+            validateWorld(draft);
+        } catch (reason) {
+            error.textContent = reason instanceof Error ? reason.message : String(reason);
+            error.hidden = false;
+            return;
+        }
+        const before = cloneWorld(world);
+        world.rules = draft.rules;
+        dialog.close();
+        commit(before);
+        properties.querySelector('button')?.focus();
+    };
+    dialog.append(title, form);
+    dialog.addEventListener('close', () => dialog.remove(), { once: true });
+    refresh();
+    document.body.append(dialog);
+    dialog.showModal();
 }
 function refreshInspector() {
     properties.replaceChildren();
@@ -477,7 +532,19 @@ function refreshInspector() {
     if (e.kind === 'spawn') {
         number('Radius (m)', 'radius', 1, 100, 1);
         if (!world.rules?.waves[e.id]) number('Relative weight', 'weight', 0, 10, 0.1);
-        waveEditor(properties, world, e.id, commit);
+        button('Edit waves', () => openWaveEditor(e.id));
+        button('Copy waves', () => {
+            copiedWaves = structuredClone(world.rules?.waves[e.id] ?? []);
+            paste.disabled = false;
+        });
+        const paste = button('Paste waves', () => {
+            if (!copiedWaves) return;
+            const before = cloneWorld(world);
+            world.rules ??= { winTime: 720, waves: {} };
+            world.rules.waves[e.id] = structuredClone(copiedWaves);
+            commit(before);
+        });
+        paste.disabled = !copiedWaves;
     }
     if (e.kind === 'prop') number('Scale', 'scale', 0.5, 3, 0.05);
     if (!e.polygon.length) number('Rotation (radians)', 'rotation', -Math.PI, Math.PI, 0.01);

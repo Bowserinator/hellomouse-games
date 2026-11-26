@@ -119,7 +119,8 @@ fn unit_recover(id: u32, point: vec2<i32>) {
 fn order_prepare() {
     for (var id = 0u; id < min(MAX_ENTITIES,u32(atomicLoad(&extra[2]))); id++) {
         let at = entity(id); let def = entity_def(id);
-        if (!is_active(id) || atomicLoad(&extra[at + E_orderCount]) == 0) { continue; }
+        if (!is_active(id) || atomicLoad(&extra[at + E_orderCount]) == 0 ||
+            atomicLoad(&extra[at + E_clearUntil]) > i32(p(P_tick))) { continue; }
         let order = order_at(id);
         let position = vec2<i32>(atomicLoad(&extra[at + E_x]),atomicLoad(&extra[at + E_z]));
         let arrival = min(defs[def + U_width],defs[def + U_depth]) * Q / 2 + defs[def + U_speed] / 10;
@@ -158,9 +159,10 @@ fn unit_move(@builtin(global_invocation_id) invocation: vec3<u32>, @builtin(num_
     let facing = atomicLoad(&extra[at + E_facing]);
     atomicStore(&extra[motion],position.x); atomicStore(&extra[motion + 1u],position.y);
     atomicStore(&extra[motion + 2u],facing); atomicStore(&extra[motion + 3u],0);
-    if (!is_active(id) || atomicLoad(&extra[at + E_orderCount]) == 0) { return; }
+    let clearing = atomicLoad(&extra[at + E_clearUntil]) > i32(p(P_tick));
+    if (!is_active(id) || (!clearing && atomicLoad(&extra[at + E_orderCount]) == 0)) { return; }
     let def = entity_def(id); if (defs[def + U_kind] != 2) { return; }
-    let order = order_at(id); let kind = atomicLoad(&extra[order]);
+    let order = order_at(id); let kind = select(atomicLoad(&extra[order]),0,clearing);
     if (kind == 3) { atomicStore(&extra[motion + 3u],2); return; }
     if ((kind == 1 || kind == 2) && defs[def + U_fireOnMove] == 0 &&
         (atomicLoad(&extra[at + E_flags]) & 1) == 0) {
@@ -173,6 +175,7 @@ fn unit_move(@builtin(global_invocation_id) invocation: vec3<u32>, @builtin(num_
         }
     }
     var point = vec2<i32>(atomicLoad(&extra[order + 1u]),atomicLoad(&extra[order + 2u]));
+    if (clearing) { point = vec2<i32>(atomicLoad(&extra[at + E_clearX]),atomicLoad(&extra[at + E_clearZ])); }
     var arrival_point = point;
     if (kind == 1) {
         let victim = point.x;
@@ -186,7 +189,8 @@ fn unit_move(@builtin(global_invocation_id) invocation: vec3<u32>, @builtin(num_
     let intermediate = atomicLoad(&extra[at + E_orderCount]) > 1;
     let arrival = min(defs[def + U_width],defs[def + U_depth]) * Q / 2 +
         select(0,defs[def + U_speed] / 10,intermediate);
-    if (max(abs(goal_delta.x),abs(goal_delta.y)) <= arrival) {
+    if (max(abs(goal_delta.x),abs(goal_delta.y)) <= select(arrival,Q / 2,clearing)) {
+        if (clearing) { atomicStore(&extra[motion + 3u],4); return; }
         atomicStore(&extra[motion + 3u],select(1,2,kind == 1)); return;
     }
     var delta = point - position; let speed = max(1,defs[def + U_speed] / 20);
@@ -244,9 +248,11 @@ fn unit_commit() {
         atomicStore(&extra[at + E_speed],max(abs(next.x - old.x),abs(next.y - old.y)) * 20);
         let flags = atomicLoad(&extra[motion + 3u]);
         if ((flags & 1) != 0) { remove_order(id,0u); }
+        if ((flags & 4) != 0) { atomicStore(&extra[at + E_clearUntil],0); }
         let recovery = u32(defs[D_unitRecovery]) + id * 4u;
         let anchor = vec2<i32>(atomicLoad(&extra[recovery]),atomicLoad(&extra[recovery + 1u]));
-        if (atomicLoad(&extra[at + E_orderCount]) == 0 || (flags & 2) != 0 ||
+        if ((atomicLoad(&extra[at + E_orderCount]) == 0 &&
+            atomicLoad(&extra[at + E_clearUntil]) <= i32(p(P_tick))) || (flags & 6) != 0 ||
             max(abs(next.x - anchor.x),abs(next.y - anchor.y)) >= Q / 10) {
             atomicStore(&extra[recovery],next.x); atomicStore(&extra[recovery + 1u],next.y);
             atomicStore(&extra[recovery + 2u],0);

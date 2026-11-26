@@ -17,7 +17,7 @@ export const SHELL = defineProjectile({ ...projectile, name: 'Howitzer shell', m
     muzzleFx: 'muzzle', trailFx: 'shell', impactFx: 'explosion' });
 export const GAS_SHELL = defineProjectile({ ...projectile, name: 'Gas shell', motion: Motion.Arc,
     speed: B.gas.speed * Q, gravity: B.gas.gravity * Q, ttl: B.gas.ttl, damage: B.gas.damage,
-    splashRadius: B.gas.splash * Q, effects: [new GasEffect(B.gas.duration, B.gas.dot, B.gas.slowPct)],
+    splashRadius: B.gas.splash * Q, effects: [new GasEffect(B.gas.duration, B.gas.cloudDamage, B.gas.slowPct)],
     muzzleFx: 'muzzle', trailFx: 'gas', impactFx: 'gas' });
 export const TANK_SHELL = defineProjectile({ ...projectile, name: 'Tank shell', motion: Motion.Arc,
     speed: B.tank.speed * Q, gravity: B.tank.gravity * Q, ttl: B.tank.ttl, damage: B.tank.damage,

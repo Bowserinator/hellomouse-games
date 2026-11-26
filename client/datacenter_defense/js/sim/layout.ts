@@ -1,3 +1,5 @@
+import { LOBBY_LIMIT } from '../shared/protocol.js';
+
 export const PARAM = {
     tick: 0, count: 1, columns: 2, rows: 3, cellQ: 4, seed: 5, terrain: 6, spawns: 7,
     terrainColumns: 8, terrainRows: 9, widthQ: 10, depthQ: 11, objectiveX: 12, objectiveZ: 13,
@@ -12,10 +14,10 @@ export const PARAM = {
 } as const;
 export const MAX_ENTITIES = 1024;
 export const MAX_GHOSTS = 1024;
-export const GHOST_STRIDE = 6;
+export const GHOST_STRIDE = 7;
 export const GHOST_WORDS = 1 + MAX_GHOSTS * GHOST_STRIDE;
 export const GHOST = { definition: 0, x: 1, z: 2, rotation: 3, owner: 4, source: 5 } as const;
-export const ENTITY_WORDS = 24;
+export const ENTITY_WORDS = 33;
 export const ENTITY_DESTROYED = 8;
 export const RENDER_AIMS = ENTITY_WORDS;
 export const RENDER_ORDERS = RENDER_AIMS + 4;
@@ -30,7 +32,8 @@ export function zombieHp(packed: number): number {
 }
 export const RENDER_AIM_ACTIVE = 0x10000;
 export const RENDER_CHARGE_SHIFT = 20;
-export const RENDER_PROJECTILE_WORDS = 8;
+export const RENDER_PROJECTILE_WORDS = 9;
+export const RENDER_PROJECTILE_LAUNCH = 8;
 export const RENDER_BEAM_WORDS = 8;
 export const RENDER_EXPLOSION_WORDS = 6;
 export const RENDER_SALE_EFFECT = -1;
@@ -38,17 +41,23 @@ export const ENTITY = {
     state: 0, owner: 1, def: 2, x: 3, z: 4, facing: 5, hp: 6, power: 7, rotation: 8,
     orderHead: 9, orderCount: 10, priorityLow: 11, priorityHigh: 12, flags: 13, speed: 14, timer: 15,
     progress: 16, assist: 17, buildTask: 18, decay: 19, taskGeneration: 20, explicitTask: 21,
-    repairProgress: 22, repairBase: 23
+    repairProgress: 22, repairBase: 23, upgradeTarget: 24, upgradeProgress: 25, upgradeGain: 26,
+    clearX: 27, clearZ: 28, clearUntil: 29, skippedTask: 30, skippedGeneration: 31, queuedUpgrade: 32
 } as const;
 export const ECONOMY = {
     money: 0, power: 1, moneyCap: 2, powerCap: 3, moneyIncome: 4, powerIncome: 5,
-    moneyUsed: 6, powerUsed: 7, rejected: 8, objectiveTask: 9, objectiveGeneration: 10,
-    objectiveExplicit: 11, objectiveHold: 12, moneyRate: 13, powerRate: 14, sampleTick: 15,
+    moneyUsed: 6, powerUsed: 7, rejected: 8, starterShare: 9,
+    moneyRate: 13, powerRate: 14, sampleTick: 15,
     moneyHistory: 56, powerHistory: 76,
-    objectiveTier: 96, upgradeTarget: 97, upgradeProgress: 98, upgradeGain: 105,
-    moneyCarry: 99, powerCarry: 100, upgradeRequest: 101
+    moneyCarry: 99, powerCarry: 100, kills: 106,
+    players: 114, moneyCursor: 116, powerCursor: 117
 } as const;
-export const ECONOMY_WORDS = ECONOMY.upgradeGain + 1;
+export const PLAYER_ECONOMY_WORDS = 101;
+const PLAYER_ECONOMY_START = ECONOMY.powerCursor + 1;
+export const ECONOMY_WORDS = PLAYER_ECONOMY_START + (LOBBY_LIMIT - 1) * PLAYER_ECONOMY_WORDS;
+export function playerEconomyOffset(slot: number) {
+    return slot === 0 ? 0 : PLAYER_ECONOMY_START + (slot - 1) * PLAYER_ECONOMY_WORDS;
+}
 export function isLive(row?: Int32Array): row is Int32Array {
     return !!row && row[ENTITY.state] !== 0 && row[ENTITY.hp] > 0;
 }

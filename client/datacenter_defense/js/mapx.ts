@@ -4,7 +4,10 @@ import { MAX_ZOMBIES } from './sim/fixed.js';
 export interface Wave {
     time: number;
     counts: Record<string, number>;
+    hpScale?: number;
+    damageScale?: number;
 }
+export const MAX_WAVE_SCALE = 40;
 export type Point = { x: number; z: number };
 export type Kind = 'building' | 'passage' | 'region' | 'prop' | 'objective' | 'spawn';
 export interface Entity {
@@ -204,6 +207,9 @@ export function validateWorld(world: World) {
             for (const wave of list) {
                 if (!Number.isInteger(wave.time) || wave.time < 0 || wave.time > 86400 || wave.time < previous ||
                     !wave.counts || typeof wave.counts !== 'object' || Array.isArray(wave.counts)) throw Error('Invalid wave time or counts');
+                for (const [scale, minimum] of [[wave.hpScale, 0.01], [wave.damageScale, 0]] as const)
+                    if (scale !== undefined && (typeof scale !== 'number' || scale < minimum || scale > MAX_WAVE_SCALE ||
+                        scale !== Math.round(scale * 100) / 100)) throw Error('Invalid wave stat scale');
                 previous = wave.time;
                 for (const [name, count] of Object.entries(wave.counts)) {
                     if (!names.has(name) || !Number.isInteger(count) || count < 0 || count > MAX_ZOMBIES)
@@ -228,8 +234,10 @@ export function validateWorld(world: World) {
 export function encodeMap(world: World): Uint8Array {
     validateWorld(world);
     const output = new Writer();
+    const scaled = Object.values(world.rules?.waves ?? {}).some(waves =>
+        waves.some(wave => (wave.hpScale ?? 1) !== 1 || (wave.damageScale ?? 1) !== 1));
     output.raw(textEncoder.encode('MAPX'));
-    output.number(1, 'u16');
+    output.number(scaled ? 2 : 1, 'u16');
     output.number(0, 'u16');
     const section = (tag: number, write: (w: Writer) => void) => {
         const w = new Writer();
@@ -277,6 +285,10 @@ export function encodeMap(world: World): Uint8Array {
             w.number(waves.length, 'u16');
             for (const wave of waves) {
                 w.number(wave.time, 'u32');
+                if (scaled) {
+                    w.number(Math.round((wave.hpScale ?? 1) * 100), 'u16');
+                    w.number(Math.round((wave.damageScale ?? 1) * 100), 'u16');
+                }
                 for (const variant of VARIANTS) w.number(wave.counts[variant.name] ?? 0, 'u32');
             }
         }
@@ -289,7 +301,8 @@ export function decodeMap(bytes: Uint8Array): World {
     if (!(bytes instanceof Uint8Array) || bytes.length > MAX_FILE_SIZE) throw Error('Invalid MAPX file size');
     const r = new Reader(bytes);
     if (textDecoder.decode(r.raw(4)) !== 'MAPX') throw Error('Not a MAPX file');
-    if (r.number('u16') !== 1 || r.number('u16') !== 0) throw Error('Unsupported MAPX version or flags');
+    const version = r.number('u16');
+    if ((version !== 1 && version !== 2) || r.number('u16') !== 0) throw Error('Unsupported MAPX version or flags');
     const seen = new Set<number>();
     const world: World = {
         version: 1, name: '', origin: { lat: 0, lon: 0 }, width: 0, depth: 0,
@@ -343,8 +356,11 @@ export function decodeMap(bytes: Uint8Array): World {
             for (let i = 0; i < count; i++) {
                 const id = s.text();
                 if (Object.prototype.hasOwnProperty.call(waves, id)) throw Error('Duplicate wave spawn');
-                waves[id] = Array.from({ length: s.number('u16') }, () => ({ time: s.number('u32'),
-                    counts: Object.fromEntries(types.map(name => [name, s.number('u32')])) }));
+                waves[id] = Array.from({ length: s.number('u16') }, () => {
+                    const time = s.number('u32');
+                    const scales = version === 2 ? { hpScale: s.number('u16') / 100, damageScale: s.number('u16') / 100 } : {};
+                    return { time, ...scales, counts: Object.fromEntries(types.map(name => [name, s.number('u32')])) };
+                });
             }
             world.rules = { winTime, waves };
         } else if (tag === 5) {

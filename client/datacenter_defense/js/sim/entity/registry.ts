@@ -1,4 +1,4 @@
-import { Q } from '../fixed.js';
+import { Q, TICK_HZ } from '../fixed.js';
 
 export const UNIT_STRIDE = 48;
 export const UNIT = {
@@ -7,7 +7,7 @@ export const UNIT = {
     sonicRadius: 23, power: 24, drain: 25, recharge: 26, blocks: 27, armTicks: 28,
     triggerRadius: 29, projectile: 30, pushSpeed: 31, fireOnMove: 32, flightHeight: 33,
     runoverDamage: 34, mass: 35, buildRadius: 36, moneyCost: 37, powerCost: 38, buildTicks: 39, buildPower: 40,
-    moneyIncome: 41, powerIncome: 42, moneyStorage: 43, powerStorage: 44
+    moneyIncome: 41, powerIncome: 42, moneyStorage: 43, powerStorage: 44, energyDrain: 45, drainWhenFiring: 46
 } as const;
 export type IconShape = 'square' | 'direct' | 'artillery' | 'armor' | 'beam' | 'sonic' | 'mine';
 export interface EntityOptions {
@@ -37,7 +37,7 @@ export interface EntityOptions {
     buildPower?: number;
     income?: { money?: number; power?: number };
     storage?: { money?: number; power?: number };
-    upkeep?: number;
+    energyDrain?: { perSecond: number; whenFiring?: boolean };
     requirements?: ReadonlyArray<string>;
 }
 export abstract class EntityDef {
@@ -81,6 +81,8 @@ export abstract class EntityDef {
         row[UNIT.powerIncome] = (o.income?.power ?? 0) * 5;
         row[UNIT.moneyStorage] = (o.storage?.money ?? 0) * 100;
         row[UNIT.powerStorage] = (o.storage?.power ?? 0) * 100;
+        row[UNIT.energyDrain] = (o.energyDrain?.perSecond ?? 0) * 100 / TICK_HZ;
+        row[UNIT.drainWhenFiring] = Number(o.energyDrain?.whenFiring ?? false);
         if (o.flightHeight || this.kind === 6) row[UNIT.blocks] = 0;
         return row;
     }
@@ -108,14 +110,16 @@ export function defaults(tier: number): Pick<EntityOptions, 'cost' | 'buildSecon
         buildSeconds: [10, 30, 90][tier - 1] };
 }
 export const entities: Array<EntityDef> = [];
+
 export function defineEntity(definition: EntityDef): number {
     const { width, depth } = definition.footprint, o = definition.options;
     if (!o.cost || ![o.cost.money, o.cost.power, o.buildSeconds, o.buildPower ?? 0,
-        o.income?.money ?? 0, o.income?.power ?? 0, o.storage?.money ?? 0, o.storage?.power ?? 0]
+        o.income?.money ?? 0, o.income?.power ?? 0, o.storage?.money ?? 0,
+        o.storage?.power ?? 0, o.energyDrain?.perSecond ?? 0]
         .every(n => Number.isInteger(n) && n >= 0) ||
-        o.cost.money > 100000 || o.cost.power > 100000 || o.buildSeconds > 3600 ||
-        (o.buildPower ?? 0) > 18 || (o.income?.money ?? 0) > 2000 || (o.income?.power ?? 0) > 2000 ||
-        (o.storage?.money ?? 0) > 8000 || (o.storage?.power ?? 0) > 8000)
+        o.cost.money > 100000 || o.cost.power > 100000 || o.buildSeconds > 7200 ||
+        (o.buildPower ?? 0) > 96 || (o.income?.money ?? 0) > 2000 || (o.income?.power ?? 0) > 2000 ||
+        (o.storage?.money ?? 0) > 8000 || (o.storage?.power ?? 0) > 8000 || (o.energyDrain?.perSecond ?? 0) > 100000)
         throw Error('Invalid economy definition');
     if (!definition.name || entities.some(entity => entity.name === definition.name) ||
         ![definition.tier, definition.maxHp, width, depth, o.speed ?? 0, o.turnRate ?? 1024,

@@ -1,11 +1,20 @@
 [
     {
+        "id": "apple_park",
+        "name": "Apple_Park",
+        "file": "apple_park.mapx",
+        "preview": "apple_park.png",
+        "winTime": 1200,
+        "playable": true,
+        "mapHash": 3569854411
+    },
+    {
         "id": "test_arena",
         "name": "Test arena",
         "file": "test_arena.mapx",
         "preview": "test_arena.png",
         "winTime": 720,
         "playable": true,
-        "mapHash": 3593037002
+        "mapHash": 3179030681
     }
 ]

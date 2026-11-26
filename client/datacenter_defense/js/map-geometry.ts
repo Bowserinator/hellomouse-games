@@ -38,7 +38,7 @@ export class MapGeometry {
         for (const entry of this.cache.values())
             if (entry.objective) entry.group.rotation.z = -Math.PI / 2 * progress * progress;
     }
-    sync(world: World) {
+    sync(world: World, showSpawns = true) {
         let changed = false;
         const keep = new Set<string>();
         const update = (key: string, signature: string, create: () => T.Group, objective = false) => {
@@ -82,7 +82,7 @@ export class MapGeometry {
             () => this.surroundings(world, Math.sqrt(variance)));
         const dimensions = `${world.width},${world.depth}`;
         for (const e of world.objects) {
-            if (e.kind === 'passage' || e.kind === 'region') continue;
+            if (e.kind === 'passage' || e.kind === 'region' || (!showSpawns && e.kind === 'spawn')) continue;
             const passages = world.objects.filter(p => p.kind === 'passage' && p.parent === e.id);
             const ground = elevation(world, center(e));
             let bottom = -1;

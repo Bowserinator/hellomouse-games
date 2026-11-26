@@ -3,7 +3,7 @@ import { COMMAND_DELAY_TICKS, MAX_COMMANDS, orderedCommands, type Command } from
 import { SimCore, type RenderSnapshot, type SimOptions } from './core.js';
 import { TICK_HZ } from './fixed.js';
 import type { TickBundle } from './lockstep.js';
-import { PAUSE_COOLDOWN_MS, type LobbyPlayer } from '../shared/protocol.js';
+import { PAUSE_COOLDOWN_MS, type AnnotationAction, type ConnectionStats, type LobbyPlayer, type MapAnnotation } from '../shared/protocol.js';
 
 export interface DriverOptions extends SimOptions {
     local?: boolean; player?: number; slot?: number; roster?: ReadonlyArray<LobbyPlayer>;
@@ -13,8 +13,11 @@ export class SimDriver {
     tickMilliseconds?: number;
     slot = 0;
     roster: ReadonlyArray<LobbyPlayer> = [];
+    connectionStats: ReadonlyArray<ConnectionStats> = [];
     readonly selections = new Map<number, Array<number>>();
     onSelection?: (ids: Array<number>) => void;
+    onAnnotation?: (annotation: MapAnnotation) => void;
+    onAnnotationAction?: (action: AnnotationAction) => void;
     result?: { outcome: 'victory' | 'defeat'; tick: number };
     onGameEnd?: (result: { outcome: 'victory' | 'defeat'; tick: number }) => void;
     onSnapshot?: (snapshot: RenderSnapshot) => void;
@@ -31,6 +34,9 @@ export class SimDriver {
     private pending = new Map<number, Array<Command>>();
     private sequence = 0;
     private sent = new Map<number, number>();
+    private lastCommandTick = -1;
+    private awaiting = new Map<number, Command>();
+    private executed = new WeakMap<Command, number>();
     private accumulator = 0;
     private last = 0;
     private timer?: ReturnType<typeof setTimeout>;
@@ -47,11 +53,13 @@ export class SimDriver {
         let driver: SimDriver | undefined;
         const core = await SimCore.create(gpu, world, {
             ...options,
+            starterSlots: options.roster?.map(player => player.slot) ?? options.starterSlots,
             hashInterval: world.rules ? 1 : options.hashInterval,
             onHash: (tick, hash, hp, blocked) => {
                 options.onHash?.(tick, hash, hp, blocked);
                 driver?.onHash?.(tick, hash);
-                if (driver && !driver.result && world.rules && (hp === 0 || tick >= world.rules.winTime * TICK_HZ)) {
+                if (driver && !driver.result && driver.core.nav.winTick !== undefined &&
+                    (hp === 0 || tick >= driver.core.nav.winTick)) {
                     driver.result = { outcome: hp === 0 ? 'defeat' : 'victory', tick };
                     driver.pause();
                     driver.onGameEnd?.(driver.result);
@@ -70,26 +78,49 @@ export class SimDriver {
         driver.roster = options.roster ?? [];
         return driver;
     }
+    private get commandTick() {
+        let tick = Math.max(this.lastCommandTick, this.core.tick + (this.paused ? 0 : COMMAND_DELAY_TICKS));
+        if (this.paused) while (tick <= this.core.tick + 32 && this.sent.get(tick) === MAX_COMMANDS) tick++;
+        return tick;
+    }
     get commandCapacity() {
-        return MAX_COMMANDS - (this.sent.get(this.core.tick + COMMAND_DELAY_TICKS) ?? 0);
+        const tick = this.commandTick;
+        return tick > this.core.tick + 32 ? 0 : MAX_COMMANDS - (this.sent.get(tick) ?? 0);
     }
     submit(input: Omit<Command, 'player' | 'seq' | 'targetTick'>): Command {
         if (!this.commandCapacity) throw Error('Command tick is full');
         if (this.stopped || this.core.lockstep.frozen) throw Error('Simulation is not accepting commands');
-        const targetTick = this.core.tick + COMMAND_DELAY_TICKS;
+        const targetTick = this.commandTick;
         const command = { ...input, payload: input.payload.slice(), player: this.player, source: this.slot,
             seq: this.sequence, targetTick };
         const pending = this.pending.get(targetTick) ?? [];
         const ordered = orderedCommands([...pending, command], targetTick);
         this.sequence++;
+        this.lastCommandTick = targetTick;
         this.sent.set(targetTick, (this.sent.get(targetTick) ?? 0) + 1);
         for (const tick of this.sent.keys()) if (tick < this.core.tick) this.sent.delete(tick);
         if (this.local) this.pending.set(targetTick, ordered);
+        else {
+            this.awaiting.set(command.seq, command);
+            if (this.awaiting.size > 4096) this.awaiting.delete(this.awaiting.keys().next().value!);
+        }
         this.onCommand?.(command);
         return command;
     }
+    hasApplied(command: Command, snapshotTick: number) {
+        const tick = this.local ? command.targetTick : this.executed.get(command);
+        return tick !== undefined && tick < snapshotTick;
+    }
     receive(bundle: TickBundle) {
         this.core.lockstep.submit(bundle);
+        if (this.local) return;
+        for (const command of bundle.commands) {
+            if (command.source !== this.slot || command.clientSeq === undefined) continue;
+            const sent = this.awaiting.get(command.clientSeq);
+            if (!sent) continue;
+            this.executed.set(sent, bundle.tick);
+            this.awaiting.delete(command.clientSeq);
+        }
     }
     start(now = performance.now()) {
         if (this.stopped) throw Error('Simulation stopped');
@@ -117,7 +148,7 @@ export class SimDriver {
         if (!this.local) {
             this.onPauseRequest?.(paused); return;
         }
-        if (!paused) this.setPauseCooldown(PAUSE_COOLDOWN_MS);
+        if (!paused && this.core.lockstep.players.length > 1) this.setPauseCooldown(PAUSE_COOLDOWN_MS);
         this.pause(paused);
     }
     resumeAt(tick: number) {

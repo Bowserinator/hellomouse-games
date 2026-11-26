@@ -1,12 +1,14 @@
 import { effectsWGSL, PROJECTILE_STRIDE } from '../projectile/registry.js';
 import { RENDER_EXPLOSION_WORDS } from '../layout.js';
+import { LOBBY_LIMIT } from '../../shared/protocol.js';
 
 export function projectileKernels(workgroupSize: number): string {
     return `
 fn damage_zombie(victim: u32, damage: i32, owner: i32) {
     if (victim >= p(P_count) || current(F_hp, victim) <= 0) { return; }
     let armor = defs[zombie_def(meta_variant(current(F_meta, victim))) + 12u];
-    atomicAdd(&extra[p(P_damage) + victim], max(0, damage - armor));
+    if (damage <= armor) { return; }
+    atomicAdd(&extra[p(P_damage) + victim], damage - armor);
     atomicMin(&extra[p(P_credits) + victim], owner);
 }
 fn ring_slot(id: u32, definition: u32) -> i32 {
@@ -27,6 +29,7 @@ fn initialize_shot(shot: u32, id: u32, definition: u32, point: vec2<i32>) {
     atomicStore(&extra[at + 11u], -1);
     atomicStore(&extra[aux], point.x); atomicStore(&extra[aux + 1u], point.y);
     atomicStore(&extra[aux + 3u], defs[definition + W_damageScale]);
+    atomicStore(&extra[aux + 7u], i32(p(P_tick)) + 1);
 }
 fn launch_projectile(id: u32, definition: u32) -> bool {
     let slot = ring_slot(id, definition); if (slot < 0) { return false; }
@@ -62,6 +65,9 @@ fn launch_projectile(id: u32, definition: u32) -> bool {
 fn launch_beam(id: u32, definition: u32) -> bool {
     let at = u32(defs[D_beams]) + id * 8u;
     if (atomicLoad(&extra[at]) != 0) { return false; }
+    let unit = entity_def(id / 4u);
+    if (defs[unit + U_drainWhenFiring] != 0 && defs[D_unlimitedEconomy] == 0 &&
+        eco(economy_offset(entity_source(id / 4u)) + C_power) < defs[unit + U_energyDrain]) { return false; }
     let origin = mount_position(id); let angle = atomicLoad(&extra[weapon_state(id) + 1u]);
     atomicStore(&extra[at], select(1, -defs[definition + W_fireParams], defs[definition + W_fireParams] > 0));
     atomicStore(&extra[at + 1u], origin.x); atomicStore(&extra[at + 2u], origin.y);
@@ -220,8 +226,11 @@ fn splash_damage(shot: u32, definition: u32, base_damage: i32, slow: i32, impuls
 }
 fn gas_damage(shot: u32, definition: u32) {
     let scale = atomicLoad(&extra[shot_aux(shot) + 3u]);
-    splash_damage(shot, definition, defs[definition + J_effectParams + 1u] * scale / 100,
-        defs[definition + J_effectParams + 2u],false);
+    let duration = defs[definition + J_effectParams];
+    let total = defs[definition + J_effectParams + 1u] * scale / 100;
+    let phase = i32(p(P_tick) % u32(duration));
+    let damage = total * (phase + 1) / duration - total * phase / duration;
+    splash_damage(shot, definition, damage, defs[definition + J_effectParams + 2u],false);
 }
 ${effectsWGSL()}
 fn detonate(shot: u32, state: i32, lane: u32) {
@@ -300,26 +309,52 @@ fn splash_scan(@builtin(local_invocation_index) lane: u32, @builtin(workgroup_id
 fn gas_reset(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_workgroups) groups: vec3<u32>) {
     let i = index(id, groups); if (i < p(P_count)) { atomicStore(&extra[u32(defs[D_gasSlow]) + i], 100); }
 }
+fn beam_status(i: u32, definition: u32) -> i32 {
+    if (!weapon_live(i) || (atomicLoad(&extra[entity(i / 4u) + E_flags]) & 1) != 0) { return -1; }
+    let state = weapon_state(i); let victim = atomicLoad(&extra[state + 2u]);
+    if ((victim >= 0 && !weapon_targetable(i,definition,victim)) ||
+        (victim < 0 && (victim != -3 || atomicLoad(&extra[state + 3u]) == 0))) { return -1; }
+    let aim = aim_point(i, definition) - mount_position(i);
+    let angle = atomicLoad(&extra[state + 1u]);
+    return i32(abs(turn_delta(angle, atan2_q(aim.y, aim.x))) <= 32);
+}
+@compute @workgroup_size(1)
+fn fund_beams() {
+    let count = min(MAX_ENTITIES,u32(atomicLoad(&extra[2])));
+    for (var id = 0u; id < count; id++) {
+        if (!is_active(id)) { continue; }
+        let unit = entity_def(id);
+        if (defs[unit + U_drainWhenFiring] == 0) { continue; }
+        for (var mount = 0u; mount < u32(defs[unit + U_weaponCount]); mount++) {
+            let i = id * 4u + mount;
+            let beam = u32(defs[D_beams]) + i * 8u;
+            if (atomicLoad(&extra[beam]) <= 0) { continue; }
+            let definition = u32(atomicLoad(&extra[beam + 6u]));
+            if (beam_status(i,definition) == 1 && !pay_energy(id,defs[unit + U_energyDrain])) {
+                atomicStore(&extra[beam],0);
+                atomicStore(&extra[weapon_state(i)],defs[definition + W_fireParams + 3u]);
+            }
+        }
+    }
+    for (var slot = 0u; slot < ${LOBBY_LIMIT}u; slot++) {
+        if (player_has_economy(slot)) { sample_spending(slot); }
+    }
+}
 @compute @workgroup_size(${workgroupSize})
 fn beam_update(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_workgroups) groups: vec3<u32>) {
     let i = index(id, groups); if (i >= MAX_ENTITIES * 4u) { return; }
     let at = u32(defs[D_beams]) + i * 8u; let phase = atomicLoad(&extra[at]); if (phase == 0) { return; }
-    if (!weapon_live(i)) { atomicStore(&extra[at], 0); return; }
     let definition = u32(atomicLoad(&extra[at + 6u]));
-    let state = weapon_state(i); let victim = atomicLoad(&extra[state + 2u]);
-    if ((victim >= 0 && !weapon_targetable(i,definition,victim)) ||
-        (victim < 0 && (victim != -3 || atomicLoad(&extra[state + 3u]) == 0))) {
-        atomicStore(&extra[at],0); return;
-    }
-    let aim = aim_point(i, definition) - mount_position(i);
-    let angle = atomicLoad(&extra[state + 1u]);
-    if (abs(turn_delta(angle, atan2_q(aim.y, aim.x))) > 32) {
+    let status = beam_status(i,definition);
+    if (status < 0) { atomicStore(&extra[at],0); return; }
+    if (status == 0) {
         atomicStore(&extra[at], min(-1, phase)); return;
     }
     if (phase < 0) {
         atomicStore(&extra[at + 3u], 0);
         atomicStore(&extra[at], select(phase + 1, 1, phase == -1)); return;
     }
+    let state = weapon_state(i); let angle = atomicLoad(&extra[state + 1u]);
     let duration = max(1, defs[definition + W_fireParams + 1u]);
     let origin = mount_position(i); atomicStore(&extra[at + 1u], origin.x); atomicStore(&extra[at + 2u], origin.y);
     atomicStore(&extra[at + 4u], angle); atomicStore(&extra[at + 5u], angle);

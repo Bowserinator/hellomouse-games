@@ -1,21 +1,57 @@
+import { LOBBY_LIMIT } from '../../shared/protocol.js';
+import { BALANCE } from '../balance.js';
 import { COMMAND_SLOT_WORDS, COMMAND_STRIDE, COMMAND_WORDS, CommandType, MAX_PLAYERS,
-    MAX_COMMANDS, OBJECTIVE_ASSIST_TARGET, ORDER_TARGET_SHIFT, SALE_EFFECT_SLOTS } from '../commands.js';
-import { MAX_WEAPONS, PLAYER_WORDS, PROJECTILE_WORDS, RENDER_EXPLOSION_WORDS,
+    MAX_COMMANDS, ORDER_TARGET_SHIFT, SALE_EFFECT_SLOTS } from '../commands.js';
+import { MAX_ORDERS, MAX_WEAPONS, PLAYER_WORDS, PROJECTILE_WORDS, RENDER_EXPLOSION_WORDS,
     RENDER_SALE_EFFECT, WEAPON_WORDS } from '../layout.js';
 
 export function commandKernels(workgroupSize: number): string {
     return `
 fn selected_entity(command: u32, id: u32) -> bool {
-    return (u32(atomicLoad(&extra[command + ${COMMAND_WORDS}u + id / 32u])) & (1u << (id % 32u))) != 0u;
+    return entity_source(id) == (u32(atomicLoad(&extra[command])) >> 3u) &&
+        (u32(atomicLoad(&extra[command + ${COMMAND_WORDS}u + id / 32u])) & (1u << (id % 32u))) != 0u;
 }
 fn clear_override(id: u32) {
     for (var mount = 0u; mount < 4u; mount++) {
         atomicStore(&extra[weapon_state(id * 4u + mount) + 3u], 0);
     }
 }
+fn transfer_entity(id: u32, recipient: i32) {
+    let at = entity(id); let rotation = atomicLoad(&extra[at + E_rotation]) & 3;
+    if (is_active(id)) {
+        let def = entity_def(id);
+        change_storage(entity_source(id),def,-1);
+        change_storage(u32(recipient),def,1);
+    }
+    atomicStore(&extra[at + E_rotation],rotation | (recipient << 2u));
+    atomicStore(&extra[at + E_owner],recipient % ${MAX_PLAYERS});
+}
+fn inherit_units(departed: u32, eligible: u32) {
+    var recipient = -1; var best = -1;
+    for (var slot = 0u; slot < ${LOBBY_LIMIT}u; slot++) {
+        if ((eligible & (1u << slot)) == 0u) { continue; }
+        let kills = eco(C_kills + slot);
+        if (kills > best) { recipient = i32(slot); best = kills; }
+    }
+    if (recipient < 0) { return; }
+    eco_set(C_players,i32(u32(eco(C_players)) & ~departed));
+    for (var id = 0u; id < min(MAX_ENTITIES,u32(atomicLoad(&extra[2]))); id++) {
+        if (is_live(id) && (departed & (1u << entity_source(id))) != 0u) { transfer_entity(id,recipient); }
+    }
+    for (var i = 0u; i < ghost_count(); i++) {
+        let at = ghost_at(i);
+        if ((departed & (1u << u32(atomicLoad(&extra[at + 5u])))) != 0u) {
+            atomicStore(&extra[at + 4u],recipient % ${MAX_PLAYERS});
+            atomicStore(&extra[at + 5u],recipient);
+        }
+    }
+}
 @compute @workgroup_size(1)
 fn apply_commands() {
-    eco_set(C_moneyRate,0); eco_set(C_powerRate,0);
+    for (var slot = 0u; slot < ${LOBBY_LIMIT}u; slot++) {
+        let offset = economy_offset(slot);
+        eco_set(offset + C_moneyRate,0); eco_set(offset + C_powerRate,0);
+    }
     let start = p(P_commands); let count = min(u32(atomicLoad(&extra[start])), 64u);
     var command_hash = bitcast<u32>(atomicLoad(&extra[p(P_commandHash)]));
     for (var i = 0u; i < count; i++) {
@@ -28,30 +64,24 @@ fn apply_commands() {
         for (var word = 0u; word < ${COMMAND_STRIDE}u; word++) {
             command_hash = pcg(command_hash ^ bitcast<u32>(atomicLoad(&extra[at + word])));
         }
-        if (player >= ${MAX_PLAYERS}u) { continue; }
+        if (source >= ${LOBBY_LIMIT}u || !player_has_economy(source)) { continue; }
         let avatar = p(P_players) + player * ${PLAYER_WORDS}u;
         atomicStore(&extra[avatar + 5u], atomicLoad(&extra[at + 1u]));
-        if (kind == ${CommandType.ObjectiveStance}) {
-            if (a >= 0 && a <= 1) { eco_set(C_objectiveHold,a); } continue;
-        }
-        if (kind == ${CommandType.ObjectiveUpgrade}) {
-            queue_upgrade(a,b != 0); continue;
-        }
         if (kind == ${CommandType.Order} && a == 5) {
-            if (b == ${OBJECTIVE_ASSIST_TARGET}) {
-                if (objective_upgrading()) {
-                    for (var body = 0u; body < MAX_ENTITIES; body++) {
-                        if (!selected_entity(at,body) || !objective_reach(body)) { continue; }
-                        atomicStore(&extra[entity(body) + E_buildTask],-2);
-                        atomicStore(&extra[entity(body) + E_explicitTask],1);
-                    }
-                }
-                continue;
-            }
             if (b < 0 || b >= i32(MAX_ENTITIES) || c < 0 || c > 1 || d != 0) { continue; }
-            if (c == 1) { set_build_task(-1,b,true); }
             for (var body = 0u; body < MAX_ENTITIES; body++) {
-                if (selected_entity(at,body)) { set_build_task(i32(body),b,true); }
+                if (!selected_entity(at,body)) { continue; }
+                if (c == 0) { set_build_task(i32(body),b,true); continue; }
+                let builder = entity(body);
+                let manual = atomicLoad(&extra[builder + E_explicitTask]) != 0;
+                if (atomicLoad(&extra[builder + E_buildTask]) != b || !builder_reaches(i32(body),u32(b),manual)) { continue; }
+                let generation = atomicLoad(&extra[builder + E_taskGeneration]);
+                if (generation != (atomicLoad(&extra[entity(u32(b)) + E_flags]) >> 8)) { continue; }
+                // shortcut: remember one canceled target per crane; use a list if players need to block several.
+                atomicStore(&extra[builder + E_skippedTask],b + 1);
+                atomicStore(&extra[builder + E_skippedGeneration],generation);
+                atomicStore(&extra[builder + E_buildTask],-1);
+                atomicStore(&extra[builder + E_explicitTask],0);
             }
             continue;
         }
@@ -67,7 +97,7 @@ fn apply_commands() {
             continue;
         }
         if (kind == ${CommandType.RemoveOrder}) {
-            if (a >= 0 && a < i32(MAX_ENTITIES) && b >= 0 && b < 8 && is_live(u32(a))) {
+            if (a >= 0 && a < i32(MAX_ENTITIES) && b >= 0 && b < ${MAX_ORDERS} && is_live(u32(a)) && entity_source(u32(a)) == source) {
                 remove_order(u32(a),u32(b));
             }
             continue;
@@ -107,16 +137,40 @@ fn apply_commands() {
                 if (a >= 0 && a < defs[D_unitCount] &&
                     defs[u32(defs[D_unit]) + u32(a) * u32(defs[D_unitStride]) + U_kind] == 6) {
                     let def = u32(defs[D_unit]) + u32(a) * u32(defs[D_unitStride]);
-                    if (has_builder(at,atomicLoad(&extra[at + 8u]) == 1,defs[def + U_tier],vec2<i32>(b,c),false)) {
-                        strike(a,b,c,player);
+                    if (has_builder(at,defs[def + U_tier],vec2<i32>(b,c),false)) {
+                        strike(a,b,c,player,source);
                     }
                 } else {
                     let queued = queue_ghost(a,b,c,d,player,source,at,
-                        atomicLoad(&extra[at + 8u]) == 1,atomicLoad(&extra[at + 9u]) == 1);
+                        atomicLoad(&extra[at + 9u]) == 1);
+                }
+            }
+            case ${CommandType.CraneUpgrade}: {
+                if (a < 0 || a >= i32(MAX_ENTITIES) || c < 2 || c > 3) { break; }
+                let id = u32(a); let body = entity(id); let def = entity_def(id);
+                let flags = u32(atomicLoad(&extra[body + E_flags]));
+                if (is_active(id) && entity_source(id) == source && flags >> 8u == u32(b) &&
+                    defs[def + U_buildPower] > 0 && c > defs[def + U_tier]) {
+                    if (d == 0) {
+                        atomicStore(&extra[body + E_upgradeTarget],c);
+                        atomicStore(&extra[body + E_queuedUpgrade],0);
+                    } else if (c > atomicLoad(&extra[body + E_upgradeTarget])) {
+                        atomicMax(&extra[body + E_queuedUpgrade],c);
+                    }
+                }
+            }
+            case ${CommandType.Inherit}: { inherit_units(u32(a),u32(b)); }
+            case ${CommandType.Gift}: {
+                if (a < 0 || a >= i32(MAX_ENTITIES) || c < 0 || c >= ${LOBBY_LIMIT} || u32(c) == source) { break; }
+                let id = u32(a); let body = entity(id);
+                let flags = u32(atomicLoad(&extra[body + E_flags]));
+                if (atomicLoad(&extra[body + E_state]) != 0 && atomicLoad(&extra[body + E_hp]) > 0 &&
+                    entity_source(id) == source && (flags >> 8u) == u32(b)) {
+                    transfer_entity(id,c);
                 }
             }
             case ${CommandType.Sell}: {
-                if (a >= 0 && a < i32(MAX_ENTITIES) && atomicLoad(&extra[entity(u32(a)) + E_state]) != 0 &&
+                if (a >= 0 && a < i32(MAX_ENTITIES) && is_live(u32(a)) && entity_source(u32(a)) == source &&
                     (u32(atomicLoad(&extra[entity(u32(a)) + E_flags])) >> 8u) == u32(b)) {
                     let body = entity(u32(a)); let def = entity_def(u32(a));
                     let complete = atomicLoad(&extra[body + E_state]) != 2;
@@ -129,14 +183,16 @@ fn apply_commands() {
                     atomicStore(&extra[effect + 5u],${RENDER_SALE_EFFECT});
                     free_entity(u32(a));
                     if (complete) {
-                        eco_set(C_money,min(eco(C_moneyCap),eco(C_money) + defs[def + U_moneyCost] * 7 / 10));
-                        eco_set(C_power,min(eco(C_powerCap),eco(C_power) + defs[def + U_powerCost] * 7 / 10));
+                        let money = defs[def + U_moneyCost] * ${BALANCE.saleRefundPct} / 100;
+                        let power = defs[def + U_powerCost] * ${BALANCE.saleRefundPct} / 100;
+                        share_overflow(source,C_money,C_moneyCap,C_moneyCursor,deposit(source,C_money,C_moneyCap,money));
+                        share_overflow(source,C_power,C_powerCap,C_powerCursor,deposit(source,C_power,C_powerCap,power));
                     }
                 }
             }
             case ${CommandType.PlaceRow}: {
                 place_row(a,b,c,d,atomicLoad(&extra[at + 8u]),player,source,at,
-                    atomicLoad(&extra[at + 9u]) == 1,atomicLoad(&extra[at + 10u]) == 1);
+                    atomicLoad(&extra[at + 10u]) == 1);
             }
             case ${CommandType.RemoveGhost}: { cancel_ghost(a,b,source); }
             default: {

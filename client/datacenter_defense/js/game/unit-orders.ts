@@ -11,7 +11,7 @@ import type { PathPoint, PathBody, PathStructure } from './pathing.js';
 
 type Input = Omit<Command, 'player' | 'seq' | 'targetTick'>;
 export type LogicalOrder = { kind: OrderType; goal: PathPoint; waypoint?: PathPoint; victim?: number };
-type Flight = { targetTick?: number; replace: boolean; waypoint: boolean };
+type Flight = { command?: Command; replace: boolean; waypoint: boolean };
 type Plan = { id: number; generation: number; version: number; orders: Array<LogicalOrder>; body: PathBody;
     points: Array<PathPoint>; cursor: number; flights: Array<Flight>; busy: boolean; started: boolean;
     append: boolean; lastPlan: number; stuck?: number; moveEnds: Array<number>; lookingAhead: boolean; };
@@ -21,7 +21,9 @@ export class UnitOrders {
     private pathing: PathingClient;
     private snapshot?: RenderSnapshot;
     private structures = new Map<number, PathStructure>();
-    private outbox: Array<{ input: Input; plan?: Plan; version?: number; flight?: Flight }> = [];
+    private outbox: Array<{ input: Input; plan?: Plan; version?: number; flight?: Flight;
+        onSent?: (command: Command) => void; }> = [];
+    private removals: Array<Command> = [];
     private frameCommands = 0;
     private destroyed = false;
     constructor(private driver: SimDriver, private notify: (message: string) => void) {
@@ -31,8 +33,8 @@ export class UnitOrders {
     private row(id: number) {
         return this.snapshot?.defense?.entities.subarray(id * RENDER_ENTITY_WORDS, (id + 1) * RENDER_ENTITY_WORDS);
     }
-    submit(input: Input) {
-        this.outbox.push({ input }); this.drain();
+    submit(input: Input, onSent?: (command: Command) => void) {
+        this.outbox.push({ input, onSent }); this.drain();
     }
     private mask(id: number) {
         const blob = new Array<number>(32).fill(0); blob[id >>> 5] = (1 << (id & 31)) >>> 0; return blob;
@@ -44,8 +46,10 @@ export class UnitOrders {
                 continue;
             try {
                 const command = this.driver.submit(item.input); this.frameCommands++;
+                if (command.type === CommandType.RemoveOrder) this.removals.push(command);
                 this.onCommand?.(command);
-                if (item.flight) item.flight.targetTick = command.targetTick;
+                item.onSent?.(command);
+                if (item.flight) item.flight.command = command;
             } catch (error) {
                 if (item.plan) this.plans.delete(item.plan.id);
                 this.notify(error instanceof Error ? error.message : String(error)); break;
@@ -148,18 +152,53 @@ export class UnitOrders {
             }
         });
     }
-    remove(id: number, segment: number) {
+    visibleSegments(id: number, count: number) {
+        const segments = Array.from({ length: count }, (_, index) => index);
+        for (const input of this.removals)
+            if (input.payload[0] === id) segments.splice(input.payload[1], 1);
+        for (const { input } of this.outbox)
+            if (input.type === CommandType.RemoveOrder && input.payload[0] === id)
+                segments.splice(input.payload[1], 1);
+        return segments;
+    }
+    visiblePrefix(id: number, count: number) {
+        const segments = this.visibleSegments(id, count);
         const plan = this.plans.get(id);
-        if (!plan) {
-            this.submit({ type: CommandType.RemoveOrder, payload: [id, segment] }); return;
+        if (!plan) return segments;
+        if (!plan.append) return [];
+        return segments.slice(0, Math.max(0, segments.length - (plan.cursor - plan.flights.length)));
+    }
+    queueOrigin(id: number, row: Int32Array): PathPoint {
+        const segment = this.visiblePrefix(id, row[E.orderCount]).at(-1);
+        if (segment !== undefined) {
+            const at = RENDER_ORDERS + segment * 4;
+            if (row[at] !== OrderType.Attack) return { x: row[at + 1], z: row[at + 2] };
+            const words = this.snapshot?.words, victim = row[at + 1] * 3;
+            if (words && victim >= 0 && victim + 2 < words.length && zombieHp(words[victim + 2]))
+                return { x: words[victim], z: words[victim + 1] };
         }
+        return { x: row[E.x], z: row[E.z] };
+    }
+    remove(id: number, segment: number, fromSnapshot = false) {
+        const row = this.row(id);
+        if (!isLive(row) || row[E.rotation] >>> 2 !== this.driver.slot) return;
+        const plan = this.plans.get(id);
+        if (!plan || fromSnapshot) {
+            this.submit({ type: CommandType.RemoveOrder, payload: [id, segment] });
+            if (plan && !plan.started) this.request([plan], false);
+            return;
+        }
+        const keepPrefix = plan.append && !plan.started;
         plan.orders.splice(segment, 1);
         if (!plan.orders.length) {
-            this.plans.delete(id); this.submit({ type: CommandType.Order, payload: [4, 0, 0, 0], blob: this.mask(id) });
-        } else if (segment === 0 || segment < plan.moveEnds.length || plan.lookingAhead) this.request([plan], true);
+            this.plans.delete(id);
+            if (!keepPrefix) this.submit({ type: CommandType.Order, payload: [4, 0, 0, 0], blob: this.mask(id) });
+        } else if (segment === 0 || segment < plan.moveEnds.length || plan.lookingAhead)
+            this.request([plan], !keepPrefix);
     }
     private request(plans: Array<Plan>, stop: boolean) {
         const groups = new Map<string, Array<Plan>>();
+        const origins = new Map<number, PathPoint>();
         for (const plan of plans) {
             const row = this.row(plan.id); if (!isLive(row) || !plan.orders.length) continue;
             const logical = plan.orders[0];
@@ -180,7 +219,9 @@ export class UnitOrders {
                 plan.append = false;
                 this.submit({ type: CommandType.Order, payload: [4, 0, 0, 0], blob: this.mask(plan.id) });
             }
-            const key = `${row[E.x] / (4 * Q) | 0},${row[E.z] / (4 * Q) | 0},${plan.body.width},` +
+            const origin = this.queueOrigin(plan.id, row);
+            origins.set(plan.id, origin);
+            const key = `${origin.x / (4 * Q) | 0},${origin.z / (4 * Q) | 0},${plan.body.width},` +
                 `${plan.body.depth},${plan.body.flightHeight ?? 0},${logical.goal.x},${logical.goal.z}`;
             const group = groups.get(key) ?? []; group.push(plan); groups.set(key, group);
         }
@@ -196,7 +237,7 @@ export class UnitOrders {
         }
         for (const group of groups.values()) {
             const versions = group.map(plan => plan.version);
-            const starts = group.map(plan => ({ id: plan.id, x: this.row(plan.id)![E.x], z: this.row(plan.id)![E.z] }));
+            const starts = group.map(plan => ({ id: plan.id, ...origins.get(plan.id)! }));
             void this.pathing.find(starts, group[0].orders[0].goal, group[0].body, units).then(paths => {
                 if (this.destroyed) return;
                 paths.forEach((result, index) => {
@@ -247,6 +288,9 @@ export class UnitOrders {
     }
     private fill(plan: Plan) {
         const row = this.row(plan.id); if (!row || plan.busy || !plan.points.length) return;
+        // Keep the new route editable while its starting waypoint can still change.
+        if (this.driver.isPaused && plan.append && !plan.started &&
+            this.visiblePrefix(plan.id, row[E.orderCount]).length) return;
         const logical = plan.orders[0];
         let occupied = !plan.started && !plan.append || plan.flights.some(flight => flight.replace)
             ? plan.flights.length : row[E.orderCount] + plan.flights.length;
@@ -282,6 +326,7 @@ export class UnitOrders {
     }
     accept(snapshot: RenderSnapshot) {
         this.snapshot = snapshot;
+        this.removals = this.removals.filter(command => !this.driver.hasApplied(command, snapshot.tick));
         if (!snapshot.defense) return;
         const next = new Map<number, PathStructure>(), changed: Array<PathStructure> = [];
         for (let id = 0; id < 1024; id++) {
@@ -306,14 +351,16 @@ export class UnitOrders {
                 this.plans.delete(plan.id); continue;
             }
             plan.flights = plan.flights.filter(flight =>
-                flight.targetTick === undefined || flight.targetTick >= snapshot.tick);
+                !flight.command || !this.driver.hasApplied(flight.command, snapshot.tick));
             if (row[E.state] === 2) {
                 this.fill(plan); continue;
             }
             if (plan.moveEnds.length > 1 && !plan.flights.some(flight => flight.replace)) {
                 let remaining = plan.moveEnds.filter(end => end > plan.cursor).length;
                 remaining += plan.flights.filter(flight => flight.waypoint).length;
-                for (let segment = 0; segment < row[E.orderCount]; segment++)
+                const segments = this.visibleSegments(plan.id, row[E.orderCount]);
+                const prefix = this.visiblePrefix(plan.id, row[E.orderCount]).length;
+                for (const segment of segments.slice(prefix))
                     if (row[RENDER_ORDERS + segment * 4 + 3] & ORDER_WAYPOINT) remaining++;
                 const reached = Math.min(plan.moveEnds.length - 1, plan.moveEnds.length - remaining);
                 if (reached > 0) {

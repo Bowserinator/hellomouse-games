@@ -9,21 +9,22 @@ fn reserve_shot() -> i32 {
     }
     return -1;
 }
-fn strike(def_id: i32, x: i32, z: i32, owner: u32) {
+fn strike(def_id: i32, x: i32, z: i32, owner: u32, source: u32) {
     if (def_id < 0 || def_id >= defs[D_unitCount] || x < 0 || z < 0 ||
         x > i32(p(P_widthQ)) || z > i32(p(P_depthQ))) { return; }
     let def = u32(defs[D_unit]) + u32(def_id) * u32(defs[D_unitStride]);
     if (defs[def + U_kind] != 6) { return; }
+    let offset = economy_offset(source);
     let unlimited = defs[D_unlimitedEconomy] != 0;
-    if (!unlimited && (eco(C_money) < defs[def + U_moneyCost] || eco(C_power) < defs[def + U_powerCost])) {
-        eco_set(C_rejected,eco(C_rejected) + 1); return;
+    if (!unlimited && (eco(offset + C_money) < defs[def + U_moneyCost] || eco(offset + C_power) < defs[def + U_powerCost])) {
+        eco_set(offset + C_rejected,eco(offset + C_rejected) + 1); return;
     }
     let slot = reserve_shot(); if (slot < 0) { return; }
     if (!unlimited) {
-        eco_set(C_money,eco(C_money) - defs[def + U_moneyCost]);
-        eco_set(C_power,eco(C_power) - defs[def + U_powerCost]);
-        eco_set(C_moneyRate,eco(C_moneyRate) + defs[def + U_moneyCost]);
-        eco_set(C_powerRate,eco(C_powerRate) + defs[def + U_powerCost]);
+        eco_set(offset + C_money,eco(offset + C_money) - defs[def + U_moneyCost]);
+        eco_set(offset + C_power,eco(offset + C_power) - defs[def + U_powerCost]);
+        eco_set(offset + C_moneyRate,eco(offset + C_moneyRate) + defs[def + U_moneyCost]);
+        eco_set(offset + C_powerRate,eco(offset + C_powerRate) + defs[def + U_powerCost]);
     }
     let at = shot_at(u32(slot)); let aux = shot_aux(u32(slot));
     for (var word = 0u; word < 12u; word++) { atomicStore(&extra[at + word],0); }
@@ -32,6 +33,7 @@ fn strike(def_id: i32, x: i32, z: i32, owner: u32) {
     atomicStore(&extra[at + 2u],-1); atomicStore(&extra[at + 3u],defs[def + U_projectile]);
     atomicStore(&extra[at + 4u],x); atomicStore(&extra[at + 5u],z);
     atomicStore(&extra[at + 11u],-1); atomicStore(&extra[aux + 3u],100);
+    atomicStore(&extra[aux + 7u],i32(p(P_tick)) + 1);
     atomicStore(&extra[aux],x); atomicStore(&extra[aux + 1u],z);
     let projectile = shot_def(u32(slot));
     if (defs[projectile + J_motion] == 4) {
@@ -85,10 +87,11 @@ fn detonate_bomber(emitter: u32, projectile_id: i32) {
     atomicStore(&extra[at + 3u],projectile_id); atomicStore(&extra[at + 4u],x);
     atomicStore(&extra[at + 5u],z); atomicStore(&extra[at + 6u],Q / 2);
     atomicStore(&extra[at + 10u],1); atomicStore(&extra[at + 11u],-1);
-    atomicStore(&extra[aux],x); atomicStore(&extra[aux + 1u],z); atomicStore(&extra[aux + 3u],100);
+    atomicStore(&extra[aux],x); atomicStore(&extra[aux + 1u],z);
+    atomicStore(&extra[aux + 3u],scaled_zombie_stat(emitter,defs[shot_def(u32(slot)) + J_damage],WAVE_DAMAGE));
     atomicMax(&scratch[${SCRATCH.hostileEnd}],u32(slot) + 1u - (u32(defs[D_projectileCountMax]) - 2048u));
 }
-fn bomber_friendly_fire(end: vec3<i32>, definition: u32, radius: i32) {
+fn bomber_friendly_fire(end: vec3<i32>, definition: u32, radius: i32, damage: i32) {
     let padding = defs[definition + J_radius] + 2 * Q;
     var query = target_query(vec2<i32>(end.x - padding,end.z - padding),
         vec2<i32>(end.x + padding,end.z + padding),true);
@@ -101,12 +104,26 @@ fn bomber_friendly_fire(end: vec3<i32>, definition: u32, radius: i32) {
         let distance = i32(root(u32(delta.x * delta.x + delta.y * delta.y)));
         if (distance > radius || building_hit(end,vec3<i32>(zx,building_height(zx,zz) + Q,zz) - end) <= Q) { continue; }
         let factor = 100 - defs[definition + J_falloff] * distance / max(1,radius);
-        damage_zombie(u32(victim),defs[definition + J_damage] * factor / 100,2147483647);
+        damage_zombie(u32(victim),damage * factor / 100,2147483647);
     }
 }
 fn ranged_think(id: u32, definition: u32) {
     let position = vec3<i32>(current(F_x,id),building_height(current(F_x,id),current(F_z,id)) + Q,current(F_z,id));
     let range = cm(defs[definition + 6u]); var best = range * range + 1; var selected = -1;
+    let focused = objective_focused(position.x,position.z);
+    let cooldown = meta_cooldown(current(F_meta,id));
+    let goal = vec3<i32>(i32(p(P_objectiveX)),building_height(i32(p(P_objectiveX)),i32(p(P_objectiveZ))) + Q,
+        i32(p(P_objectiveZ)));
+    let delta_to_goal = vec2<i32>(cm(goal.x) - cm(position.x),cm(goal.z) - cm(position.z));
+    let objective_in_range = in_circle(delta_to_goal.x,delta_to_goal.y,range) &&
+        building_hit(position,goal - position) > Q;
+    set_target(id,0); put(F_tgt,id,-1); set_state(id,1);
+    if (focused && objective_in_range) {
+        set_target(id,1); set_state(id,2);
+        if (cooldown == 0) { attack(id,definition); }
+        return;
+    }
+    if (focused && cooldown != 0) { return; }
     for (var other = 0u; other < min(MAX_ENTITIES,u32(atomicLoad(&extra[2]))); other++) {
         let at = entity(other); let def = entity_def(other);
         if (atomicLoad(&extra[at + E_state]) == 0 || (defs[def + U_kind] == 5 && is_active(other) &&
@@ -119,15 +136,11 @@ fn ranged_think(id: u32, definition: u32) {
         if (squared >= best || building_hit(position,point - position) <= Q) { continue; }
         selected = i32(other); best = squared;
     }
-    set_target(id,0); put(F_tgt,id,-1); set_state(id,1);
-    if (selected >= 0) { set_target(id,2); put(F_tgt,id,selected); set_state(id,2); }
-    else {
-        let delta = vec2<i32>(cm(i32(p(P_objectiveX))) - cm(position.x),cm(i32(p(P_objectiveZ))) - cm(position.z));
-        if (in_circle(delta.x,delta.y,range) && building_hit(position,
-            vec3<i32>(i32(p(P_objectiveX)),building_height(i32(p(P_objectiveX)),i32(p(P_objectiveZ))) + Q,
-                i32(p(P_objectiveZ))) - position) > Q) { set_target(id,1); set_state(id,2); }
-    }
-    if (meta_state(current(F_meta,id)) == 2 && meta_cooldown(current(F_meta,id)) == 0) { attack(id,definition); }
+    if (selected >= 0) {
+        set_target(id,2); put(F_tgt,id,selected);
+        if (!focused) { set_state(id,2); }
+    } else if (objective_in_range) { set_target(id,1); set_state(id,2); }
+    if (meta_target(current(F_meta,id)) != 0 && cooldown == 0) { attack(id,definition); }
 }
 @compute @workgroup_size(1)
 fn hostile_emit() {
@@ -171,7 +184,8 @@ fn hostile_emit() {
         atomicStore(&extra[at + 7u],delta.x / ticks); atomicStore(&extra[at + 8u],delta.z / ticks);
         atomicStore(&extra[at + 9u],delta.y / ticks); atomicStore(&extra[at + 10u],ticks);
         atomicStore(&extra[at + 11u],victim); atomicStore(&extra[aux],point.x);
-        atomicStore(&extra[aux + 1u],point.z); atomicStore(&extra[aux + 3u],100);
+        atomicStore(&extra[aux + 1u],point.z);
+        atomicStore(&extra[aux + 3u],scaled_zombie_stat(emitter,defs[projectile + J_damage],WAVE_DAMAGE));
         atomicMax(&scratch[${SCRATCH.hostileEnd}],u32(slot) + 1u - (u32(defs[D_projectileCountMax]) - 2048u));
     }
 }
@@ -214,8 +228,11 @@ fn hostile_update(@builtin(global_invocation_id) id: vec3<u32>, @builtin(num_wor
     atomicStore(&extra[flash + 2u],end.z); atomicStore(&extra[flash + 3u],atomicLoad(&extra[at + 6u]));
     atomicStore(&extra[flash + 4u],defs[definition + J_radius]);
     atomicStore(&extra[flash + 5u],atomicLoad(&extra[at + 3u]));
-    damage_friendlies(end,definition,defs[definition + J_damage]);
-    if (atomicLoad(&extra[at + 2u]) == -2) { bomber_friendly_fire(end,definition,radius); }
+    let damage = atomicLoad(&extra[shot_aux(shot) + 3u]);
+    if (damage > 0) {
+        damage_friendlies(end,definition,damage);
+        if (atomicLoad(&extra[at + 2u]) == -2) { bomber_friendly_fire(end,definition,radius,damage); }
+    }
     atomicStore(&extra[at],0);
 }
 fn damage_friendlies(end: vec3<i32>, definition: u32, damage: i32) {

@@ -1,9 +1,10 @@
 export const BALANCE = {
     barrierHp: 500,
     construction: {
-        objective: 80, crane: [50, 80, 120], power: [2, 6, 18], hp: [300, 1500, 5000]
+        crane: [25, 40, 60], power: [15, 39, 96], hp: [300, 1500, 5000], repairSpeedDivisor: 10
     },
-    objective: { hp: 20000, money: 1, power: 20 },
+    saleRefundPct: 70,
+    objective: { hp: 20000, money: 1, power: 20, moneyStorage: 50000, powerStorage: 500000 },
     powerStorageBlast: { radius: 4, damage: 300 },
     stationaryDamagePct: 100,
     cooldownBarMinTicks: 11,
@@ -14,7 +15,7 @@ export const BALANCE = {
     explosionPushSpeed: 48,
     police: { hp: 60, speed: 6, range: 22, damage: 15, cooldown: 12 },
     sniper: { hp: 700, speed: 4, range: 150, cooldown: 200 },
-    helicopter: { hp: 700, speed: 12, height: 10, range: 35, damage: 16, cooldown: 5 },
+    helicopter: { hp: 700, speed: 12, height: 10, range: 35, damage: 23, cooldown: 5 },
     steamroller: { hp: 5000, speed: 4, damage: 15, mass: 12 },
     tomahawk: { damage: 15000, radius: 15, flightTicks: 30, altitude: 250, tilt: 12, bearing: 215 },
     fireworks: { hp: 180, speed: 5, range: 35, damage: 65, cooldown: 60, percent: 5 },
@@ -26,8 +27,8 @@ export const BALANCE = {
         mobileHp: 400, moveSpeed: 4 },
     howitzer: { minRange: 15, range: 120, damage: 2200, cooldown: 400, speed: 30, ttl: 160,
         splash: 8, gravity: 10, launchDegrees: 60, hp: 3600 },
-    gas: { minRange: 10, range: 90, damage: 80, cooldown: 40, speed: 45, ttl: 40,
-        splash: 7, gravity: 6, duration: 100, dot: 2, slowPct: 50, hp: 2250 },
+    gas: { minRange: 10, range: 90, damage: 12, cooldown: 40, speed: 45, ttl: 40,
+        splash: 7, gravity: 6, duration: 100, cloudDamage: 32, slowPct: 50, hp: 2250 },
     tank: { range: 40, damage: 128, cooldown: 40, speed: 50, ttl: 20, splash: 4, gravity: 12,
         hp: 1500, moveSpeed: 2, turnRate: 512 },
     heavyTank: { hp: 7200, damage: 1750, cooldown: 100 },

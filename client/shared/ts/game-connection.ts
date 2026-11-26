@@ -3,6 +3,7 @@ declare function createConnection(): WebSocket;
 export interface GameConnectionOptions {
     gameType: string;
     onMessage: (message: Record<string, unknown>) => void;
+    resume?: { resumeToken: string; nextTick: number };
     onOpen?: () => void;
     onClose?: () => void;
     pingIntervalInMilliseconds: number;
@@ -26,7 +27,7 @@ export function connectToGame(options: GameConnectionOptions): GameConnection {
     };
     socket.onopen = () => {
         const gameIdentifier = location.search.slice(1).split('=')[0];
-        send(gameIdentifier ? { type: 'JOIN', gameID: gameIdentifier } : { type: 'CREATE', gameType: options.gameType });
+        send(gameIdentifier ? { type: 'JOIN', gameID: gameIdentifier, ...options.resume } : { type: 'CREATE', gameType: options.gameType });
         pingTimer = setInterval(() => send({ type: 'PING', ping: Date.now() }), options.pingIntervalInMilliseconds);
         options.onOpen?.();
     };

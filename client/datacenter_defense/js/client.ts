@@ -3,10 +3,13 @@ import { Preview } from './editor/preview.js';
 import { blankWorld } from './editor/world.js';
 import { CommandBar } from './game/ui/command-bar.js';
 import { ResourceBars } from './game/ui/resource-bars.js';
+import { Leaderboard } from './game/ui/leaderboard.js';
+import { annotationToolbar } from './game/ui/map-annotations.js';
 import { SimulationControls } from './game/ui/simulation-controls.js';
 import { TimelineHud } from './game/ui/timeline-hud.js';
 import { BALANCE } from './sim/balance.js';
-import { ECONOMY as C, ECONOMY_WORDS } from './sim/layout.js';
+import { CRANE_T3 } from './sim/content/index.js';
+import { ECONOMY as C, ECONOMY_WORDS, ENTITY as E, ENTITY_WORDS } from './sim/layout.js';
 import { TICK_HZ } from './sim/fixed.js';
 import { checkWebGPU } from './webgpu.js';
 import { Lobby } from './lobby.js';
@@ -14,7 +17,7 @@ import { connectToGame, type GameConnection } from '../../shared/ts/game-connect
 import { copyInviteLink } from '../../shared/ts/copy-invite-link.js';
 import { Lockstep, type TickBundle } from './sim/lockstep.js';
 import { CommandType } from './sim/commands.js';
-import type { Battlefield, LobbyState, MatchStart } from './shared/protocol.js';
+import { RECONNECT_MS, type Battlefield, type ConnectionStats, type LobbyState, type MapAnnotation, type MatchStart } from './shared/protocol.js';
 
 const element = (id: string) => document.getElementById(id) as HTMLElement;
 if (!document.getElementById('loading')) {
@@ -39,6 +42,9 @@ let preview: Preview | undefined;
 let connection: GameConnection | undefined;
 let lobby: Lobby | undefined;
 let generation = 0;
+let resumeToken: string | undefined;
+let nextTick = 0;
+let reconnectUntil = 0;
 
 async function battlefield(file: string): Promise<World> {
     const response = await fetch(`maps/${file}`);
@@ -47,7 +53,7 @@ async function battlefield(file: string): Promise<World> {
 }
 function showGame(world: World) {
     element('lobby').hidden = true; element('game').hidden = false;
-    preview ??= new Preview(element('game'));
+    preview ??= new Preview(element('game'), false);
     preview.sync(world);
     const objective = world.objects.find(object => object.kind === 'objective');
     preview.focus(world, objective ?? { x: world.width / 2, z: world.depth / 2 }, 100);
@@ -57,7 +63,7 @@ function showLobby(message: string) {
     element('result').hidden = true;
     element('loading').hidden = true;
     element('game').classList.remove('game--loading');
-    generation++;
+    generation++; resumeToken = undefined; reconnectUntil = 0;
     preview?.stopSimulation();
     element('lobby').hidden = false; element('game').hidden = true;
     notify(message);
@@ -81,7 +87,7 @@ async function startMatch(start: MatchStart) {
         const scene = showGame(world);
         await scene.startSimulation(world, notify, true, false, false,
             { local: false, player: lobby.slot % 8, slot: lobby.slot, roster: start.players,
-                players: start.slots, seed: start.seed });
+                players: start.slots, seed: start.seed, buildTime: start.buildTime });
         if (current !== generation) return;
         const driver = scene.driver;
         if (!driver) throw Error('Simulation did not load');
@@ -95,6 +101,7 @@ async function startMatch(start: MatchStart) {
             finish(result.outcome); connection?.send({ type: 'GAME_END', ...result });
         };
         driver.onSelection = ids => connection?.send({ type: 'SELECTION', ids });
+        driver.onAnnotationAction = action => connection?.send({ type: 'ANNOTATION', ...action });
         driver.onStall = stalled => {
             if (stalled) notify('Waiting for players');
         };
@@ -118,6 +125,8 @@ function receive(message: Record<string, unknown>) {
         case 'LOBBY': lobby?.show(message as LobbyState); break;
         case 'START': void startMatch(message as MatchStart); break;
         case 'BEGIN':
+            resumeToken = typeof message.token === 'string' ? message.token : undefined;
+            nextTick = 0;
             element('loading').hidden = true;
             element('game').classList.remove('game--loading');
             driver?.submit({ type: CommandType.Ready, payload: [] });
@@ -125,17 +134,39 @@ function receive(message: Record<string, unknown>) {
             break;
         case 'BUNDLE':
             try {
-                driver?.receive(message.bundle as TickBundle);
+                if (driver) {
+                    const bundle = message.bundle as TickBundle;
+                    driver.receive(bundle);
+                    nextTick = bundle.tick + 1;
+                }
             } catch (error) {
                 driver?.pause(); notify(error instanceof Error ? error.message : String(error));
             }
+            break;
+        case 'PING':
+            if (typeof message.ping === 'number')
+                connection?.send({ type: 'CONNECTION_PING', ping: Math.max(0, Date.now() - message.ping) });
+            break;
+        case 'CONNECTION_STATS':
+            if (driver && Array.isArray(message.players))
+                driver.connectionStats = message.players as Array<ConnectionStats>;
             break;
         case 'SELECTION':
             if (driver && typeof message.slot === 'number' && Array.isArray(message.ids))
                 driver.selections.set(message.slot, message.ids);
             break;
+        case 'ANNOTATION':
+            if (message.annotation && typeof message.annotation === 'object')
+                driver?.onAnnotation?.(message.annotation as MapAnnotation);
+            break;
+        case 'RECONNECTED':
+            reconnectUntil = 0;
+            element('disconnect-banner').hidden = true;
+            if (driver) connection?.send({ type: 'INPUT', tick: driver.core.tick });
+            break;
         case 'RESUMED':
-            if (typeof message.tick === 'number') driver?.resumeAt(message.tick);
+            if (driver && typeof message.tick === 'number' && message.tick >= driver.core.tick)
+                driver.resumeAt(message.tick);
             if (driver) connection?.send({ type: 'INPUT', tick: driver.core.tick });
             break;
         case 'PAUSE_STATE':
@@ -156,8 +187,31 @@ function receive(message: Record<string, unknown>) {
             }
             notify(`Simulation desync at tick ${String(message.tick)}. Reload to join a new game.`);
             break;
-        case 'ERROR': notify(String(message.message ?? 'Connection error')); break;
+        case 'ERROR':
+            if (reconnectUntil && message.code === 'NOT_ALLOWED') connection?.dispose();
+            else notify(String(message.message ?? 'Connection error'));
+            if (reconnectUntil && message.code === 'NOT_ALLOWED') retryConnection();
+            break;
     }
+}
+function openConnection(resume?: { resumeToken: string; nextTick: number }) {
+    connection = connectToGame({ gameType: 'datacenter_defense', onMessage: receive, resume,
+        pingIntervalInMilliseconds: 5000, disconnectBanner: element('disconnect-banner'), onClose: retryConnection });
+}
+function retryConnection() {
+    const driver = preview?.driver;
+    if (resumeToken && driver && !driver.result) {
+        reconnectUntil ||= Date.now() + RECONNECT_MS;
+        if (Date.now() < reconnectUntil) {
+            element('disconnect-banner').textContent = 'Reconnecting…';
+            setTimeout(() => {
+                if (resumeToken && reconnectUntil) openConnection({ resumeToken, nextTick });
+            }, 750);
+            return;
+        }
+    }
+    element('disconnect-banner').textContent = 'Disconnected from server';
+    showLobby('Disconnected. Reload to join a new game.');
 }
 async function joinLobby() {
     if (connection || !await checkWebGPU()) return;
@@ -166,11 +220,7 @@ async function joinLobby() {
         if (!response.ok) throw Error('Could not load the battlefield list');
         const maps = await response.json() as Array<Battlefield>;
         lobby = new Lobby(element('lobby-content'), maps, message => connection?.send(message));
-        connection = connectToGame({ gameType: 'datacenter_defense', onMessage: receive,
-            pingIntervalInMilliseconds: 5000, disconnectBanner: element('disconnect-banner'),
-            onClose: () => {
-                showLobby('Disconnected. Reload to join a new game.');
-            } });
+        openConnection();
     } catch (error) {
         notify(error instanceof Error ? error.message : String(error));
     }
@@ -202,10 +252,46 @@ if (new URLSearchParams(location.search).has('mock')) {
     }
     host.append(states);
     const economy = new Int32Array(ECONOMY_WORDS);
+    const leaderboard = new Leaderboard(host, [
+        { slot: 0, color: 0, name: 'Player 1', ready: true },
+        { slot: 1, color: 1, name: 'Player 2', ready: true }
+    ], 0);
+    leaderboard.updateConnection([{ slot: 0, ping: 18, tick: 1200 }, { slot: 1, ping: 64, tick: 1199 }]);
     economy.set([50000, 500000, 50000, 500000]);
+    economy.set([125, 42], C.kills);
+    leaderboard.update(economy);
     economy.fill(BALANCE.objective.money * 100 / TICK_HZ, C.moneyHistory, C.moneyHistory + TICK_HZ);
     economy.fill(BALANCE.objective.power * 100 / TICK_HZ, C.powerHistory, C.powerHistory + TICK_HZ);
-    new ResourceBars(host).update(economy);
-    new CommandBar(host).selection([], false, { name: 'Defense objective', hp: BALANCE.objective.hp,
-        tier: 1, target: 1, progress: 0, held: false });
+    const resources = new ResourceBars(host);
+    annotationToolbar(resources.element, () => {});
+    resources.update(economy);
+    const startDrain = document.createElement('button'), stopDrain = document.createElement('button');
+    startDrain.type = stopDrain.type = 'button';
+    startDrain.textContent = 'Start drain'; stopDrain.textContent = 'Stop drain';
+    stopDrain.disabled = true;
+    let drain: ReturnType<typeof setInterval>;
+    startDrain.onclick = () => {
+        startDrain.disabled = true; stopDrain.disabled = false;
+        economy[C.moneyUsed] = 1000; economy[C.powerUsed] = 5000;
+        resources.update(economy);
+        drain = setInterval(() => {
+            const moneyNet = BALANCE.objective.money * 100 - economy[C.moneyUsed];
+            const powerNet = BALANCE.objective.power * 100 - economy[C.powerUsed];
+            economy[C.money] = Math.max(0, economy[C.money] + moneyNet / 10);
+            economy[C.power] = Math.max(0, economy[C.power] + powerNet / 10);
+            resources.update(economy);
+        }, 100);
+    };
+    stopDrain.onclick = () => {
+        clearInterval(drain);
+        startDrain.disabled = false; stopDrain.disabled = true;
+        economy[C.moneyUsed] = economy[C.powerUsed] = 0;
+        resources.update(economy);
+    };
+    states.append(startDrain, stopDrain);
+    const crane = new Int32Array(ENTITY_WORDS);
+    crane[E.def] = CRANE_T3;
+    crane[E.state] = 1;
+    crane[E.hp] = BALANCE.construction.hp[2];
+    new CommandBar(host).selection([crane], false, { name: 'Defense objective', hp: BALANCE.objective.hp });
 } else void joinLobby();
